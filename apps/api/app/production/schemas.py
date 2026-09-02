@@ -98,4 +98,6 @@ class QuantityReconciliationReport(BaseModel):
     unallocated_quantity: Decimal
     is_valid: bool
     is_over_allocated: bool
+    unaccounted_discrepancy: Decimal = Decimal("0.0")
     batches: List[BatchAllocationItem]
+

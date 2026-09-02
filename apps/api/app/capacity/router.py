@@ -53,3 +53,14 @@ async def execute_absence_handover(
 ):
     count = await CapacityService.execute_handover(db, id, current_user.id)
     return SuccessResponse(data={"reassigned_tasks_count": count, "message": f"Successfully reassigned {count} tasks."})
+
+
+@router.get("/absence/{id}/summary", response_model=SuccessResponse[dict])
+async def get_absence_handover_summary(
+    id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_permission("tasks:read")),
+):
+    summary = await CapacityService.get_absence_handover_summary(db, id)
+    return SuccessResponse(data=summary)
+

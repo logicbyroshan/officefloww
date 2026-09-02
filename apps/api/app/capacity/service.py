@@ -240,3 +240,31 @@ class CapacityService:
         absence.approved_by_id = manager_id
         await db.commit()
         return reassigned_count
+
+    @staticmethod
+    async def get_absence_handover_summary(db: AsyncSession, absence_id: uuid.UUID) -> dict:
+        absence = await db.scalar(
+            select(AbsenceRecord).where(AbsenceRecord.id == absence_id)
+        )
+        if not absence:
+            raise EntityNotFoundError("AbsenceRecord", str(absence_id))
+
+        user = await db.scalar(select(User).where(User.id == absence.user_id))
+        user_name = user.full_name if user else "Unknown"
+
+        handover_data = absence.handover_recommendations_json or {}
+        tasks_list = handover_data.get("tasks", [])
+
+        return {
+            "absence_id": str(absence.id),
+            "absent_user_id": str(absence.user_id),
+            "absent_user_name": user_name,
+            "start_date": absence.start_date.isoformat(),
+            "end_date": absence.end_date.isoformat(),
+            "reason": absence.reason,
+            "status": absence.status.value,
+            "tasks_count": len(tasks_list),
+            "handover_tasks": tasks_list,
+        }
+
+

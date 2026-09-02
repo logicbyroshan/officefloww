@@ -29,6 +29,16 @@ async def create_invoice(
     return SuccessResponse(data=InvoiceRead.model_validate(inv))
 
 
+@router.get("/invoices/{id}", response_model=SuccessResponse[InvoiceRead])
+async def get_invoice(
+    id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_permission("orders:read")),
+):
+    inv = await BillingService.get_invoice(db, id)
+    return SuccessResponse(data=InvoiceRead.model_validate(inv))
+
+
 @router.post("/payments", response_model=SuccessResponse[PaymentRead], status_code=status.HTTP_201_CREATED)
 async def record_payment(
     data: PaymentCreate,

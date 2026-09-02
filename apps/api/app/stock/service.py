@@ -5,6 +5,7 @@ import uuid
 
 from sqlalchemy import select, func, and_
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from apps.api.app.core.exceptions import BusinessRuleViolationError, EntityNotFoundError
 from apps.api.app.orders.models import OrderItem
@@ -56,6 +57,23 @@ class StockService:
         await db.commit()
         await db.refresh(item)
         return item
+
+    @staticmethod
+    async def create_lot(db: AsyncSession, data: StockLotCreate) -> StockLot:
+        lot = StockLot(
+            stock_item_id=data.stock_item_id,
+            location_id=data.location_id,
+            lot_number=data.lot_number,
+            initial_quantity=data.quantity,
+            current_quantity=data.quantity,
+            cost_per_unit=data.cost_per_unit,
+            supplier_id=data.supplier_id,
+            expiry_date=data.expiry_date,
+        )
+        db.add(lot)
+        await db.commit()
+        await db.refresh(lot)
+        return lot
 
     @staticmethod
     async def get_items(db: AsyncSession) -> List[StockItem]:
@@ -363,3 +381,48 @@ class StockService:
             requirements=requirements,
             has_shortage=has_shortage,
         )
+
+    @staticmethod
+    async def get_lot_traceability(db: AsyncSession, lot_id: uuid.UUID) -> dict:
+        lot = await db.scalar(
+            select(StockLot)
+            .options(selectinload(StockLot.item), selectinload(StockLot.location))
+            .where(StockLot.id == lot_id)
+        )
+        if not lot:
+            raise EntityNotFoundError("StockLot", str(lot_id))
+
+        movements = (
+            await db.scalars(
+                select(StockMovement)
+                .where(StockMovement.stock_item_id == lot.stock_item_id)
+                .order_by(StockMovement.timestamp.desc())
+            )
+        ).all()
+
+        movements_list = []
+        for m in movements:
+            movements_list.append({
+                "id": str(m.id),
+                "movement_type": m.movement_type.value,
+                "quantity": float(m.quantity),
+                "order_id": str(m.order_id) if m.order_id else None,
+                "order_item_id": str(m.order_item_id) if m.order_item_id else None,
+                "reason": m.reason,
+                "timestamp": m.timestamp.isoformat() if m.timestamp else None,
+            })
+
+        return {
+            "lot_id": str(lot.id),
+            "lot_number": lot.lot_number,
+            "stock_item_id": str(lot.stock_item_id),
+            "stock_item_name": lot.item.name if lot.item else "Unknown",
+            "stock_item_code": lot.item.code if lot.item else "Unknown",
+            "location_name": lot.location.name if lot.location else "Unknown",
+            "initial_quantity": float(lot.initial_quantity),
+            "current_quantity": float(lot.current_quantity),
+            "cost_per_unit": float(lot.cost_per_unit),
+            "supplier_id": str(lot.supplier_id) if lot.supplier_id else None,
+            "movements_history": movements_list,
+        }
+

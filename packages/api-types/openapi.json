@@ -3083,6 +3083,52 @@
         }
       }
     },
+    "/api/v1/stock/lots": {
+      "post": {
+        "tags": [
+          "Stock & Inventory"
+        ],
+        "summary": "Create Stock Lot",
+        "operationId": "create_stock_lot_api_v1_stock_lots_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StockLotCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_dict_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/stock/movements": {
       "post": {
         "tags": [
@@ -3180,6 +3226,54 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SuccessResponse_OrderBOMCalculationResponse_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/stock/traceability/lot/{lot_id}": {
+      "get": {
+        "tags": [
+          "Stock & Inventory"
+        ],
+        "summary": "Get Stock Lot Traceability",
+        "operationId": "get_stock_lot_traceability_api_v1_stock_traceability_lot__lot_id__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "lot_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Lot Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_dict_"
                 }
               }
             }
@@ -5161,6 +5255,54 @@
         ]
       }
     },
+    "/api/v1/billing/invoices/{id}": {
+      "get": {
+        "tags": [
+          "Billing & Client Payments"
+        ],
+        "summary": "Get Invoice",
+        "operationId": "get_invoice_api_v1_billing_invoices__id__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_InvoiceRead_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/billing/payments": {
       "post": {
         "tags": [
@@ -5886,6 +6028,54 @@
         ],
         "summary": "Execute Absence Handover",
         "operationId": "execute_absence_handover_api_v1_capacity_absence__id__execute_handover_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_dict_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/capacity/absence/{id}/summary": {
+      "get": {
+        "tags": [
+          "Capacity & Workload Planning"
+        ],
+        "summary": "Get Absence Handover Summary",
+        "operationId": "get_absence_handover_summary_api_v1_capacity_absence__id__summary_get",
         "security": [
           {
             "OAuth2PasswordBearer": []
@@ -13923,6 +14113,11 @@
             "type": "boolean",
             "title": "Is Over Allocated"
           },
+          "unaccounted_discrepancy": {
+            "type": "string",
+            "title": "Unaccounted Discrepancy",
+            "default": "0.0"
+          },
           "batches": {
             "items": {
               "$ref": "#/components/schemas/BatchAllocationItem"
@@ -14883,6 +15078,79 @@
           "OUTSIDE_LABOUR"
         ],
         "title": "StockLocationType"
+      },
+      "StockLotCreate": {
+        "properties": {
+          "stock_item_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Stock Item Id"
+          },
+          "location_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Location Id"
+          },
+          "lot_number": {
+            "type": "string",
+            "title": "Lot Number"
+          },
+          "quantity": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Quantity"
+          },
+          "cost_per_unit": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Cost Per Unit",
+            "default": "0.0"
+          },
+          "supplier_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Supplier Id"
+          },
+          "expiry_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expiry Date"
+          }
+        },
+        "type": "object",
+        "required": [
+          "stock_item_id",
+          "location_id",
+          "lot_number",
+          "quantity"
+        ],
+        "title": "StockLotCreate"
       },
       "StockMovementCreate": {
         "properties": {

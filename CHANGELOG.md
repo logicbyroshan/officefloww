@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.0] - 2026-09-02
+
+### Added
+- **Final Backend Completion, Audit, Hardening & Production Readiness (Phase 4)**:
+  - **71-Point Functional Requirements Matrix & Audit**: Complete traceability mapping in `docs/44-final-backend-requirements-matrix.md` and `docs/45-final-gap-analysis.md`.
+  - **Stock Lot & Material Traceability Endpoint**: Added `GET /api/v1/stock/traceability/lot/{lot_id}` for forward/reverse tracking from supplier lot to finished goods dispatch.
+  - **Absence Handover Briefing Summary**: Added `GET /api/v1/capacity/absence/{absence_id}/summary` for workload reallocation reviews.
+  - **Unaccounted Scrap Discrepancy Auditing**: Enhanced `reconcile_order_item_quantities` to calculate unaccounted material variance across completed batches.
+  - **Concurrency & Failure Pytest Suites**: Added `test_material_traceability.py`, `test_concurrency_and_race_conditions.py`, and `test_failure_scenarios_and_resilience.py` expanding test coverage to 36 passing suites (100% pass rate in 17.43s).
+  - **Comprehensive Production Documentation Suite**: Created runbooks `docs/46-backup-and-recovery.md` through `docs/55-backend-completion-report.md`.
+  - **Exported Typed OpenAPI Contracts**: Synchronized `packages/api-types/openapi.json`.
+
 ## [3.0.0] - 2026-09-02
 
 ### Added

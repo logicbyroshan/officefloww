@@ -12,6 +12,7 @@ from apps.api.app.stock.schemas import (
     StockItemRead,
     StockLocationCreate,
     StockLocationRead,
+    StockLotCreate,
     StockMovementCreate,
     StockMovementRead,
     OrderBOMCalculationResponse,
@@ -80,6 +81,16 @@ async def get_item_balance(
     return SuccessResponse(data=balance)
 
 
+@router.post("/lots", response_model=SuccessResponse[dict], status_code=status.HTTP_201_CREATED)
+async def create_stock_lot(
+    data: StockLotCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_permission("ledger:write")),
+):
+    lot = await StockService.create_lot(db, data)
+    return SuccessResponse(data={"id": str(lot.id), "lot_number": lot.lot_number, "stock_item_id": str(lot.stock_item_id)})
+
+
 @router.post("/movements", response_model=SuccessResponse[StockMovementRead], status_code=status.HTTP_201_CREATED)
 async def record_stock_movement(
     data: StockMovementCreate,
@@ -105,3 +116,17 @@ async def calculate_order_item_bom(
         db, order_id=order_id, order_item_id=order_item_id, auto_reserve=auto_reserve
     )
     return SuccessResponse(data=calc)
+
+
+@router.get(
+    "/traceability/lot/{lot_id}",
+    response_model=SuccessResponse[dict],
+)
+async def get_stock_lot_traceability(
+    lot_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_permission("ledger:read")),
+):
+    trace = await StockService.get_lot_traceability(db, lot_id=lot_id)
+    return SuccessResponse(data=trace)
+

@@ -5,6 +5,7 @@ import uuid
 
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from apps.api.app.billing.models import (
     Invoice,
@@ -28,6 +29,18 @@ from apps.api.app.workflows.models import StepStatus, WorkflowInstance, Workflow
 
 
 class BillingService:
+    @staticmethod
+    async def get_invoice(db: AsyncSession, invoice_id: uuid.UUID) -> Invoice:
+        res = await db.execute(
+            select(Invoice)
+            .options(selectinload(Invoice.items))
+            .where(Invoice.id == invoice_id)
+        )
+        inv = res.scalar_one_or_none()
+        if not inv:
+            raise EntityNotFoundError("Invoice", str(invoice_id))
+        return inv
+
     @staticmethod
     async def create_invoice(db: AsyncSession, data: InvoiceCreate) -> Invoice:
         inv_number = f"INV-{datetime.now().strftime('%Y%m%d%H%M%S')}-{uuid.uuid4().hex[:4].upper()}"

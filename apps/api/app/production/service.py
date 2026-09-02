@@ -218,8 +218,11 @@ class ProductionService:
             )
         )
         batches = list(batches_res.scalars().all())
-
-        total_allocated = sum(b.input_quantity for b in batches)
+        total_allocated = sum((b.input_quantity for b in batches), Decimal("0.0"))
+        completed_batches = [b for b in batches if b.status == ProductionBatchStatus.COMPLETED]
+        total_completed_allocated = sum((b.input_quantity for b in completed_batches), Decimal("0.0"))
+        total_completed_accounted = sum((b.output_quantity + b.reject_quantity + b.waste_quantity for b in completed_batches), Decimal("0.0"))
+        unaccounted = max(Decimal("0.0"), total_completed_allocated - total_completed_accounted) if completed_batches else Decimal("0.0")
         unallocated = max(Decimal("0.0"), target_qty - total_allocated)
         is_over = total_allocated > target_qty
         is_valid = total_allocated == target_qty
@@ -242,5 +245,7 @@ class ProductionService:
             unallocated_quantity=unallocated,
             is_valid=is_valid,
             is_over_allocated=is_over,
+            unaccounted_discrepancy=unaccounted,
             batches=batch_items,
         )
+
