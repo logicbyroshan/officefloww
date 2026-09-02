@@ -4,8 +4,51 @@
   "description": "OfficeFloww Desktop Management Application (Electron + React + TypeScript)",
   "main": "main.js",
   "scripts": {
+    "build": "npx esbuild src/index.tsx --bundle --outfile=dist/bundle.js --platform=browser --loader:.ts=tsx --sourcemap",
+    "watch": "npx esbuild src/index.tsx --bundle --outfile=dist/bundle.js --platform=browser --loader:.ts=tsx --sourcemap --watch",
     "start": "electron .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "package": "npm run build && electron-builder --dir",
+    "dist": "npm run build && electron-builder --win nsis"
+  },
+  "build": {
+    "appId": "com.officefloww.desktop",
+    "productName": "OfficeFloww",
+    "copyright": "Copyright © 2026 OfficeFloww",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "index.html",
+      "dist/**/*",
+      "src/design-system/tokens/index.css"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "OfficeFloww Operating System"
+    }
   },
   "dependencies": {
     "@officefloww/api-client": "file:../../packages/api-client",
@@ -17,6 +60,7 @@
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",
     "electron": "^29.1.5",
+    "electron-builder": "^24.13.3",
     "typescript": "^5.4.2"
   }
 }

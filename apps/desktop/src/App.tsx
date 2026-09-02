@@ -1,230 +1,356 @@
 import React, { useState, useEffect } from "react";
-import { OfficeFlowwClient } from "@officefloww/api-client";
-import { User, Order, Task, Client, FileFolder, Approval } from "@officefloww/api-types";
+import { AuthProvider, useAuth } from "./auth/AuthContext";
+import { ToastProvider } from "./design-system/components/Toast";
+import { initAccentTheme } from "./design-system/tokens/theme";
+import { AppShell } from "./layout/AppShell";
+import { AppNavSection } from "./auth/permissions";
 
-const client = new OfficeFlowwClient({ baseUrl: "http://localhost:8000/api/v1" });
+// Services & Hooks
+import {
+  OrdersService,
+  TasksService,
+  ApprovalsService,
+  ClientsService,
+  ProductsService,
+} from "./api/services";
+import { useAsync } from "./hooks/useAsync";
 
-export const App: React.FC = () => {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [email, setEmail] = useState("admin@officefloww.com");
-  const [password, setPassword] = useState("OfficeFloww@2026");
-  const [activeTab, setActiveTab] = useState<"dashboard" | "clients" | "orders" | "tasks" | "files">("dashboard");
+// Views
+import { LoginView } from "./views/auth/LoginView";
+import { DashboardView } from "./views/dashboard/DashboardView";
+import { ManagementDashboardView } from "./views/dashboard/ManagementDashboardView";
+import { QuotationsView } from "./views/quotations/QuotationsView";
+import { OrdersView } from "./views/orders/OrdersView";
+import { OrderDetailView } from "./views/orders/OrderDetailView";
+import { NewOrderModal } from "./views/orders/NewOrderModal";
+import { TasksView } from "./views/tasks/TasksView";
+import { ApprovalsView } from "./views/approvals/ApprovalsView";
+import { ClientsView } from "./views/clients/ClientsView";
+import { ClientDetailView } from "./views/clients/ClientDetailView";
+import { NewClientModal } from "./views/clients/NewClientModal";
+import { ProductsView } from "./views/products/ProductsView";
+import { ProductDetailView } from "./views/products/ProductDetailView";
+import { StockDashboardView } from "./views/stock/StockDashboardView";
+import { PurchasingView } from "./views/purchasing/PurchasingView";
+import { ProductionView } from "./views/production/ProductionView";
+import { LabourView } from "./views/labour/LabourView";
+import { PackingDispatchView } from "./views/packing/PackingDispatchView";
+import { BillingView } from "./views/billing/BillingView";
+import { ReportsView } from "./views/reports/ReportsView";
+import { AuditView } from "./views/audit/AuditView";
+import { AutomationView } from "./views/automation/AutomationView";
+import { SettingsView } from "./views/settings/SettingsView";
+import { GlobalSearchModal } from "./views/search/GlobalSearchModal";
+import { LoadingState } from "./design-system/components/FeedbackStates";
 
-  // Domain states
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [clients, setClients] = useState<Client[]>([]);
-  const [approvals, setApprovals] = useState<Approval[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+const MainApp: React.FC = () => {
+  const { user, loading: authLoading } = useAuth();
+  const [activeSection, setActiveSection] = useState<AppNavSection>("dashboard");
+  const [isManagementDashboard, setIsManagementDashboard] = useState(false);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setErrorMsg(null);
-    try {
-      const res = await client.auth.login({ email, password });
-      setCurrentUser(res.user);
-      loadDashboardData();
-    } catch (err: any) {
-      setErrorMsg(err.message || "Failed to login");
-    } finally {
-      setLoading(false);
-    }
+  // Modals
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isNewOrderOpen, setIsNewOrderOpen] = useState(false);
+  const [isNewClientOpen, setIsNewClientOpen] = useState(false);
+
+  // Listen for search shortcut
+  useEffect(() => {
+    initAccentTheme();
+    const handleOpenSearch = () => setIsSearchOpen(true);
+    window.addEventListener("officefloww:open-search", handleOpenSearch);
+    return () => window.removeEventListener("officefloww:open-search", handleOpenSearch);
+  }, []);
+
+  // Primary Data Loading
+  const {
+    data: ordersData,
+    loading: ordersLoading,
+    error: ordersError,
+    execute: refreshOrders,
+  } = useAsync(() => OrdersService.list(), [user]);
+
+  const {
+    data: tasksData,
+    loading: tasksLoading,
+    error: tasksError,
+    execute: refreshTasks,
+  } = useAsync(() => TasksService.list(), [user]);
+
+  const {
+    data: approvalsData,
+    loading: approvalsLoading,
+    error: approvalsError,
+    execute: refreshApprovals,
+  } = useAsync(() => ApprovalsService.list(), [user]);
+
+  const {
+    data: clientsData,
+    loading: clientsLoading,
+    error: clientsError,
+    execute: refreshClients,
+  } = useAsync(() => ClientsService.list(), [user]);
+
+  const {
+    data: productsData,
+    loading: productsLoading,
+    error: productsError,
+    execute: refreshProducts,
+  } = useAsync(() => ProductsService.list(), [user]);
+
+  const refreshAll = () => {
+    refreshOrders();
+    refreshTasks();
+    refreshApprovals();
+    refreshClients();
+    refreshProducts();
   };
 
-  const loadDashboardData = async () => {
-    setLoading(true);
-    try {
-      const [oList, tList, cList, aList] = await Promise.all([
-        client.orders.list(),
-        client.tasks.list(),
-        client.clients.list(),
-        client.approvals.list(),
-      ]);
-      setOrders(oList);
-      setTasks(tList);
-      setClients(cList);
-      setApprovals(aList);
-    } catch (err: any) {
-      setErrorMsg(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCompleteTask = async (taskId: string) => {
-    try {
-      await client.tasks.complete(taskId, "Completed from desktop UI stub");
-      await loadDashboardData();
-    } catch (err: any) {
-      alert(`Error completing task: ${err.message}`);
-    }
-  };
-
-  const handleApprove = async (approvalId: string) => {
-    try {
-      await client.approvals.approve(approvalId, "Approved via desktop interface stub");
-      await loadDashboardData();
-    } catch (err: any) {
-      alert(`Error approving: ${err.message}`);
-    }
-  };
-
-  if (!currentUser) {
-    return (
-      <div style={{ maxWidth: 400, margin: "100px auto" }} className="card">
-        <h2>OfficeFloww Desktop Login</h2>
-        {errorMsg && <p style={{ color: "#ef4444" }}>{errorMsg}</p>}
-        <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          <div>
-            <label>Email: </label>
-            <input style={{ width: "100%" }} value={email} onChange={(e) => setEmail(e.target.value)} />
-          </div>
-          <div>
-            <label>Password: </label>
-            <input style={{ width: "100%" }} type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-          </div>
-          <button type="submit" disabled={loading}>
-            {loading ? "Logging in..." : "Login"}
-          </button>
-        </form>
-      </div>
-    );
+  if (authLoading) {
+    return <LoadingState message="Restoring workstation session..." />;
   }
 
+  if (!user) {
+    return <LoginView />;
+  }
+
+  const orders = ordersData || [];
+  const tasks = tasksData || [];
+  const approvals = approvalsData || [];
+  const clients = clientsData || [];
+  const products = productsData || [];
+
+  const pendingApprovalsCount = approvals.filter((a) => a.status === "PENDING").length;
+  const urgentTasksCount = tasks.filter((t) => t.status === "BLOCKED" || t.status === "IN_PROGRESS").length;
+
+  // View Routing
+  const renderCurrentView = () => {
+    if (selectedOrderId) {
+      return (
+        <OrderDetailView
+          orderId={selectedOrderId}
+          clients={clients}
+          onBack={() => setSelectedOrderId(null)}
+          onSelectTask={(taskId) => {
+            setActiveSection("tasks");
+          }}
+        />
+      );
+    }
+
+    if (selectedClientId) {
+      return (
+        <ClientDetailView
+          clientId={selectedClientId}
+          onBack={() => setSelectedClientId(null)}
+          onSelectOrder={(orderId) => setSelectedOrderId(orderId)}
+        />
+      );
+    }
+
+    if (selectedProductId) {
+      return (
+        <ProductDetailView
+          productId={selectedProductId}
+          onBack={() => setSelectedProductId(null)}
+        />
+      );
+    }
+
+    switch (activeSection) {
+      case "dashboard":
+        if (isManagementDashboard || user.role === "OWNER" || user.role === "MANAGER") {
+          return (
+            <ManagementDashboardView
+              orders={orders}
+              tasks={tasks}
+              approvals={approvals}
+              clients={clients}
+              onSelectOrder={(id) => setSelectedOrderId(id)}
+              onSelectTask={(id) => setActiveSection("tasks")}
+              onSwitchToFloorView={() => setIsManagementDashboard(false)}
+            />
+          );
+        }
+        return (
+          <DashboardView
+            orders={orders}
+            tasks={tasks}
+            approvals={approvals}
+            clients={clients}
+            loading={ordersLoading || tasksLoading}
+            error={ordersError || tasksError}
+            onRefresh={refreshAll}
+            onSelectOrder={(id) => setSelectedOrderId(id)}
+            onSelectTask={(id) => setActiveSection("tasks")}
+            onNewOrder={() => setIsNewOrderOpen(true)}
+            onNewClient={() => setIsNewClientOpen(true)}
+          />
+        );
+      case "quotations":
+        return (
+          <QuotationsView
+            clients={clients}
+            products={products}
+            onOrderConverted={(orderId) => {
+              refreshOrders();
+              setActiveSection("orders");
+            }}
+          />
+        );
+      case "orders":
+        return (
+          <OrdersView
+            orders={orders}
+            clients={clients}
+            loading={ordersLoading}
+            error={ordersError}
+            onRefresh={refreshOrders}
+            onSelectOrder={(id) => setSelectedOrderId(id)}
+            onNewOrder={() => setIsNewOrderOpen(true)}
+          />
+        );
+      case "tasks":
+        return (
+          <TasksView
+            tasks={tasks}
+            loading={tasksLoading}
+            error={tasksError}
+            onRefresh={refreshTasks}
+            onGoToOrder={(id) => setSelectedOrderId(id)}
+          />
+        );
+      case "approvals":
+        return (
+          <ApprovalsView
+            approvals={approvals}
+            loading={approvalsLoading}
+            error={approvalsError}
+            onRefresh={refreshApprovals}
+          />
+        );
+      case "clients":
+        return (
+          <ClientsView
+            clients={clients}
+            loading={clientsLoading}
+            error={clientsError}
+            onRefresh={refreshClients}
+            onSelectClient={(id) => setSelectedClientId(id)}
+          />
+        );
+      case "products":
+        return (
+          <ProductsView
+            products={products}
+            loading={productsLoading}
+            error={productsError}
+            onRefresh={refreshProducts}
+            onSelectProduct={(id) => setSelectedProductId(id)}
+          />
+        );
+      case "production":
+        return <ProductionView />;
+      case "stock":
+        return <StockDashboardView />;
+      case "purchasing":
+        return <PurchasingView />;
+      case "labour":
+        return <LabourView />;
+      case "packing":
+      case "dispatch":
+        return <PackingDispatchView />;
+      case "billing":
+        return <BillingView />;
+      case "reports":
+        return <ReportsView />;
+      case "audit":
+        return <AuditView />;
+      case "automation":
+        return <AutomationView />;
+      case "settings":
+        return <SettingsView />;
+      default:
+        return (
+          <DashboardView
+            orders={orders}
+            tasks={tasks}
+            approvals={approvals}
+            clients={clients}
+            loading={ordersLoading}
+            error={ordersError}
+            onRefresh={refreshAll}
+            onSelectOrder={(id) => setSelectedOrderId(id)}
+            onSelectTask={(id) => setActiveSection("tasks")}
+            onNewOrder={() => setIsNewOrderOpen(true)}
+            onNewClient={() => setIsNewClientOpen(true)}
+          />
+        );
+    }
+  };
+
   return (
-    <div>
-      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-        <h2>OfficeFloww Production OS</h2>
-        <div>
-          <span>Logged in as: <strong>{currentUser.full_name} ({currentUser.role})</strong> </span>
-          <button onClick={() => setCurrentUser(null)} style={{ background: "#475569", marginLeft: 10 }}>Logout</button>
-        </div>
-      </header>
+    <AppShell
+      activeSection={activeSection}
+      onSelectSection={(sec) => {
+        setSelectedOrderId(null);
+        setSelectedClientId(null);
+        setSelectedProductId(null);
+        setActiveSection(sec);
+      }}
+      onOpenSearch={() => setIsSearchOpen(true)}
+      pendingApprovalsCount={pendingApprovalsCount}
+      urgentTasksCount={urgentTasksCount}
+    >
+      {renderCurrentView()}
 
-      <div className="nav">
-        <button onClick={() => setActiveTab("dashboard")}>Dashboard ({orders.length} Orders)</button>
-        <button onClick={() => setActiveTab("clients")}>Clients ({clients.length})</button>
-        <button onClick={() => setActiveTab("orders")}>Orders</button>
-        <button onClick={() => setActiveTab("tasks")}>Task Queue ({tasks.length})</button>
-        <button onClick={() => setActiveTab("files")}>Approvals ({approvals.length})</button>
-        <button onClick={loadDashboardData} style={{ background: "#059669", marginLeft: "auto" }}>Refresh Live Data</button>
-      </div>
+      {/* Global Modals */}
+      <GlobalSearchModal
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+        onSelectOrder={(id) => {
+          setSelectedOrderId(id);
+          setIsSearchOpen(false);
+        }}
+        onSelectClient={(id) => {
+          setSelectedClientId(id);
+          setIsSearchOpen(false);
+        }}
+        onSelectProduct={(id) => {
+          setSelectedProductId(id);
+          setIsSearchOpen(false);
+        }}
+        onSelectTask={(id) => {
+          setActiveSection("tasks");
+          setIsSearchOpen(false);
+        }}
+      />
 
-      {loading && <p>Loading operational data...</p>}
-      {errorMsg && <p style={{ color: "#ef4444" }}>{errorMsg}</p>}
+      <NewOrderModal
+        isOpen={isNewOrderOpen}
+        onClose={() => setIsNewOrderOpen(false)}
+        clients={clients}
+        products={products}
+        onOrderCreated={refreshOrders}
+      />
 
-      {/* DASHBOARD TAB */}
-      {activeTab === "dashboard" && (
-        <div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
-            <div className="card"><h3>Active Orders</h3><p style={{ fontSize: 28, margin: 0 }}>{orders.length}</p></div>
-            <div className="card"><h3>Pending Tasks</h3><p style={{ fontSize: 28, margin: 0 }}>{tasks.filter(t => t.status !== "COMPLETED").length}</p></div>
-            <div className="card"><h3>Clients</h3><p style={{ fontSize: 28, margin: 0 }}>{clients.length}</p></div>
-            <div className="card"><h3>Pending Approvals</h3><p style={{ fontSize: 28, margin: 0 }}>{approvals.filter(a => a.status === "PENDING").length}</p></div>
-          </div>
-        </div>
-      )}
+      <NewClientModal
+        isOpen={isNewClientOpen}
+        onClose={() => setIsNewClientOpen(false)}
+        onClientCreated={refreshClients}
+      />
+    </AppShell>
+  );
+};
 
-      {/* ORDERS TAB */}
-      {activeTab === "orders" && (
-        <div className="card">
-          <h3>Production Orders</h3>
-          <table>
-            <thead>
-              <tr><th>Order #</th><th>Client ID</th><th>Status</th><th>Priority</th><th>Total Amount</th></tr>
-            </thead>
-            <tbody>
-              {orders.map((o) => (
-                <tr key={o.id}>
-                  <td><strong>{o.order_number}</strong></td>
-                  <td>{o.client_id}</td>
-                  <td>{o.status}</td>
-                  <td>{o.priority}</td>
-                  <td>INR {o.total_amount.toLocaleString()}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* TASKS TAB */}
-      {activeTab === "tasks" && (
-        <div className="card">
-          <h3>Active Shop-Floor Tasks</h3>
-          <table>
-            <thead>
-              <tr><th>Task Code</th><th>Title</th><th>Role</th><th>Status</th><th>Action</th></tr>
-            </thead>
-            <tbody>
-              {tasks.map((t) => (
-                <tr key={t.id}>
-                  <td><code>{t.task_code}</code></td>
-                  <td>{t.title}</td>
-                  <td>{t.assigned_role || "Unassigned"}</td>
-                  <td>{t.status}</td>
-                  <td>
-                    {t.status !== "COMPLETED" && (
-                      <button onClick={() => handleCompleteTask(t.id)}>Mark Complete</button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* APPROVALS TAB */}
-      {activeTab === "files" && (
-        <div className="card">
-          <h3>Artwork & Sample Approvals</h3>
-          <table>
-            <thead>
-              <tr><th>Approval ID</th><th>Order ID</th><th>Status</th><th>Comments</th><th>Action</th></tr>
-            </thead>
-            <tbody>
-              {approvals.map((a) => (
-                <tr key={a.id}>
-                  <td><code>{a.id.slice(0, 8)}</code></td>
-                  <td>{a.order_id}</td>
-                  <td>{a.status}</td>
-                  <td>{a.comments || "-"}</td>
-                  <td>
-                    {a.status === "PENDING" && (
-                      <button onClick={() => handleApprove(a.id)} style={{ background: "#16a34a" }}>Approve</button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* CLIENTS TAB */}
-      {activeTab === "clients" && (
-        <div className="card">
-          <h3>Registered Clients</h3>
-          <table>
-            <thead>
-              <tr><th>Client Code</th><th>Organization</th><th>Tax / GST</th><th>Contacts</th></tr>
-            </thead>
-            <tbody>
-              {clients.map((c) => (
-                <tr key={c.id}>
-                  <td><strong>{c.client_code}</strong></td>
-                  <td>{c.organization_name}</td>
-                  <td>{c.tax_identifier || "-"}</td>
-                  <td>{c.contacts?.length || 0}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
+export const App: React.FC = () => {
+  return (
+    <AuthProvider>
+      <ToastProvider>
+        <MainApp />
+      </ToastProvider>
+    </AuthProvider>
   );
 };
