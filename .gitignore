@@ -69,6 +69,8 @@ pnpm-debug.log*
 .pnp/
 .pnp.js
 dist/
+release/
+apps/desktop/release/
 packages/*/dist/
 packages/*/build/
 packages/*/.turbo/
