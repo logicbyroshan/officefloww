@@ -1,0 +1,116 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: officefloww_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: officefloww
+      POSTGRES_USER: officefloww
+      POSTGRES_PASSWORD: officefloww_secure_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U officefloww -d officefloww"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: officefloww_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: minio/minio:latest
+    container_name: officefloww_minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+
+  minio-init:
+    image: minio/mc:latest
+    container_name: officefloww_minio_init
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc alias set myminio http://minio:9000 minioadmin minioadmin;
+      /usr/bin/mc mb myminio/officefloww-files || true;
+      /usr/bin/mc anonymous set public myminio/officefloww-files;
+      exit 0;
+      "
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    container_name: officefloww_api
+    restart: unless-stopped
+    environment:
+      - APP_ENV=production
+      - DATABASE_URL=postgresql+asyncpg://officefloww:officefloww_secure_pass@postgres:5432/officefloww
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      - OBJECT_STORAGE_ENDPOINT=http://minio:9000
+      - OBJECT_STORAGE_BUCKET=officefloww-files
+      - OBJECT_STORAGE_ACCESS_KEY=minioadmin
+      - OBJECT_STORAGE_SECRET_KEY=minioadmin
+      - SECRET_KEY=super-secret-officefloww-change-in-production-random-token-key-32b
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_started
+
+  celery_worker:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.worker
+    container_name: officefloww_celery_worker
+    restart: unless-stopped
+    environment:
+      - APP_ENV=production
+      - DATABASE_URL=postgresql+asyncpg://officefloww:officefloww_secure_pass@postgres:5432/officefloww
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      - OBJECT_STORAGE_ENDPOINT=http://minio:9000
+      - OBJECT_STORAGE_BUCKET=officefloww-files
+      - OBJECT_STORAGE_ACCESS_KEY=minioadmin
+      - OBJECT_STORAGE_SECRET_KEY=minioadmin
+      - SECRET_KEY=super-secret-officefloww-change-in-production-random-token-key-32b
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
