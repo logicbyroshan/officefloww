@@ -1,0 +1,14 @@
+{
+  "name": "@officefloww/validation",
+  "version": "1.0.0",
+  "description": "Shared validation logic and business rules for OfficeFloww",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.2"
+  }
+}

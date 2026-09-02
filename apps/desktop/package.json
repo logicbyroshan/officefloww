@@ -1,0 +1,22 @@
+{
+  "name": "officefloww-desktop",
+  "version": "1.0.0",
+  "description": "OfficeFloww Desktop Management Application (Electron + React + TypeScript)",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@officefloww/api-client": "file:../../packages/api-client",
+    "@officefloww/api-types": "file:../../packages/api-types",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.66",
+    "@types/react-dom": "^18.2.22",
+    "electron": "^29.1.5",
+    "typescript": "^5.4.2"
+  }
+}

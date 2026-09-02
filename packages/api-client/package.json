@@ -1,0 +1,17 @@
+{
+  "name": "@officefloww/api-client",
+  "version": "1.0.0",
+  "description": "Typed API Client for OfficeFloww",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@officefloww/api-types": "file:../api-types"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.2"
+  }
+}

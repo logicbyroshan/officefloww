@@ -1,0 +1,21 @@
+{
+  "name": "officefloww-labour-app",
+  "version": "1.0.0",
+  "description": "OfficeFloww Labour & Piece-Rate Tracking Mobile App (React Native + TypeScript)",
+  "main": "index.js",
+  "scripts": {
+    "start": "react-native start",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@officefloww/api-client": "file:../../packages/api-client",
+    "@officefloww/api-types": "file:../../packages/api-types",
+    "react": "18.2.0",
+    "react-native": "0.73.6"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.66",
+    "@types/react-native": "^0.73.0",
+    "typescript": "^5.4.2"
+  }
+}

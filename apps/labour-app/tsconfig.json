@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "paths": {
+      "react": ["../desktop/node_modules/@types/react"],
+      "@officefloww/api-client": ["../../packages/api-client/dist/index"],
+      "@officefloww/api-types": ["../../packages/api-types/dist/index"]
+    }
+  },
+  "include": ["App.tsx", "react-native.d.ts"]
+}
