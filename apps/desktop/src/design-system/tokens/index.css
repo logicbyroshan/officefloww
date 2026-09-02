@@ -1,0 +1,155 @@
+/* ==========================================================================
+   OfficeFloww Enterprise Design System Tokens
+   Single Accent Architecture + Industrial Neutral Palette
+   Sharp 2px-6px Radii & High-Density Typography
+   ========================================================================== */
+
+:root {
+  /* ----------------------------------------------------
+     Single Accent Color Variable Family (Default: Sapphire)
+     ---------------------------------------------------- */
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --accent-active: #1e40af;
+  --accent-soft: rgba(37, 99, 235, 0.12);
+  --accent-border: rgba(37, 99, 235, 0.35);
+  --accent-text: #60a5fa;
+  --accent-contrast: #ffffff;
+
+  /* ----------------------------------------------------
+     Industrial Neutral Palette (Dark Theme Base)
+     ---------------------------------------------------- */
+  --bg-app: #09090b;          /* Root desktop canvas */
+  --bg-surface: #121215;      /* TopBar, Sidebar, Page headers */
+  --bg-card: #18181b;         /* Cards, Containers, Tables, Modals */
+  --bg-card-hover: #202024;   /* Interactive item hover */
+  --bg-input: #111114;        /* Text inputs, selects, code blocks */
+  --bg-muted: #27272a;        /* Subtle chips, table headers, dividers */
+
+  /* Text & Content Hierarchy */
+  --text-primary: #f4f4f5;    /* 95% White - Headlines, essential data */
+  --text-secondary: #a1a1aa;  /* 65% Neutral - Subtitles, table cells */
+  --text-muted: #71717a;      /* 45% Neutral - Captions, timestamps, borders */
+  --text-disabled: #52525b;   /* 30% Neutral - Inactive controls */
+
+  /* Borders & Dividers */
+  --border-subtle: #27272a;   /* Subtle row dividers, container outlines */
+  --border-medium: #3f3f46;   /* Input borders, card outlines */
+  --border-strong: #52525b;   /* Active boundaries, modal borders */
+
+  /* ----------------------------------------------------
+     Semantic Status Colors (Strictly for Semantic Badges)
+     ---------------------------------------------------- */
+  --status-success: #10b981;
+  --status-success-soft: rgba(16, 185, 129, 0.12);
+  --status-success-border: rgba(16, 185, 129, 0.3);
+
+  --status-warning: #f59e0b;
+  --status-warning-soft: rgba(245, 158, 11, 0.12);
+  --status-warning-border: rgba(245, 158, 11, 0.3);
+
+  --status-error: #ef4444;
+  --status-error-soft: rgba(239, 68, 68, 0.12);
+  --status-error-border: rgba(239, 68, 68, 0.3);
+
+  --status-info: #0ea5e9;
+  --status-info-soft: rgba(14, 165, 233, 0.12);
+  --status-info-border: rgba(14, 165, 233, 0.3);
+
+  /* ----------------------------------------------------
+     Shape Language & Radii (Sharp: 2px - 6px maximum)
+     ---------------------------------------------------- */
+  --radius-xs: 2px;           /* Tags, badges, small buttons */
+  --radius-sm: 4px;           /* Inputs, regular buttons, table rows */
+  --radius-md: 6px;           /* Cards, drawers, modal dialogs */
+  --radius-lg: 6px;           /* Standard max radius across the OS */
+
+  /* ----------------------------------------------------
+     Typography & Spacing Scale
+     ---------------------------------------------------- */
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", Consolas, "Courier New", monospace;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+
+  /* Elevation Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.6), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.8), 0 4px 6px -4px rgba(0, 0, 0, 0.6);
+
+  /* Layout Constants */
+  --topbar-height: 52px;
+  --sidebar-width: 240px;
+  --sidebar-collapsed-width: 64px;
+}
+
+/* ==========================================================================
+   CSS Reset & Base Enterprise Layout
+   ========================================================================== */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  user-select: none;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-app);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-medium);
+  border-radius: var(--radius-xs);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* Base Form Elements */
+input, select, textarea, button {
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: var(--accent-text);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+code, kbd, samp, pre {
+  font-family: var(--font-mono);
+  font-size: 12px;
+}

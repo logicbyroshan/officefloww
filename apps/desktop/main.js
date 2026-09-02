@@ -3,16 +3,21 @@ const path = require("path");
 
 function createWindow() {
   const win = new BrowserWindow({
-    width: 1280,
-    height: 800,
-    title: "OfficeFloww Production OS",
+    width: 1440,
+    height: 900,
+    minWidth: 1200,
+    minHeight: 720,
+    title: "OfficeFloww — Industrial Production OS",
+    backgroundColor: "#09090b",
     webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
+      nodeIntegration: false,
+      contextIsolation: true,
+      sandbox: false,
+      preload: path.join(__dirname, "preload.js"),
     },
   });
 
-  win.loadFile("index.html");
+  win.loadFile(path.join(__dirname, "index.html"));
 }
 
 app.whenReady().then(() => {
