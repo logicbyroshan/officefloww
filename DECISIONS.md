@@ -119,3 +119,44 @@
 - **Context**: Delivery staff frequently pay cash for inter-city bus parcels or local tempos out-of-pocket. Manual reimbursement tracking causes delayed payments and lost receipts.
 - **Decision**: When a delivery is booked with a freight charge, the system automatically creates a `DeliveryExpense` reimbursement entry in `PENDING` status for the paying employee with receipt attachment.
 - **Consequences**: Immediate transparency into petty cash obligations and faster employee reimbursements.
+
+---
+
+## ADR-016: Deterministic Financial & Costing Calculations vs. AI Safety Boundary
+- **Status**: Accepted
+- **Context**: LLMs and generative AI tools are probabilistic and prone to hallucination in multi-step accounting, BOM costing, tax calculation, and inventory reconciliation.
+- **Decision**: All financial math (quotations, costings, margins, price tiers, labour piece-rates, GST tax calculations) is computed strictly through deterministic `decimal.Decimal` arithmetic in Python services. The AI assistant layer operates strictly through read-only deterministic backend query tools (`get_order_status`, `get_low_stock`, `get_employee_workload`, etc.) with zero direct database write access.
+- **Consequences**: 100% financial correctness and auditing compliance with zero risk of AI-induced balance corruption.
+
+---
+
+## ADR-017: Multi-Channel Notification Provider Abstraction
+- **Status**: Accepted
+- **Context**: Coupling business workflows directly to third-party notification vendors (like Twilio, WhatsApp Cloud API, Firebase) creates brittle code and vendor lock-in.
+- **Decision**: Implement a `NotificationProvider` abstract strategy with dedicated channel adapters (`InApp`, `Desktop`, `MobilePush`, `Email`, `WhatsApp`).
+- **Consequences**: Business logic dispatches abstract events; transport adapters handle payload formatting and retries independently.
+
+---
+
+## ADR-018: Tokenized External Client Proof Approval Architecture
+- **Status**: Accepted
+- **Context**: School principals and corporate purchasers need to inspect and approve artwork proofs quickly without navigating complex login portals.
+- **Decision**: Generate cryptographically secure, time-bound tokens (`token_urlsafe(32)`) allowing clients to view watermarked digital proofs, approve, or request revisions. On approval, the file version becomes immutable and production is unlocked.
+- **Consequences**: Reduces approval turnaround times from days to minutes while guaranteeing artwork version lock.
+
+---
+
+## ADR-019: Idempotent Event-Driven Automation Engine
+- **Status**: Accepted
+- **Context**: Retrying background jobs or event dispatches can inadvertently create duplicate tasks, duplicate stock reservations, or duplicate invoices.
+- **Decision**: The rules engine (`WHEN event IF conditions THEN actions`) enforces strict idempotency key tracking via `idempotency_records`. Duplicate incoming events are suppressed safely with cached responses.
+- **Consequences**: Guaranteed idempotency and fault-tolerant background automation.
+
+---
+
+## ADR-020: Employee Absence & Skill-Based Workload Handover
+- **Status**: Accepted
+- **Context**: Sudden employee illness or leave causes stalled production queues and missed delivery deadlines.
+- **Decision**: An automated handover engine detects absent staff, finds qualified substitute workers matching role requirements and lowest current queue depth, and presents an actionable handover plan for manager sign-off.
+- **Consequences**: Zero single points of failure in task execution with full supervisor oversight.
+

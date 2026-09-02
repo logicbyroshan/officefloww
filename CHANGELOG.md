@@ -5,6 +5,49 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] - 2026-09-02
+
+### Added
+- **Automated Business Operating System & Intelligence Layer (Phase 3)**:
+  - **Quotation & Tiered Costing Engine (`apps/api/app/quotations/`)**:
+    - Configurable quantity-based pricing tiers ($1\text{--}100, 101\text{--}500, 501\text{--}1000, 1001\text{--}5000, 5000+$).
+    - Deterministic costing breakdown using high-precision Decimal arithmetic (BOM material costs, setup wastage %, machine hourly rates, piece-rate labour, packaging, transport freight, overhead markup %, and target gross margin %).
+    - Traffic-light feasibility analysis (`GREEN`, `YELLOW`, `RED`) checking unreserved stock, machine backlog, and labour capacity with actionable recommendations.
+    - Quotation versioning and seamless conversion into confirmed production orders.
+  - **Capacity Planning, Workload & Absence Handover (`apps/api/app/capacity/`)**:
+    - Machine and operator capacity tracking with daily/weekly utilization percentages.
+    - Employee absence detection with automated substitute candidate search (matching roles and lowest queue depth).
+    - Manager-approved task handover execution.
+  - **Dynamic Delivery ETA Engine (`apps/api/app/eta/`)**:
+    - Critical-path delivery forecasting across DAG workflow steps, machine queues, procurement lead times, and contractor fitting buffers.
+    - Dynamic recalculation on delays with immutable snapshot history.
+  - **Transparent Priority Engine (`apps/api/app/capacity/`)**:
+    - Objective priority calculation (`CRITICAL`, `HIGH`, `NORMAL`, `LOW`) accompanied by explicit human-readable explanations.
+  - **Idempotent Automation Rules Engine (`apps/api/app/automation/`)**:
+    - Event-Condition-Action (ECA) rules engine with strict idempotency key tracking preventing duplicate tasks, stock issues, or payouts.
+    - Full execution audit logging in `AutomationLog`.
+  - **Multi-Channel Notifications & Client Proof Portal (`apps/api/app/notifications/`)**:
+    - `NotificationProvider` strategy abstraction supporting `InApp`, `Desktop`, `MobilePush`, `Email`, and `WhatsApp`.
+    - WhatsApp HSM template messaging architecture.
+    - Tokenized, secure external client proof approval portal with instant version locking upon approval.
+  - **Data Import & Migration Bridges (`apps/api/app/integrations/`)**:
+    - Google Sheets bulk CSV/API import for clients, stock items, and pricing.
+    - Trello board migration mapper converting cards, lists, members, attachments, and comments into structured tasks and comments.
+  - **Management AI Assistant & Tool Layer (`apps/api/app/ai/`)**:
+    - Controlled read-only query tools (`get_orders_at_risk`, `get_low_stock`, `get_employee_workload`, `get_labour_performance`, `get_pending_payments`).
+    - Natural language query answering and automated daily executive briefings with zero direct database mutations and zero AI-generated financial math.
+  - **Executive Analytics & Responsibility Audit (`apps/api/app/analytics/`)**:
+    - Multi-domain dashboards (revenue, orders, machine utilization, contractor quality rankings, scrap analysis, client balance aging).
+    - Verifiable responsibility audit trail linking operational sign-offs to actor identity and correlation IDs.
+  - **Enterprise Security & Disaster Recovery**:
+    - Object-level file authorization restricting floor workers and external clients to task-permitted files only.
+    - Automated backup and restore utilities (`scripts/backup_db.py`, `scripts/restore_db.py`).
+    - Complete documentation suite (`docs/29-quotation-engine.md` to `docs/43-disaster-recovery.md`).
+- **Database & Testing**:
+  - Alembic migration `0003_phase3_automation_intelligence`.
+  - Pytest test suite expanded to 32 comprehensive tests (including Grand Tour end-to-end business lifecycle test) with 100% pass rate.
+  - Monorepo TypeScript packages compiled and typechecked with 0 errors.
+
 ## [2.0.0] - 2026-09-02
 
 ### Added

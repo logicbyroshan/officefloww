@@ -3,7 +3,7 @@
   "info": {
     "title": "OfficeFloww API",
     "description": "Centralized Production Management and Office Automation System for Commercial Printing Operations.",
-    "version": "2.0.0"
+    "version": "3.0.0"
   },
   "paths": {
     "/health": {
@@ -5546,10 +5546,1075 @@
           }
         }
       }
+    },
+    "/api/v1/quotations/pricing-rules": {
+      "post": {
+        "tags": [
+          "Quotations & Costing"
+        ],
+        "summary": "Create Pricing Rule",
+        "operationId": "create_pricing_rule_api_v1_quotations_pricing_rules_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PricingRuleCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_PricingRuleRead_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/quotations/calculate-cost": {
+      "post": {
+        "tags": [
+          "Quotations & Costing"
+        ],
+        "summary": "Calculate Cost",
+        "operationId": "calculate_cost_api_v1_quotations_calculate_cost_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CostCalculationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_CostCalculationBreakdown_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/quotations": {
+      "post": {
+        "tags": [
+          "Quotations & Costing"
+        ],
+        "summary": "Create Quotation",
+        "operationId": "create_quotation_api_v1_quotations_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuotationCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_QuotationRead_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/quotations/{id}/feasibility": {
+      "get": {
+        "tags": [
+          "Quotations & Costing"
+        ],
+        "summary": "Check Feasibility",
+        "operationId": "check_feasibility_api_v1_quotations__id__feasibility_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_QuotationFeasibilityReport_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/quotations/{id}/convert-to-order": {
+      "post": {
+        "tags": [
+          "Quotations & Costing"
+        ],
+        "summary": "Convert Quotation To Order",
+        "operationId": "convert_quotation_to_order_api_v1_quotations__id__convert_to_order_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_dict_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/capacity/machines": {
+      "get": {
+        "tags": [
+          "Capacity & Workload Planning"
+        ],
+        "summary": "Get Machine Capacity",
+        "operationId": "get_machine_capacity_api_v1_capacity_machines_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_List_CapacityMetrics__"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/capacity/employees": {
+      "get": {
+        "tags": [
+          "Capacity & Workload Planning"
+        ],
+        "summary": "Get Employee Workload",
+        "operationId": "get_employee_workload_api_v1_capacity_employees_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_List_CapacityMetrics__"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/capacity/absence/plan-handover": {
+      "post": {
+        "tags": [
+          "Capacity & Workload Planning"
+        ],
+        "summary": "Plan Absence Handover",
+        "operationId": "plan_absence_handover_api_v1_capacity_absence_plan_handover_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AbsenceCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_HandoverPlan_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/capacity/absence/{id}/execute-handover": {
+      "post": {
+        "tags": [
+          "Capacity & Workload Planning"
+        ],
+        "summary": "Execute Absence Handover",
+        "operationId": "execute_absence_handover_api_v1_capacity_absence__id__execute_handover_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_dict_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/eta/orders/{order_id}": {
+      "get": {
+        "tags": [
+          "Delivery ETA Engine"
+        ],
+        "summary": "Calculate Order Eta",
+        "operationId": "calculate_order_eta_api_v1_eta_orders__order_id__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "order_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Order Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_ETACalculationResponse_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/eta/orders/{order_id}/history": {
+      "get": {
+        "tags": [
+          "Delivery ETA Engine"
+        ],
+        "summary": "Get Order Eta History",
+        "operationId": "get_order_eta_history_api_v1_eta_orders__order_id__history_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "order_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Order Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_List_ETAHistoryRead__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/automation/rules": {
+      "get": {
+        "tags": [
+          "Automation Engine"
+        ],
+        "summary": "List Automation Rules",
+        "operationId": "list_automation_rules_api_v1_automation_rules_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_List_AutomationRuleRead__"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Automation Engine"
+        ],
+        "summary": "Create Automation Rule",
+        "operationId": "create_automation_rule_api_v1_automation_rules_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutomationRuleCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_AutomationRuleRead_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/automation/logs": {
+      "get": {
+        "tags": [
+          "Automation Engine"
+        ],
+        "summary": "List Automation Logs",
+        "operationId": "list_automation_logs_api_v1_automation_logs_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_List_AutomationLogRead__"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/automation/trigger": {
+      "post": {
+        "tags": [
+          "Automation Engine"
+        ],
+        "summary": "Trigger Automation Event",
+        "operationId": "trigger_automation_event_api_v1_automation_trigger_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TriggerAutomationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_dict_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/notifications/send": {
+      "post": {
+        "tags": [
+          "Notifications & Client Proof Portal"
+        ],
+        "summary": "Send Notification",
+        "operationId": "send_notification_api_v1_notifications_send_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotificationCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_NotificationRead_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/notifications/proofs/generate-link": {
+      "post": {
+        "tags": [
+          "Notifications & Client Proof Portal"
+        ],
+        "summary": "Generate Proof Link",
+        "operationId": "generate_proof_link_api_v1_notifications_proofs_generate_link_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProofLinkCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_ProofLinkRead_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/notifications/proofs/{token}/respond": {
+      "post": {
+        "tags": [
+          "Notifications & Client Proof Portal"
+        ],
+        "summary": "Client Respond To Proof",
+        "operationId": "client_respond_to_proof_api_v1_notifications_proofs__token__respond_post",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProofClientResponse"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_dict_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/integrations/google-sheets/import": {
+      "post": {
+        "tags": [
+          "Integrations & Migrations"
+        ],
+        "summary": "Import From Google Sheets",
+        "operationId": "import_from_google_sheets_api_v1_integrations_google_sheets_import_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoogleSheetsImportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_GoogleSheetsImportSummary_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/integrations/trello/migrate": {
+      "post": {
+        "tags": [
+          "Integrations & Migrations"
+        ],
+        "summary": "Migrate From Trello",
+        "operationId": "migrate_from_trello_api_v1_integrations_trello_migrate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrelloMigrationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_TrelloMigrationSummary_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/ai/query": {
+      "post": {
+        "tags": [
+          "Management AI Assistant"
+        ],
+        "summary": "Query Management Ai",
+        "operationId": "query_management_ai_api_v1_ai_query_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AIQueryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_AIQueryResponse_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/ai/daily-briefing": {
+      "get": {
+        "tags": [
+          "Management AI Assistant"
+        ],
+        "summary": "Get Daily Executive Briefing",
+        "operationId": "get_daily_executive_briefing_api_v1_ai_daily_briefing_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_DailyBriefingResponse_"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/analytics/dashboard": {
+      "get": {
+        "tags": [
+          "Management Analytics & Reporting"
+        ],
+        "summary": "Get Executive Dashboard",
+        "operationId": "get_executive_dashboard_api_v1_analytics_dashboard_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_ExecutiveDashboardSummary_"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/analytics/responsibility-trail": {
+      "get": {
+        "tags": [
+          "Management Analytics & Reporting"
+        ],
+        "summary": "Get Responsibility Audit Trail",
+        "operationId": "get_responsibility_audit_trail_api_v1_analytics_responsibility_trail_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse_List_ResponsibilityAuditItem__"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
     }
   },
   "components": {
     "schemas": {
+      "AIQueryRequest": {
+        "properties": {
+          "query": {
+            "type": "string",
+            "title": "Query"
+          }
+        },
+        "type": "object",
+        "required": [
+          "query"
+        ],
+        "title": "AIQueryRequest"
+      },
+      "AIQueryResponse": {
+        "properties": {
+          "query": {
+            "type": "string",
+            "title": "Query"
+          },
+          "intent_detected": {
+            "type": "string",
+            "title": "Intent Detected"
+          },
+          "answer": {
+            "type": "string",
+            "title": "Answer"
+          },
+          "data_evidence": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Data Evidence"
+          },
+          "recommendations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Recommendations",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "query",
+          "intent_detected",
+          "answer",
+          "data_evidence"
+        ],
+        "title": "AIQueryResponse"
+      },
+      "AbsenceCreate": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Start Date"
+          },
+          "end_date": {
+            "type": "string",
+            "format": "date",
+            "title": "End Date"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "start_date",
+          "end_date"
+        ],
+        "title": "AbsenceCreate"
+      },
       "ApprovalDecisionRequest": {
         "properties": {
           "comments": {
@@ -6251,6 +7316,235 @@
         ],
         "title": "AuditLogRead"
       },
+      "AutomationLogRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "rule_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rule Id"
+          },
+          "event_name": {
+            "type": "string",
+            "title": "Event Name"
+          },
+          "idempotency_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Idempotency Key"
+          },
+          "status": {
+            "$ref": "#/components/schemas/AutomationStatus"
+          },
+          "payload_json": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payload Json"
+          },
+          "actions_executed_json": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actions Executed Json"
+          },
+          "error_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Message"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "event_name",
+          "status",
+          "created_at"
+        ],
+        "title": "AutomationLogRead"
+      },
+      "AutomationRuleCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "trigger_event": {
+            "type": "string",
+            "title": "Trigger Event"
+          },
+          "conditions_json": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conditions Json"
+          },
+          "actions_json": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actions Json"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "trigger_event"
+        ],
+        "title": "AutomationRuleCreate"
+      },
+      "AutomationRuleRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "trigger_event": {
+            "type": "string",
+            "title": "Trigger Event"
+          },
+          "conditions_json": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conditions Json"
+          },
+          "actions_json": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actions Json"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "execution_count": {
+            "type": "integer",
+            "title": "Execution Count"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "trigger_event",
+          "is_active",
+          "execution_count",
+          "created_at"
+        ],
+        "title": "AutomationRuleRead"
+      },
+      "AutomationStatus": {
+        "type": "string",
+        "enum": [
+          "SUCCESS",
+          "FAILED",
+          "SKIPPED"
+        ],
+        "title": "AutomationStatus"
+      },
       "BOMItemCreate": {
         "properties": {
           "component_name": {
@@ -6638,6 +7932,55 @@
         ],
         "title": "Body_upload_file_api_v1_files_upload_post"
       },
+      "CapacityMetrics": {
+        "properties": {
+          "resource_type": {
+            "type": "string",
+            "title": "Resource Type"
+          },
+          "resource_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Resource Id"
+          },
+          "resource_name": {
+            "type": "string",
+            "title": "Resource Name"
+          },
+          "total_capacity_hours": {
+            "type": "number",
+            "title": "Total Capacity Hours"
+          },
+          "allocated_hours": {
+            "type": "number",
+            "title": "Allocated Hours"
+          },
+          "available_hours": {
+            "type": "number",
+            "title": "Available Hours"
+          },
+          "utilization_percentage": {
+            "type": "number",
+            "title": "Utilization Percentage"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "resource_type",
+          "resource_id",
+          "resource_name",
+          "total_capacity_hours",
+          "allocated_hours",
+          "available_hours",
+          "utilization_percentage",
+          "status"
+        ],
+        "title": "CapacityMetrics"
+      },
       "ClientContactCreate": {
         "properties": {
           "name": {
@@ -7021,6 +8364,200 @@
         },
         "type": "object",
         "title": "ClientUpdate"
+      },
+      "CostCalculationBreakdown": {
+        "properties": {
+          "product_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Product Id"
+          },
+          "quantity": {
+            "type": "integer",
+            "title": "Quantity"
+          },
+          "material_cost": {
+            "type": "string",
+            "title": "Material Cost"
+          },
+          "wastage_cost": {
+            "type": "string",
+            "title": "Wastage Cost"
+          },
+          "labour_cost": {
+            "type": "string",
+            "title": "Labour Cost"
+          },
+          "machine_cost": {
+            "type": "string",
+            "title": "Machine Cost"
+          },
+          "packing_cost": {
+            "type": "string",
+            "title": "Packing Cost"
+          },
+          "delivery_cost_estimate": {
+            "type": "string",
+            "title": "Delivery Cost Estimate"
+          },
+          "overhead_cost": {
+            "type": "string",
+            "title": "Overhead Cost"
+          },
+          "margin_amount": {
+            "type": "string",
+            "title": "Margin Amount"
+          },
+          "total_cost": {
+            "type": "string",
+            "title": "Total Cost"
+          },
+          "suggested_unit_price": {
+            "type": "string",
+            "title": "Suggested Unit Price"
+          },
+          "breakdown_details": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Breakdown Details",
+            "default": {}
+          }
+        },
+        "type": "object",
+        "required": [
+          "product_id",
+          "quantity",
+          "material_cost",
+          "wastage_cost",
+          "labour_cost",
+          "machine_cost",
+          "packing_cost",
+          "delivery_cost_estimate",
+          "overhead_cost",
+          "margin_amount",
+          "total_cost",
+          "suggested_unit_price"
+        ],
+        "title": "CostCalculationBreakdown"
+      },
+      "CostCalculationRequest": {
+        "properties": {
+          "product_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Product Id"
+          },
+          "quantity": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Quantity"
+          },
+          "desired_margin_percentage": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Desired Margin Percentage",
+            "default": "25.0"
+          },
+          "overhead_percentage": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Overhead Percentage",
+            "default": "10.0"
+          },
+          "estimated_delivery_cost": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Estimated Delivery Cost",
+            "default": "500.0"
+          }
+        },
+        "type": "object",
+        "required": [
+          "product_id",
+          "quantity"
+        ],
+        "title": "CostCalculationRequest"
+      },
+      "DailyBriefingResponse": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "title": "Date"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "orders_at_risk": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Orders At Risk"
+          },
+          "low_stock_alerts": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Low Stock Alerts"
+          },
+          "overloaded_employees": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Overloaded Employees"
+          },
+          "pending_receivables_inr": {
+            "type": "number",
+            "title": "Pending Receivables Inr"
+          },
+          "action_items": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Action Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "date",
+          "summary",
+          "orders_at_risk",
+          "low_stock_alerts",
+          "overloaded_employees",
+          "pending_receivables_inr",
+          "action_items"
+        ],
+        "title": "DailyBriefingResponse"
       },
       "DefectReason": {
         "type": "string",
@@ -7582,6 +9119,171 @@
         ],
         "title": "DeliveryStatus"
       },
+      "ETACalculationResponse": {
+        "properties": {
+          "order_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Order Id"
+          },
+          "estimated_delivery_date": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Estimated Delivery Date"
+          },
+          "critical_path_hours": {
+            "type": "number",
+            "title": "Critical Path Hours"
+          },
+          "confidence_level": {
+            "type": "string",
+            "title": "Confidence Level"
+          },
+          "factors": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Factors"
+          },
+          "breakdown": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Breakdown"
+          }
+        },
+        "type": "object",
+        "required": [
+          "order_id",
+          "estimated_delivery_date",
+          "critical_path_hours",
+          "confidence_level",
+          "factors",
+          "breakdown"
+        ],
+        "title": "ETACalculationResponse"
+      },
+      "ETAHistoryRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "order_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Order Id"
+          },
+          "estimated_delivery_date": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Estimated Delivery Date"
+          },
+          "critical_path_hours": {
+            "type": "string",
+            "title": "Critical Path Hours"
+          },
+          "trigger_reason": {
+            "type": "string",
+            "title": "Trigger Reason"
+          },
+          "details_json": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Details Json"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "order_id",
+          "estimated_delivery_date",
+          "critical_path_hours",
+          "trigger_reason",
+          "created_at"
+        ],
+        "title": "ETAHistoryRead"
+      },
+      "ExecutiveDashboardSummary": {
+        "properties": {
+          "total_orders_count": {
+            "type": "integer",
+            "title": "Total Orders Count"
+          },
+          "active_production_orders": {
+            "type": "integer",
+            "title": "Active Production Orders"
+          },
+          "completed_orders_count": {
+            "type": "integer",
+            "title": "Completed Orders Count"
+          },
+          "total_revenue_inr": {
+            "type": "number",
+            "title": "Total Revenue Inr"
+          },
+          "total_outstanding_inr": {
+            "type": "number",
+            "title": "Total Outstanding Inr"
+          },
+          "avg_scrap_rate_percentage": {
+            "type": "number",
+            "title": "Avg Scrap Rate Percentage"
+          },
+          "top_selling_products": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Top Selling Products"
+          },
+          "contractor_quality_ranking": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Contractor Quality Ranking"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_orders_count",
+          "active_production_orders",
+          "completed_orders_count",
+          "total_revenue_inr",
+          "total_outstanding_inr",
+          "avg_scrap_rate_percentage",
+          "top_selling_products",
+          "contractor_quality_ranking"
+        ],
+        "title": "ExecutiveDashboardSummary"
+      },
+      "FeasibilityStatus": {
+        "type": "string",
+        "enum": [
+          "GREEN",
+          "YELLOW",
+          "RED"
+        ],
+        "title": "FeasibilityStatus"
+      },
       "FileApprovalStatus": {
         "type": "string",
         "enum": [
@@ -8071,6 +9773,64 @@
         ],
         "title": "GoodsReceiptRead"
       },
+      "GoogleSheetsImportRequest": {
+        "properties": {
+          "entity_type": {
+            "type": "string",
+            "title": "Entity Type"
+          },
+          "rows": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Rows"
+          }
+        },
+        "type": "object",
+        "required": [
+          "entity_type",
+          "rows"
+        ],
+        "title": "GoogleSheetsImportRequest"
+      },
+      "GoogleSheetsImportSummary": {
+        "properties": {
+          "entity_type": {
+            "type": "string",
+            "title": "Entity Type"
+          },
+          "total_rows": {
+            "type": "integer",
+            "title": "Total Rows"
+          },
+          "imported_count": {
+            "type": "integer",
+            "title": "Imported Count"
+          },
+          "skipped_count": {
+            "type": "integer",
+            "title": "Skipped Count"
+          },
+          "errors": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Errors",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "entity_type",
+          "total_rows",
+          "imported_count",
+          "skipped_count"
+        ],
+        "title": "GoogleSheetsImportSummary"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -8083,6 +9843,107 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "HandoverPlan": {
+        "properties": {
+          "absence_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Absence Id"
+          },
+          "absent_user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Absent User Id"
+          },
+          "absent_user_name": {
+            "type": "string",
+            "title": "Absent User Name"
+          },
+          "active_tasks_count": {
+            "type": "integer",
+            "title": "Active Tasks Count"
+          },
+          "tasks_to_handover": {
+            "items": {
+              "$ref": "#/components/schemas/HandoverTaskItem"
+            },
+            "type": "array",
+            "title": "Tasks To Handover"
+          }
+        },
+        "type": "object",
+        "required": [
+          "absence_id",
+          "absent_user_id",
+          "absent_user_name",
+          "active_tasks_count",
+          "tasks_to_handover"
+        ],
+        "title": "HandoverPlan"
+      },
+      "HandoverTaskItem": {
+        "properties": {
+          "task_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Task Id"
+          },
+          "task_code": {
+            "type": "string",
+            "title": "Task Code"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "current_assignee_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Current Assignee Id"
+          },
+          "recommended_assignee_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Recommended Assignee Id"
+          },
+          "recommended_assignee_name": {
+            "type": "string",
+            "title": "Recommended Assignee Name"
+          },
+          "priority": {
+            "type": "string",
+            "title": "Priority"
+          },
+          "due_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due Date"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "task_id",
+          "task_code",
+          "title",
+          "current_assignee_id",
+          "recommended_assignee_id",
+          "recommended_assignee_name",
+          "priority",
+          "reason"
+        ],
+        "title": "HandoverTaskItem"
       },
       "InvoiceCreate": {
         "properties": {
@@ -9411,6 +11272,135 @@
         ],
         "title": "MachineStatus"
       },
+      "NotificationChannel": {
+        "type": "string",
+        "enum": [
+          "IN_APP",
+          "DESKTOP",
+          "MOBILE_PUSH",
+          "EMAIL",
+          "WHATSAPP"
+        ],
+        "title": "NotificationChannel"
+      },
+      "NotificationCreate": {
+        "properties": {
+          "recipient_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recipient Id"
+          },
+          "channel": {
+            "$ref": "#/components/schemas/NotificationChannel",
+            "default": "IN_APP"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "body": {
+            "type": "string",
+            "title": "Body"
+          },
+          "metadata_json": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata Json"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "body"
+        ],
+        "title": "NotificationCreate"
+      },
+      "NotificationDeliveryStatus": {
+        "type": "string",
+        "enum": [
+          "PENDING",
+          "SENT",
+          "FAILED",
+          "READ"
+        ],
+        "title": "NotificationDeliveryStatus"
+      },
+      "NotificationRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "recipient_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recipient Id"
+          },
+          "channel": {
+            "$ref": "#/components/schemas/NotificationChannel"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "body": {
+            "type": "string",
+            "title": "Body"
+          },
+          "status": {
+            "$ref": "#/components/schemas/NotificationDeliveryStatus"
+          },
+          "metadata_json": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata Json"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "channel",
+          "title",
+          "body",
+          "status",
+          "created_at"
+        ],
+        "title": "NotificationRead"
+      },
       "OrderBOMCalculationResponse": {
         "properties": {
           "order_id": {
@@ -10706,6 +12696,192 @@
         ],
         "title": "PriceTrendsRead"
       },
+      "PricingRuleCreate": {
+        "properties": {
+          "product_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Product Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "tiers": {
+            "items": {
+              "$ref": "#/components/schemas/PricingTierCreate"
+            },
+            "type": "array",
+            "title": "Tiers",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "product_id",
+          "name"
+        ],
+        "title": "PricingRuleCreate"
+      },
+      "PricingRuleRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "product_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Product Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "tiers": {
+            "items": {
+              "$ref": "#/components/schemas/PricingTierRead"
+            },
+            "type": "array",
+            "title": "Tiers",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "product_id",
+          "name",
+          "is_active"
+        ],
+        "title": "PricingRuleRead"
+      },
+      "PricingTierCreate": {
+        "properties": {
+          "min_quantity": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Min Quantity"
+          },
+          "max_quantity": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Quantity"
+          },
+          "base_unit_price": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Base Unit Price"
+          },
+          "discount_percentage": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Discount Percentage",
+            "default": "0.0"
+          }
+        },
+        "type": "object",
+        "required": [
+          "min_quantity",
+          "base_unit_price"
+        ],
+        "title": "PricingTierCreate"
+      },
+      "PricingTierRead": {
+        "properties": {
+          "min_quantity": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Min Quantity"
+          },
+          "max_quantity": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Quantity"
+          },
+          "base_unit_price": {
+            "type": "string",
+            "title": "Base Unit Price"
+          },
+          "discount_percentage": {
+            "type": "string",
+            "title": "Discount Percentage",
+            "default": "0.0"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "pricing_rule_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Pricing Rule Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "min_quantity",
+          "base_unit_price",
+          "id",
+          "pricing_rule_id"
+        ],
+        "title": "PricingTierRead"
+      },
       "ProductCategoryRead": {
         "properties": {
           "code": {
@@ -11383,6 +13559,120 @@
         ],
         "title": "ProductionRecordRead"
       },
+      "ProofApprovalStatus": {
+        "type": "string",
+        "enum": [
+          "PENDING",
+          "APPROVED",
+          "CHANGES_REQUESTED",
+          "EXPIRED"
+        ],
+        "title": "ProofApprovalStatus"
+      },
+      "ProofClientResponse": {
+        "properties": {
+          "decision": {
+            "$ref": "#/components/schemas/ProofApprovalStatus"
+          },
+          "feedback_notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Feedback Notes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "decision"
+        ],
+        "title": "ProofClientResponse"
+      },
+      "ProofLinkCreate": {
+        "properties": {
+          "file_version_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "File Version Id"
+          },
+          "client_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Client Id"
+          },
+          "contact_name": {
+            "type": "string",
+            "title": "Contact Name"
+          },
+          "contact_phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contact Phone"
+          },
+          "expires_in_hours": {
+            "type": "integer",
+            "title": "Expires In Hours",
+            "default": 72
+          }
+        },
+        "type": "object",
+        "required": [
+          "file_version_id",
+          "client_id",
+          "contact_name"
+        ],
+        "title": "ProofLinkCreate"
+      },
+      "ProofLinkRead": {
+        "properties": {
+          "token": {
+            "type": "string",
+            "title": "Token"
+          },
+          "proof_url": {
+            "type": "string",
+            "title": "Proof Url"
+          },
+          "file_version_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "File Version Id"
+          },
+          "client_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Client Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ProofApprovalStatus"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Expires At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "token",
+          "proof_url",
+          "file_version_id",
+          "client_id",
+          "status",
+          "expires_at"
+        ],
+        "title": "ProofLinkRead"
+      },
       "PurchaseOrderCreate": {
         "properties": {
           "supplier_id": {
@@ -11873,6 +14163,329 @@
         ],
         "title": "QuantityTransactionType"
       },
+      "QuotationCreate": {
+        "properties": {
+          "client_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Client Id"
+          },
+          "valid_until": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid Until"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/QuotationItemCreate"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "client_id",
+          "items"
+        ],
+        "title": "QuotationCreate"
+      },
+      "QuotationFeasibilityReport": {
+        "properties": {
+          "quotation_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quotation Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/FeasibilityStatus"
+          },
+          "stock_feasible": {
+            "type": "boolean",
+            "title": "Stock Feasible"
+          },
+          "machine_capacity_feasible": {
+            "type": "boolean",
+            "title": "Machine Capacity Feasible"
+          },
+          "labour_capacity_feasible": {
+            "type": "boolean",
+            "title": "Labour Capacity Feasible"
+          },
+          "estimated_production_hours": {
+            "type": "number",
+            "title": "Estimated Production Hours"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Reasons"
+          },
+          "recommendations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Recommendations"
+          },
+          "missing_stock_items": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Missing Stock Items",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "stock_feasible",
+          "machine_capacity_feasible",
+          "labour_capacity_feasible",
+          "estimated_production_hours",
+          "reasons",
+          "recommendations"
+        ],
+        "title": "QuotationFeasibilityReport"
+      },
+      "QuotationItemCreate": {
+        "properties": {
+          "product_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Product Id"
+          },
+          "quantity": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Quantity"
+          },
+          "unit_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit Price"
+          },
+          "specifications_json": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Specifications Json"
+          }
+        },
+        "type": "object",
+        "required": [
+          "product_id",
+          "quantity"
+        ],
+        "title": "QuotationItemCreate"
+      },
+      "QuotationItemRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "product_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Product Id"
+          },
+          "quantity": {
+            "type": "integer",
+            "title": "Quantity"
+          },
+          "unit_price": {
+            "type": "string",
+            "title": "Unit Price"
+          },
+          "subtotal": {
+            "type": "string",
+            "title": "Subtotal"
+          },
+          "specifications_json": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Specifications Json"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "product_id",
+          "quantity",
+          "unit_price",
+          "subtotal"
+        ],
+        "title": "QuotationItemRead"
+      },
+      "QuotationRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "quotation_number": {
+            "type": "string",
+            "title": "Quotation Number"
+          },
+          "client_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Client Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/QuotationStatus"
+          },
+          "current_version_number": {
+            "type": "integer",
+            "title": "Current Version Number"
+          },
+          "valid_until": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid Until"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "subtotal": {
+            "type": "string",
+            "title": "Subtotal"
+          },
+          "tax_amount": {
+            "type": "string",
+            "title": "Tax Amount"
+          },
+          "total_amount": {
+            "type": "string",
+            "title": "Total Amount"
+          },
+          "converted_order_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Converted Order Id"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/QuotationItemRead"
+            },
+            "type": "array",
+            "title": "Items",
+            "default": []
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "quotation_number",
+          "client_id",
+          "status",
+          "current_version_number",
+          "subtotal",
+          "tax_amount",
+          "total_amount",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "QuotationRead"
+      },
+      "QuotationStatus": {
+        "type": "string",
+        "enum": [
+          "DRAFT",
+          "SENT_TO_CLIENT",
+          "ACCEPTED",
+          "REJECTED",
+          "EXPIRED",
+          "CONVERTED_TO_ORDER"
+        ],
+        "title": "QuotationStatus"
+      },
       "RefreshTokenRequest": {
         "properties": {
           "refresh_token": {
@@ -11895,6 +14508,51 @@
           "REJECTED"
         ],
         "title": "ReimbursementStatus"
+      },
+      "ResponsibilityAuditItem": {
+        "properties": {
+          "operation_name": {
+            "type": "string",
+            "title": "Operation Name"
+          },
+          "order_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Order Number"
+          },
+          "actor_name": {
+            "type": "string",
+            "title": "Actor Name"
+          },
+          "actor_role": {
+            "type": "string",
+            "title": "Actor Role"
+          },
+          "timestamp": {
+            "type": "string",
+            "title": "Timestamp"
+          },
+          "verified_evidence": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Verified Evidence"
+          }
+        },
+        "type": "object",
+        "required": [
+          "operation_name",
+          "actor_name",
+          "actor_role",
+          "timestamp",
+          "verified_evidence"
+        ],
+        "title": "ResponsibilityAuditItem"
       },
       "StepStatus": {
         "type": "string",
@@ -12484,6 +15142,35 @@
         ],
         "title": "StockMovementType"
       },
+      "SuccessResponse_AIQueryResponse_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/AIQueryResponse"
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "title": "SuccessResponse[AIQueryResponse]"
+      },
       "SuccessResponse_ApprovalRead_": {
         "properties": {
           "success": {
@@ -12600,6 +15287,35 @@
         ],
         "title": "SuccessResponse[AssetTypeRead]"
       },
+      "SuccessResponse_AutomationRuleRead_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/AutomationRuleRead"
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "title": "SuccessResponse[AutomationRuleRead]"
+      },
       "SuccessResponse_BillOfMaterialsRead_": {
         "properties": {
           "success": {
@@ -12686,6 +15402,64 @@
           "data"
         ],
         "title": "SuccessResponse[ClientRead]"
+      },
+      "SuccessResponse_CostCalculationBreakdown_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/CostCalculationBreakdown"
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "title": "SuccessResponse[CostCalculationBreakdown]"
+      },
+      "SuccessResponse_DailyBriefingResponse_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/DailyBriefingResponse"
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "title": "SuccessResponse[DailyBriefingResponse]"
       },
       "SuccessResponse_DeliveryExceptionRead_": {
         "properties": {
@@ -12774,6 +15548,64 @@
         ],
         "title": "SuccessResponse[DeliveryRead]"
       },
+      "SuccessResponse_ETACalculationResponse_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/ETACalculationResponse"
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "title": "SuccessResponse[ETACalculationResponse]"
+      },
+      "SuccessResponse_ExecutiveDashboardSummary_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/ExecutiveDashboardSummary"
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "title": "SuccessResponse[ExecutiveDashboardSummary]"
+      },
       "SuccessResponse_FileRead_": {
         "properties": {
           "success": {
@@ -12831,6 +15663,64 @@
           "data"
         ],
         "title": "SuccessResponse[GoodsReceiptRead]"
+      },
+      "SuccessResponse_GoogleSheetsImportSummary_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/GoogleSheetsImportSummary"
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "title": "SuccessResponse[GoogleSheetsImportSummary]"
+      },
+      "SuccessResponse_HandoverPlan_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/HandoverPlan"
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "title": "SuccessResponse[HandoverPlan]"
       },
       "SuccessResponse_InvoiceRead_": {
         "properties": {
@@ -13134,6 +16024,138 @@
         ],
         "title": "SuccessResponse[List[AssetTypeRead]]"
       },
+      "SuccessResponse_List_AutomationLogRead__": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/AutomationLogRead"
+            },
+            "type": "array",
+            "title": "Data"
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "title": "SuccessResponse[List[AutomationLogRead]]"
+      },
+      "SuccessResponse_List_AutomationRuleRead__": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/AutomationRuleRead"
+            },
+            "type": "array",
+            "title": "Data"
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "title": "SuccessResponse[List[AutomationRuleRead]]"
+      },
+      "SuccessResponse_List_CapacityMetrics__": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/CapacityMetrics"
+            },
+            "type": "array",
+            "title": "Data"
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "title": "SuccessResponse[List[CapacityMetrics]]"
+      },
+      "SuccessResponse_List_ETAHistoryRead__": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ETAHistoryRead"
+            },
+            "type": "array",
+            "title": "Data"
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "title": "SuccessResponse[List[ETAHistoryRead]]"
+      },
       "SuccessResponse_List_FileFolderRead__": {
         "properties": {
           "success": {
@@ -13397,6 +16419,39 @@
           "data"
         ],
         "title": "SuccessResponse[List[QuantityTransactionRead]]"
+      },
+      "SuccessResponse_List_ResponsibilityAuditItem__": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/ResponsibilityAuditItem"
+            },
+            "type": "array",
+            "title": "Data"
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "title": "SuccessResponse[List[ResponsibilityAuditItem]]"
       },
       "SuccessResponse_List_StockItemRead__": {
         "properties": {
@@ -13691,6 +16746,35 @@
         ],
         "title": "SuccessResponse[MachineRead]"
       },
+      "SuccessResponse_NotificationRead_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/NotificationRead"
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "title": "SuccessResponse[NotificationRead]"
+      },
       "SuccessResponse_OrderBOMCalculationResponse_": {
         "properties": {
           "success": {
@@ -13923,6 +17007,35 @@
         ],
         "title": "SuccessResponse[PriceTrendsRead]"
       },
+      "SuccessResponse_PricingRuleRead_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/PricingRuleRead"
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "title": "SuccessResponse[PricingRuleRead]"
+      },
       "SuccessResponse_ProductRead_": {
         "properties": {
           "success": {
@@ -14009,6 +17122,35 @@
           "data"
         ],
         "title": "SuccessResponse[ProductionRecordRead]"
+      },
+      "SuccessResponse_ProofLinkRead_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/ProofLinkRead"
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "title": "SuccessResponse[ProofLinkRead]"
       },
       "SuccessResponse_PurchaseOrderRead_": {
         "properties": {
@@ -14125,6 +17267,64 @@
           "data"
         ],
         "title": "SuccessResponse[QuantityTransactionRead]"
+      },
+      "SuccessResponse_QuotationFeasibilityReport_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/QuotationFeasibilityReport"
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "title": "SuccessResponse[QuotationFeasibilityReport]"
+      },
+      "SuccessResponse_QuotationRead_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/QuotationRead"
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "title": "SuccessResponse[QuotationRead]"
       },
       "SuccessResponse_StockBalanceRead_": {
         "properties": {
@@ -14444,6 +17644,35 @@
           "data"
         ],
         "title": "SuccessResponse[TransportProviderRead]"
+      },
+      "SuccessResponse_TrelloMigrationSummary_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/TrelloMigrationSummary"
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "title": "SuccessResponse[TrelloMigrationSummary]"
       },
       "SuccessResponse_UserRead_": {
         "properties": {
@@ -15649,6 +18878,112 @@
           "OTHER"
         ],
         "title": "TransportType"
+      },
+      "TrelloMigrationRequest": {
+        "properties": {
+          "board_name": {
+            "type": "string",
+            "title": "Board Name"
+          },
+          "lists": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Lists"
+          },
+          "cards": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Cards"
+          },
+          "members": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Members",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "board_name",
+          "lists",
+          "cards"
+        ],
+        "title": "TrelloMigrationRequest"
+      },
+      "TrelloMigrationSummary": {
+        "properties": {
+          "board_name": {
+            "type": "string",
+            "title": "Board Name"
+          },
+          "tasks_imported": {
+            "type": "integer",
+            "title": "Tasks Imported"
+          },
+          "comments_imported": {
+            "type": "integer",
+            "title": "Comments Imported"
+          },
+          "members_mapped": {
+            "type": "integer",
+            "title": "Members Mapped"
+          },
+          "errors": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Errors",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "board_name",
+          "tasks_imported",
+          "comments_imported",
+          "members_mapped"
+        ],
+        "title": "TrelloMigrationSummary"
+      },
+      "TriggerAutomationRequest": {
+        "properties": {
+          "event_name": {
+            "type": "string",
+            "title": "Event Name"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Payload"
+          },
+          "idempotency_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Idempotency Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "event_name",
+          "payload"
+        ],
+        "title": "TriggerAutomationRequest"
       },
       "UserCreate": {
         "properties": {

@@ -872,3 +872,232 @@ export interface OrderCompletionCheck {
   quantities_reconciled: boolean;
   packing_completed: boolean;
 }
+
+// ----------------------------------------------------
+// 19. Phase 3: Quotations & Tiered Pricing
+// ----------------------------------------------------
+
+export enum QuotationStatus {
+  DRAFT = "DRAFT",
+  SENT_TO_CLIENT = "SENT_TO_CLIENT",
+  ACCEPTED = "ACCEPTED",
+  REJECTED = "REJECTED",
+  EXPIRED = "EXPIRED",
+  CONVERTED_TO_ORDER = "CONVERTED_TO_ORDER",
+}
+
+export enum FeasibilityStatus {
+  GREEN = "GREEN",
+  YELLOW = "YELLOW",
+  RED = "RED",
+}
+
+export interface PricingTier {
+  id: string;
+  pricing_rule_id: string;
+  min_quantity: number;
+  max_quantity?: number | null;
+  base_unit_price: number;
+  discount_percentage: number;
+}
+
+export interface PricingRule {
+  id: string;
+  product_id: string;
+  name: string;
+  description?: string | null;
+  is_active: boolean;
+  tiers: PricingTier[];
+}
+
+export interface QuotationItem {
+  id: string;
+  quotation_id: string;
+  product_id: string;
+  quantity: number;
+  unit_price: number;
+  subtotal: number;
+  specifications_json?: Record<string, any> | null;
+}
+
+export interface Quotation {
+  id: string;
+  quotation_number: string;
+  client_id: string;
+  status: QuotationStatus;
+  current_version_number: number;
+  valid_until?: string | null;
+  notes?: string | null;
+  subtotal: number;
+  tax_amount: number;
+  total_amount: number;
+  converted_order_id?: string | null;
+  items: QuotationItem[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CostCalculationBreakdown {
+  product_id: string;
+  quantity: number;
+  material_cost: number;
+  wastage_cost: number;
+  labour_cost: number;
+  machine_cost: number;
+  packing_cost: number;
+  delivery_cost_estimate: number;
+  overhead_cost: number;
+  margin_amount: number;
+  total_cost: number;
+  suggested_unit_price: number;
+  breakdown_details: Record<string, any>;
+}
+
+export interface QuotationFeasibilityReport {
+  quotation_id?: string | null;
+  status: FeasibilityStatus;
+  stock_feasible: boolean;
+  machine_capacity_feasible: boolean;
+  labour_capacity_feasible: boolean;
+  estimated_production_hours: number;
+  reasons: string[];
+  recommendations: string[];
+  missing_stock_items: Record<string, any>[];
+}
+
+// ----------------------------------------------------
+// 20. Phase 3: Capacity & Absence Handover
+// ----------------------------------------------------
+
+export interface CapacityMetrics {
+  resource_type: string;
+  resource_id: string;
+  resource_name: string;
+  total_capacity_hours: number;
+  allocated_hours: number;
+  available_hours: number;
+  utilization_percentage: number;
+  status: string;
+}
+
+export interface HandoverTaskItem {
+  task_id: string;
+  task_code: string;
+  title: string;
+  current_assignee_id: string;
+  recommended_assignee_id: string;
+  recommended_assignee_name: string;
+  priority: string;
+  due_date?: string | null;
+  reason: string;
+}
+
+export interface HandoverPlan {
+  absence_id: string;
+  absent_user_id: string;
+  absent_user_name: string;
+  active_tasks_count: number;
+  tasks_to_handover: HandoverTaskItem[];
+}
+
+// ----------------------------------------------------
+// 21. Phase 3: Dynamic ETA Engine
+// ----------------------------------------------------
+
+export interface ETACalculationResponse {
+  order_id: string;
+  estimated_delivery_date: string;
+  critical_path_hours: number;
+  confidence_level: string;
+  factors: string[];
+  breakdown: Record<string, number>;
+}
+
+// ----------------------------------------------------
+// 22. Phase 3: Automation Rules & Idempotency
+// ----------------------------------------------------
+
+export interface AutomationRule {
+  id: string;
+  name: string;
+  description?: string | null;
+  trigger_event: string;
+  conditions_json?: Record<string, any> | null;
+  actions_json?: Record<string, any> | null;
+  is_active: boolean;
+  execution_count: number;
+  created_at: string;
+}
+
+export interface AutomationLog {
+  id: string;
+  rule_id?: string | null;
+  event_name: string;
+  idempotency_key?: string | null;
+  status: string;
+  payload_json?: Record<string, any> | null;
+  actions_executed_json?: Record<string, any> | null;
+  error_message?: string | null;
+  created_at: string;
+}
+
+// ----------------------------------------------------
+// 23. Phase 3: Notifications & Client Proof Portal
+// ----------------------------------------------------
+
+export interface ProofLinkRead {
+  token: string;
+  proof_url: string;
+  file_version_id: string;
+  client_id: string;
+  status: string;
+  expires_at: string;
+}
+
+export interface ProofClientResponse {
+  decision: "APPROVED" | "CHANGES_REQUESTED";
+  feedback_notes?: string | null;
+}
+
+// ----------------------------------------------------
+// 24. Phase 3: Management AI & Executive Analytics
+// ----------------------------------------------------
+
+export interface AIQueryResponse {
+  query: string;
+  intent_detected: string;
+  answer: string;
+  data_evidence: Record<string, any>;
+  recommendations: string[];
+}
+
+export interface DailyBriefingResponse {
+  date: string;
+  summary: string;
+  orders_at_risk: Record<string, any>[];
+  low_stock_alerts: Record<string, any>[];
+  overloaded_employees: Record<string, any>[];
+  pending_receivables_inr: number;
+  action_items: string[];
+}
+
+export interface ExecutiveDashboardSummary {
+  total_orders_count: number;
+  active_production_orders: number;
+  completed_orders_count: number;
+  total_revenue_inr: number;
+  total_outstanding_inr: number;
+  avg_scrap_rate_percentage: number;
+  top_selling_products: Record<string, any>[];
+  contractor_quality_ranking: Record<string, any>[];
+}
+
+export interface ResponsibilityAuditItem {
+  operation_name: string;
+  order_number?: string | null;
+  actor_name: string;
+  actor_role: string;
+  timestamp: string;
+  verified_evidence: Record<string, any>;
+}
+

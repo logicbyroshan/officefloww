@@ -564,8 +564,61 @@ async def seed():
         db.add(TransportProvider(code="COURIER-DTDC", name="DTDC Express Courier", provider_type=TransportType.DTDC, contact_phone="1800 209 6677"))
         db.add(TransportProvider(code="PORTER-LOCAL", name="Porter Intra-City Mini-Trucks", provider_type=TransportType.PORTER, contact_phone="+91 80 4411 4411"))
 
+        # ----------------------------------------------------
+        # 7. PHASE 3 AUTOMATION & INTELLIGENCE SEED DATA
+        # ----------------------------------------------------
+        print("\n🧠 Seeding Phase 3 Automation & Intelligence Layer...")
+        from apps.api.app.quotations.models import PricingRule, PricingTier
+        from apps.api.app.automation.models import AutomationRule
+
+        # 7.1 Tiered Pricing Rules
+        print("  Creating Configurable Quantity-Based Pricing Tiers...")
+        rule_idcard = PricingRule(product_id=prod_idcard.id, name="ID Card Volume Tiers", is_active=True)
+        db.add(rule_idcard)
+        await db.flush()
+
+        tiers_idcard = [
+            PricingTier(pricing_rule_id=rule_idcard.id, min_quantity=1, max_quantity=100, base_unit_price=45.0, discount_percentage=0.0),
+            PricingTier(pricing_rule_id=rule_idcard.id, min_quantity=101, max_quantity=500, base_unit_price=40.0, discount_percentage=0.0),
+            PricingTier(pricing_rule_id=rule_idcard.id, min_quantity=501, max_quantity=1000, base_unit_price=36.0, discount_percentage=0.0),
+            PricingTier(pricing_rule_id=rule_idcard.id, min_quantity=1001, max_quantity=5000, base_unit_price=32.0, discount_percentage=0.0),
+            PricingTier(pricing_rule_id=rule_idcard.id, min_quantity=5001, max_quantity=None, base_unit_price=28.0, discount_percentage=0.0),
+        ]
+        db.add_all(tiers_idcard)
+
+        rule_mpl = PricingRule(product_id=prod_mpl.id, name="MPL Lanyard Volume Tiers", is_active=True)
+        db.add(rule_mpl)
+        await db.flush()
+
+        tiers_mpl = [
+            PricingTier(pricing_rule_id=rule_mpl.id, min_quantity=1, max_quantity=100, base_unit_price=30.0, discount_percentage=0.0),
+            PricingTier(pricing_rule_id=rule_mpl.id, min_quantity=101, max_quantity=500, base_unit_price=26.0, discount_percentage=0.0),
+            PricingTier(pricing_rule_id=rule_mpl.id, min_quantity=501, max_quantity=1000, base_unit_price=23.0, discount_percentage=0.0),
+            PricingTier(pricing_rule_id=rule_mpl.id, min_quantity=1001, max_quantity=5000, base_unit_price=20.0, discount_percentage=0.0),
+            PricingTier(pricing_rule_id=rule_mpl.id, min_quantity=5001, max_quantity=None, base_unit_price=18.0, discount_percentage=0.0),
+        ]
+        db.add_all(tiers_mpl)
+
+        # 7.2 Automation Rules
+        print("  Creating Event Automation Rules...")
+        auto1 = AutomationRule(
+            name="Stock Shortage Auto-Procurement Alert",
+            trigger_event="StockShortageDetected",
+            conditions_json={"is_critical": True},
+            actions_json={"action": "CREATE_PURCHASE_RECOMMENDATION", "notify_role": "PRODUCTION_MANAGER"},
+            is_active=True,
+        )
+        auto2 = AutomationRule(
+            name="Design Approval Task Advancer",
+            trigger_event="DesignApproved",
+            conditions_json={},
+            actions_json={"action": "ADVANCE_WORKFLOW_STEP", "target": "PRINTING"},
+            is_active=True,
+        )
+        db.add_all([auto1, auto2])
+
         await db.commit()
-        print("✨ OfficeFloww Database (Phase 1 & Phase 2) Seeded Successfully!")
+        print("✨ OfficeFloww Database (Phase 1, 2 & 3) Seeded Successfully!")
 
 
 if __name__ == "__main__":

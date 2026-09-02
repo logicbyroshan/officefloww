@@ -30,6 +30,9 @@ import apps.api.app.assets.models
 import apps.api.app.packing.models
 import apps.api.app.dispatch.models
 import apps.api.app.billing.models
+import apps.api.app.quotations.models
+import apps.api.app.capacity.models
+import apps.api.app.eta.models
 
 config = context.config
 

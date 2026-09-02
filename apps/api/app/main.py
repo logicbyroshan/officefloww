@@ -31,6 +31,16 @@ from apps.api.app.dispatch.router import router as dispatch_router
 from apps.api.app.billing.router import router as billing_router
 from apps.api.app.worker.router import router as worker_router
 
+# Phase 3 Routers
+from apps.api.app.quotations.router import router as quotations_router
+from apps.api.app.capacity.router import router as capacity_router
+from apps.api.app.eta.router import router as eta_router
+from apps.api.app.automation.router import router as automation_router
+from apps.api.app.notifications.router import router as notifications_router
+from apps.api.app.integrations.router import router as integrations_router
+from apps.api.app.ai.router import router as ai_router
+from apps.api.app.analytics.router import router as analytics_router
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -46,7 +56,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="OfficeFloww API",
     description="Centralized Production Management and Office Automation System for Commercial Printing Operations.",
-    version="2.0.0",
+    version="3.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_url="/openapi.json",
@@ -73,7 +83,7 @@ async def health_check():
         "status": "healthy",
         "service": settings.APP_NAME,
         "environment": settings.APP_ENV,
-        "version": "2.0.0",
+        "version": "3.0.0",
     }
 
 
@@ -101,6 +111,16 @@ app.include_router(packing_router, prefix=api_v1)
 app.include_router(dispatch_router, prefix=api_v1)
 app.include_router(billing_router, prefix=api_v1)
 app.include_router(worker_router, prefix=api_v1)
+
+# Phase 3 Routers
+app.include_router(quotations_router, prefix=api_v1)
+app.include_router(capacity_router, prefix=api_v1)
+app.include_router(eta_router, prefix=api_v1)
+app.include_router(automation_router, prefix=api_v1)
+app.include_router(notifications_router, prefix=api_v1)
+app.include_router(integrations_router, prefix=api_v1)
+app.include_router(ai_router, prefix=api_v1)
+app.include_router(analytics_router, prefix=api_v1)
 
 # WebSocket Router
 app.include_router(ws_router)

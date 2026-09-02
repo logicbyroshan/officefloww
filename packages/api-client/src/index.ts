@@ -571,4 +571,164 @@ export class OfficeFlowwClient {
       });
     },
   };
+
+  // --------------------------------------------------
+  // Phase 3: Quotations & Tiered Costing
+  // --------------------------------------------------
+  quotations = {
+    createPricingRule: (data: any) => {
+      return this.request<any>("/quotations/pricing-rules", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+    },
+    calculateCost: (data: any) => {
+      return this.request<any>("/quotations/calculate-cost", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+    },
+    createQuotation: (data: any) => {
+      return this.request<any>("/quotations", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+    },
+    getFeasibility: (id: string) => {
+      return this.request<any>(`/quotations/${id}/feasibility`);
+    },
+    convertToOrder: (id: string) => {
+      return this.request<any>(`/quotations/${id}/convert-to-order`, {
+        method: "POST",
+      });
+    },
+  };
+
+  // --------------------------------------------------
+  // Phase 3: Capacity & Absence Handover
+  // --------------------------------------------------
+  capacity = {
+    getMachines: () => {
+      return this.request<any[]>("/capacity/machines");
+    },
+    getEmployees: () => {
+      return this.request<any[]>("/capacity/employees");
+    },
+    planAbsenceHandover: (data: any) => {
+      return this.request<any>("/capacity/absence/plan-handover", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+    },
+    executeAbsenceHandover: (absenceId: string) => {
+      return this.request<any>(`/capacity/absence/${absenceId}/execute-handover`, {
+        method: "POST",
+      });
+    },
+  };
+
+  // --------------------------------------------------
+  // Phase 3: Dynamic ETA Engine
+  // --------------------------------------------------
+  eta = {
+    getOrderETA: (orderId: string) => {
+      return this.request<any>(`/eta/orders/${orderId}`);
+    },
+    getOrderETAHistory: (orderId: string) => {
+      return this.request<any[]>(`/eta/orders/${orderId}/history`);
+    },
+  };
+
+  // --------------------------------------------------
+  // Phase 3: Automation Rules & Triggers
+  // --------------------------------------------------
+  automation = {
+    listRules: () => {
+      return this.request<any[]>("/automation/rules");
+    },
+    createRule: (data: any) => {
+      return this.request<any>("/automation/rules", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+    },
+    listLogs: () => {
+      return this.request<any[]>("/automation/logs");
+    },
+    triggerEvent: (data: any) => {
+      return this.request<any>("/automation/trigger", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+    },
+  };
+
+  // --------------------------------------------------
+  // Phase 3: Notifications & Client Proof Portal
+  // --------------------------------------------------
+  notifications = {
+    send: (data: any) => {
+      return this.request<any>("/notifications/send", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+    },
+    generateProofLink: (data: any) => {
+      return this.request<any>("/notifications/proofs/generate-link", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+    },
+    respondToProof: (token: string, data: any) => {
+      return this.request<any>(`/notifications/proofs/${token}/respond`, {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+    },
+  };
+
+  // --------------------------------------------------
+  // Phase 3: Integrations & Migrations
+  // --------------------------------------------------
+  integrations = {
+    importGoogleSheets: (data: any) => {
+      return this.request<any>("/integrations/google-sheets/import", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+    },
+    migrateTrello: (data: any) => {
+      return this.request<any>("/integrations/trello/migrate", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+    },
+  };
+
+  // --------------------------------------------------
+  // Phase 3: Management AI
+  // --------------------------------------------------
+  ai = {
+    query: (query: string) => {
+      return this.request<any>("/ai/query", {
+        method: "POST",
+        body: JSON.stringify({ query }),
+      });
+    },
+    getDailyBriefing: () => {
+      return this.request<any>("/ai/daily-briefing");
+    },
+  };
+
+  // --------------------------------------------------
+  // Phase 3: Management Analytics
+  // --------------------------------------------------
+  analytics = {
+    getDashboard: () => {
+      return this.request<any>("/analytics/dashboard");
+    },
+    getResponsibilityTrail: () => {
+      return this.request<any[]>("/analytics/responsibility-trail");
+    },
+  };
 }
