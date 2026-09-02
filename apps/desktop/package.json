@@ -8,16 +8,15 @@
     "watch": "npx esbuild src/index.tsx --bundle --outfile=dist/bundle.js --platform=browser --loader:.ts=tsx --sourcemap --watch",
     "start": "electron .",
     "typecheck": "tsc --noEmit",
-    "package": "npm run build && electron-builder --dir",
-    "dist": "npm run build && electron-builder --win nsis"
+    "package": "npm run build && npx electron-builder --dir",
+    "dist": "npm run build && npx electron-builder --win nsis"
   },
   "build": {
     "appId": "com.officefloww.desktop",
     "productName": "OfficeFloww",
     "copyright": "Copyright © 2026 OfficeFloww",
     "directories": {
-      "output": "release",
-      "buildResources": "build"
+      "output": "release"
     },
     "files": [
       "main.js",

@@ -33,16 +33,17 @@ export function Table<T>({
   compact = false,
   style,
 }: TableProps<T>) {
-  const padding = compact ? "6px 10px" : "10px 12px";
+  const padding = compact ? "8px 12px" : "12px 16px";
 
   return (
     <div
       style={{
         width: "100%",
         overflowX: "auto",
-        border: "1px solid var(--border-subtle)",
-        borderRadius: "var(--radius-sm)",
+        border: "1px solid var(--border-medium)",
+        borderRadius: "var(--radius-md)",
         backgroundColor: "var(--bg-card)",
+        boxShadow: "var(--shadow-sm)",
         ...style,
       }}
     >
@@ -60,10 +61,10 @@ export function Table<T>({
                 style={{
                   padding,
                   width: col.width,
-                  fontSize: "11px",
-                  fontWeight: 600,
+                  fontSize: "12px",
+                  fontWeight: 700,
                   textTransform: "uppercase",
-                  letterSpacing: "0.5px",
+                  letterSpacing: "0.6px",
                   color: "var(--text-secondary)",
                   textAlign: col.align || "left",
                   whiteSpace: "nowrap",
@@ -79,13 +80,13 @@ export function Table<T>({
             <tr>
               <td
                 colSpan={columns.length}
-                style={{ padding: "32px", textAlign: "center", color: "var(--text-muted)" }}
+                style={{ padding: "40px", textAlign: "center", color: "var(--text-muted)" }}
               >
-                <div style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
+                <div style={{ display: "inline-flex", alignItems: "center", gap: "10px", fontSize: "14px" }}>
                   <span
                     style={{
-                      width: 14,
-                      height: 14,
+                      width: 18,
+                      height: 18,
                       border: "2px solid var(--accent)",
                       borderRightColor: "transparent",
                       borderRadius: "50%",
@@ -93,7 +94,7 @@ export function Table<T>({
                       display: "inline-block",
                     }}
                   />
-                  <span>Loading table data...</span>
+                  <span>Loading records...</span>
                 </div>
               </td>
             </tr>
@@ -102,10 +103,10 @@ export function Table<T>({
               <td
                 colSpan={columns.length}
                 style={{
-                  padding: "36px 16px",
+                  padding: "48px 16px",
                   textAlign: "center",
                   color: "var(--text-muted)",
-                  fontSize: "12px",
+                  fontSize: "13px",
                 }}
               >
                 {emptyText}
@@ -125,10 +126,10 @@ export function Table<T>({
                     backgroundColor: isSelected
                       ? "var(--accent-soft)"
                       : idx % 2 === 1
-                      ? "rgba(255, 255, 255, 0.015)"
+                      ? "rgba(255, 255, 255, 0.02)"
                       : "transparent",
                     cursor: onRowClick ? "pointer" : "default",
-                    transition: "background-color 0.1s ease",
+                    transition: "background-color 0.12s ease",
                   }}
                   onMouseEnter={(e) => {
                     if (onRowClick && !isSelected) {
@@ -138,7 +139,7 @@ export function Table<T>({
                   onMouseLeave={(e) => {
                     if (onRowClick && !isSelected) {
                       e.currentTarget.style.backgroundColor =
-                        idx % 2 === 1 ? "rgba(255, 255, 255, 0.015)" : "transparent";
+                        idx % 2 === 1 ? "rgba(255, 255, 255, 0.02)" : "transparent";
                     }
                   }}
                 >
@@ -147,17 +148,18 @@ export function Table<T>({
                       ? col.render(row, idx)
                       : (row as any)[col.key] !== undefined
                       ? String((row as any)[col.key])
-                      : "-";
+                      : "—";
 
                     return (
                       <td
                         key={col.key}
                         style={{
                           padding,
-                          fontSize: "12px",
+                          fontSize: "13.5px",
                           color: "var(--text-primary)",
                           textAlign: col.align || "left",
                           verticalAlign: "middle",
+                          lineHeight: "1.45",
                         }}
                       >
                         {content}
@@ -197,8 +199,8 @@ export const Pagination: React.FC<PaginationProps> = ({
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        padding: "10px 12px",
-        fontSize: "12px",
+        padding: "12px 16px",
+        fontSize: "13px",
         color: "var(--text-muted)",
         borderTop: "1px solid var(--border-subtle)",
         backgroundColor: "var(--bg-surface)",
@@ -212,17 +214,17 @@ export const Pagination: React.FC<PaginationProps> = ({
         )}
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
         <button
           disabled={currentPage <= 1}
           onClick={() => onPageChange(currentPage - 1)}
           style={{
-            padding: "4px 8px",
+            padding: "5px 10px",
             backgroundColor: "var(--bg-muted)",
             border: "1px solid var(--border-medium)",
             borderRadius: "var(--radius-xs)",
             color: "var(--text-primary)",
-            fontSize: "11px",
+            fontSize: "12px",
             cursor: currentPage <= 1 ? "not-allowed" : "pointer",
             opacity: currentPage <= 1 ? 0.4 : 1,
           }}
@@ -230,7 +232,7 @@ export const Pagination: React.FC<PaginationProps> = ({
           Previous
         </button>
 
-        <span style={{ padding: "0 6px", fontFamily: "var(--font-mono)", fontSize: "11px" }}>
+        <span style={{ padding: "0 8px", fontFamily: "var(--font-mono)", fontSize: "12px" }}>
           Page {currentPage} of {totalPages}
         </span>
 
@@ -238,12 +240,12 @@ export const Pagination: React.FC<PaginationProps> = ({
           disabled={currentPage >= totalPages}
           onClick={() => onPageChange(currentPage + 1)}
           style={{
-            padding: "4px 8px",
+            padding: "5px 10px",
             backgroundColor: "var(--bg-muted)",
             border: "1px solid var(--border-medium)",
             borderRadius: "var(--radius-xs)",
             color: "var(--text-primary)",
-            fontSize: "11px",
+            fontSize: "12px",
             cursor: currentPage >= totalPages ? "not-allowed" : "pointer",
             opacity: currentPage >= totalPages ? 0.4 : 1,
           }}

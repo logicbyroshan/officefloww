@@ -35,9 +35,9 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   return (
     <div
       style={{
-        padding: "16px 24px",
+        padding: "18px 28px",
         backgroundColor: "var(--bg-surface)",
-        borderBottom: "1px solid var(--border-subtle)",
+        borderBottom: "1px solid var(--border-medium)",
         display: "flex",
         flexDirection: "column",
         gap: "6px",
@@ -46,14 +46,14 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
       }}
     >
       {breadcrumbs && breadcrumbs.length > 0 && (
-        <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "11px", color: "var(--text-muted)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "12px", color: "var(--text-muted)", marginBottom: "2px" }}>
           {breadcrumbs.map((b, idx) => (
             <React.Fragment key={idx}>
               {idx > 0 && <span style={{ color: "var(--border-strong)" }}>/</span>}
               {b.onClick ? (
                 <span
                   onClick={b.onClick}
-                  style={{ color: "var(--text-secondary)", cursor: "pointer" }}
+                  style={{ color: "var(--text-secondary)", cursor: "pointer", fontWeight: 500 }}
                   onMouseEnter={(e) => (e.currentTarget.style.color = "var(--text-primary)")}
                   onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-secondary)")}
                 >
@@ -68,14 +68,14 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
       )}
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <h1 style={{ fontSize: "18px", fontWeight: 700, color: "var(--text-primary)", letterSpacing: "-0.2px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <h1 style={{ fontSize: "20px", fontWeight: 800, color: "var(--text-primary)", letterSpacing: "-0.4px" }}>
             {title}
           </h1>
           {badge}
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           {secondaryActions}
           {primaryAction && (
             <Button
@@ -92,7 +92,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
       </div>
 
       {subtitle && (
-        <p style={{ fontSize: "12px", color: "var(--text-secondary)", maxWidth: "720px", marginTop: "2px" }}>
+        <p style={{ fontSize: "13.5px", color: "var(--text-secondary)", maxWidth: "800px", marginTop: "2px", lineHeight: "1.45" }}>
           {subtitle}
         </p>
       )}
@@ -112,14 +112,14 @@ export const SectionHeader: React.FC<{
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        marginBottom: "12px",
+        marginBottom: "14px",
         ...style,
       }}
     >
       <div>
-        <h3 style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-primary)" }}>{title}</h3>
+        <h3 style={{ fontSize: "15px", fontWeight: 700, color: "var(--text-primary)" }}>{title}</h3>
         {subtitle && (
-          <p style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "1px" }}>{subtitle}</p>
+          <p style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "2px" }}>{subtitle}</p>
         )}
       </div>
       {action && <div>{action}</div>}
@@ -132,14 +132,14 @@ export const SplitPane: React.FC<{
   right: React.ReactNode;
   leftWidth?: string | number;
   minLeftWidth?: string | number;
-}> = ({ left, right, leftWidth = "320px", minLeftWidth = "280px" }) => {
+}> = ({ left, right, leftWidth = "340px", minLeftWidth = "300px" }) => {
   return (
     <div style={{ display: "flex", width: "100%", height: "100%", overflow: "hidden" }}>
       <div
         style={{
           width: leftWidth,
           minWidth: minLeftWidth,
-          borderRight: "1px solid var(--border-subtle)",
+          borderRight: "1px solid var(--border-medium)",
           backgroundColor: "var(--bg-surface)",
           overflowY: "auto",
           flexShrink: 0,

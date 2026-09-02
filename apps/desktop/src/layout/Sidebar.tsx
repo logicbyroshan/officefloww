@@ -57,20 +57,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
     if (visibleItems.length === 0) return null;
 
     return (
-      <div style={{ marginBottom: "14px" }}>
+      <div style={{ marginBottom: "16px" }}>
         <div
           style={{
-            fontSize: "10px",
+            fontSize: "11px",
             fontWeight: 700,
             textTransform: "uppercase",
-            letterSpacing: "0.6px",
+            letterSpacing: "0.8px",
             color: "var(--text-muted)",
-            padding: "0 12px 6px 12px",
+            padding: "0 14px 8px 14px",
           }}
         >
           {title}
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
           {visibleItems.map((item) => {
             const isActive = activeSection === item.id;
 
@@ -83,16 +83,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
-                  padding: "6px 12px",
+                  padding: "8px 14px",
                   borderRadius: "var(--radius-sm)",
                   border: "none",
+                  borderLeft: isActive ? "3px solid var(--accent)" : "3px solid transparent",
                   backgroundColor: isActive ? "var(--accent-soft)" : "transparent",
                   color: isActive ? "var(--accent-text)" : "var(--text-secondary)",
-                  fontSize: "12px",
+                  fontSize: "13.5px",
                   fontWeight: isActive ? 600 : 500,
                   cursor: "pointer",
                   textAlign: "left",
-                  transition: "background-color 0.1s ease, color 0.1s ease",
+                  transition: "all 0.12s ease",
                   width: "100%",
                 }}
                 onMouseEnter={(e) => {
@@ -108,10 +109,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   }
                 }}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: "9px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "11px" }}>
                   <Icon
                     name={item.icon}
-                    size={14}
+                    size={16}
                     color={isActive ? "var(--accent-text)" : "var(--text-muted)"}
                   />
                   <span>{item.label}</span>
@@ -120,10 +121,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 {item.badge !== undefined && item.badge > 0 && (
                   <span
                     style={{
-                      fontSize: "10px",
+                      fontSize: "11px",
                       fontFamily: "var(--font-mono)",
                       fontWeight: 700,
-                      padding: "1px 6px",
+                      padding: "2px 7px",
                       borderRadius: "var(--radius-xs)",
                       backgroundColor:
                         item.badgeVariant === "urgent" ? "var(--status-error)" : "var(--accent)",
@@ -146,11 +147,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
       style={{
         width: "var(--sidebar-width)",
         backgroundColor: "var(--bg-surface)",
-        borderRight: "1px solid var(--border-subtle)",
+        borderRight: "1px solid var(--border-medium)",
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
-        padding: "14px 8px 10px 8px",
+        padding: "16px 10px 14px 10px",
         flexShrink: 0,
         height: "100%",
         overflowY: "auto",
@@ -158,30 +159,31 @@ export const Sidebar: React.FC<SidebarProps> = ({
     >
       <div>
         {/* Brand Header */}
-        <div style={{ padding: "0 12px 14px 12px", borderBottom: "1px solid var(--border-subtle)", marginBottom: "12px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+        <div style={{ padding: "0 12px 16px 12px", borderBottom: "1px solid var(--border-subtle)", marginBottom: "14px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <div
               style={{
-                width: 24,
-                height: 24,
+                width: 30,
+                height: 30,
                 backgroundColor: "var(--accent)",
                 borderRadius: "var(--radius-xs)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 color: "#fff",
-                fontWeight: 700,
-                fontSize: "13px",
+                fontWeight: 800,
+                fontSize: "14px",
                 fontFamily: "var(--font-mono)",
+                boxShadow: "0 2px 6px var(--accent-soft)",
               }}
             >
               OF
             </div>
             <div>
-              <div style={{ fontSize: "13px", fontWeight: 700, color: "var(--text-primary)", letterSpacing: "-0.2px" }}>
+              <div style={{ fontSize: "14.5px", fontWeight: 700, color: "var(--text-primary)", letterSpacing: "-0.2px" }}>
                 OfficeFloww
               </div>
-              <div style={{ fontSize: "10px", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+              <div style={{ fontSize: "10.5px", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.6px", fontWeight: 600 }}>
                 Production OS
               </div>
             </div>
@@ -195,24 +197,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* Footer / Settings Link */}
-      <div style={{ borderTop: "1px solid var(--border-subtle)", paddingTop: "8px" }}>
+      <div style={{ borderTop: "1px solid var(--border-subtle)", paddingTop: "10px" }}>
         <button
           type="button"
           onClick={() => onSelectSection("settings")}
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "9px",
-            padding: "8px 12px",
+            gap: "10px",
+            padding: "9px 14px",
             borderRadius: "var(--radius-sm)",
             border: "none",
+            borderLeft: activeSection === "settings" ? "3px solid var(--accent)" : "3px solid transparent",
             backgroundColor: activeSection === "settings" ? "var(--accent-soft)" : "transparent",
-            color: activeSection === "settings" ? "var(--accent-text)" : "var(--text-muted)",
-            fontSize: "12px",
+            color: activeSection === "settings" ? "var(--accent-text)" : "var(--text-secondary)",
+            fontSize: "13.5px",
             fontWeight: activeSection === "settings" ? 600 : 500,
             cursor: "pointer",
             width: "100%",
             textAlign: "left",
+            transition: "all 0.12s ease",
           }}
           onMouseEnter={(e) => {
             if (activeSection !== "settings") {
@@ -223,11 +227,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
           onMouseLeave={(e) => {
             if (activeSection !== "settings") {
               e.currentTarget.style.backgroundColor = "transparent";
-              e.currentTarget.style.color = "var(--text-muted)";
+              e.currentTarget.style.color = "var(--text-secondary)";
             }
           }}
         >
-          <Icon name="settings" size={14} />
+          <Icon name="settings" size={16} />
           <span>System Settings</span>
         </button>
       </div>

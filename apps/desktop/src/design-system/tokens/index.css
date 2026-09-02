@@ -1,7 +1,7 @@
 /* ==========================================================================
    OfficeFloww Enterprise Design System Tokens
    Single Accent Architecture + Industrial Neutral Palette
-   Sharp 2px-6px Radii & High-Density Typography
+   Sharp 2px-6px Radii & Enhanced Legibility Typography
    ========================================================================== */
 
 :root {
@@ -11,61 +11,61 @@
   --accent: #2563eb;
   --accent-hover: #1d4ed8;
   --accent-active: #1e40af;
-  --accent-soft: rgba(37, 99, 235, 0.12);
-  --accent-border: rgba(37, 99, 235, 0.35);
+  --accent-soft: rgba(37, 99, 235, 0.14);
+  --accent-border: rgba(37, 99, 235, 0.38);
   --accent-text: #60a5fa;
   --accent-contrast: #ffffff;
 
   /* ----------------------------------------------------
      Industrial Neutral Palette (Dark Theme Base)
      ---------------------------------------------------- */
-  --bg-app: #09090b;          /* Root desktop canvas */
-  --bg-surface: #121215;      /* TopBar, Sidebar, Page headers */
-  --bg-card: #18181b;         /* Cards, Containers, Tables, Modals */
-  --bg-card-hover: #202024;   /* Interactive item hover */
-  --bg-input: #111114;        /* Text inputs, selects, code blocks */
-  --bg-muted: #27272a;        /* Subtle chips, table headers, dividers */
+  --bg-app: #0b0f17;          /* Deep slate canvas */
+  --bg-surface: #111722;      /* TopBar, Sidebar, Page headers */
+  --bg-card: #161f2e;         /* Cards, Containers, Tables, Modals */
+  --bg-card-hover: #1c273a;   /* Interactive item hover */
+  --bg-input: #0e141f;        /* Text inputs, selects, code blocks */
+  --bg-muted: #1e293b;        /* Subtle chips, table headers, dividers */
 
   /* Text & Content Hierarchy */
-  --text-primary: #f4f4f5;    /* 95% White - Headlines, essential data */
-  --text-secondary: #a1a1aa;  /* 65% Neutral - Subtitles, table cells */
-  --text-muted: #71717a;      /* 45% Neutral - Captions, timestamps, borders */
-  --text-disabled: #52525b;   /* 30% Neutral - Inactive controls */
+  --text-primary: #f8fafc;    /* Crisp White - Headlines, essential data */
+  --text-secondary: #cbd5e1;  /* High Legibility - Subtitles, table cells */
+  --text-muted: #94a3b8;      /* Secondary Neutral - Captions, timestamps, borders */
+  --text-disabled: #64748b;   /* Inactive controls */
 
   /* Borders & Dividers */
-  --border-subtle: #27272a;   /* Subtle row dividers, container outlines */
-  --border-medium: #3f3f46;   /* Input borders, card outlines */
-  --border-strong: #52525b;   /* Active boundaries, modal borders */
+  --border-subtle: #1e293b;   /* Subtle row dividers, container outlines */
+  --border-medium: #334155;   /* Input borders, card outlines */
+  --border-strong: #475569;   /* Active boundaries, modal borders */
 
   /* ----------------------------------------------------
      Semantic Status Colors (Strictly for Semantic Badges)
      ---------------------------------------------------- */
   --status-success: #10b981;
-  --status-success-soft: rgba(16, 185, 129, 0.12);
-  --status-success-border: rgba(16, 185, 129, 0.3);
+  --status-success-soft: rgba(16, 185, 129, 0.14);
+  --status-success-border: rgba(16, 185, 129, 0.35);
 
   --status-warning: #f59e0b;
-  --status-warning-soft: rgba(245, 158, 11, 0.12);
-  --status-warning-border: rgba(245, 158, 11, 0.3);
+  --status-warning-soft: rgba(245, 158, 11, 0.14);
+  --status-warning-border: rgba(245, 158, 11, 0.35);
 
   --status-error: #ef4444;
-  --status-error-soft: rgba(239, 68, 68, 0.12);
-  --status-error-border: rgba(239, 68, 68, 0.3);
+  --status-error-soft: rgba(239, 68, 68, 0.14);
+  --status-error-border: rgba(239, 68, 68, 0.35);
 
   --status-info: #0ea5e9;
-  --status-info-soft: rgba(14, 165, 233, 0.12);
-  --status-info-border: rgba(14, 165, 233, 0.3);
+  --status-info-soft: rgba(14, 165, 233, 0.14);
+  --status-info-border: rgba(14, 165, 233, 0.35);
 
   /* ----------------------------------------------------
      Shape Language & Radii (Sharp: 2px - 6px maximum)
      ---------------------------------------------------- */
-  --radius-xs: 2px;           /* Tags, badges, small buttons */
+  --radius-xs: 3px;           /* Tags, badges, small buttons */
   --radius-sm: 4px;           /* Inputs, regular buttons, table rows */
   --radius-md: 6px;           /* Cards, drawers, modal dialogs */
-  --radius-lg: 6px;           /* Standard max radius across the OS */
+  --radius-lg: 8px;           /* Standard container radius */
 
   /* ----------------------------------------------------
-     Typography & Spacing Scale
+     Typography & Spacing Scale (Enhanced Legibility)
      ---------------------------------------------------- */
   --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: "JetBrains Mono", "SF Mono", Consolas, "Courier New", monospace;
@@ -80,14 +80,14 @@
   --space-10: 40px;
 
   /* Elevation Shadows */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.6), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.8), 0 4px 6px -4px rgba(0, 0, 0, 0.6);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 8px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 12px 20px -3px rgba(0, 0, 0, 0.7), 0 4px 6px -4px rgba(0, 0, 0, 0.5);
 
   /* Layout Constants */
-  --topbar-height: 52px;
-  --sidebar-width: 240px;
-  --sidebar-collapsed-width: 64px;
+  --topbar-height: 56px;
+  --sidebar-width: 256px;
+  --sidebar-collapsed-width: 68px;
 }
 
 /* ==========================================================================
@@ -107,8 +107,8 @@ html, body, #root {
   background-color: var(--bg-app);
   color: var(--text-primary);
   font-family: var(--font-sans);
-  font-size: 13px;
-  line-height: 1.45;
+  font-size: 14px;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   user-select: none;
@@ -116,8 +116,8 @@ html, body, #root {
 
 /* Scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
 }
 ::-webkit-scrollbar-track {
   background: var(--bg-app);
@@ -133,7 +133,7 @@ html, body, #root {
 /* Base Form Elements */
 input, select, textarea, button {
   font-family: inherit;
-  font-size: 13px;
+  font-size: 14px;
   outline: none;
 }
 
@@ -151,5 +151,5 @@ a:hover {
 
 code, kbd, samp, pre {
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 13px;
 }

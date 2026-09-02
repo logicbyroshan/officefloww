@@ -23,11 +23,12 @@ export const Card: React.FC<CardProps> = ({
     <div
       style={{
         backgroundColor: "var(--bg-card)",
-        border: "1px solid var(--border-subtle)",
+        border: "1px solid var(--border-medium)",
         borderRadius: sharp ? 0 : "var(--radius-md)",
         overflow: "hidden",
         display: "flex",
         flexDirection: "column",
+        boxShadow: "var(--shadow-sm)",
         ...style,
       }}
       {...props}
@@ -38,21 +39,21 @@ export const Card: React.FC<CardProps> = ({
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            padding: "12px 16px",
-            borderBottom: "1px solid var(--border-subtle)",
+            padding: "14px 18px",
+            borderBottom: "1px solid var(--border-medium)",
             backgroundColor: "var(--bg-surface)",
           }}
         >
           <div>
             {typeof title === "string" ? (
-              <h3 style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-primary)" }}>
+              <h3 style={{ fontSize: "15px", fontWeight: 700, color: "var(--text-primary)", letterSpacing: "-0.2px" }}>
                 {title}
               </h3>
             ) : (
               title
             )}
             {subtitle && (
-              <p style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "2px" }}>
+              <p style={{ fontSize: "12.5px", color: "var(--text-secondary)", marginTop: "3px", lineHeight: "1.4" }}>
                 {subtitle}
               </p>
             )}
@@ -60,7 +61,7 @@ export const Card: React.FC<CardProps> = ({
           {headerAction && <div>{headerAction}</div>}
         </div>
       )}
-      <div style={{ padding: noPadding ? 0 : "16px", flex: 1 }}>{children}</div>
+      <div style={{ padding: noPadding ? 0 : "18px", flex: 1 }}>{children}</div>
     </div>
   );
 };
@@ -95,6 +96,7 @@ export const StatBox: React.FC<StatBoxProps> = ({
     valueColor = "var(--status-warning)";
   } else if (status === "success") {
     borderLeft = "3px solid var(--status-success)";
+    valueColor = "var(--status-success)";
   }
 
   return (
@@ -102,14 +104,15 @@ export const StatBox: React.FC<StatBoxProps> = ({
       onClick={onClick}
       style={{
         backgroundColor: "var(--bg-card)",
-        border: "1px solid var(--border-subtle)",
+        border: "1px solid var(--border-medium)",
         borderLeft,
         borderRadius: "var(--radius-sm)",
-        padding: "12px 14px",
+        padding: "14px 16px",
         display: "flex",
         flexDirection: "column",
-        gap: "4px",
+        gap: "6px",
         cursor: onClick ? "pointer" : "default",
+        boxShadow: "var(--shadow-sm)",
         transition: "border-color 0.15s ease, background-color 0.15s ease",
       }}
       onMouseEnter={(e) => {
@@ -122,37 +125,38 @@ export const StatBox: React.FC<StatBoxProps> = ({
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <span
           style={{
-            fontSize: "11px",
-            fontWeight: 600,
+            fontSize: "11.5px",
+            fontWeight: 700,
             textTransform: "uppercase",
-            letterSpacing: "0.5px",
+            letterSpacing: "0.6px",
             color: "var(--text-muted)",
           }}
         >
           {label}
         </span>
-        {icon && <Icon name={icon} size={14} color="var(--text-muted)" />}
+        {icon && <Icon name={icon} size={16} color="var(--text-muted)" />}
       </div>
 
       <div style={{ display: "flex", alignItems: "baseline", gap: "8px", marginTop: "2px" }}>
         <span
           style={{
-            fontSize: "20px",
-            fontWeight: 700,
+            fontSize: "24px",
+            fontWeight: 800,
             fontFamily: "var(--font-mono)",
             color: valueColor,
             lineHeight: 1.1,
+            letterSpacing: "-0.5px",
           }}
         >
           {value}
         </span>
         {subValue && (
-          <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>{subValue}</span>
+          <span style={{ fontSize: "12px", color: "var(--text-secondary)", fontWeight: 500 }}>{subValue}</span>
         )}
       </div>
 
       {trend && (
-        <div style={{ fontSize: "11px", color: "var(--text-secondary)", marginTop: "2px" }}>
+        <div style={{ fontSize: "12px", color: "var(--text-secondary)", marginTop: "2px" }}>
           {trend.label}
         </div>
       )}

@@ -28,9 +28,9 @@ export const Tabs: React.FC<TabsProps> = ({
         display: "flex",
         alignItems: "center",
         gap: "4px",
-        borderBottom: "1px solid var(--border-subtle)",
+        borderBottom: "1px solid var(--border-medium)",
         backgroundColor: "var(--bg-surface)",
-        padding: "0 8px",
+        padding: "0 16px",
         overflowX: "auto",
         ...style,
       }}
@@ -46,17 +46,17 @@ export const Tabs: React.FC<TabsProps> = ({
             style={{
               display: "inline-flex",
               alignItems: "center",
-              gap: "6px",
-              padding: "10px 14px",
-              fontSize: "12px",
+              gap: "8px",
+              padding: "12px 18px",
+              fontSize: "13.5px",
               fontWeight: isActive ? 600 : 500,
               color: isActive ? "var(--accent-text)" : "var(--text-secondary)",
               backgroundColor: "transparent",
               border: "none",
-              borderBottom: isActive ? "2px solid var(--accent)" : "2px solid transparent",
+              borderBottom: isActive ? "3px solid var(--accent)" : "3px solid transparent",
               cursor: tab.disabled ? "not-allowed" : "pointer",
               opacity: tab.disabled ? 0.4 : 1,
-              transition: "all 0.15s ease",
+              transition: "all 0.12s ease",
               whiteSpace: "nowrap",
             }}
             onMouseEnter={(e) => {
@@ -69,7 +69,7 @@ export const Tabs: React.FC<TabsProps> = ({
             {tab.icon && (
               <Icon
                 name={tab.icon}
-                size={13}
+                size={15}
                 color={isActive ? "var(--accent-text)" : "var(--text-muted)"}
               />
             )}
@@ -77,10 +77,10 @@ export const Tabs: React.FC<TabsProps> = ({
             {tab.badge !== undefined && (
               <span
                 style={{
-                  fontSize: "10px",
+                  fontSize: "11px",
                   fontWeight: 700,
                   fontFamily: "var(--font-mono)",
-                  padding: "1px 5px",
+                  padding: "2px 7px",
                   borderRadius: "var(--radius-xs)",
                   backgroundColor: isActive ? "var(--accent)" : "var(--bg-muted)",
                   color: isActive ? "#fff" : "var(--text-muted)",

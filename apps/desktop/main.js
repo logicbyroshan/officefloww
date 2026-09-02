@@ -8,7 +8,9 @@ function createWindow() {
     minWidth: 1200,
     minHeight: 720,
     title: "OfficeFloww — Industrial Production OS",
-    backgroundColor: "#09090b",
+    backgroundColor: "#0d1117",
+    show: false,
+    center: true,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -18,6 +20,11 @@ function createWindow() {
   });
 
   win.loadFile(path.join(__dirname, "index.html"));
+
+  win.once("ready-to-show", () => {
+    win.show();
+    win.focus();
+  });
 }
 
 app.whenReady().then(() => {
