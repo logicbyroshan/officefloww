@@ -1,8 +1,4 @@
 import React, { useState } from "react";
-import { UserRole } from "@officefloww/api-types";
-import { PageHeader } from "../../design-system/layouts/PageHeader";
-import { Table, Column } from "../../design-system/components/Table";
-import { Button } from "../../design-system/components/Button";
 import { Icon } from "../../design-system/components/Icon";
 import { useToast } from "../../design-system/components/Toast";
 import { StaffDetailProfileView } from "./StaffDetailProfileView";
@@ -137,158 +133,41 @@ const INITIAL_STAFF: StaffMember[] = [
   },
 ];
 
+const getInitials = (name: string) => {
+  const parts = name.trim().split(" ");
+  if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+  return name.slice(0, 2).toUpperCase();
+};
+
+const getAvatarGradient = (role: string) => {
+  if (role === "ADMIN") return "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)";
+  if (role === "OPERATOR") return "linear-gradient(135deg, #10b981 0%, #047857 100%)";
+  if (role === "WORKER") return "linear-gradient(135deg, #f59e0b 0%, #b45309 100%)";
+  return "linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)";
+};
+
 export const StaffView: React.FC = () => {
   const { success } = useToast();
-  const [activeTab, setActiveTab] = useState<"all" | "employees" | "labour" | "assignments" | "performance">("all");
   const [search, setSearch] = useState("");
   const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null);
 
+  // One-click copy handler with event isolation
+  const handleCopy = (text: string, label: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(text);
+    success("Copied to Clipboard", `${label} "${text}" copied.`);
+  };
+
   const filteredStaff = INITIAL_STAFF.filter((s) => {
     const q = search.toLowerCase();
-    const matchSearch =
-      !q || s.name.toLowerCase().includes(q) || s.email.toLowerCase().includes(q) || s.role.toLowerCase().includes(q);
-    if (!matchSearch) return false;
-
-    if (activeTab === "employees") return s.type === "EMPLOYEE";
-    if (activeTab === "labour") return s.type === "LABOUR";
-    return true;
+    return (
+      !q ||
+      s.name.toLowerCase().includes(q) ||
+      s.email.toLowerCase().includes(q) ||
+      s.role.toLowerCase().includes(q) ||
+      s.assignedTools.some((t) => t.toLowerCase().includes(q))
+    );
   });
-
-  const columns: Column<StaffMember>[] = [
-    {
-      key: "name",
-      header: "Staff Member",
-      render: (s) => (
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <div
-            style={{
-              width: "28px",
-              height: "28px",
-              borderRadius: "4px",
-              backgroundColor: s.type === "EMPLOYEE" ? "rgba(255, 138, 115, 0.15)" : "rgba(56, 189, 248, 0.15)",
-              color: s.type === "EMPLOYEE" ? "var(--accent-text)" : "#38bdf8",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "11px",
-              fontWeight: 700,
-            }}
-          >
-            {s.name.slice(0, 2).toUpperCase()}
-          </div>
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-primary)" }}>{s.name}</span>
-            <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>{s.phone || s.email}</span>
-          </div>
-        </div>
-      ),
-    },
-    {
-      key: "type",
-      header: "Type & Role",
-      render: (s) => (
-        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <span
-            style={{
-              fontSize: "10.5px",
-              padding: "2px 6px",
-              borderRadius: "3px",
-              backgroundColor: s.type === "EMPLOYEE" ? "rgba(255, 255, 255, 0.05)" : "rgba(56, 189, 248, 0.12)",
-              color: s.type === "EMPLOYEE" ? "var(--text-secondary)" : "#38bdf8",
-              fontWeight: 600,
-            }}
-          >
-            {s.type}
-          </span>
-          <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>{s.role}</span>
-        </div>
-      ),
-    },
-    {
-      key: "activeTasks",
-      header: "Workload",
-      align: "right",
-      render: (s) => (
-        <span style={{ fontFamily: "var(--font-mono)", fontSize: "12.5px", fontWeight: 600, color: "#fff" }}>
-          {s.activeTasks} tasks active
-        </span>
-      ),
-    },
-    {
-      key: "availability",
-      header: "Availability",
-      render: (s) => {
-        let color = "#10b981";
-        if (s.availability === "Busy") color = "var(--accent)";
-        if (s.availability === "Off Shift") color = "var(--text-muted)";
-        return (
-          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <span style={{ width: 6, height: 6, borderRadius: "50%", backgroundColor: color }} />
-            <span style={{ fontSize: "12px", color }}>{s.availability}</span>
-          </div>
-        );
-      },
-    },
-    {
-      key: "acceptanceRate",
-      header: "Quality & Defect Rate",
-      align: "right",
-      render: (s) => (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "1px" }}>
-          <span style={{ fontFamily: "var(--font-mono)", fontSize: "12px", color: "#10b981", fontWeight: 600 }}>
-            {s.acceptanceRate}% pass
-          </span>
-          <span style={{ fontSize: "10px", color: "var(--text-muted)" }}>{s.defectRate}% defect</span>
-        </div>
-      ),
-    },
-    {
-      key: "actions",
-      header: "",
-      width: "95px",
-      align: "right",
-      render: (s) => (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            setSelectedStaff(s);
-          }}
-          style={{
-            display: "inline-flex",
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "5px",
-            padding: "5px 12px",
-            borderRadius: "4px",
-            backgroundColor: "rgba(255, 255, 255, 0.05)",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
-            color: "var(--text-secondary)",
-            fontSize: "12px",
-            fontWeight: 500,
-            cursor: "pointer",
-            whiteSpace: "nowrap",
-            lineHeight: 1,
-            transition: "all 0.15s ease",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = "rgba(255, 138, 115, 0.15)";
-            e.currentTarget.style.borderColor = "var(--accent-border)";
-            e.currentTarget.style.color = "var(--accent-text)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
-            e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
-            e.currentTarget.style.color = "var(--text-secondary)";
-          }}
-        >
-          <span>Profile</span>
-          <span style={{ fontSize: "11px" }}>→</span>
-        </button>
-      ),
-    },
-  ];
 
   if (selectedStaff) {
     return (
@@ -300,183 +179,373 @@ export const StaffView: React.FC = () => {
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", overflowY: "auto" }}>
-      <div style={{ position: "sticky", top: 0, zIndex: 30, backgroundColor: "#0b0f19" }}>
-        <PageHeader
-          title="Staff & Workforce"
-          badge={
-            <span
-              style={{
-                fontSize: "11px",
-                fontWeight: 600,
-                color: "var(--accent-text)",
-                backgroundColor: "rgba(255, 138, 115, 0.12)",
-                border: "1px solid var(--accent-border)",
-                borderRadius: "4px",
-                padding: "2px 8px",
-              }}
-            >
-              {INITIAL_STAFF.length} Total Workforce
-            </span>
-          }
-          primaryAction={{
-            label: "Add Personnel",
-            icon: "plus",
-            onClick: () => {
-              success("Personnel Provisioning", "Staff record creation opened.");
-            },
-          }}
-        />
-      </div>
-
-      <div style={{ padding: "16px 24px", display: "flex", flexDirection: "column", gap: "14px" }}>
-        {/* Navigation Tabs Bar */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
-            paddingBottom: "10px",
-            gap: "12px",
-            flexWrap: "wrap",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-            {[
-              { id: "all" as const, label: "All Staff" },
-              { id: "employees" as const, label: "Employees" },
-              { id: "labour" as const, label: "Labour & Contractors" },
-              { id: "assignments" as const, label: "Assignments & Workload" },
-              { id: "performance" as const, label: "Objective Performance" },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id)}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  padding: "6px 12px",
-                  borderRadius: "4px",
-                  border: "none",
-                  backgroundColor:
-                    activeTab === tab.id ? "rgba(255, 138, 115, 0.14)" : "transparent",
-                  color: activeTab === tab.id ? "var(--accent-text)" : "var(--text-secondary)",
-                  fontSize: "12.5px",
-                  fontWeight: activeTab === tab.id ? 600 : 500,
-                  cursor: "pointer",
-                }}
-              >
-                <span>{tab.label}</span>
-              </button>
-            ))}
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        width: "100%",
+        boxSizing: "border-box",
+        overflowY: "auto",
+        backgroundColor: "#070a10",
+        backgroundImage: "radial-gradient(ellipse 80% 50% at 50% -20%, rgba(255, 138, 115, 0.04), transparent)",
+        color: "#e2e8f0",
+      }}
+    >
+      {/* TOP HEADER: SEARCH & ADD PERSONNEL ON TOP (NO REDUNDANT TITLE OR TABS) */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "14px 28px",
+          backgroundColor: "rgba(14, 18, 28, 0.95)",
+          backdropFilter: "blur(20px)",
+          borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+          gap: "16px",
+          flexWrap: "wrap",
+          position: "sticky",
+          top: 0,
+          zIndex: 30,
+          width: "100%",
+          boxSizing: "border-box",
+        }}
+      >
+        {/* Left: Workforce counter badge (sharp corners) */}
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "5px 12px",
+              borderRadius: "3px",
+              backgroundColor: "rgba(255, 138, 115, 0.12)",
+              border: "1px solid var(--accent-border)",
+              color: "var(--accent-text)",
+              fontSize: "12.5px",
+              fontWeight: 700,
+            }}
+          >
+            <span style={{ width: "6px", height: "6px", borderRadius: "1px", backgroundColor: "var(--accent)" }} />
+            <span>{INITIAL_STAFF.length} Total Workforce</span>
           </div>
 
+          <span style={{ fontSize: "12.5px", color: "var(--text-muted)" }}>
+            Showing {filteredStaff.length} active personnel & contractors
+          </span>
+        </div>
+
+        {/* Right: Search Bar & Add Personnel Action (sharp corners) */}
+        <div style={{ display: "flex", alignItems: "center", gap: "12px", flex: 1, justifyContent: "flex-end", maxWidth: "600px" }}>
           <div
             style={{
               display: "flex",
               alignItems: "center",
               gap: "8px",
-              height: "36px",
+              height: "38px",
               boxSizing: "border-box",
-              backgroundColor: "rgba(0, 0, 0, 0.25)",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
-              borderRadius: "4px",
-              padding: "0 12px",
+              backgroundColor: "rgba(0, 0, 0, 0.3)",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
+              borderRadius: "3px",
+              padding: "0 14px",
+              flex: 1,
+              maxWidth: "380px",
             }}
           >
             <Icon name="search" size={14} color="var(--text-muted)" />
             <input
               type="text"
-              placeholder="Search staff, tools, skills..."
+              placeholder="Search staff by name, role, email, tools..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               style={{
                 background: "none",
                 border: "none",
                 color: "#fff",
-                fontSize: "12.5px",
+                fontSize: "13px",
                 outline: "none",
-                width: "180px",
+                width: "100%",
               }}
             />
           </div>
-        </div>
 
-        {/* Assignments View */}
-        {activeTab === "assignments" ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-            <div
-              style={{
-                padding: "14px 16px",
-                backgroundColor: "rgba(19, 23, 34, 0.8)",
-                border: "1px solid rgba(255, 255, 255, 0.08)",
-                borderRadius: "4px",
-              }}
-            >
-              <h4 style={{ margin: "0 0 4px 0", fontSize: "13px", color: "var(--accent-text)", fontWeight: 700 }}>
-                Smart Dispatch Recommendation
-              </h4>
-              <p style={{ margin: 0, fontSize: "12px", color: "var(--text-muted)" }}>
-                Task: <strong>ORD-2026-0001 (Lanyard Assembly 500 pcs)</strong>
-              </p>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginTop: "12px" }}>
-                <div
-                  style={{
-                    padding: "10px 12px",
-                    backgroundColor: "rgba(255, 255, 255, 0.03)",
-                    border: "1px solid var(--accent-border)",
-                    borderRadius: "4px",
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <span style={{ fontSize: "13px", fontWeight: 600, color: "#fff" }}>Priya Nair</span>
-                    <span style={{ fontSize: "11px", color: "#10b981", fontWeight: 600 }}>Recommended</span>
-                  </div>
-                  <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "4px" }}>
-                    Available now • 2 active tasks • 99.8% quality record • Sublimation specialist
-                  </div>
-                </div>
-
-                <div
-                  style={{
-                    padding: "10px 12px",
-                    backgroundColor: "rgba(255, 255, 255, 0.03)",
-                    border: "1px solid rgba(255, 255, 255, 0.06)",
-                    borderRadius: "4px",
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <span style={{ fontSize: "13px", fontWeight: 600, color: "#fff" }}>Ramesh Labour Unit</span>
-                    <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>Alternative</span>
-                  </div>
-                  <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "4px" }}>
-                    Contractor • 300 hooks held • Rate ₹1.50/unit • Capacity ready
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : (
-          /* Main Staff Table */
-          <div
+          <button
+            type="button"
+            onClick={() => success("Personnel Provisioning", "Staff record creation opened.")}
             style={{
-              backgroundColor: "rgba(19, 23, 34, 0.75)",
-              backdropFilter: "blur(14px)",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
-              borderRadius: "4px",
-              overflow: "hidden",
+              height: "38px",
+              padding: "0 16px",
+              borderRadius: "3px",
+              backgroundColor: "var(--accent)",
+              backgroundImage: "linear-gradient(135deg, #ff8a73 0%, #ea580c 100%)",
+              border: "none",
+              color: "#ffffff",
+              fontSize: "13px",
+              fontWeight: 700,
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              boxShadow: "0 2px 10px rgba(234, 88, 12, 0.35)",
+              flexShrink: 0,
             }}
           >
-            <Table
-              columns={columns}
-              data={filteredStaff}
-              onRowClick={(s) => setSelectedStaff(s)}
-              emptyText="No staff members match the active filters."
-            />
-          </div>
-        )}
+            <Icon name="plus" size={14} color="#fff" />
+            <span>Add Personnel</span>
+          </button>
+        </div>
+      </div>
+
+      {/* BODY AREA: CARDS GRID (NO TABLES, NO TABS, SHARPER SIDES) */}
+      <div style={{ padding: "26px 32px", display: "flex", flexDirection: "column", gap: "24px", width: "100%", boxSizing: "border-box" }}>
+        
+        {/* CARDS GRID */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(440px, 1fr))",
+            gap: "22px",
+            width: "100%",
+            boxSizing: "border-box",
+          }}
+        >
+          {filteredStaff.map((staff) => {
+            const isAvailable = staff.availability === "Available";
+            const roleSubtitle = `${staff.role} • ${staff.type === "LABOUR" ? "Piece-Rate Contractor" : "Floor Specialist"}`;
+
+            return (
+              <div
+                key={staff.id}
+                onClick={() => setSelectedStaff(staff)}
+                style={{
+                  backgroundColor: "rgba(18, 23, 35, 0.78)",
+                  backdropFilter: "blur(18px)",
+                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                  borderRadius: "3px",
+                  padding: "24px 26px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "16px",
+                  cursor: "pointer",
+                  transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
+                  position: "relative",
+                  overflow: "hidden",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "translateY(-3px)";
+                  e.currentTarget.style.borderColor = "rgba(255, 138, 115, 0.4)";
+                  e.currentTarget.style.boxShadow = "0 8px 24px rgba(0, 0, 0, 0.45)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "none";
+                  e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.08)";
+                  e.currentTarget.style.boxShadow = "none";
+                }}
+              >
+                {/* Top Row: Monogram Avatar (sharp 3px) + Name + Availability */}
+                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+                    <div
+                      style={{
+                        width: "50px",
+                        height: "50px",
+                        borderRadius: "3px",
+                        background: getAvatarGradient(staff.role),
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: "18px",
+                        fontWeight: 800,
+                        color: "#fff",
+                        flexShrink: 0,
+                        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.35)",
+                      }}
+                    >
+                      {getInitials(staff.name)}
+                    </div>
+
+                    <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                      <h3 style={{ margin: 0, fontSize: "17.5px", fontWeight: 800, color: "#ffffff", letterSpacing: "-0.3px" }}>
+                        {staff.name}
+                      </h3>
+                      <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>
+                        {roleSubtitle}
+                      </span>
+                    </div>
+                  </div>
+
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "5px",
+                      padding: "3px 8px",
+                      borderRadius: "2px",
+                      backgroundColor: isAvailable ? "rgba(16, 185, 129, 0.12)" : "rgba(245, 158, 11, 0.12)",
+                      border: "1px solid " + (isAvailable ? "rgba(16, 185, 129, 0.3)" : "rgba(245, 158, 11, 0.3)"),
+                      color: isAvailable ? "#34d399" : "#f59e0b",
+                      fontSize: "11px",
+                      fontWeight: 700,
+                      flexShrink: 0,
+                    }}
+                  >
+                    <span style={{ width: "5px", height: "5px", borderRadius: "1px", backgroundColor: isAvailable ? "#10b981" : "#f59e0b" }} />
+                    {staff.availability}
+                  </span>
+                </div>
+
+                {/* Middle Contact Section with One-Click Copy (sharp 3px) */}
+                <div
+                  style={{
+                    backgroundColor: "rgba(0, 0, 0, 0.22)",
+                    borderRadius: "3px",
+                    border: "1px solid rgba(255, 255, 255, 0.06)",
+                    padding: "10px 12px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "6px",
+                  }}
+                >
+                  {/* Phone with copy */}
+                  <div
+                    onClick={(e) => handleCopy(staff.phone || "+91 98200 11002", "Phone Number", e)}
+                    title="Click to copy phone number"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "4px 6px",
+                      borderRadius: "2px",
+                      cursor: "pointer",
+                      transition: "background-color 0.15s ease",
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--text-secondary)" }}>
+                      <Icon name="phone" size={13} color="#f59e0b" />
+                      <span style={{ fontFamily: "var(--font-mono)", fontSize: "12.5px", fontWeight: 600 }}>
+                        {staff.phone || "+91 98200 11002"}
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "4px", color: "var(--text-muted)", fontSize: "11px" }}>
+                      <Icon name="copy" size={11} color="var(--text-muted)" />
+                      <span>Copy</span>
+                    </div>
+                  </div>
+
+                  {/* Email with copy */}
+                  <div
+                    onClick={(e) => handleCopy(staff.email, "Email Address", e)}
+                    title="Click to copy email address"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "4px 6px",
+                      borderRadius: "2px",
+                      cursor: "pointer",
+                      transition: "background-color 0.15s ease",
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--text-secondary)" }}>
+                      <Icon name="mail" size={13} color="#34d399" />
+                      <span style={{ fontSize: "12px" }}>{staff.email}</span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "4px", color: "var(--text-muted)", fontSize: "11px" }}>
+                      <Icon name="copy" size={11} color="var(--text-muted)" />
+                      <span>Copy</span>
+                    </div>
+                  </div>
+
+                  {/* Workstation Tools */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "4px 6px", color: "var(--text-muted)", fontSize: "11.5px" }}>
+                    <Icon name="tool" size={13} color="var(--accent-text)" />
+                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {staff.assignedTools.join(" • ") || "General Workstation Station"}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Production Metrics Strip */}
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(3, 1fr)",
+                    gap: "10px",
+                    backgroundColor: "rgba(255, 255, 255, 0.02)",
+                    border: "1px solid rgba(255, 255, 255, 0.05)",
+                    borderRadius: "2px",
+                    padding: "10px 12px",
+                    textAlign: "center",
+                  }}
+                >
+                  <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                    <span style={{ fontSize: "10px", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>Active Tasks</span>
+                    <strong style={{ fontSize: "14px", color: "#fff", fontFamily: "var(--font-mono)" }}>{staff.activeTasks}</strong>
+                  </div>
+
+                  <div style={{ display: "flex", flexDirection: "column", gap: "2px", borderLeft: "1px solid rgba(255, 255, 255, 0.06)", borderRight: "1px solid rgba(255, 255, 255, 0.06)" }}>
+                    <span style={{ fontSize: "10px", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>Today Done</span>
+                    <strong style={{ fontSize: "14px", color: "#34d399", fontFamily: "var(--font-mono)" }}>
+                      {staff.type === "LABOUR" ? `${staff.completedToday.toLocaleString()}u` : `${staff.completedToday} batches`}
+                    </strong>
+                  </div>
+
+                  <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                    <span style={{ fontSize: "10px", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>Quality Pass</span>
+                    <strong style={{ fontSize: "14px", color: "#60a5fa", fontFamily: "var(--font-mono)" }}>{staff.acceptanceRate}%</strong>
+                  </div>
+                </div>
+
+                {/* Bottom Footer: Shift Status + View Profile Action */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: "4px", borderTop: "1px solid rgba(255, 255, 255, 0.06)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>Today Shift:</span>
+                    <span style={{ fontSize: "11.5px", fontWeight: 700, color: "#fff", fontFamily: "var(--font-mono)" }}>8h 30m logged</span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedStaff(staff);
+                    }}
+                    style={{
+                      height: "32px",
+                      padding: "0 14px",
+                      borderRadius: "2px",
+                      backgroundColor: "rgba(59, 130, 246, 0.12)",
+                      border: "1px solid rgba(59, 130, 246, 0.3)",
+                      color: "#60a5fa",
+                      fontSize: "12px",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      transition: "all 0.15s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = "#2563eb";
+                      e.currentTarget.style.color = "#ffffff";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = "rgba(59, 130, 246, 0.12)";
+                      e.currentTarget.style.color = "#60a5fa";
+                    }}
+                  >
+                    <span>View Profile</span>
+                    <span>→</span>
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

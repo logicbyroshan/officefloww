@@ -1817,7 +1817,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                   backgroundColor: "rgba(18, 23, 35, 0.75)",
                   backdropFilter: "blur(18px)",
                   border: "1px solid rgba(255, 255, 255, 0.08)",
-                  borderRadius: "12px",
+                  borderRadius: "3px",
                   padding: "26px 28px",
                   display: "flex",
                   flexDirection: "column",
@@ -1845,7 +1845,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                       style={{
                         width: "54px",
                         height: "54px",
-                        borderRadius: "14px",
+                        borderRadius: "3px",
                         background: isNw
                           ? "linear-gradient(135deg, #d97706 0%, #78350f 100%)"
                           : "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)",
@@ -1877,8 +1877,8 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                       display: "inline-flex",
                       alignItems: "center",
                       gap: "5px",
-                      padding: "3px 10px",
-                      borderRadius: "12px",
+                      padding: "3px 8px",
+                      borderRadius: "2px",
                       backgroundColor: "rgba(16, 185, 129, 0.12)",
                       border: "1px solid rgba(16, 185, 129, 0.3)",
                       color: "#34d399",
@@ -1887,7 +1887,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                       flexShrink: 0,
                     }}
                   >
-                    <span style={{ width: "5px", height: "5px", borderRadius: "50%", backgroundColor: "#10b981" }} />
+                    <span style={{ width: "5px", height: "5px", borderRadius: "1px", backgroundColor: "#10b981" }} />
                     Active
                   </span>
                 </div>
@@ -1896,7 +1896,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                 <div
                   style={{
                     backgroundColor: "rgba(0, 0, 0, 0.22)",
-                    borderRadius: "8px",
+                    borderRadius: "3px",
                     border: "1px solid rgba(255, 255, 255, 0.06)",
                     padding: "12px 14px",
                     display: "flex",
@@ -1913,7 +1913,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                       alignItems: "center",
                       justifyContent: "space-between",
                       padding: "5px 8px",
-                      borderRadius: "5px",
+                      borderRadius: "2px",
                       cursor: "pointer",
                       transition: "background-color 0.15s ease",
                     }}
@@ -1940,7 +1940,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                       alignItems: "center",
                       justifyContent: "space-between",
                       padding: "5px 8px",
-                      borderRadius: "5px",
+                      borderRadius: "2px",
                       cursor: "pointer",
                       transition: "background-color 0.15s ease",
                     }}
@@ -1968,7 +1968,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                       alignItems: "center",
                       justifyContent: "space-between",
                       padding: "5px 8px",
-                      borderRadius: "5px",
+                      borderRadius: "2px",
                       cursor: "pointer",
                       transition: "background-color 0.15s ease",
                     }}
@@ -2007,7 +2007,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                           style={{
                             width: "32px",
                             height: "32px",
-                            borderRadius: "50%",
+                            borderRadius: "3px",
                             background: crew.color,
                             color: "#fff",
                             display: "flex",
@@ -2050,7 +2050,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                     style={{
                       height: "34px",
                       padding: "0 16px",
-                      borderRadius: "5px",
+                      borderRadius: "2px",
                       backgroundColor: "rgba(59, 130, 246, 0.12)",
                       border: "1px solid rgba(59, 130, 246, 0.3)",
                       color: "#60a5fa",
