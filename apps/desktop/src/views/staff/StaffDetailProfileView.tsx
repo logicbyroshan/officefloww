@@ -126,13 +126,16 @@ export const StaffDetailProfileView: React.FC<StaffDetailProfileViewProps> = ({
       <div
         style={{
           padding: "16px 28px",
-          backgroundColor: "rgba(14, 18, 26, 0.9)",
-          backdropFilter: "blur(14px)",
+          backgroundColor: "rgba(14, 18, 26, 0.95)",
+          backdropFilter: "blur(20px)",
           borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
           flexShrink: 0,
+          position: "sticky",
+          top: 0,
+          zIndex: 40,
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
@@ -347,8 +350,8 @@ export const StaffDetailProfileView: React.FC<StaffDetailProfileViewProps> = ({
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               {/* Gender */}
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <div style={{ width: 28, height: 28, borderRadius: "4px", backgroundColor: "rgba(255, 255, 255, 0.04)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--accent-text)" }}>
-                  👤
+                <div style={{ width: 28, height: 28, borderRadius: "4px", backgroundColor: "rgba(255, 255, 255, 0.04)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Icon name="user" size={14} color="var(--accent-text)" />
                 </div>
                 <div style={{ display: "flex", flexDirection: "column" }}>
                   <span style={{ fontSize: "10.5px", color: "var(--text-muted)" }}>Gender / Identity</span>
@@ -358,8 +361,8 @@ export const StaffDetailProfileView: React.FC<StaffDetailProfileViewProps> = ({
 
               {/* Date of Birth */}
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <div style={{ width: 28, height: 28, borderRadius: "4px", backgroundColor: "rgba(255, 255, 255, 0.04)", display: "flex", alignItems: "center", justifyContent: "center", color: "#38bdf8" }}>
-                  📅
+                <div style={{ width: 28, height: 28, borderRadius: "4px", backgroundColor: "rgba(255, 255, 255, 0.04)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Icon name="calendar" size={14} color="#38bdf8" />
                 </div>
                 <div style={{ display: "flex", flexDirection: "column" }}>
                   <span style={{ fontSize: "10.5px", color: "var(--text-muted)" }}>Date of Birth</span>
@@ -369,8 +372,8 @@ export const StaffDetailProfileView: React.FC<StaffDetailProfileViewProps> = ({
 
               {/* Email Address */}
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <div style={{ width: 28, height: 28, borderRadius: "4px", backgroundColor: "rgba(255, 255, 255, 0.04)", display: "flex", alignItems: "center", justifyContent: "center", color: "#34d399" }}>
-                  ✉️
+                <div style={{ width: 28, height: 28, borderRadius: "4px", backgroundColor: "rgba(255, 255, 255, 0.04)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Icon name="mail" size={14} color="#34d399" />
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", overflow: "hidden" }}>
                   <span style={{ fontSize: "10.5px", color: "var(--text-muted)" }}>Email Address</span>
@@ -382,8 +385,8 @@ export const StaffDetailProfileView: React.FC<StaffDetailProfileViewProps> = ({
 
               {/* Phone */}
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <div style={{ width: 28, height: 28, borderRadius: "4px", backgroundColor: "rgba(255, 255, 255, 0.04)", display: "flex", alignItems: "center", justifyContent: "center", color: "#f59e0b" }}>
-                  📞
+                <div style={{ width: 28, height: 28, borderRadius: "4px", backgroundColor: "rgba(255, 255, 255, 0.04)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Icon name="phone" size={14} color="#f59e0b" />
                 </div>
                 <div style={{ display: "flex", flexDirection: "column" }}>
                   <span style={{ fontSize: "10.5px", color: "var(--text-muted)" }}>Direct Phone</span>
@@ -395,8 +398,8 @@ export const StaffDetailProfileView: React.FC<StaffDetailProfileViewProps> = ({
 
               {/* Plant Location */}
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <div style={{ width: 28, height: 28, borderRadius: "4px", backgroundColor: "rgba(255, 255, 255, 0.04)", display: "flex", alignItems: "center", justifyContent: "center", color: "#c084fc" }}>
-                  📍
+                <div style={{ width: 28, height: 28, borderRadius: "4px", backgroundColor: "rgba(255, 255, 255, 0.04)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Icon name="map-pin" size={14} color="#c084fc" />
                 </div>
                 <div style={{ display: "flex", flexDirection: "column" }}>
                   <span style={{ fontSize: "10.5px", color: "var(--text-muted)" }}>Factory Station</span>

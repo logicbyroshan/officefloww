@@ -301,31 +301,33 @@ export const StaffView: React.FC = () => {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", overflowY: "auto" }}>
-      <PageHeader
-        title="Staff & Workforce"
-        badge={
-          <span
-            style={{
-              fontSize: "11px",
-              fontWeight: 600,
-              color: "var(--accent-text)",
-              backgroundColor: "rgba(255, 138, 115, 0.12)",
-              border: "1px solid var(--accent-border)",
-              borderRadius: "4px",
-              padding: "2px 8px",
-            }}
-          >
-            {INITIAL_STAFF.length} Total Workforce
-          </span>
-        }
-        primaryAction={{
-          label: "Add Personnel",
-          icon: "plus",
-          onClick: () => {
-            success("Personnel Provisioning", "Staff record creation opened.");
-          },
-        }}
-      />
+      <div style={{ position: "sticky", top: 0, zIndex: 30, backgroundColor: "#0b0f19" }}>
+        <PageHeader
+          title="Staff & Workforce"
+          badge={
+            <span
+              style={{
+                fontSize: "11px",
+                fontWeight: 600,
+                color: "var(--accent-text)",
+                backgroundColor: "rgba(255, 138, 115, 0.12)",
+                border: "1px solid var(--accent-border)",
+                borderRadius: "4px",
+                padding: "2px 8px",
+              }}
+            >
+              {INITIAL_STAFF.length} Total Workforce
+            </span>
+          }
+          primaryAction={{
+            label: "Add Personnel",
+            icon: "plus",
+            onClick: () => {
+              success("Personnel Provisioning", "Staff record creation opened.");
+            },
+          }}
+        />
+      </div>
 
       <div style={{ padding: "16px 24px", display: "flex", flexDirection: "column", gap: "14px" }}>
         {/* Navigation Tabs Bar */}

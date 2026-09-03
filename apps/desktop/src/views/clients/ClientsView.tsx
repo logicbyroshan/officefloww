@@ -43,6 +43,13 @@ interface ClientInvoiceItem {
   status: "PAID" | "PARTIAL" | "PENDING" | "OVERDUE";
 }
 
+interface AssignedCrewMember {
+  initials: string;
+  name: string;
+  role: string;
+  color: string;
+}
+
 const getInitials = (name: string) => {
   const parts = name.trim().split(" ");
   if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
@@ -63,6 +70,37 @@ const getAvatarColor = (name: string) => {
   for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
   return colors[Math.abs(hash) % colors.length];
 };
+
+// Production Assigned Crew by Client
+const CLIENT_CREW_POOL: AssignedCrewMember[][] = [
+  [
+    { initials: "RS", name: "Rohan Sharma", role: "Plant Admin", color: "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)" },
+    { initials: "PN", name: "Priya Nair", role: "QA Colorimeter Operator", color: "linear-gradient(135deg, #10b981 0%, #047857 100%)" },
+    { initials: "DK", name: "Dinesh Kumar", role: "Heat Transfer Worker", color: "linear-gradient(135deg, #f59e0b 0%, #b45309 100%)" },
+    { initials: "RL", name: "Ramesh Stitching Unit", role: "Lanyard Stitching Labour", color: "linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)" },
+  ],
+  [
+    { initials: "SY", name: "Sunil Yadav", role: "Precision Weighing Worker", color: "linear-gradient(135deg, #06b6d4 0%, #0e7490 100%)" },
+    { initials: "PN", name: "Priya Nair", role: "QA Lead", color: "linear-gradient(135deg, #10b981 0%, #047857 100%)" },
+    { initials: "SR", name: "Sneha Roy", role: "Sublimation Studio Operator", color: "linear-gradient(135deg, #ec4899 0%, #be185d 100%)" },
+    { initials: "RS", name: "Rohan Sharma", role: "Admin", color: "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)" },
+  ],
+  [
+    { initials: "SR", name: "Sneha Roy", role: "Design Specialist", color: "linear-gradient(135deg, #ec4899 0%, #be185d 100%)" },
+    { initials: "DK", name: "Dinesh Kumar", role: "Press Operator", color: "linear-gradient(135deg, #f59e0b 0%, #b45309 100%)" },
+    { initials: "RL", name: "Ramesh Unit", role: "Packaging Labour", color: "linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)" },
+  ],
+  [
+    { initials: "PN", name: "Priya Nair", role: "QA Colorimeter Operator", color: "linear-gradient(135deg, #10b981 0%, #047857 100%)" },
+    { initials: "SY", name: "Sunil Yadav", role: "Packing Worker", color: "linear-gradient(135deg, #06b6d4 0%, #0e7490 100%)" },
+    { initials: "RS", name: "Rohan Sharma", role: "Production Head", color: "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)" },
+  ],
+  [
+    { initials: "DK", name: "Dinesh Kumar", role: "Thermal Press Worker", color: "linear-gradient(135deg, #f59e0b 0%, #b45309 100%)" },
+    { initials: "SR", name: "Sneha Roy", role: "Artwork Inspector", color: "linear-gradient(135deg, #ec4899 0%, #be185d 100%)" },
+    { initials: "RL", name: "Ramesh Unit", role: "Lanyard Labour Team", color: "linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)" },
+  ],
+];
 
 // Initial Realistic Production Logs
 const INITIAL_LOGS: Record<string, ClientLogItem[]> = {
@@ -177,10 +215,9 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
     }
   }, [initialClientId]);
 
-  // Active Tab inside Client Management View (Tabs at top header: Overview, Contacts, Projects, Invoices, Logs)
-  const [clientTab, setClientTab] = useState<
-    "overview" | "contacts" | "projects" | "invoices" | "logs"
-  >("overview");
+  // Active Tab inside Client Management View (Tabs at top header: Overview, Projects, Invoices, Logs)
+  // Contacts is moved inside Overview as requested!
+  const [clientTab, setClientTab] = useState<"overview" | "projects" | "invoices" | "logs">("overview");
 
   // Directory search filter
   const [search, setSearch] = useState("");
@@ -296,6 +333,13 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
       activeProjects: Math.max(1, clientOrders.filter((o) => o.status !== OrderStatus.COMPLETED).length || 2),
     };
   }, [selectedClient, clientOrders]);
+
+  // One-click copy handler with toast feedback
+  const handleCopy = (text: string, label: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(text);
+    success("Copied to Clipboard", `${label} "${text}" copied.`);
+  };
 
   // Handlers
   const handlePostQuickLog = (e: React.FormEvent) => {
@@ -449,7 +493,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
   }
 
   // ----------------------------------------------------
-  // RENDER 1: CLIENT PROFILE PAGE (With Tabs Moved to Header)
+  // RENDER 1: CLIENT PROFILE PAGE (With Tabs Moved to Header, Contacts Inside Overview)
   // ----------------------------------------------------
   if (selectedClient) {
     const isNorthwind = selectedClient.organization_name.toLowerCase().includes("northwind");
@@ -494,7 +538,10 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
           <div style={{ display: "flex", alignItems: "center", gap: "24px" }}>
             <button
               type="button"
-              onClick={() => setSelectedClientId(null)}
+              onClick={() => {
+                setSelectedClientId(null);
+                onSelectClient?.("");
+              }}
               style={{
                 background: "rgba(255, 255, 255, 0.05)",
                 border: "1px solid rgba(255, 255, 255, 0.1)",
@@ -522,11 +569,10 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
               <span>All Clients</span>
             </button>
 
-            {/* TABS IN HEADER (Overview, Contacts, Projects, Invoices, Logs) */}
+            {/* TABS IN HEADER (Overview, Projects, Invoices, Logs) - Contacts moved inside Overview */}
             <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
               {[
                 { id: "overview" as const, label: "Overview", count: undefined },
-                { id: "contacts" as const, label: "Contacts", count: clientContacts.length },
                 { id: "projects" as const, label: "Projects", count: Math.max(clientOrders.length, 2) },
                 { id: "invoices" as const, label: "Invoices", count: clientInvoices.length },
                 { id: "logs" as const, label: "Logs", count: clientLogs.length },
@@ -697,7 +743,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
             boxSizing: "border-box",
           }}
         >
-          {/* Client Identity Banner (NO CRYPTIC CODES) */}
+          {/* Client Identity Banner */}
           <div
             style={{
               display: "flex",
@@ -766,7 +812,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
             </div>
           </div>
 
-          {/* Full-width KPI Metrics Strip (NO CRYPTIC CODES) */}
+          {/* Full-width KPI Metrics Strip */}
           <div
             style={{
               display: "grid",
@@ -863,190 +909,227 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
           {/* TAB CONTENTS */}
           <div style={{ width: "100%", boxSizing: "border-box" }}>
             
-            {/* 1. OVERVIEW TAB */}
+            {/* 1. OVERVIEW TAB: (Includes Dossier, Credit Standing, AND Contacts Section!) */}
             {clientTab === "overview" && (
-              <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "20px", width: "100%", boxSizing: "border-box" }}>
-                {/* Institutional Coordinates */}
-                <div
-                  style={{
-                    backgroundColor: "rgba(18, 23, 35, 0.75)",
-                    border: "1px solid rgba(255, 255, 255, 0.08)",
-                    borderRadius: "8px",
-                    padding: "24px",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "16px",
-                  }}
-                >
-                  <h3 style={{ margin: 0, fontSize: "15px", fontWeight: 700, color: "#fff", display: "flex", alignItems: "center", gap: "8px" }}>
-                    <Icon name="briefcase" size={15} color="#60a5fa" />
-                    <span>Corporate Dossier & Commercial Terms</span>
-                  </h3>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "12px", fontSize: "13px" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid rgba(255, 255, 255, 0.05)", paddingBottom: "8px" }}>
-                      <span style={{ color: "var(--text-muted)" }}>Tax Identifier / GSTIN:</span>
-                      <strong style={{ fontFamily: "var(--font-mono)", color: "#fff" }}>{selectedClient.tax_identifier || "23AAAAA0000A1Z5"}</strong>
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid rgba(255, 255, 255, 0.05)", paddingBottom: "8px" }}>
-                      <span style={{ color: "var(--text-muted)" }}>Agreed Payment Terms:</span>
-                      <strong style={{ color: "#34d399" }}>Net 30 Days (Direct NEFT/RTGS)</strong>
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid rgba(255, 255, 255, 0.05)", paddingBottom: "8px" }}>
-                      <span style={{ color: "var(--text-muted)" }}>Registered Office Address:</span>
-                      <span style={{ color: "var(--text-secondary)", textAlign: "right", maxWidth: "340px" }}>
-                        {selectedClient.billing_address || "12 Industrial Corridor, Govindpura, Bhopal 462023"}
-                      </span>
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "space-between" }}>
-                      <span style={{ color: "var(--text-muted)" }}>Central Dispatch Works:</span>
-                      <span style={{ color: "var(--text-secondary)", textAlign: "right", maxWidth: "340px" }}>
-                        {selectedClient.delivery_address || "AIDC Central Factory Hub, Sector 4, Mandideep"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Credit Ledger Health */}
-                <div
-                  style={{
-                    backgroundColor: "rgba(18, 23, 35, 0.75)",
-                    border: "1px solid rgba(255, 255, 255, 0.08)",
-                    borderRadius: "8px",
-                    padding: "24px",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "16px",
-                  }}
-                >
-                  <h3 style={{ margin: 0, fontSize: "15px", fontWeight: 700, color: "#fff", display: "flex", alignItems: "center", gap: "8px" }}>
-                    <Icon name="pie-chart" size={15} color="#34d399" />
-                    <span>Commercial Credit & Ledger Standing</span>
-                  </h3>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "12px", fontSize: "13px" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between" }}>
-                      <span style={{ color: "var(--text-muted)" }}>Account Standing:</span>
-                      <strong style={{ color: "#10b981" }}>A+ Prime Corporate (Punctual Payee)</strong>
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "space-between" }}>
-                      <span style={{ color: "var(--text-muted)" }}>Credit Limit Authorized:</span>
-                      <strong style={{ fontFamily: "var(--font-mono)", color: "#fff" }}>₹10,00,000</strong>
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "space-between" }}>
-                      <span style={{ color: "var(--text-muted)" }}>Active Credit Utilization:</span>
-                      <strong style={{ fontFamily: "var(--font-mono)", color: "#ff8a73" }}>₹{metrics.outstanding.toLocaleString("en-IN")} (42.5%)</strong>
-                    </div>
-
-                    {/* Progress bar */}
-                    <div style={{ width: "100%", height: "8px", backgroundColor: "rgba(255, 255, 255, 0.08)", borderRadius: "4px", overflow: "hidden", marginTop: "4px" }}>
-                      <div style={{ width: "42.5%", height: "100%", backgroundColor: "#34d399", borderRadius: "4px" }} />
-                    </div>
-
-                    <div style={{ marginTop: "8px", padding: "14px", backgroundColor: "rgba(255, 255, 255, 0.02)", borderRadius: "6px", border: "1px solid rgba(255, 255, 255, 0.06)" }}>
-                      <span style={{ fontSize: "11px", color: "var(--text-muted)", display: "block", fontWeight: 700, letterSpacing: "0.5px" }}>
-                        OFFICEFLOWW CREDIT ADVISORY
-                      </span>
-                      <span style={{ fontSize: "12px", color: "var(--text-secondary)", marginTop: "4px", display: "block", lineHeight: 1.4 }}>
-                        Client account has cleared 98% of all prior invoices within the Net 30 window. Approved for high-volume automated production dispatch.
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* 2. CONTACTS TAB */}
-            {clientTab === "contacts" && (
-              <div style={{ display: "flex", flexDirection: "column", gap: "16px", width: "100%" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontSize: "13px", color: "var(--text-muted)" }}>
-                    {clientContacts.length} Key Stakeholders & Authorized Contacts
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setShowNewContactModal(true)}
+              <div style={{ display: "flex", flexDirection: "column", gap: "22px", width: "100%", boxSizing: "border-box" }}>
+                
+                {/* Upper Dossier & Credit Grid */}
+                <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "20px", width: "100%", boxSizing: "border-box" }}>
+                  {/* Institutional Coordinates */}
+                  <div
                     style={{
-                      height: "36px",
-                      padding: "0 16px",
-                      borderRadius: "5px",
-                      backgroundColor: "rgba(255, 255, 255, 0.06)",
-                      border: "1px solid rgba(255, 255, 255, 0.15)",
-                      color: "#fff",
-                      fontSize: "12.5px",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "6px",
+                      backgroundColor: "rgba(18, 23, 35, 0.75)",
+                      border: "1px solid rgba(255, 255, 255, 0.08)",
+                      borderRadius: "8px",
+                      padding: "24px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "16px",
                     }}
                   >
-                    <span>+</span>
-                    <span>Add Stakeholder</span>
-                  </button>
-                </div>
-
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(360px, 1fr))", gap: "18px", width: "100%" }}>
-                  {clientContacts.map((cnt) => (
-                    <div
-                      key={cnt.id}
-                      style={{
-                        backgroundColor: "rgba(18, 23, 35, 0.75)",
-                        border: "1px solid rgba(255, 255, 255, 0.08)",
-                        borderRadius: "8px",
-                        padding: "20px",
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "12px",
-                      }}
-                    >
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-                          <div
-                            style={{
-                              width: "44px",
-                              height: "44px",
-                              borderRadius: "50%",
-                              background: getAvatarColor(cnt.name),
-                              color: "#fff",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              fontWeight: 800,
-                              fontSize: "15px",
-                              border: "1px solid rgba(255, 255, 255, 0.2)",
-                            }}
-                          >
-                            {getInitials(cnt.name)}
-                          </div>
-                          <div>
-                            <div style={{ fontSize: "14.5px", fontWeight: 700, color: "#fff" }}>{cnt.name}</div>
-                            <div style={{ fontSize: "12px", color: "var(--text-muted)" }}>{cnt.designation || "Executive Stakeholder"}</div>
-                          </div>
-                        </div>
-
-                        {cnt.is_primary && (
-                          <span style={{ fontSize: "10.5px", padding: "2px 8px", borderRadius: "10px", backgroundColor: "rgba(16, 185, 129, 0.15)", color: "#10b981", fontWeight: 700 }}>
-                            PRIMARY
-                          </span>
-                        )}
+                    <h3 style={{ margin: 0, fontSize: "15px", fontWeight: 700, color: "#fff", display: "flex", alignItems: "center", gap: "8px" }}>
+                      <Icon name="briefcase" size={15} color="#60a5fa" />
+                      <span>Corporate Dossier & Commercial Terms</span>
+                    </h3>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "12px", fontSize: "13px" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid rgba(255, 255, 255, 0.05)", paddingBottom: "8px" }}>
+                        <span style={{ color: "var(--text-muted)" }}>Tax Identifier / GSTIN:</span>
+                        <strong style={{ fontFamily: "var(--font-mono)", color: "#fff" }}>{selectedClient.tax_identifier || "23AAAAA0000A1Z5"}</strong>
                       </div>
-
-                      <div style={{ borderTop: "1px solid rgba(255, 255, 255, 0.06)", paddingTop: "12px", display: "flex", flexDirection: "column", gap: "8px", fontSize: "13px" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--text-secondary)" }}>
-                          <Icon name="mail" size={13} color="var(--text-muted)" />
-                          <span>{cnt.email}</span>
-                        </div>
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--text-secondary)" }}>
-                          <Icon name="phone" size={13} color="var(--text-muted)" />
-                          <span>{cnt.phone || "+91 98260 00000"}</span>
-                        </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid rgba(255, 255, 255, 0.05)", paddingBottom: "8px" }}>
+                        <span style={{ color: "var(--text-muted)" }}>Agreed Payment Terms:</span>
+                        <strong style={{ color: "#34d399" }}>Net 30 Days (Direct NEFT/RTGS)</strong>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid rgba(255, 255, 255, 0.05)", paddingBottom: "8px" }}>
+                        <span style={{ color: "var(--text-muted)" }}>Registered Office Address:</span>
+                        <span style={{ color: "var(--text-secondary)", textAlign: "right", maxWidth: "340px" }}>
+                          {selectedClient.billing_address || "12 Industrial Corridor, Govindpura, Bhopal 462023"}
+                        </span>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between" }}>
+                        <span style={{ color: "var(--text-muted)" }}>Central Dispatch Works:</span>
+                        <span style={{ color: "var(--text-secondary)", textAlign: "right", maxWidth: "340px" }}>
+                          {selectedClient.delivery_address || "AIDC Central Factory Hub, Sector 4, Mandideep"}
+                        </span>
                       </div>
                     </div>
-                  ))}
+                  </div>
+
+                  {/* Credit Ledger Health */}
+                  <div
+                    style={{
+                      backgroundColor: "rgba(18, 23, 35, 0.75)",
+                      border: "1px solid rgba(255, 255, 255, 0.08)",
+                      borderRadius: "8px",
+                      padding: "24px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "16px",
+                    }}
+                  >
+                    <h3 style={{ margin: 0, fontSize: "15px", fontWeight: 700, color: "#fff", display: "flex", alignItems: "center", gap: "8px" }}>
+                      <Icon name="pie-chart" size={15} color="#34d399" />
+                      <span>Commercial Credit & Ledger Standing</span>
+                    </h3>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "12px", fontSize: "13px" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between" }}>
+                        <span style={{ color: "var(--text-muted)" }}>Account Standing:</span>
+                        <strong style={{ color: "#10b981" }}>A+ Prime Corporate (Punctual Payee)</strong>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between" }}>
+                        <span style={{ color: "var(--text-muted)" }}>Credit Limit Authorized:</span>
+                        <strong style={{ fontFamily: "var(--font-mono)", color: "#fff" }}>₹10,00,000</strong>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between" }}>
+                        <span style={{ color: "var(--text-muted)" }}>Active Credit Utilization:</span>
+                        <strong style={{ fontFamily: "var(--font-mono)", color: "#ff8a73" }}>₹{metrics.outstanding.toLocaleString("en-IN")} (42.5%)</strong>
+                      </div>
+
+                      {/* Progress bar */}
+                      <div style={{ width: "100%", height: "8px", backgroundColor: "rgba(255, 255, 255, 0.08)", borderRadius: "4px", overflow: "hidden", marginTop: "4px" }}>
+                        <div style={{ width: "42.5%", height: "100%", backgroundColor: "#34d399", borderRadius: "4px" }} />
+                      </div>
+
+                      <div style={{ marginTop: "8px", padding: "14px", backgroundColor: "rgba(255, 255, 255, 0.02)", borderRadius: "6px", border: "1px solid rgba(255, 255, 255, 0.06)" }}>
+                        <span style={{ fontSize: "11px", color: "var(--text-muted)", display: "block", fontWeight: 700, letterSpacing: "0.5px" }}>
+                          OFFICEFLOWW CREDIT ADVISORY
+                        </span>
+                        <span style={{ fontSize: "12px", color: "var(--text-secondary)", marginTop: "4px", display: "block", lineHeight: 1.4 }}>
+                          Client account has cleared 98% of all prior invoices within the Net 30 window. Approved for high-volume automated production dispatch.
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
+
+                {/* Lower Contacts Section (MOVED INSIDE OVERVIEW) */}
+                <div
+                  style={{
+                    backgroundColor: "rgba(18, 23, 35, 0.75)",
+                    border: "1px solid rgba(255, 255, 255, 0.08)",
+                    borderRadius: "8px",
+                    padding: "22px 24px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "18px",
+                    width: "100%",
+                    boxSizing: "border-box",
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <Icon name="users" size={16} color="var(--accent-text)" />
+                      <h3 style={{ margin: 0, fontSize: "15px", fontWeight: 700, color: "#fff" }}>
+                        Key Stakeholders & Authorized Contacts ({clientContacts.length})
+                      </h3>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowNewContactModal(true)}
+                      style={{
+                        height: "34px",
+                        padding: "0 14px",
+                        borderRadius: "5px",
+                        backgroundColor: "rgba(255, 255, 255, 0.06)",
+                        border: "1px solid rgba(255, 255, 255, 0.15)",
+                        color: "#fff",
+                        fontSize: "12.5px",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                      }}
+                    >
+                      <span>+</span>
+                      <span>Add Stakeholder</span>
+                    </button>
+                  </div>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: "16px", width: "100%" }}>
+                    {clientContacts.map((cnt) => (
+                      <div
+                        key={cnt.id}
+                        style={{
+                          backgroundColor: "rgba(0, 0, 0, 0.25)",
+                          border: "1px solid rgba(255, 255, 255, 0.06)",
+                          borderRadius: "8px",
+                          padding: "16px",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "10px",
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                            <div
+                              style={{
+                                width: "40px",
+                                height: "40px",
+                                borderRadius: "50%",
+                                background: getAvatarColor(cnt.name),
+                                color: "#fff",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                fontWeight: 800,
+                                fontSize: "14px",
+                                border: "1px solid rgba(255, 255, 255, 0.2)",
+                              }}
+                            >
+                              {getInitials(cnt.name)}
+                            </div>
+                            <div>
+                              <div style={{ fontSize: "14px", fontWeight: 700, color: "#fff" }}>{cnt.name}</div>
+                              <div style={{ fontSize: "11.5px", color: "var(--text-muted)" }}>{cnt.designation || "Stakeholder"}</div>
+                            </div>
+                          </div>
+
+                          {cnt.is_primary && (
+                            <span style={{ fontSize: "10px", padding: "2px 8px", borderRadius: "10px", backgroundColor: "rgba(16, 185, 129, 0.15)", color: "#10b981", fontWeight: 700 }}>
+                              PRIMARY
+                            </span>
+                          )}
+                        </div>
+
+                        <div style={{ borderTop: "1px solid rgba(255, 255, 255, 0.05)", paddingTop: "10px", display: "flex", flexDirection: "column", gap: "6px", fontSize: "12.5px" }}>
+                          <div
+                            onClick={(e) => handleCopy(cnt.email, "Email", e)}
+                            title="Click to copy email"
+                            style={{ display: "flex", alignItems: "center", justifyContent: "space-between", color: "var(--text-secondary)", cursor: "pointer", padding: "3px 6px", borderRadius: "4px" }}
+                            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)")}
+                            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+                          >
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                              <Icon name="mail" size={13} color="#34d399" />
+                              <span>{cnt.email}</span>
+                            </div>
+                            <Icon name="copy" size={12} color="var(--text-muted)" />
+                          </div>
+
+                          <div
+                            onClick={(e) => handleCopy(cnt.phone || "+91 98260 00000", "Phone", e)}
+                            title="Click to copy phone"
+                            style={{ display: "flex", alignItems: "center", justifyContent: "space-between", color: "var(--text-secondary)", cursor: "pointer", padding: "3px 6px", borderRadius: "4px" }}
+                            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)")}
+                            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+                          >
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                              <Icon name="phone" size={13} color="#f59e0b" />
+                              <span style={{ fontFamily: "var(--font-mono)" }}>{cnt.phone || "+91 98260 00000"}</span>
+                            </div>
+                            <Icon name="copy" size={12} color="var(--text-muted)" />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
               </div>
             )}
 
-            {/* 3. PROJECTS TAB (NO CRYPTIC CODES) */}
+            {/* 2. PROJECTS TAB (NO CRYPTIC CODES) */}
             {clientTab === "projects" && (
               <div style={{ display: "flex", flexDirection: "column", gap: "16px", width: "100%" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -1160,7 +1243,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
               </div>
             )}
 
-            {/* 4. INVOICES TAB (NO CRYPTIC CODES) */}
+            {/* 3. INVOICES TAB (NO CRYPTIC CODES) */}
             {clientTab === "invoices" && (
               <div style={{ display: "flex", flexDirection: "column", gap: "16px", width: "100%" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -1274,7 +1357,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
               </div>
             )}
 
-            {/* 5. LOGS TAB (RENAMED FROM ACTIVITY, NO CRYPTIC CODES) */}
+            {/* 4. LOGS TAB (RENAMED FROM ACTIVITY, NO CRYPTIC CODES) */}
             {clientTab === "logs" && (
               <div style={{ display: "flex", flexDirection: "column", gap: "16px", width: "100%" }}>
                 {/* Interactive Log Bar */}
@@ -1574,7 +1657,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
   }
 
   // ----------------------------------------------------
-  // RENDER 2: CLIENT DIRECTORY IN CARDS (NO TABLE, NO TITLE, SEARCH ON TOP HEADER)
+  // RENDER 2: CLIENT DIRECTORY IN LARGER CARDS WITH STACKED CREW & ONE-CLICK COPY
   // ----------------------------------------------------
   return (
     <div
@@ -1695,20 +1778,20 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
         </div>
       </div>
 
-      {/* BODY AREA: CARDS GRID (NO TABLES!) */}
-      <div style={{ padding: "24px 32px", display: "flex", flexDirection: "column", gap: "20px", width: "100%", boxSizing: "border-box" }}>
+      {/* BODY AREA: BIGGER CARDS GRID WITH STACKED CREW & ONE-CLICK COPY */}
+      <div style={{ padding: "26px 32px", display: "flex", flexDirection: "column", gap: "24px", width: "100%", boxSizing: "border-box" }}>
         
-        {/* CARDS GRID */}
+        {/* CARDS GRID (Bigger Cards: minmax 460px) */}
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(380px, 1fr))",
-            gap: "20px",
+            gridTemplateColumns: "repeat(auto-fill, minmax(460px, 1fr))",
+            gap: "24px",
             width: "100%",
             boxSizing: "border-box",
           }}
         >
-          {filteredClients.map((c) => {
+          {filteredClients.map((c, clientIdx) => {
             const isNw = c.organization_name.toLowerCase().includes("northwind");
             const subtitle = isNw
               ? "Enterprise NFC & Smartcard Access Control"
@@ -1721,6 +1804,8 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
               email: "contact@institution.org",
             };
 
+            const assignedCrew = CLIENT_CREW_POOL[clientIdx % CLIENT_CREW_POOL.length];
+
             return (
               <div
                 key={c.id}
@@ -1732,20 +1817,20 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                   backgroundColor: "rgba(18, 23, 35, 0.75)",
                   backdropFilter: "blur(18px)",
                   border: "1px solid rgba(255, 255, 255, 0.08)",
-                  borderRadius: "10px",
-                  padding: "22px",
+                  borderRadius: "12px",
+                  padding: "26px 28px",
                   display: "flex",
                   flexDirection: "column",
-                  gap: "16px",
+                  gap: "18px",
                   cursor: "pointer",
                   transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
                   position: "relative",
                   overflow: "hidden",
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translateY(-3px)";
-                  e.currentTarget.style.borderColor = "rgba(255, 138, 115, 0.35)";
-                  e.currentTarget.style.boxShadow = "0 8px 24px rgba(0, 0, 0, 0.4)";
+                  e.currentTarget.style.transform = "translateY(-4px)";
+                  e.currentTarget.style.borderColor = "rgba(255, 138, 115, 0.4)";
+                  e.currentTarget.style.boxShadow = "0 10px 30px rgba(0, 0, 0, 0.45)";
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = "none";
@@ -1753,35 +1838,35 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                   e.currentTarget.style.boxShadow = "none";
                 }}
               >
-                {/* Top Row: Avatar + Organization Name + Active Badge */}
-                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "14px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+                {/* Top Row: Avatar (54px) + Organization Name (18px) + Active Badge */}
+                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
                     <div
                       style={{
-                        width: "48px",
-                        height: "48px",
-                        borderRadius: "12px",
+                        width: "54px",
+                        height: "54px",
+                        borderRadius: "14px",
                         background: isNw
                           ? "linear-gradient(135deg, #d97706 0%, #78350f 100%)"
                           : "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        fontSize: "20px",
+                        fontSize: "22px",
                         fontWeight: 800,
                         color: "#fff",
                         flexShrink: 0,
-                        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.35)",
+                        boxShadow: "0 4px 14px rgba(0, 0, 0, 0.35)",
                       }}
                     >
                       {isNw ? "🏢" : c.organization_name.slice(0, 2).toUpperCase()}
                     </div>
 
-                    <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
-                      <h3 style={{ margin: 0, fontSize: "16.5px", fontWeight: 700, color: "#ffffff", letterSpacing: "-0.2px" }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                      <h3 style={{ margin: 0, fontSize: "18px", fontWeight: 800, color: "#ffffff", letterSpacing: "-0.3px" }}>
                         {c.organization_name}
                       </h3>
-                      <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>
+                      <span style={{ fontSize: "12.5px", color: "var(--text-muted)" }}>
                         {subtitle}
                       </span>
                     </div>
@@ -1791,9 +1876,9 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                     style={{
                       display: "inline-flex",
                       alignItems: "center",
-                      gap: "4px",
-                      padding: "2px 8px",
-                      borderRadius: "10px",
+                      gap: "5px",
+                      padding: "3px 10px",
+                      borderRadius: "12px",
                       backgroundColor: "rgba(16, 185, 129, 0.12)",
                       border: "1px solid rgba(16, 185, 129, 0.3)",
                       color: "#34d399",
@@ -1807,47 +1892,154 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                   </span>
                 </div>
 
-                {/* Middle Details Section */}
+                {/* Middle Details Section with One-Click Copy */}
                 <div
                   style={{
-                    backgroundColor: "rgba(0, 0, 0, 0.2)",
-                    borderRadius: "6px",
-                    border: "1px solid rgba(255, 255, 255, 0.05)",
+                    backgroundColor: "rgba(0, 0, 0, 0.22)",
+                    borderRadius: "8px",
+                    border: "1px solid rgba(255, 255, 255, 0.06)",
                     padding: "12px 14px",
                     display: "flex",
                     flexDirection: "column",
-                    gap: "8px",
-                    fontSize: "12.5px",
+                    gap: "6px",
                   }}
                 >
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#ffffff" }}>
-                    <Icon name="user" size={13} color="var(--text-muted)" />
-                    <span style={{ fontWeight: 600 }}>{primaryContact.name}</span>
-                    <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>({primaryContact.designation || "Primary Contact"})</span>
+                  {/* Contact Name - Click to copy */}
+                  <div
+                    onClick={(e) => handleCopy(primaryContact.name, "Contact Name", e)}
+                    title="Click to copy contact name"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "5px 8px",
+                      borderRadius: "5px",
+                      cursor: "pointer",
+                      transition: "background-color 0.15s ease",
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "9px", color: "#ffffff" }}>
+                      <Icon name="user" size={14} color="var(--accent-text)" />
+                      <span style={{ fontWeight: 700, fontSize: "13.5px" }}>{primaryContact.name}</span>
+                      <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>({primaryContact.designation || "Primary Contact"})</span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "4px", color: "var(--text-muted)", fontSize: "11px" }}>
+                      <Icon name="copy" size={12} color="var(--text-muted)" />
+                      <span>Copy</span>
+                    </div>
                   </div>
 
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--text-secondary)" }}>
-                    <Icon name="phone" size={13} color="var(--text-muted)" />
-                    <span>{primaryContact.phone || "+91 98260 00000"}</span>
-                    <span style={{ margin: "0 4px", color: "rgba(255, 255, 255, 0.2)" }}>•</span>
-                    <span style={{ color: "var(--text-muted)" }}>{primaryContact.email || "contact@org.in"}</span>
+                  {/* Phone - Click to copy */}
+                  <div
+                    onClick={(e) => handleCopy(primaryContact.phone || "+91 98260 12345", "Phone Number", e)}
+                    title="Click to copy phone number"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "5px 8px",
+                      borderRadius: "5px",
+                      cursor: "pointer",
+                      transition: "background-color 0.15s ease",
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "9px", color: "var(--text-secondary)" }}>
+                      <Icon name="phone" size={14} color="#f59e0b" />
+                      <span style={{ fontFamily: "var(--font-mono)", fontSize: "13px", fontWeight: 600 }}>
+                        {primaryContact.phone || "+91 98260 12345"}
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "4px", color: "var(--text-muted)", fontSize: "11px" }}>
+                      <Icon name="copy" size={12} color="var(--text-muted)" />
+                      <span>Copy</span>
+                    </div>
                   </div>
 
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--text-muted)" }}>
-                    <Icon name="map-pin" size={13} color="var(--text-muted)" />
+                  {/* Email - Click to copy */}
+                  <div
+                    onClick={(e) => handleCopy(primaryContact.email || "contact@org.in", "Email Address", e)}
+                    title="Click to copy email address"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "5px 8px",
+                      borderRadius: "5px",
+                      cursor: "pointer",
+                      transition: "background-color 0.15s ease",
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "9px", color: "var(--text-secondary)" }}>
+                      <Icon name="mail" size={14} color="#34d399" />
+                      <span style={{ fontSize: "12.5px" }}>{primaryContact.email || "contact@org.in"}</span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "4px", color: "var(--text-muted)", fontSize: "11px" }}>
+                      <Icon name="copy" size={12} color="var(--text-muted)" />
+                      <span>Copy</span>
+                    </div>
+                  </div>
+
+                  {/* Worksite / Factory Address */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "9px", padding: "5px 8px", color: "var(--text-muted)", fontSize: "12px" }}>
+                    <Icon name="map-pin" size={14} color="#c084fc" />
                     <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {c.billing_address || "Bhopal Industrial Zone, Sector 2, MP"}
                     </span>
                   </div>
                 </div>
 
-                {/* Bottom Card Footer with Production Status and Button */}
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: "4px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                    <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>Terms:</span>
-                    <span style={{ fontSize: "11.5px", fontWeight: 700, color: "#34d399" }}>Net 30 Days</span>
+                {/* Bottom Card Footer: Stacked User/Labour Profiles in place of Terms */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: "6px", borderTop: "1px solid rgba(255, 255, 255, 0.06)" }}>
+                  
+                  {/* Stacked User Profiles Working on this Client */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <div style={{ display: "flex", alignItems: "center" }}>
+                      {assignedCrew.map((crew, idx) => (
+                        <div
+                          key={crew.name}
+                          title={`${crew.name} (${crew.role})`}
+                          style={{
+                            width: "32px",
+                            height: "32px",
+                            borderRadius: "50%",
+                            background: crew.color,
+                            color: "#fff",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: "11px",
+                            fontWeight: 800,
+                            border: "2px solid #131722",
+                            marginLeft: idx === 0 ? 0 : "-8px",
+                            boxShadow: "0 2px 6px rgba(0, 0, 0, 0.4)",
+                            cursor: "pointer",
+                            transition: "all 0.15s ease",
+                            zIndex: 5 - idx,
+                          }}
+                          onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-3px) scale(1.15)")}
+                          onMouseLeave={(e) => (e.currentTarget.style.transform = "none")}
+                        >
+                          {crew.initials}
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column" }}>
+                      <span style={{ fontSize: "12px", fontWeight: 700, color: "#fff" }}>
+                        Assigned Team
+                      </span>
+                      <span style={{ fontSize: "10.5px", color: "var(--text-muted)" }}>
+                        {assignedCrew.length} Production Staff
+                      </span>
+                    </div>
                   </div>
 
+                  {/* Open Workspace Action */}
                   <button
                     type="button"
                     onClick={(e) => {
@@ -1856,13 +2048,13 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                       onSelectClient?.(c.id);
                     }}
                     style={{
-                      height: "32px",
-                      padding: "0 14px",
-                      borderRadius: "4px",
+                      height: "34px",
+                      padding: "0 16px",
+                      borderRadius: "5px",
                       backgroundColor: "rgba(59, 130, 246, 0.12)",
                       border: "1px solid rgba(59, 130, 246, 0.3)",
                       color: "#60a5fa",
-                      fontSize: "12px",
+                      fontSize: "12.5px",
                       fontWeight: 700,
                       cursor: "pointer",
                       display: "inline-flex",
@@ -1873,10 +2065,12 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                     onMouseEnter={(e) => {
                       e.currentTarget.style.backgroundColor = "#2563eb";
                       e.currentTarget.style.color = "#ffffff";
+                      e.currentTarget.style.boxShadow = "0 3px 12px rgba(37, 99, 235, 0.4)";
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.backgroundColor = "rgba(59, 130, 246, 0.12)";
                       e.currentTarget.style.color = "#60a5fa";
+                      e.currentTarget.style.boxShadow = "none";
                     }}
                   >
                     <span>Open Workspace</span>
