@@ -63,6 +63,7 @@ export const Button: React.FC<ButtonProps> = ({
 
     return {
       display: "inline-flex",
+      flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
       gap: "6px",
@@ -70,6 +71,8 @@ export const Button: React.FC<ButtonProps> = ({
       fontSize,
       fontWeight: 500,
       height,
+      boxSizing: "border-box",
+      lineHeight: 1,
       backgroundColor: bg,
       color,
       border,
@@ -98,15 +101,28 @@ export const Button: React.FC<ButtonProps> = ({
             borderRightColor: "transparent",
             borderRadius: "50%",
             animation: "spin 0.6s linear infinite",
-            display: "inline-block",
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
           }}
         />
       ) : (
-        icon && iconPosition === "left" && <Icon name={icon} size={size === "sm" ? 12 : 14} />
+        icon && iconPosition === "left" && (
+          <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, lineHeight: 1 }}>
+            <Icon name={icon} size={size === "sm" ? 12 : 14} />
+          </span>
+        )
       )}
-      <span>{children}</span>
+      {children && (
+        <span style={{ display: "inline-flex", alignItems: "center", lineHeight: 1, whiteSpace: "nowrap" }}>
+          {children}
+        </span>
+      )}
       {!loading && icon && iconPosition === "right" && (
-        <Icon name={icon} size={size === "sm" ? 12 : 14} />
+        <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, lineHeight: 1 }}>
+          <Icon name={icon} size={size === "sm" ? 12 : 14} />
+        </span>
       )}
     </button>
   );
@@ -160,8 +176,11 @@ export const IconButton: React.FC<IconButtonProps> = ({
       title={tooltip}
       style={{
         display: "inline-flex",
+        flexDirection: "row",
         alignItems: "center",
         justifyContent: "center",
+        flexShrink: 0,
+        lineHeight: 1,
         width,
         height,
         padding: 0,

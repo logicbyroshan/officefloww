@@ -25,6 +25,7 @@ interface MovementRecord {
   id: string;
   timestamp: string;
   item_code: string;
+  item_name?: string;
   type: string;
   quantity: number;
   source: string;
@@ -126,6 +127,7 @@ const SEED_MOVEMENTS: MovementRecord[] = [
     id: "mov-01",
     timestamp: "2026-09-03T11:42:00Z",
     item_code: "HDW-DOGHOOK-20MM",
+    item_name: "Metal Dog-Hook 20mm (Nickel Plated)",
     type: "ISSUE",
     quantity: 500,
     source: "Main Store",
@@ -137,6 +139,7 @@ const SEED_MOVEMENTS: MovementRecord[] = [
     id: "mov-02",
     timestamp: "2026-09-03T10:15:00Z",
     item_code: "RAW-SATIN-20MM-WHT",
+    item_name: "Satin Lanyard Ribbon 20mm (White)",
     type: "RESERVE",
     quantity: 2500,
     source: "Main Store",
@@ -251,16 +254,6 @@ export const StockDashboardView: React.FC = () => {
 
   const inventoryColumns: Column<StockRecord>[] = [
     {
-      key: "code",
-      header: "Material SKU",
-      width: "140px",
-      render: (s) => (
-        <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: "var(--accent-text)", fontSize: "12px" }}>
-          {s.code}
-        </span>
-      ),
-    },
-    {
       key: "name",
       header: "Material / Component Description",
       render: (s) => (
@@ -372,11 +365,11 @@ export const StockDashboardView: React.FC = () => {
     },
     {
       key: "item_code",
-      header: "Material SKU",
-      width: "150px",
+      header: "Material / Component",
+      width: "200px",
       render: (m) => (
-        <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: "var(--accent-text)", fontSize: "12px" }}>
-          {m.item_code}
+        <span style={{ fontWeight: 600, color: "var(--text-primary)", fontSize: "12.5px" }}>
+          {m.item_name || m.item_code}
         </span>
       ),
     },
@@ -512,7 +505,7 @@ export const StockDashboardView: React.FC = () => {
             <Icon name="search" size={13} color="var(--text-muted)" />
             <input
               type="text"
-              placeholder="Search SKU, name, rack..."
+              placeholder="Search materials, category, location..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               style={{
@@ -646,10 +639,10 @@ export const StockDashboardView: React.FC = () => {
           >
             <div>
               <h3 style={{ margin: 0, fontSize: "15px", fontWeight: 700, color: "#fff" }}>
-                {selectedItem.code}
+                {selectedItem.name}
               </h3>
               <span style={{ fontSize: "11.5px", color: "var(--accent-text)" }}>
-                {selectedItem.name}
+                {selectedItem.location} • {selectedItem.category}
               </span>
             </div>
             <button
@@ -716,7 +709,7 @@ export const StockDashboardView: React.FC = () => {
                 variant="secondary"
                 size="sm"
                 onClick={() => {
-                  success("Material Issued", `Issued 100 units of ${selectedItem.code} to floor.`);
+                  success("Material Issued", `Issued 100 units of ${selectedItem.name} to floor.`);
                 }}
               >
                 Issue to Floor
@@ -724,11 +717,12 @@ export const StockDashboardView: React.FC = () => {
               <Button
                 variant="primary"
                 size="sm"
+                icon="plus"
                 onClick={() => {
-                  success("Requisition", `Created purchase requisition for ${selectedItem.code}.`);
+                  success("Requisition", `Created purchase requisition for ${selectedItem.name}.`);
                 }}
               >
-                + Reorder PO
+                Reorder Material
               </Button>
             </div>
           </div>
@@ -747,7 +741,7 @@ export const StockDashboardView: React.FC = () => {
               label="Select Material / Raw Stock"
               value={receiptItem}
               onChange={(e) => setReceiptItem(e.target.value)}
-              options={stockItems.map((s) => ({ value: s.id, label: `${s.code} — ${s.name}` }))}
+              options={stockItems.map((s) => ({ value: s.id, label: `${s.name} (${s.location})` }))}
             />
 
             <Input

@@ -9,7 +9,7 @@ class UserBase(BaseModel):
     email: EmailStr
     full_name: str
     phone: Optional[str] = None
-    role: UserRole = UserRole.DATA_OPERATOR
+    role: UserRole = UserRole.OPERATOR
     is_active: bool = True
 
 

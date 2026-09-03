@@ -125,7 +125,7 @@ export const OrdersView: React.FC<OrdersViewProps> = ({
           onClick: onNewOrder,
         }}
         secondaryActions={
-          <Button variant="secondary" icon="refresh" onClick={onRefresh}>
+          <Button variant="secondary" size="sm" icon="refresh" onClick={onRefresh}>
             Refresh
           </Button>
         }

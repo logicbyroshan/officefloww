@@ -4,6 +4,24 @@ from apps.api.app.users.models import UserRole
 ROLE_PERMISSIONS: Dict[UserRole, Set[str]] = {
     UserRole.OWNER: {"*"},
     UserRole.ADMIN: {"*"},
+    UserRole.OPERATOR: {
+        "orders:read", "orders:write", "orders:approve",
+        "workflows:read", "workflows:write", "workflows:advance",
+        "tasks:read", "tasks:write", "tasks:complete",
+        "files:read", "files:upload",
+        "approvals:read", "approvals:write", "approvals:decide",
+        "clients:read", "clients:write",
+        "products:read", "products:write", "bom:write",
+        "ledger:read", "ledger:write",
+        "audit:read",
+        "users:read",
+    },
+    UserRole.WORKER: {
+        "orders:read",
+        "tasks:read", "tasks:complete",
+        "files:read",
+        "ledger:read", "ledger:write",
+    },
     UserRole.MANAGER: {
         "orders:read", "orders:write", "orders:approve",
         "workflows:read", "workflows:write", "workflows:advance",

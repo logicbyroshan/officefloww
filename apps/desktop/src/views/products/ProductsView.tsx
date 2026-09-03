@@ -37,7 +37,7 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
   const columns: Column<Product>[] = [
     {
       key: "code",
-      header: "Product Code / SKU",
+      header: "Product Code",
       width: "160px",
       render: (p) => (
         <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: "var(--accent-text)" }}>

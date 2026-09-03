@@ -213,7 +213,6 @@ export const SettingsView: React.FC = () => {
                 )}
               </Card>
 
-              {/* Firm Information */}
               <Card title="Firm Identity & Institutional Domain">
                 <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12.5px" }}>
@@ -228,6 +227,24 @@ export const SettingsView: React.FC = () => {
                     <span style={{ color: "var(--text-muted)" }}>Logged In As:</span>
                     <strong style={{ color: "#fff" }}>{user?.email} ({user?.role})</strong>
                   </div>
+                  <div style={{ marginTop: "8px", padding: "10px", backgroundColor: "rgba(255,255,255,0.02)", borderRadius: "4px", border: "1px solid rgba(255,255,255,0.06)" }}>
+                    <div style={{ fontSize: "10.5px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", marginBottom: "8px", letterSpacing: "0.8px" }}>
+                      System Role Limits (Enforced)
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
+                      {[
+                        { role: "ADMIN", limit: "Max 3 users", color: "var(--accent-text)" },
+                        { role: "OPERATOR", limit: "Max 10 users", color: "#38bdf8" },
+                        { role: "WORKER", limit: "Unlimited", color: "#10b981" },
+                        { role: "LABOUR", limit: "Unlimited", color: "var(--text-secondary)" },
+                      ].map((r) => (
+                        <div key={r.role} style={{ display: "flex", justifyContent: "space-between", fontSize: "11.5px", padding: "4px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                          <span style={{ fontWeight: 700, color: r.color }}>{r.role}</span>
+                          <span style={{ color: "var(--text-muted)" }}>{r.limit}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </Card>
             </>
@@ -240,7 +257,7 @@ export const SettingsView: React.FC = () => {
               </p>
               <Table
                 columns={[
-                  { key: "code", header: "Product SKU", render: (p) => <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: "var(--accent-text)" }}>{p.code}</span> },
+                  { key: "code", header: "Product Code", render: (p) => <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: "var(--accent-text)" }}>{p.code}</span> },
                   { key: "name", header: "Product Description", render: (p) => <span style={{ fontWeight: 600, color: "#fff" }}>{p.name}</span> },
                   { key: "bom", header: "BOM Components", render: (p) => <span style={{ fontSize: "11.5px", color: "var(--text-secondary)" }}>{p.bom}</span> },
                   { key: "basePrice", header: "Standard Price", align: "right", render: (p) => <span style={{ fontFamily: "var(--font-mono)", color: "#34d399", fontWeight: 700 }}>₹{p.basePrice}</span> },

@@ -80,16 +80,6 @@ export const StockView: React.FC = () => {
 
   const columns: Column<MockStockItem>[] = [
     {
-      key: "sku",
-      header: "Stock SKU",
-      width: "160px",
-      render: (s) => (
-        <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: "var(--accent-text)" }}>
-          {s.sku}
-        </span>
-      ),
-    },
-    {
       key: "name",
       header: "Raw Material / Component Description",
       render: (s) => (
@@ -143,7 +133,7 @@ export const StockView: React.FC = () => {
 
       <div style={{ padding: "16px 24px", display: "flex", flexDirection: "column", gap: "16px", flex: 1 }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "12px" }}>
-          <StatBox label="Total Warehouse SKUs" value={stockItems.length} subValue="Tracked Items" icon="stock" />
+          <StatBox label="Total Tracked Materials" value={stockItems.length} subValue="Tracked Items" icon="stock" />
           <StatBox label="Physical Inventory Units" value="97,135" subValue="Across Locations" icon="package" />
           <StatBox label="BOM Reserved Holds" value="7,512" subValue="Active Production Holds" icon="lock" />
           <StatBox label="Net Available Units" value="89,623" subValue="Available to Promise" icon="check-circle" status="success" />

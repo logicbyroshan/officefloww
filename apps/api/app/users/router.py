@@ -6,13 +6,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from apps.api.app.core.database import get_db
 from apps.api.app.core.schemas import SuccessResponse, PaginatedResponse, PaginationMeta
-from apps.api.app.core.exceptions import EntityNotFoundError, ConflictError
+from apps.api.app.core.exceptions import EntityNotFoundError, ConflictError, BusinessRuleViolationError
 from apps.api.app.core.security import get_password_hash
 from apps.api.app.auth.dependencies import get_current_user, require_role
 from apps.api.app.users.models import User, UserRole
 from apps.api.app.users.schemas import UserCreate, UserRead, UserUpdate
 
 router = APIRouter(prefix="/users", tags=["Users"])
+
+CANONICAL_ROLES = {UserRole.ADMIN, UserRole.OPERATOR, UserRole.WORKER, UserRole.LABOUR}
+MAX_ROLE_LIMITS = {
+    UserRole.ADMIN: 3,
+    UserRole.OPERATOR: 10,
+}
 
 
 @router.get("", response_model=PaginatedResponse[UserRead])
@@ -48,12 +54,26 @@ async def create_user(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_role(UserRole.OWNER, UserRole.ADMIN, UserRole.MANAGER)),
 ):
-    existing = await db.scalar(select(User).where(User.email == user_in.email.lower().strip()))
+    clean_email = user_in.email.lower().strip()
+    if not clean_email.endswith("@adharshbhopal.in"):
+        raise BusinessRuleViolationError("Only corporate @adharshbhopal.in email addresses are permitted.")
+
+    if user_in.role in MAX_ROLE_LIMITS and user_in.is_active:
+        active_count = await db.scalar(
+            select(func.count(User.id)).where(User.role == user_in.role, User.is_active == True)
+        ) or 0
+        limit = MAX_ROLE_LIMITS[user_in.role]
+        if active_count >= limit:
+            raise BusinessRuleViolationError(
+                f"Maximum limit of {limit} active {user_in.role.value} accounts reached (current: {active_count})."
+            )
+
+    existing = await db.scalar(select(User).where(User.email == clean_email))
     if existing:
         raise ConflictError(f"User with email '{user_in.email}' already exists.")
 
     new_user = User(
-        email=user_in.email.lower().strip(),
+        email=clean_email,
         hashed_password=get_password_hash(user_in.password),
         full_name=user_in.full_name,
         phone=user_in.phone,
@@ -88,6 +108,25 @@ async def update_user(
     user = await db.scalar(select(User).where(User.id == user_id))
     if not user:
         raise EntityNotFoundError("User", user_id)
+
+    target_role = user_in.role if user_in.role is not None else user.role
+    target_active = user_in.is_active if user_in.is_active is not None else user.is_active
+
+    if target_role in MAX_ROLE_LIMITS and target_active:
+        # If role is changing to a limited role or an inactive user of that role is being activated
+        if (user_in.role is not None and user_in.role != user.role) or (user_in.is_active is True and not user.is_active):
+            active_count = await db.scalar(
+                select(func.count(User.id)).where(
+                    User.role == target_role,
+                    User.is_active == True,
+                    User.id != user_id
+                )
+            ) or 0
+            limit = MAX_ROLE_LIMITS[target_role]
+            if active_count >= limit:
+                raise BusinessRuleViolationError(
+                    f"Maximum limit of {limit} active {target_role.value} accounts reached (current: {active_count})."
+                )
 
     if user_in.full_name is not None:
         user.full_name = user_in.full_name

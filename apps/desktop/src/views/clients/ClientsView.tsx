@@ -334,8 +334,8 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                   Cost calculation, margins, and lead time estimators.
                 </p>
               </div>
-              <Button variant="primary" size="sm">
-                + Create Quotation
+              <Button variant="primary" size="sm" icon="plus">
+                Create Quotation
               </Button>
             </div>
 
@@ -343,7 +343,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
               columns={[
                 { key: "code", header: "Quote #", render: () => <span style={{ fontFamily: "var(--font-mono)", color: "var(--accent-text)", fontWeight: 700 }}>QTN-2026-0042</span> },
                 { key: "client", header: "Client", render: () => <span style={{ fontWeight: 600, color: "#fff" }}>St. Xavier's High School</span> },
-                { key: "items", header: "Items & SKU", render: () => <span>500 Multicolor Lanyards + ID Badges</span> },
+                { key: "items", header: "Items Ordered", render: () => <span>500 Multicolor Lanyards + ID Badges</span> },
                 { key: "amount", header: "Quoted Total", align: "right", render: () => <span style={{ fontFamily: "var(--font-mono)", color: "#34d399", fontWeight: 700 }}>₹1,82,500</span> },
                 { key: "status", header: "Status", render: () => <span style={{ fontSize: "10.5px", padding: "2px 6px", borderRadius: "3px", backgroundColor: "rgba(16, 185, 129, 0.15)", color: "#10b981", fontWeight: 700 }}>CONVERTED</span> },
               ]}

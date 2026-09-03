@@ -75,11 +75,12 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
           {badge}
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+        <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: "8px", flexShrink: 0 }}>
           {secondaryActions}
           {primaryAction && (
             <Button
               variant="primary"
+              size="sm"
               icon={primaryAction.icon}
               onClick={primaryAction.onClick}
               disabled={primaryAction.disabled}

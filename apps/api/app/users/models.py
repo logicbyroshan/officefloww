@@ -9,8 +9,13 @@ from apps.api.app.core.database import Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 
 class UserRole(str, Enum):
-    OWNER = "OWNER"
     ADMIN = "ADMIN"
+    OPERATOR = "OPERATOR"
+    WORKER = "WORKER"
+    LABOUR = "LABOUR"
+
+    # Legacy mappings
+    OWNER = "OWNER"
     MANAGER = "MANAGER"
     SALES = "SALES"
     DESIGNER = "DESIGNER"
@@ -19,9 +24,6 @@ class UserRole(str, Enum):
     MACHINE_OPERATOR = "MACHINE_OPERATOR"
     PACKING_OPERATOR = "PACKING_OPERATOR"
     ACCOUNTS = "ACCOUNTS"
-
-    # Future roles
-    LABOUR = "LABOUR"
     DELIVERY_PARTNER = "DELIVERY_PARTNER"
     DISPATCH_OPERATOR = "DISPATCH_OPERATOR"
     PURCHASE_MANAGER = "PURCHASE_MANAGER"

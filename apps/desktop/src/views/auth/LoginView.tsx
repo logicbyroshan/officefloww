@@ -43,7 +43,7 @@ const FACILITY_SLIDES: FacilitySlide[] = [
     role: "Labour Payout & Hardware Reconciliation",
   },
   {
-    badge: "Core Products • High SKU Variety",
+    badge: "Core Products • High Custom Variety",
     title: "Multicolor Lanyards & Smart RFID Cards.",
     quote:
       "Centralized production management engineered for high-throughput facilities: Multicolor Printed Lanyards (MPL), ID Cards, Acrylic Badges, Marksheets, and Custom Engineered Print Products.",

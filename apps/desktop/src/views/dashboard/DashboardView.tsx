@@ -195,7 +195,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 onClick={onNewOrder}
                 style={{
                   display: "inline-flex",
+                  flexDirection: "row",
                   alignItems: "center",
+                  justifyContent: "center",
                   gap: "6px",
                   padding: "6px 12px",
                   borderRadius: "4px",
@@ -205,10 +207,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   fontWeight: 600,
                   border: "none",
                   cursor: "pointer",
+                  whiteSpace: "nowrap",
+                  lineHeight: 1,
                 }}
               >
                 <Icon name="plus" size={13} />
-                <span>+ New Order</span>
+                <span>New Order</span>
               </button>
             )}
 
@@ -217,7 +221,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               onClick={onNewTask ? onNewTask : () => onNavigateSection?.("tasks")}
               style={{
                 display: "inline-flex",
+                flexDirection: "row",
                 alignItems: "center",
+                justifyContent: "center",
                 gap: "6px",
                 padding: "6px 12px",
                 borderRadius: "4px",
@@ -227,10 +233,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 fontSize: "12px",
                 fontWeight: 500,
                 cursor: "pointer",
+                whiteSpace: "nowrap",
+                lineHeight: 1,
               }}
             >
               <Icon name="tasks" size={13} />
-              <span>+ New Task</span>
+              <span>New Task</span>
             </button>
 
             {hasPerm("clients:create") && (
@@ -239,7 +247,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 onClick={onNewClient}
                 style={{
                   display: "inline-flex",
+                  flexDirection: "row",
                   alignItems: "center",
+                  justifyContent: "center",
                   gap: "6px",
                   padding: "6px 12px",
                   borderRadius: "4px",
@@ -249,10 +259,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   fontSize: "12px",
                   fontWeight: 500,
                   cursor: "pointer",
+                  whiteSpace: "nowrap",
+                  lineHeight: 1,
                 }}
               >
                 <Icon name="clients" size={13} />
-                <span>+ New Client</span>
+                <span>New Client</span>
               </button>
             )}
 
@@ -261,7 +273,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               onClick={onNewQuotation ? onNewQuotation : () => onNavigateSection?.("clients")}
               style={{
                 display: "inline-flex",
+                flexDirection: "row",
                 alignItems: "center",
+                justifyContent: "center",
                 gap: "6px",
                 padding: "6px 12px",
                 borderRadius: "4px",
@@ -271,10 +285,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 fontSize: "12px",
                 fontWeight: 500,
                 cursor: "pointer",
+                whiteSpace: "nowrap",
+                lineHeight: 1,
               }}
             >
               <Icon name="quotations" size={13} />
-              <span>+ Quotation</span>
+              <span>New Quotation</span>
             </button>
 
             <button
@@ -282,7 +298,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               onClick={onStockEntry ? onStockEntry : () => onNavigateSection?.("stock")}
               style={{
                 display: "inline-flex",
+                flexDirection: "row",
                 alignItems: "center",
+                justifyContent: "center",
                 gap: "6px",
                 padding: "6px 12px",
                 borderRadius: "4px",
@@ -292,6 +310,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 fontSize: "12px",
                 fontWeight: 500,
                 cursor: "pointer",
+                whiteSpace: "nowrap",
+                lineHeight: 1,
               }}
             >
               <Icon name="stock" size={13} />
@@ -303,7 +323,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               onClick={onRecordPayment ? onRecordPayment : () => onNavigateSection?.("billing")}
               style={{
                 display: "inline-flex",
+                flexDirection: "row",
                 alignItems: "center",
+                justifyContent: "center",
                 gap: "6px",
                 padding: "6px 12px",
                 borderRadius: "4px",
@@ -313,6 +335,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 fontSize: "12px",
                 fontWeight: 500,
                 cursor: "pointer",
+                whiteSpace: "nowrap",
+                lineHeight: 1,
               }}
             >
               <Icon name="billing" size={13} />
