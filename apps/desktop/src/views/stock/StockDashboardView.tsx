@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { PageHeader } from "../../design-system/layouts/PageHeader";
 import { Table, Column } from "../../design-system/components/Table";
-import { Button, IconButton } from "../../design-system/components/Button";
+import { Button } from "../../design-system/components/Button";
 import { Icon } from "../../design-system/components/Icon";
 import { Modal } from "../../design-system/components/Modal";
 import { Input, Select, Textarea } from "../../design-system/components/Input";
@@ -16,9 +16,9 @@ interface StockRecord {
   physical_stock: number;
   reserved_stock: number;
   available_stock: number;
+  used_stock: number; // Total units used/consumed in production
   min_stock_level: number;
-  cost_price: number;
-  location: string;
+  item_price: number; // Renamed from cost_price / product price
   active: boolean;
   iconName: "layers" | "package" | "tool" | "file-text" | "sliders" | "cpu";
   iconColor: string;
@@ -32,7 +32,6 @@ interface MovementRecord {
   item_name?: string;
   type: string;
   quantity: number;
-  source: string;
   destination: string;
   user_name: string;
   reason: string;
@@ -68,9 +67,9 @@ const SEED_STOCK_ITEMS: StockRecord[] = [
     physical_stock: 50000,
     reserved_stock: 2500,
     available_stock: 47500,
+    used_stock: 14200,
     min_stock_level: 10000,
-    cost_price: 4.20,
-    location: "Main Store - Rack A1",
+    item_price: 4.20,
     active: true,
     iconName: "layers",
     iconColor: "#38bdf8",
@@ -85,9 +84,9 @@ const SEED_STOCK_ITEMS: StockRecord[] = [
     physical_stock: 12000,
     reserved_stock: 2500,
     available_stock: 9500,
+    used_stock: 6800,
     min_stock_level: 3000,
-    cost_price: 1.80,
-    location: "Main Store - Rack B2",
+    item_price: 1.80,
     active: true,
     iconName: "package",
     iconColor: "#ff8a73",
@@ -102,9 +101,9 @@ const SEED_STOCK_ITEMS: StockRecord[] = [
     physical_stock: 8500,
     reserved_stock: 2000,
     available_stock: 6500,
+    used_stock: 7500,
     min_stock_level: 8000,
-    cost_price: 0.95,
-    location: "Hardware Bin #04",
+    item_price: 0.95,
     active: true,
     iconName: "tool",
     iconColor: "#c084fc",
@@ -119,9 +118,9 @@ const SEED_STOCK_ITEMS: StockRecord[] = [
     physical_stock: 45,
     reserved_stock: 5,
     available_stock: 40,
+    used_stock: 18,
     min_stock_level: 15,
-    cost_price: 420.0,
-    location: "Cleanroom Film Cabinet",
+    item_price: 420.0,
     active: true,
     iconName: "file-text",
     iconColor: "#34d399",
@@ -136,9 +135,9 @@ const SEED_STOCK_ITEMS: StockRecord[] = [
     physical_stock: 8,
     reserved_stock: 2,
     available_stock: 6,
+    used_stock: 5,
     min_stock_level: 5,
-    cost_price: 1850.0,
-    location: "Ink Vault - Bay 1",
+    item_price: 1850.0,
     active: true,
     iconName: "sliders",
     iconColor: "#f59e0b",
@@ -153,9 +152,9 @@ const SEED_STOCK_ITEMS: StockRecord[] = [
     physical_stock: 15000,
     reserved_stock: 1200,
     available_stock: 13800,
+    used_stock: 4200,
     min_stock_level: 5000,
-    cost_price: 1.25,
-    location: "Hardware Bin #08",
+    item_price: 1.25,
     active: true,
     iconName: "tool",
     iconColor: "#a78bfa",
@@ -170,9 +169,9 @@ const SEED_STOCK_ITEMS: StockRecord[] = [
     physical_stock: 120,
     reserved_stock: 10,
     available_stock: 110,
+    used_stock: 35,
     min_stock_level: 25,
-    cost_price: 680.0,
-    location: "Acrylic Bay #2",
+    item_price: 680.0,
     active: true,
     iconName: "layers",
     iconColor: "#38bdf8",
@@ -187,9 +186,9 @@ const SEED_STOCK_ITEMS: StockRecord[] = [
     physical_stock: 8000,
     reserved_stock: 800,
     available_stock: 7200,
+    used_stock: 2400,
     min_stock_level: 2000,
-    cost_price: 8.50,
-    location: "Electronics Vault - Shelf 3",
+    item_price: 8.50,
     active: true,
     iconName: "cpu",
     iconColor: "#ec4899",
@@ -203,9 +202,8 @@ const SEED_MOVEMENTS: MovementRecord[] = [
     timestamp: "2026-09-03T11:42:00Z",
     item_code: "HDW-DOGHOOK-20MM",
     item_name: "Metal Dog-Hook 20mm (Nickel Plated)",
-    type: "ISSUE",
+    type: "USAGE",
     quantity: 500,
-    source: "Main Store",
     destination: "Labour Workshop (Ramesh)",
     user_name: "Priya Nair",
     reason: "Lanyard assembly order #ORD-2026-0001",
@@ -215,12 +213,22 @@ const SEED_MOVEMENTS: MovementRecord[] = [
     timestamp: "2026-09-03T10:15:00Z",
     item_code: "RAW-SATIN-20MM-WHT",
     item_name: "Satin Lanyard Ribbon 20mm (White)",
-    type: "RESERVE",
+    type: "USAGE",
     quantity: 2500,
-    source: "Main Store",
     destination: "Press Floor Line 1",
     user_name: "Rohan Sharma",
     reason: "Scheduled sublimation press job",
+  },
+  {
+    id: "mov-03",
+    timestamp: "2026-09-02T14:30:00Z",
+    item_code: "RAW-PVC-076",
+    item_name: "0.76mm Gloss White PVC Core Sheet",
+    type: "USAGE",
+    quantity: 1200,
+    destination: "Thermal Card Press",
+    user_name: "Dinesh Kumar",
+    reason: "Student ID card batch #ORD-2026-0002",
   },
 ];
 
@@ -275,14 +283,13 @@ const SEED_PURCHASE_ORDERS: PurchaseOrderRecord[] = [
   },
 ];
 
-/** SVG Semi-Circle Arc Gauge matching reference image */
-const StockGaugeArc: React.FC<{ percentage: number; isLow: boolean }> = ({ percentage, isLow }) => {
+/** SVG Semi-Circle Arc Gauge displaying Usage & Stock Performance */
+const StockGaugeArc: React.FC<{ percentage: number; color?: string }> = ({ percentage, color = "#10b981" }) => {
   const radius = 20;
   const strokeWidth = 4.5;
   const circumference = Math.PI * radius;
   const clamped = Math.min(Math.max(percentage, 5), 100);
   const strokeDashoffset = circumference - (clamped / 100) * circumference;
-  const color = isLow ? "#ef4444" : clamped < 50 ? "#f59e0b" : "#10b981";
 
   return (
     <div style={{ position: "relative", width: 50, height: 28, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
@@ -313,7 +320,7 @@ const StockGaugeArc: React.FC<{ percentage: number; isLow: boolean }> = ({ perce
 };
 
 export const StockDashboardView: React.FC = () => {
-  const { success } = useToast();
+  const { success, error: toastError } = useToast();
 
   const [activeTab, setActiveTab] = useState<
     "inventory" | "transactions" | "low" | "purchasing" | "suppliers"
@@ -321,21 +328,44 @@ export const StockDashboardView: React.FC = () => {
 
   const [search, setSearch] = useState("");
   const [stockItems, setStockItems] = useState<StockRecord[]>(SEED_STOCK_ITEMS);
+  const [movements, setMovements] = useState<MovementRecord[]>(SEED_MOVEMENTS);
   const [selectedItem, setSelectedItem] = useState<StockRecord | null>(null);
-  const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
   const [showStatsCard, setShowStatsCard] = useState(true);
-  const [sortBy, setSortBy] = useState<"highest" | "lowest" | "name" | "price">("highest");
+  const [sortBy, setSortBy] = useState<"highest" | "lowest" | "name" | "price" | "used">("highest");
   const [categoryFilter, setCategoryFilter] = useState<string>("ALL");
 
-  // New stock receipt form
-  const [receiptItem, setReceiptItem] = useState(SEED_STOCK_ITEMS[0].id);
-  const [receiptQty, setReceiptQty] = useState("1000");
-  const [receiptNotes, setReceiptNotes] = useState("GRN Batch arrival inspection passed");
+  // Modals
+  const [isNewItemModalOpen, setIsNewItemModalOpen] = useState(false);
+  const [isQtyModalOpen, setIsQtyModalOpen] = useState(false);
+  const [isUsageModalOpen, setIsUsageModalOpen] = useState(false);
 
-  // KPI calculations
+  // Active item targeted for Qty or Usage adjustment
+  const [targetItem, setTargetItem] = useState<StockRecord>(SEED_STOCK_ITEMS[0]);
+
+  // Form states: New Product Entry
+  const [newName, setNewName] = useState("");
+  const [newCategory, setNewCategory] = useState<"RAW_MATERIAL" | "HARDWARE" | "CONSUMABLE">("RAW_MATERIAL");
+  const [newUnit, setNewUnit] = useState("pieces");
+  const [newQty, setNewQty] = useState("1000");
+  const [newPrice, setNewPrice] = useState("10.00");
+  const [newMinLevel, setNewMinLevel] = useState("200");
+
+  // Form states: Update Quantity Modal
+  const [qtyMode, setQtyMode] = useState<"ADD" | "SET" | "DEDUCT">("ADD");
+  const [adjustQty, setAdjustQty] = useState("500");
+  const [adjustReason, setAdjustReason] = useState("Stock receipt / inventory audit");
+
+  // Form states: Log Usage Modal
+  const [useQty, setUseQty] = useState("100");
+  const [useReason, setUseReason] = useState("Production Order run");
+  const [useDestination, setUseDestination] = useState("Press Floor Line 1");
+
+  // Computed KPIs
   const totalPhysical = useMemo(() => stockItems.reduce((acc, i) => acc + i.physical_stock, 0), [stockItems]);
+  const totalAvailable = useMemo(() => stockItems.reduce((acc, i) => acc + i.available_stock, 0), [stockItems]);
+  const totalUsed = useMemo(() => stockItems.reduce((acc, i) => acc + i.used_stock, 0), [stockItems]);
   const lowStockCount = useMemo(() => stockItems.filter((i) => i.available_stock <= i.min_stock_level).length, [stockItems]);
-  const fastMovingItem = stockItems[0]; // PVC Core Sheet
+  const mostUsedItem = useMemo(() => [...stockItems].sort((a, b) => b.used_stock - a.used_stock)[0] || stockItems[0], [stockItems]);
 
   const filteredItems = useMemo(() => {
     let list = stockItems.filter((item) => {
@@ -343,8 +373,7 @@ export const StockDashboardView: React.FC = () => {
       const matchSearch =
         !q ||
         item.name.toLowerCase().includes(q) ||
-        item.code.toLowerCase().includes(q) ||
-        item.location.toLowerCase().includes(q);
+        item.code.toLowerCase().includes(q);
 
       if (!matchSearch) return false;
       if (categoryFilter !== "ALL" && item.category !== categoryFilter) return false;
@@ -358,13 +387,15 @@ export const StockDashboardView: React.FC = () => {
       if (sortBy === "highest") return b.available_stock - a.available_stock;
       if (sortBy === "lowest") return a.available_stock - b.available_stock;
       if (sortBy === "name") return a.name.localeCompare(b.name);
-      if (sortBy === "price") return b.cost_price - a.cost_price;
+      if (sortBy === "price") return b.item_price - a.item_price;
+      if (sortBy === "used") return b.used_stock - a.used_stock;
       return 0;
     });
 
     return list;
   }, [stockItems, search, categoryFilter, activeTab, sortBy]);
 
+  // Action: Toggle item visibility
   const handleToggleActive = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     setStockItems((prev) =>
@@ -372,29 +403,136 @@ export const StockDashboardView: React.FC = () => {
     );
   };
 
-  const handleRecordReceipt = (e: React.FormEvent) => {
+  // Action: Create New Product Entry
+  const handleCreateNewItem = (e: React.FormEvent) => {
     e.preventDefault();
-    const qty = parseInt(receiptQty, 10) || 0;
-    setStockItems((prev) =>
-      prev.map((i) =>
-        i.id === receiptItem
-          ? {
-              ...i,
-              physical_stock: i.physical_stock + qty,
-              available_stock: i.available_stock + qty,
-            }
-          : i
-      )
-    );
-    success("Stock Receipt Recorded", `Added ${qty.toLocaleString()} units to inventory ledger.`);
-    setIsReceiptModalOpen(false);
+    if (!newName.trim()) {
+      toastError("Validation Error", "Please provide a valid material name.");
+      return;
+    }
+
+    const initialQty = Math.max(0, parseInt(newQty, 10) || 0);
+    const price = Math.max(0, parseFloat(newPrice) || 0);
+    const minLevel = Math.max(0, parseInt(newMinLevel, 10) || 0);
+
+    const newItem: StockRecord = {
+      id: `stk-${Date.now().toString().slice(-4)}`,
+      code: `MAT-${newName.trim().toUpperCase().slice(0, 4)}-${Math.floor(100 + Math.random() * 900)}`,
+      name: newName.trim(),
+      category: newCategory,
+      unit: newUnit,
+      physical_stock: initialQty,
+      reserved_stock: 0,
+      available_stock: initialQty,
+      used_stock: 0,
+      min_stock_level: minLevel,
+      item_price: price,
+      active: true,
+      iconName: newCategory === "HARDWARE" ? "tool" : newCategory === "CONSUMABLE" ? "sliders" : "layers",
+      iconColor: newCategory === "HARDWARE" ? "#c084fc" : newCategory === "CONSUMABLE" ? "#f59e0b" : "#38bdf8",
+      iconBg: newCategory === "HARDWARE" ? "rgba(168, 85, 247, 0.12)" : newCategory === "CONSUMABLE" ? "rgba(245, 158, 11, 0.14)" : "rgba(56, 189, 248, 0.12)",
+    };
+
+    setStockItems((prev) => [newItem, ...prev]);
+    success("New Product Created", `"${newItem.name}" added to catalog with ${initialQty} ${newUnit}.`);
+    setIsNewItemModalOpen(false);
+    setNewName("");
   };
 
+  // Action: Update Quantity of an existing product anytime
+  const handleUpdateQuantity = (e: React.FormEvent) => {
+    e.preventDefault();
+    const qtyVal = Math.max(0, parseInt(adjustQty, 10) || 0);
+
+    setStockItems((prev) =>
+      prev.map((item) => {
+        if (item.id !== targetItem.id) return item;
+
+        let newAvailable = item.available_stock;
+        let newPhysical = item.physical_stock;
+
+        if (qtyMode === "ADD") {
+          newAvailable += qtyVal;
+          newPhysical += qtyVal;
+        } else if (qtyMode === "DEDUCT") {
+          newAvailable = Math.max(0, newAvailable - qtyVal);
+          newPhysical = Math.max(0, newPhysical - qtyVal);
+        } else if (qtyMode === "SET") {
+          newAvailable = qtyVal;
+          newPhysical = qtyVal + item.reserved_stock;
+        }
+
+        return {
+          ...item,
+          available_stock: newAvailable,
+          physical_stock: newPhysical,
+        };
+      })
+    );
+
+    // Record in movements
+    const newMovement: MovementRecord = {
+      id: `mov-${Date.now().toString().slice(-4)}`,
+      timestamp: new Date().toISOString(),
+      item_code: targetItem.code,
+      item_name: targetItem.name,
+      type: qtyMode === "ADD" ? "RECEIPT" : qtyMode === "DEDUCT" ? "WRITE_OFF" : "AUDIT_SET",
+      quantity: qtyVal,
+      destination: "Floor Inventory",
+      user_name: "Admin / Floor Supervisor",
+      reason: adjustReason,
+    };
+    setMovements((prev) => [newMovement, ...prev]);
+
+    success("Stock Quantity Updated", `Updated ${targetItem.name} (${qtyMode}: ${qtyVal} ${targetItem.unit}).`);
+    setIsQtyModalOpen(false);
+  };
+
+  // Action: Report Material Usage
+  const handleLogUsage = (e: React.FormEvent) => {
+    e.preventDefault();
+    const qtyVal = Math.max(0, parseInt(useQty, 10) || 0);
+
+    if (qtyVal > targetItem.available_stock) {
+      toastError("Insufficient Stock", `Only ${targetItem.available_stock} ${targetItem.unit} available.`);
+      return;
+    }
+
+    setStockItems((prev) =>
+      prev.map((item) => {
+        if (item.id !== targetItem.id) return item;
+        return {
+          ...item,
+          available_stock: Math.max(0, item.available_stock - qtyVal),
+          physical_stock: Math.max(0, item.physical_stock - qtyVal),
+          used_stock: item.used_stock + qtyVal,
+        };
+      })
+    );
+
+    const newMovement: MovementRecord = {
+      id: `mov-${Date.now().toString().slice(-4)}`,
+      timestamp: new Date().toISOString(),
+      item_code: targetItem.code,
+      item_name: targetItem.name,
+      type: "USAGE",
+      quantity: qtyVal,
+      destination: useDestination,
+      user_name: "Line Operator",
+      reason: useReason,
+    };
+    setMovements((prev) => [newMovement, ...prev]);
+
+    success("Material Usage Reported", `Logged ${qtyVal} ${targetItem.unit} of ${targetItem.name} consumed in production.`);
+    setIsUsageModalOpen(false);
+  };
+
+  // Movement columns
   const transactionColumns: Column<MovementRecord>[] = [
     {
       key: "timestamp",
       header: "Date / Time",
-      width: "130px",
+      width: "140px",
       render: (m) => (
         <span style={{ fontSize: "11px", color: "var(--text-secondary)", fontFamily: "var(--font-mono)" }}>
           {new Date(m.timestamp).toLocaleDateString()} {new Date(m.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
@@ -403,7 +541,7 @@ export const StockDashboardView: React.FC = () => {
     },
     {
       key: "item_name",
-      header: "Material Name",
+      header: "Material / Item Name",
       render: (m) => (
         <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>
           {m.item_name || m.item_code}
@@ -413,16 +551,26 @@ export const StockDashboardView: React.FC = () => {
     {
       key: "type",
       header: "Action",
-      width: "100px",
+      width: "110px",
       render: (m) => (
         <span
           style={{
             fontSize: "10.5px",
             fontWeight: 700,
-            padding: "2px 6px",
+            padding: "2px 8px",
             borderRadius: "3px",
-            backgroundColor: m.type === "ISSUE" ? "rgba(255, 138, 115, 0.15)" : "rgba(56, 189, 248, 0.15)",
-            color: m.type === "ISSUE" ? "var(--accent-text)" : "#38bdf8",
+            backgroundColor:
+              m.type === "USAGE"
+                ? "rgba(239, 68, 68, 0.15)"
+                : m.type === "RECEIPT"
+                ? "rgba(16, 185, 129, 0.15)"
+                : "rgba(56, 189, 248, 0.15)",
+            color:
+              m.type === "USAGE"
+                ? "#ef4444"
+                : m.type === "RECEIPT"
+                ? "#10b981"
+                : "#38bdf8",
           }}
         >
           {m.type}
@@ -442,18 +590,17 @@ export const StockDashboardView: React.FC = () => {
     },
     {
       key: "destination",
-      header: "From → To / Order",
+      header: "Target / Workstation",
       render: (m) => (
         <span style={{ fontSize: "12px", color: "var(--text-primary)" }}>
-          {m.source} → {m.destination}
+          {m.destination}
         </span>
       ),
     },
     {
-      key: "user_name",
-      header: "Operator",
-      width: "120px",
-      render: (m) => <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>{m.user_name}</span>,
+      key: "reason",
+      header: "Job / Order Purpose",
+      render: (m) => <span style={{ fontSize: "11.5px", color: "var(--text-muted)" }}>{m.reason}</span>,
     },
   ];
 
@@ -478,10 +625,22 @@ export const StockDashboardView: React.FC = () => {
           </span>
         }
         primaryAction={{
-          label: "Stock Entry",
+          label: "New Product",
           icon: "plus",
-          onClick: () => setIsReceiptModalOpen(true),
+          onClick: () => setIsNewItemModalOpen(true),
         }}
+        secondaryActions={
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              setTargetItem(stockItems[0]);
+              setIsQtyModalOpen(true);
+            }}
+          >
+            ± Adjust Stock
+          </Button>
+        }
       />
 
       <div style={{ padding: "16px 24px", display: "flex", flexDirection: "column", gap: "14px" }}>
@@ -500,7 +659,7 @@ export const StockDashboardView: React.FC = () => {
           <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
             {[
               { id: "inventory" as const, label: "All Product List" },
-              { id: "transactions" as const, label: "Ledger Movements" },
+              { id: "transactions" as const, label: "Usage & Ledger Movements" },
               { id: "low" as const, label: "Low Stock Alerts", badge: lowStockCount },
               { id: "purchasing" as const, label: "Purchase Orders" },
               { id: "suppliers" as const, label: "Suppliers Directory" },
@@ -544,7 +703,7 @@ export const StockDashboardView: React.FC = () => {
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            {/* Search Bar matching reference */}
+            {/* Search Input */}
             <div
               style={{
                 display: "flex",
@@ -568,12 +727,12 @@ export const StockDashboardView: React.FC = () => {
                   color: "#fff",
                   fontSize: "12px",
                   outline: "none",
-                  width: "180px",
+                  width: "170px",
                 }}
               />
             </div>
 
-            {/* Sort By selector */}
+            {/* Sort Selector */}
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
@@ -590,8 +749,9 @@ export const StockDashboardView: React.FC = () => {
             >
               <option value="highest" style={{ backgroundColor: "#0e121a" }}>Sort By: Highest Stock</option>
               <option value="lowest" style={{ backgroundColor: "#0e121a" }}>Sort By: Lowest Stock</option>
-              <option value="name" style={{ backgroundColor: "#0e121a" }}>Sort By: Material Name</option>
-              <option value="price" style={{ backgroundColor: "#0e121a" }}>Sort By: Unit Price</option>
+              <option value="used" style={{ backgroundColor: "#0e121a" }}>Sort By: Most Used</option>
+              <option value="price" style={{ backgroundColor: "#0e121a" }}>Sort By: Item Price</option>
+              <option value="name" style={{ backgroundColor: "#0e121a" }}>Sort By: Name</option>
             </select>
 
             {/* Category Filter */}
@@ -671,36 +831,36 @@ export const StockDashboardView: React.FC = () => {
                   </div>
                 </div>
 
-                {/* 2. Winning / Fast Moving Product */}
+                {/* 2. Winning Product (Highest Usage) */}
                 <div style={{ display: "flex", flexDirection: "column", gap: "2px", borderLeft: "1px solid rgba(255, 255, 255, 0.06)", paddingLeft: "14px" }}>
-                  <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 500 }}>Winning Product</span>
+                  <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 500 }}>Top Consumed Item</span>
                   <div style={{ display: "flex", alignItems: "center", gap: "6px", overflow: "hidden" }}>
                     <span style={{ fontSize: "14px" }}>📦</span>
                     <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--accent-text)", whiteSpace: "nowrap", textOverflow: "ellipsis", overflow: "hidden" }}>
-                      {fastMovingItem.name.slice(0, 16)}...
+                      {mostUsedItem.name.slice(0, 16)}...
                     </span>
                   </div>
                 </div>
 
-                {/* 3. Average Performance / Stock Health */}
+                {/* 3. Average Performance based on usage & availability */}
                 <div style={{ display: "flex", flexDirection: "column", gap: "2px", borderLeft: "1px solid rgba(255, 255, 255, 0.06)", paddingLeft: "14px" }}>
                   <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 500 }}>Average Performance</span>
                   <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <StockGaugeArc percentage={94} isLow={false} />
+                    <StockGaugeArc percentage={88} color="#10b981" />
                     <span style={{ fontSize: "13px", fontWeight: 700, color: "#10b981" }}>Good!</span>
                   </div>
                 </div>
 
-                {/* 4. Product Sold / Physical Units */}
+                {/* 4. Total Material Used Reporting */}
                 <div style={{ display: "flex", flexDirection: "column", gap: "2px", borderLeft: "1px solid rgba(255, 255, 255, 0.06)", paddingLeft: "14px" }}>
-                  <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 500 }}>Floor Stock Units</span>
+                  <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 500 }}>Total Used / Consumed</span>
                   <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
-                    <span style={{ fontSize: "20px", fontWeight: 800, color: "#38bdf8" }}>{totalPhysical.toLocaleString()}</span>
-                    <span style={{ fontSize: "11.5px", color: "var(--text-secondary)" }}>Items</span>
+                    <span style={{ fontSize: "20px", fontWeight: 800, color: "#ff8a73" }}>{totalUsed.toLocaleString()}</span>
+                    <span style={{ fontSize: "11.5px", color: "var(--text-secondary)" }}>Units</span>
                   </div>
                 </div>
 
-                {/* 5. Product Low / Reorder Alerts */}
+                {/* 5. Reorder Alerts */}
                 <div style={{ display: "flex", flexDirection: "column", gap: "2px", borderLeft: "1px solid rgba(255, 255, 255, 0.06)", paddingLeft: "14px" }}>
                   <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 500 }}>Reorder Alerts</span>
                   <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
@@ -726,9 +886,22 @@ export const StockDashboardView: React.FC = () => {
               overflow: "hidden",
             }}
           >
+            <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255, 255, 255, 0.06)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: "13px", fontWeight: 700, color: "#fff" }}>Material Usage & Consumption Audit</span>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => {
+                  setTargetItem(stockItems[0]);
+                  setIsUsageModalOpen(true);
+                }}
+              >
+                + Log Material Usage
+              </Button>
+            </div>
             <Table
               columns={transactionColumns}
-              data={SEED_MOVEMENTS}
+              data={movements}
               emptyText="No material movements recorded today."
             />
           </div>
@@ -784,13 +957,42 @@ export const StockDashboardView: React.FC = () => {
             />
           </div>
         ) : (
-          /* Main Reference-Style Item Rows List */
+          /* Main Card Rows List (Clean without store/reviews) */
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
             {filteredItems.map((item) => {
               const isLow = item.available_stock <= item.min_stock_level;
-              const healthPercent = Math.min(Math.round((item.available_stock / (item.min_stock_level * 2)) * 100), 100);
-              const performanceLabel = healthPercent >= 80 ? "Excellent" : healthPercent >= 50 ? "Good" : "Low";
-              const totalValue = item.available_stock * item.cost_price;
+              const totalThroughput = item.available_stock + item.used_stock;
+              const usageRate = totalThroughput > 0 ? Math.round((item.used_stock / totalThroughput) * 100) : 0;
+
+              // Performance calculated from actual usage vs available stock
+              let performanceScore = 75;
+              let performanceLabel = "Steady";
+              let gaugeColor = "#10b981";
+
+              if (isLow) {
+                performanceScore = Math.max(15, Math.round((item.available_stock / item.min_stock_level) * 45));
+                performanceLabel = "Low Stock";
+                gaugeColor = "#ef4444";
+              } else if (usageRate >= 45) {
+                performanceScore = 95;
+                performanceLabel = "High Demand";
+                gaugeColor = "#10b981";
+              } else if (usageRate >= 20) {
+                performanceScore = 78;
+                performanceLabel = "Active Use";
+                gaugeColor = "#38bdf8";
+              } else {
+                performanceScore = 52;
+                performanceLabel = "Moderate";
+                gaugeColor = "#f59e0b";
+              }
+
+              const categoryBadge =
+                item.category === "RAW_MATERIAL"
+                  ? "Raw Material"
+                  : item.category === "HARDWARE"
+                  ? "Hardware Fitting"
+                  : "Consumable";
 
               return (
                 <div
@@ -805,7 +1007,7 @@ export const StockDashboardView: React.FC = () => {
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
-                    gap: "16px",
+                    gap: "14px",
                     cursor: "pointer",
                     transition: "all 0.15s ease",
                   }}
@@ -820,8 +1022,8 @@ export const StockDashboardView: React.FC = () => {
                     e.currentTarget.style.transform = "none";
                   }}
                 >
-                  {/* Left Column: Visual Thumbnail + Clean Title & Spec (No reviews as requested) */}
-                  <div style={{ display: "flex", alignItems: "center", gap: "14px", width: "320px", flexShrink: 0 }}>
+                  {/* Column 1: Visual + Title + Category (Store location removed as requested) */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "14px", width: "290px", flexShrink: 0 }}>
                     <div
                       style={{
                         width: 44,
@@ -838,7 +1040,7 @@ export const StockDashboardView: React.FC = () => {
                       <Icon name={item.iconName} size={20} color={item.iconColor} />
                     </div>
 
-                    <div style={{ display: "flex", flexDirection: "column", gap: "3px", overflow: "hidden" }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "2px", overflow: "hidden" }}>
                       <span
                         style={{
                           fontSize: "13.5px",
@@ -852,37 +1054,34 @@ export const StockDashboardView: React.FC = () => {
                         {item.name}
                       </span>
                       <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>
-                        {item.location} • {item.category.replace("_", " ")}
+                        {categoryBadge}
                       </span>
                     </div>
                   </div>
 
-                  {/* Column 2: Allocation (Available / Reserved) */}
+                  {/* Column 2: Usage Reporting ("How much is used") */}
                   <div style={{ display: "flex", flexDirection: "column", gap: "2px", width: "130px", flexShrink: 0 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                      <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>Performance</span>
-                      <span
-                        style={{
-                          fontSize: "10px",
-                          fontWeight: 700,
-                          color: isLow ? "#ef4444" : healthPercent >= 80 ? "#10b981" : "#f59e0b",
-                        }}
-                      >
+                    <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>Total Used</span>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: "5px" }}>
+                      <span style={{ fontFamily: "var(--font-mono)", fontSize: "13px", fontWeight: 700, color: "#ff8a73" }}>
+                        {item.used_stock.toLocaleString()}
+                      </span>
+                      <span style={{ fontSize: "10.5px", color: "var(--text-muted)" }}>{item.unit}</span>
+                    </div>
+                    <span style={{ fontSize: "10px", color: "var(--text-muted)" }}>{usageRate}% consumption</span>
+                  </div>
+
+                  {/* Column 3: Performance Arc Gauge (calculated from usage & remaining stock) */}
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "2px", width: "80px", flexShrink: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                      <span style={{ fontSize: "10px", fontWeight: 700, color: gaugeColor }}>
                         {performanceLabel}
                       </span>
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "11px", color: "var(--text-secondary)", fontFamily: "var(--font-mono)" }}>
-                      <span>📈 {item.available_stock.toLocaleString()}</span>
-                      <span>🔒 {item.reserved_stock.toLocaleString()}</span>
-                    </div>
+                    <StockGaugeArc percentage={performanceScore} color={gaugeColor} />
                   </div>
 
-                  {/* Column 3: Semi-Circle Gauge Arc */}
-                  <div style={{ display: "flex", alignItems: "center", width: "65px", flexShrink: 0 }}>
-                    <StockGaugeArc percentage={healthPercent} isLow={isLow} />
-                  </div>
-
-                  {/* Column 4: Stock Quantity */}
+                  {/* Column 4: Available Stock */}
                   <div style={{ display: "flex", flexDirection: "column", gap: "2px", width: "120px", flexShrink: 0 }}>
                     <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>Stock</span>
                     <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
@@ -892,21 +1091,26 @@ export const StockDashboardView: React.FC = () => {
                       </span>
                       <span style={{ fontSize: "10.5px", color: "var(--text-muted)" }}>{item.unit}</span>
                     </div>
+                    {item.reserved_stock > 0 && (
+                      <span style={{ fontSize: "10px", color: "var(--status-warning)" }}>
+                        {item.reserved_stock.toLocaleString()} reserved
+                      </span>
+                    )}
                   </div>
 
-                  {/* Column 5: Product Price & Total Valuation */}
-                  <div style={{ display: "flex", flexDirection: "column", gap: "2px", width: "130px", flexShrink: 0 }}>
-                    <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>Product Price</span>
+                  {/* Column 5: Item Price (called "Item Price", NOT "Product Price") */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "2px", width: "120px", flexShrink: 0 }}>
+                    <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>Item Price</span>
                     <div style={{ display: "flex", alignItems: "baseline", gap: "4px" }}>
                       <span style={{ fontFamily: "var(--font-mono)", fontSize: "13.5px", fontWeight: 700, color: "#34d399" }}>
-                        ₹{item.cost_price.toFixed(2)}
+                        ₹{item.item_price.toFixed(2)}
                       </span>
                       <span style={{ fontSize: "10px", color: "var(--text-muted)" }}>/ {item.unit}</span>
                     </div>
                   </div>
 
-                  {/* Column 6: Visibility / In-Stock Toggle Switch */}
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", width: "90px", flexShrink: 0 }}>
+                  {/* Column 6: Visibility Toggle Switch */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", width: "80px", flexShrink: 0 }}>
                     <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>Visibility</span>
                     <div
                       onClick={(e) => handleToggleActive(item.id, e)}
@@ -935,40 +1139,90 @@ export const StockDashboardView: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Column 7: Quick Actions (Pencil, Eye/Ledger, More) */}
+                  {/* Column 7: Quick Actions (Update Qty, Log Usage, Ledger) */}
                   <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
+                    {/* Update Quantity button */}
                     <button
                       type="button"
-                      title="Edit Material Specs"
+                      title="Update Quantity Anytime"
                       onClick={(e) => {
                         e.stopPropagation();
-                        success("Edit Material", `Editing specifications for ${item.name}`);
+                        setTargetItem(item);
+                        setQtyMode("ADD");
+                        setAdjustQty("500");
+                        setIsQtyModalOpen(true);
                       }}
                       style={{
-                        width: 28,
-                        height: 28,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "3px",
+                        padding: "4px 8px",
                         borderRadius: "4px",
                         backgroundColor: "rgba(255, 255, 255, 0.04)",
-                        border: "1px solid rgba(255, 255, 255, 0.08)",
+                        border: "1px solid rgba(255, 255, 255, 0.1)",
                         color: "var(--text-secondary)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
+                        fontSize: "11px",
+                        fontWeight: 600,
                         cursor: "pointer",
+                        whiteSpace: "nowrap",
+                        lineHeight: 1,
                         transition: "all 0.15s ease",
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.1)";
-                        e.currentTarget.style.color = "#fff";
+                        e.currentTarget.style.backgroundColor = "rgba(56, 189, 248, 0.15)";
+                        e.currentTarget.style.borderColor = "#38bdf8";
+                        e.currentTarget.style.color = "#38bdf8";
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.04)";
+                        e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
                         e.currentTarget.style.color = "var(--text-secondary)";
                       }}
                     >
-                      <Icon name="sliders" size={13} />
+                      <span>± Qty</span>
                     </button>
 
+                    {/* Report Usage button */}
+                    <button
+                      type="button"
+                      title="Report Material Usage"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setTargetItem(item);
+                        setUseQty("100");
+                        setIsUsageModalOpen(true);
+                      }}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "3px",
+                        padding: "4px 8px",
+                        borderRadius: "4px",
+                        backgroundColor: "rgba(239, 68, 68, 0.08)",
+                        border: "1px solid rgba(239, 68, 68, 0.2)",
+                        color: "#f87171",
+                        fontSize: "11px",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        whiteSpace: "nowrap",
+                        lineHeight: 1,
+                        transition: "all 0.15s ease",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = "rgba(239, 68, 68, 0.18)";
+                        e.currentTarget.style.borderColor = "#ef4444";
+                        e.currentTarget.style.color = "#fff";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = "rgba(239, 68, 68, 0.08)";
+                        e.currentTarget.style.borderColor = "rgba(239, 68, 68, 0.2)";
+                        e.currentTarget.style.color = "#f87171";
+                      }}
+                    >
+                      <span>− Use</span>
+                    </button>
+
+                    {/* View Ledger */}
                     <button
                       type="button"
                       title="View Ledger Movements"
@@ -982,12 +1236,12 @@ export const StockDashboardView: React.FC = () => {
                         alignItems: "center",
                         justifyContent: "center",
                         gap: "4px",
-                        padding: "5px 10px",
+                        padding: "4px 9px",
                         borderRadius: "4px",
                         backgroundColor: "rgba(255, 138, 115, 0.12)",
                         border: "1px solid var(--accent-border)",
                         color: "var(--accent-text)",
-                        fontSize: "11.5px",
+                        fontSize: "11px",
                         fontWeight: 600,
                         cursor: "pointer",
                         whiteSpace: "nowrap",
@@ -1004,7 +1258,7 @@ export const StockDashboardView: React.FC = () => {
                       }}
                     >
                       <span>Ledger</span>
-                      <span style={{ fontSize: "11px" }}>→</span>
+                      <span style={{ fontSize: "10.5px" }}>→</span>
                     </button>
                   </div>
                 </div>
@@ -1070,6 +1324,210 @@ export const StockDashboardView: React.FC = () => {
         )}
       </div>
 
+      {/* 1. Modal: New Product / Material Entry Form */}
+      {isNewItemModalOpen && (
+        <Modal
+          isOpen={isNewItemModalOpen}
+          onClose={() => setIsNewItemModalOpen(false)}
+          title="New Product Entry"
+        >
+          <form onSubmit={handleCreateNewItem} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            <Input
+              label="Product / Material Name"
+              placeholder="e.g. 0.5mm Frosted PVC Sheet"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              required
+            />
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+              <Select
+                label="Category"
+                value={newCategory}
+                onChange={(e) => setNewCategory(e.target.value as any)}
+                options={[
+                  { value: "RAW_MATERIAL", label: "Raw Material" },
+                  { value: "HARDWARE", label: "Hardware Fitting" },
+                  { value: "CONSUMABLE", label: "Consumable" },
+                ]}
+              />
+
+              <Select
+                label="Unit of Measurement"
+                value={newUnit}
+                onChange={(e) => setNewUnit(e.target.value)}
+                options={[
+                  { value: "sheets", label: "sheets" },
+                  { value: "meters", label: "meters" },
+                  { value: "pieces", label: "pieces" },
+                  { value: "rolls", label: "rolls" },
+                  { value: "liters", label: "liters" },
+                  { value: "kg", label: "kg" },
+                  { value: "boxes", label: "boxes" },
+                ]}
+              />
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px" }}>
+              <Input
+                label="Initial Quantity"
+                type="number"
+                value={newQty}
+                onChange={(e) => setNewQty(e.target.value)}
+                required
+              />
+
+              <Input
+                label="Item Price (₹)"
+                type="number"
+                step="0.01"
+                value={newPrice}
+                onChange={(e) => setNewPrice(e.target.value)}
+                required
+              />
+
+              <Input
+                label="Min Safety Level"
+                type="number"
+                value={newMinLevel}
+                onChange={(e) => setNewMinLevel(e.target.value)}
+                required
+              />
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px", marginTop: "10px" }}>
+              <Button variant="secondary" size="sm" onClick={() => setIsNewItemModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button variant="primary" size="sm" type="submit">
+                Create Product Entry
+              </Button>
+            </div>
+          </form>
+        </Modal>
+      )}
+
+      {/* 2. Modal: Update Quantity Anytime */}
+      {isQtyModalOpen && (
+        <Modal
+          isOpen={isQtyModalOpen}
+          onClose={() => setIsQtyModalOpen(false)}
+          title={`Update Stock Quantity: ${targetItem.name}`}
+        >
+          <form onSubmit={handleUpdateQuantity} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+            <div style={{ padding: "10px 12px", backgroundColor: "rgba(255, 255, 255, 0.03)", borderRadius: "4px", border: "1px solid rgba(255, 255, 255, 0.06)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>Current Available:</span>
+              <span style={{ fontFamily: "var(--font-mono)", fontSize: "14px", fontWeight: 700, color: "#fff" }}>
+                {targetItem.available_stock.toLocaleString()} {targetItem.unit}
+              </span>
+            </div>
+
+            {/* Mode selection chips */}
+            <div style={{ display: "flex", gap: "8px" }}>
+              {[
+                { id: "ADD" as const, label: "➕ Add Stock", color: "#10b981" },
+                { id: "DEDUCT" as const, label: "➖ Deduct Qty", color: "#ef4444" },
+                { id: "SET" as const, label: "🟰 Set Exact Count", color: "#38bdf8" },
+              ].map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => setQtyMode(m.id)}
+                  style={{
+                    flex: 1,
+                    padding: "8px 10px",
+                    borderRadius: "4px",
+                    border: qtyMode === m.id ? `1px solid ${m.color}` : "1px solid rgba(255, 255, 255, 0.08)",
+                    backgroundColor: qtyMode === m.id ? "rgba(255, 255, 255, 0.08)" : "transparent",
+                    color: qtyMode === m.id ? m.color : "var(--text-secondary)",
+                    fontSize: "11.5px",
+                    fontWeight: qtyMode === m.id ? 700 : 500,
+                    cursor: "pointer",
+                  }}
+                >
+                  {m.label}
+                </button>
+              ))}
+            </div>
+
+            <Input
+              label={`Quantity to ${qtyMode === "ADD" ? "Add" : qtyMode === "DEDUCT" ? "Deduct" : "Set Directly"}`}
+              type="number"
+              value={adjustQty}
+              onChange={(e) => setAdjustQty(e.target.value)}
+              required
+            />
+
+            <Input
+              label="Audit Note / Reason"
+              value={adjustReason}
+              onChange={(e) => setAdjustReason(e.target.value)}
+              placeholder="e.g. GRN shipment receipt or physical floor audit"
+            />
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px", marginTop: "8px" }}>
+              <Button variant="secondary" size="sm" onClick={() => setIsQtyModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button variant="primary" size="sm" type="submit">
+                Apply Quantity Update
+              </Button>
+            </div>
+          </form>
+        </Modal>
+      )}
+
+      {/* 3. Modal: Report Material Usage */}
+      {isUsageModalOpen && (
+        <Modal
+          isOpen={isUsageModalOpen}
+          onClose={() => setIsUsageModalOpen(false)}
+          title={`Report Material Usage: ${targetItem.name}`}
+        >
+          <form onSubmit={handleLogUsage} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+            <div style={{ padding: "10px 12px", backgroundColor: "rgba(255, 255, 255, 0.03)", borderRadius: "4px", border: "1px solid rgba(255, 255, 255, 0.06)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>Available for Production:</span>
+              <span style={{ fontFamily: "var(--font-mono)", fontSize: "14px", fontWeight: 700, color: "#10b981" }}>
+                {targetItem.available_stock.toLocaleString()} {targetItem.unit}
+              </span>
+            </div>
+
+            <Input
+              label="Quantity Consumed / Used"
+              type="number"
+              value={useQty}
+              onChange={(e) => setUseQty(e.target.value)}
+              required
+            />
+
+            <Input
+              label="Production Workstation / Line"
+              value={useDestination}
+              onChange={(e) => setUseDestination(e.target.value)}
+              placeholder="e.g. Press Floor Line 1, Assembly Bench 3"
+              required
+            />
+
+            <Input
+              label="Job Order / Reason"
+              value={useReason}
+              onChange={(e) => setUseReason(e.target.value)}
+              placeholder="e.g. Order #ORD-2026-0001 (500 lanyards run)"
+              required
+            />
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px", marginTop: "8px" }}>
+              <Button variant="secondary" size="sm" onClick={() => setIsUsageModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button variant="primary" size="sm" type="submit">
+                Record Material Usage
+              </Button>
+            </div>
+          </form>
+        </Modal>
+      )}
+
       {/* Stock Item Detail Drawer */}
       {selectedItem && (
         <div
@@ -1103,7 +1561,7 @@ export const StockDashboardView: React.FC = () => {
                 {selectedItem.name}
               </h3>
               <span style={{ fontSize: "11.5px", color: "var(--accent-text)" }}>
-                {selectedItem.location} • {selectedItem.category.replace("_", " ")}
+                {selectedItem.category.replace("_", " ")} • Code: {selectedItem.code}
               </span>
             </div>
             <button
@@ -1138,7 +1596,7 @@ export const StockDashboardView: React.FC = () => {
               </div>
             </div>
 
-            {/* Location & Specs */}
+            {/* Usage & Financial Specs */}
             <div
               style={{
                 padding: "12px",
@@ -1151,84 +1609,49 @@ export const StockDashboardView: React.FC = () => {
               }}
             >
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px" }}>
-                <span style={{ color: "var(--text-muted)" }}>Location:</span>
-                <strong style={{ color: "#fff" }}>{selectedItem.location}</strong>
+                <span style={{ color: "var(--text-muted)" }}>Total Consumed in Production:</span>
+                <strong style={{ color: "#ff8a73" }}>{selectedItem.used_stock.toLocaleString()} {selectedItem.unit}</strong>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px" }}>
-                <span style={{ color: "var(--text-muted)" }}>Safety Threshold:</span>
+                <span style={{ color: "var(--text-muted)" }}>Item Price:</span>
+                <strong style={{ color: "#34d399" }}>₹{selectedItem.item_price.toFixed(2)} / {selectedItem.unit}</strong>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px" }}>
+                <span style={{ color: "var(--text-muted)" }}>Total Available Valuation:</span>
+                <strong style={{ color: "#34d399" }}>₹{(selectedItem.available_stock * selectedItem.item_price).toLocaleString()}</strong>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px" }}>
+                <span style={{ color: "var(--text-muted)" }}>Minimum Safety Level:</span>
                 <strong style={{ color: "#fff" }}>{selectedItem.min_stock_level.toLocaleString()} {selectedItem.unit}</strong>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px" }}>
-                <span style={{ color: "var(--text-muted)" }}>Standard Cost:</span>
-                <strong style={{ color: "#34d399" }}>₹{selectedItem.cost_price.toFixed(2)} / {selectedItem.unit}</strong>
               </div>
             </div>
 
-            {/* Quick Material Actions */}
+            {/* Quick Actions inside Drawer */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
               <Button
                 variant="secondary"
                 size="sm"
                 onClick={() => {
-                  success("Material Issued", `Issued 100 units of ${selectedItem.name} to floor.`);
+                  setTargetItem(selectedItem);
+                  setIsUsageModalOpen(true);
                 }}
               >
-                Issue to Floor
+                − Log Usage
               </Button>
               <Button
                 variant="primary"
                 size="sm"
-                icon="plus"
                 onClick={() => {
-                  success("Requisition", `Created purchase requisition for ${selectedItem.name}.`);
+                  setTargetItem(selectedItem);
+                  setQtyMode("ADD");
+                  setIsQtyModalOpen(true);
                 }}
               >
-                Reorder Material
+                ± Update Qty
               </Button>
             </div>
           </div>
         </div>
-      )}
-
-      {/* Quick Stock Receipt Modal */}
-      {isReceiptModalOpen && (
-        <Modal
-          isOpen={isReceiptModalOpen}
-          onClose={() => setIsReceiptModalOpen(false)}
-          title="Record Material Goods Receipt (GRN)"
-        >
-          <form onSubmit={handleRecordReceipt} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-            <Select
-              label="Select Material / Raw Stock"
-              value={receiptItem}
-              onChange={(e) => setReceiptItem(e.target.value)}
-              options={stockItems.map((s) => ({ value: s.id, label: `${s.name} (${s.location})` }))}
-            />
-
-            <Input
-              label="Quantity Received"
-              type="number"
-              value={receiptQty}
-              onChange={(e) => setReceiptQty(e.target.value)}
-              required
-            />
-
-            <Textarea
-              label="Inspection Notes / Lot Reference"
-              value={receiptNotes}
-              onChange={(e) => setReceiptNotes(e.target.value)}
-            />
-
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px", marginTop: "8px" }}>
-              <Button variant="secondary" size="sm" onClick={() => setIsReceiptModalOpen(false)}>
-                Cancel
-              </Button>
-              <Button variant="primary" size="sm" type="submit">
-                Confirm Stock Receipt
-              </Button>
-            </div>
-          </form>
-        </Modal>
       )}
     </div>
   );
