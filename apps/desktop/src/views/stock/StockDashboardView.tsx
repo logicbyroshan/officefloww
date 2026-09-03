@@ -720,137 +720,149 @@ export const StockDashboardView: React.FC = () => {
                   key={item.id}
                   onClick={() => setSelectedItem(item)}
                   style={{
-                    backgroundColor: "rgba(19, 23, 34, 0.85)",
-                    backdropFilter: "blur(14px)",
-                    border: "1px solid rgba(255, 255, 255, 0.07)",
-                    borderRadius: "4px",
-                    padding: "12px 18px",
+                    backgroundColor: "rgba(18, 23, 35, 0.92)",
+                    backdropFilter: "blur(16px)",
+                    border: "1px solid rgba(255, 255, 255, 0.08)",
+                    borderRadius: "6px",
+                    padding: "16px 22px",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
-                    gap: "14px",
+                    gap: "18px",
                     cursor: "pointer",
-                    transition: "all 0.15s ease",
+                    transition: "all 0.18s cubic-bezier(0.16, 1, 0.3, 1)",
+                    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.25)",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = "rgba(25, 32, 47, 0.95)";
+                    e.currentTarget.style.backgroundColor = "rgba(26, 33, 50, 0.98)";
                     e.currentTarget.style.borderColor = "var(--accent-border)";
-                    e.currentTarget.style.transform = "translateY(-1px)";
+                    e.currentTarget.style.transform = "translateY(-2px)";
+                    e.currentTarget.style.boxShadow = "0 8px 24px rgba(0, 0, 0, 0.45)";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = "rgba(19, 23, 34, 0.85)";
-                    e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.07)";
+                    e.currentTarget.style.backgroundColor = "rgba(18, 23, 35, 0.92)";
+                    e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.08)";
                     e.currentTarget.style.transform = "none";
+                    e.currentTarget.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.25)";
                   }}
                 >
-                  {/* Column 1: Visual + Title + Category */}
-                  <div style={{ display: "flex", alignItems: "center", gap: "14px", width: "290px", flexShrink: 0 }}>
+                  {/* Column 1: Larger Visual (58px) + Title (15px) + Category (12px) */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "16px", width: "320px", flexShrink: 0 }}>
                     {item.imageUrl ? (
                       <img
                         src={item.imageUrl}
                         alt={item.name}
                         style={{
-                          width: 44,
-                          height: 44,
-                          borderRadius: "4px",
+                          width: 58,
+                          height: 58,
+                          borderRadius: "6px",
                           objectFit: "cover",
-                          border: "1px solid rgba(255, 255, 255, 0.12)",
+                          border: "1px solid rgba(255, 255, 255, 0.14)",
+                          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
                           flexShrink: 0,
                         }}
                       />
                     ) : (
                       <div
                         style={{
-                          width: 44,
-                          height: 44,
-                          borderRadius: "4px",
+                          width: 58,
+                          height: 58,
+                          borderRadius: "6px",
                           backgroundColor: item.iconBg,
-                          border: "1px solid rgba(255, 255, 255, 0.08)",
+                          border: "1px solid rgba(255, 255, 255, 0.1)",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
+                          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
                           flexShrink: 0,
                         }}
                       >
-                        <Icon name={item.iconName} size={20} color={item.iconColor} />
+                        <Icon name={item.iconName} size={24} color={item.iconColor} />
                       </div>
                     )}
 
-                    <div style={{ display: "flex", flexDirection: "column", gap: "2px", overflow: "hidden" }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "3px", overflow: "hidden" }}>
                       <span
                         style={{
-                          fontSize: "13.5px",
+                          fontSize: "15px",
                           fontWeight: 700,
-                          color: "#fff",
+                          color: "#ffffff",
                           whiteSpace: "nowrap",
                           overflow: "hidden",
                           textOverflow: "ellipsis",
+                          letterSpacing: "-0.15px",
                         }}
                       >
                         {item.name}
                       </span>
-                      <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>
+                      <span style={{ fontSize: "12px", color: "var(--text-secondary)", fontWeight: 500 }}>
                         {categoryBadge}
                       </span>
                     </div>
                   </div>
 
                   {/* Column 2: Usage Reporting */}
-                  <div style={{ display: "flex", flexDirection: "column", gap: "2px", width: "130px", flexShrink: 0 }}>
-                    <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>Total Used</span>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "3px", width: "135px", flexShrink: 0 }}>
+                    <span style={{ fontSize: "11px", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 600 }}>
+                      Total Used
+                    </span>
                     <div style={{ display: "flex", alignItems: "baseline", gap: "5px" }}>
-                      <span style={{ fontFamily: "var(--font-mono)", fontSize: "13px", fontWeight: 700, color: "#ff8a73" }}>
+                      <span style={{ fontFamily: "var(--font-mono)", fontSize: "15px", fontWeight: 800, color: "#ff8a73" }}>
                         {item.used_stock.toLocaleString()}
                       </span>
-                      <span style={{ fontSize: "10.5px", color: "var(--text-muted)" }}>{item.unit}</span>
+                      <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 500 }}>{item.unit}</span>
                     </div>
-                    <span style={{ fontSize: "10px", color: "var(--text-muted)" }}>{usageRate}% consumption</span>
+                    <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>{usageRate}% consumption</span>
                   </div>
 
                   {/* Column 3: Performance Arc Gauge */}
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "2px", width: "80px", flexShrink: 0 }}>
-                    <span style={{ fontSize: "10px", fontWeight: 700, color: gaugeColor }}>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "3px", width: "85px", flexShrink: 0 }}>
+                    <span style={{ fontSize: "11px", fontWeight: 700, color: gaugeColor }}>
                       {performanceLabel}
                     </span>
                     <StockGaugeArc percentage={performanceScore} color={gaugeColor} />
                   </div>
 
                   {/* Column 4: Available Stock */}
-                  <div style={{ display: "flex", flexDirection: "column", gap: "2px", width: "120px", flexShrink: 0 }}>
-                    <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>Stock</span>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "3px", width: "130px", flexShrink: 0 }}>
+                    <span style={{ fontSize: "11px", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 600 }}>
+                      Floor Stock
+                    </span>
                     <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                      <span style={{ fontSize: "12px" }}>📦</span>
-                      <span style={{ fontFamily: "var(--font-mono)", fontSize: "13.5px", fontWeight: 700, color: "#fff" }}>
+                      <span style={{ fontSize: "13px" }}>📦</span>
+                      <span style={{ fontFamily: "var(--font-mono)", fontSize: "15.5px", fontWeight: 800, color: "#ffffff" }}>
                         {item.available_stock.toLocaleString()}
                       </span>
-                      <span style={{ fontSize: "10.5px", color: "var(--text-muted)" }}>{item.unit}</span>
+                      <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 500 }}>{item.unit}</span>
                     </div>
                     {item.reserved_stock > 0 && (
-                      <span style={{ fontSize: "10px", color: "var(--status-warning)" }}>
+                      <span style={{ fontSize: "11px", color: "var(--status-warning)", fontWeight: 500 }}>
                         {item.reserved_stock.toLocaleString()} reserved
                       </span>
                     )}
                   </div>
 
-                  {/* Column 5: Item Price (Named Item Price) */}
-                  <div style={{ display: "flex", flexDirection: "column", gap: "2px", width: "120px", flexShrink: 0 }}>
-                    <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>Item Price</span>
+                  {/* Column 5: Item Price */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "3px", width: "130px", flexShrink: 0 }}>
+                    <span style={{ fontSize: "11px", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 600 }}>
+                      Item Price
+                    </span>
                     <div style={{ display: "flex", alignItems: "baseline", gap: "4px" }}>
-                      <span style={{ fontFamily: "var(--font-mono)", fontSize: "13.5px", fontWeight: 700, color: "#34d399" }}>
+                      <span style={{ fontFamily: "var(--font-mono)", fontSize: "15.5px", fontWeight: 800, color: "#34d399" }}>
                         ₹{item.item_price.toFixed(2)}
                       </span>
-                      <span style={{ fontSize: "10px", color: "var(--text-muted)" }}>/ {item.unit}</span>
+                      <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>/ {item.unit}</span>
                     </div>
                   </div>
 
                   {/* Column 6: Visibility Toggle Switch */}
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", width: "80px", flexShrink: 0 }}>
-                    <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>Visibility</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", width: "85px", flexShrink: 0 }}>
+                    <span style={{ fontSize: "11.5px", color: "var(--text-muted)", fontWeight: 500 }}>Visibility</span>
                     <div
                       onClick={(e) => handleToggleActive(item.id, e)}
                       style={{
-                        width: 32,
-                        height: 18,
+                        width: 36,
+                        height: 20,
                         borderRadius: "10px",
                         backgroundColor: item.active ? "var(--accent)" : "rgba(255, 255, 255, 0.15)",
                         position: "relative",
@@ -860,21 +872,21 @@ export const StockDashboardView: React.FC = () => {
                     >
                       <div
                         style={{
-                          width: 14,
-                          height: 14,
+                          width: 16,
+                          height: 16,
                           borderRadius: "50%",
                           backgroundColor: item.active ? "#090c13" : "#cbd5e1",
                           position: "absolute",
                           top: 2,
-                          left: item.active ? 16 : 2,
+                          left: item.active ? 18 : 2,
                           transition: "left 0.2s ease",
                         }}
                       />
                     </div>
                   </div>
 
-                  {/* Column 7: Action Buttons (Only 2 buttons: + Add Report and − Usage Report) */}
-                  <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
+                  {/* Column 7: Action Buttons (High-End Tactile Buttons) */}
+                  <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
                     {/* 1. Add Addition Report button */}
                     <button
                       type="button"
@@ -889,29 +901,38 @@ export const StockDashboardView: React.FC = () => {
                       style={{
                         display: "inline-flex",
                         alignItems: "center",
-                        gap: "4px",
-                        padding: "5px 11px",
+                        gap: "6px",
+                        height: "36px",
+                        padding: "0 15px",
                         borderRadius: "4px",
-                        backgroundColor: "rgba(16, 185, 129, 0.12)",
-                        border: "1px solid rgba(16, 185, 129, 0.3)",
+                        backgroundColor: "rgba(16, 185, 129, 0.14)",
+                        backgroundImage: "linear-gradient(135deg, rgba(16, 185, 129, 0.16) 0%, rgba(5, 150, 105, 0.26) 100%)",
+                        border: "1px solid rgba(52, 211, 153, 0.4)",
                         color: "#34d399",
-                        fontSize: "11.5px",
-                        fontWeight: 650,
+                        fontSize: "12.5px",
+                        fontWeight: 700,
+                        letterSpacing: "0.2px",
                         cursor: "pointer",
                         whiteSpace: "nowrap",
                         lineHeight: 1,
+                        boxShadow: "0 2px 6px rgba(0, 0, 0, 0.25)",
                         transition: "all 0.15s ease",
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = "#10b981";
+                        e.currentTarget.style.backgroundImage = "linear-gradient(135deg, #10b981 0%, #059669 100%)";
                         e.currentTarget.style.color = "#090c13";
+                        e.currentTarget.style.boxShadow = "0 4px 14px rgba(16, 185, 129, 0.4)";
+                        e.currentTarget.style.transform = "translateY(-1px)";
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = "rgba(16, 185, 129, 0.12)";
+                        e.currentTarget.style.backgroundImage = "linear-gradient(135deg, rgba(16, 185, 129, 0.16) 0%, rgba(5, 150, 105, 0.26) 100%)";
                         e.currentTarget.style.color = "#34d399";
+                        e.currentTarget.style.boxShadow = "0 2px 6px rgba(0, 0, 0, 0.25)";
+                        e.currentTarget.style.transform = "none";
                       }}
                     >
-                      <span>+ Add Report</span>
+                      <span style={{ fontSize: "14px", fontWeight: 900 }}>+</span>
+                      <span>Add Report</span>
                     </button>
 
                     {/* 2. Usage Report button */}
@@ -927,29 +948,38 @@ export const StockDashboardView: React.FC = () => {
                       style={{
                         display: "inline-flex",
                         alignItems: "center",
-                        gap: "4px",
-                        padding: "5px 11px",
+                        gap: "6px",
+                        height: "36px",
+                        padding: "0 15px",
                         borderRadius: "4px",
                         backgroundColor: "rgba(255, 138, 115, 0.14)",
-                        border: "1px solid var(--accent-border)",
+                        backgroundImage: "linear-gradient(135deg, rgba(255, 138, 115, 0.16) 0%, rgba(244, 63, 94, 0.22) 100%)",
+                        border: "1px solid rgba(255, 138, 115, 0.45)",
                         color: "var(--accent-text)",
-                        fontSize: "11.5px",
-                        fontWeight: 650,
+                        fontSize: "12.5px",
+                        fontWeight: 700,
+                        letterSpacing: "0.2px",
                         cursor: "pointer",
                         whiteSpace: "nowrap",
                         lineHeight: 1,
+                        boxShadow: "0 2px 6px rgba(0, 0, 0, 0.25)",
                         transition: "all 0.15s ease",
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = "var(--accent)";
+                        e.currentTarget.style.backgroundImage = "linear-gradient(135deg, #ff8a73 0%, #ff6b8b 100%)";
                         e.currentTarget.style.color = "#090c13";
+                        e.currentTarget.style.boxShadow = "0 4px 14px rgba(255, 107, 139, 0.4)";
+                        e.currentTarget.style.transform = "translateY(-1px)";
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = "rgba(255, 138, 115, 0.14)";
+                        e.currentTarget.style.backgroundImage = "linear-gradient(135deg, rgba(255, 138, 115, 0.16) 0%, rgba(244, 63, 94, 0.22) 100%)";
                         e.currentTarget.style.color = "var(--accent-text)";
+                        e.currentTarget.style.boxShadow = "0 2px 6px rgba(0, 0, 0, 0.25)";
+                        e.currentTarget.style.transform = "none";
                       }}
                     >
-                      <span>− Usage Report</span>
+                      <span style={{ fontSize: "14px", fontWeight: 900 }}>−</span>
+                      <span>Usage Report</span>
                     </button>
                   </div>
                 </div>
@@ -1044,130 +1074,142 @@ export const StockDashboardView: React.FC = () => {
                   key={item.id}
                   onClick={() => setSelectedItem(item)}
                   style={{
-                    backgroundColor: "rgba(19, 23, 34, 0.85)",
-                    backdropFilter: "blur(14px)",
-                    border: "1px solid rgba(255, 255, 255, 0.07)",
-                    borderRadius: "4px",
-                    padding: "12px 18px",
+                    backgroundColor: "rgba(18, 23, 35, 0.92)",
+                    backdropFilter: "blur(16px)",
+                    border: "1px solid rgba(255, 255, 255, 0.08)",
+                    borderRadius: "6px",
+                    padding: "16px 22px",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
-                    gap: "14px",
+                    gap: "18px",
                     cursor: "pointer",
-                    transition: "all 0.15s ease",
+                    transition: "all 0.18s cubic-bezier(0.16, 1, 0.3, 1)",
+                    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.25)",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = "rgba(25, 32, 47, 0.95)";
+                    e.currentTarget.style.backgroundColor = "rgba(26, 33, 50, 0.98)";
                     e.currentTarget.style.borderColor = "var(--accent-border)";
-                    e.currentTarget.style.transform = "translateY(-1px)";
+                    e.currentTarget.style.transform = "translateY(-2px)";
+                    e.currentTarget.style.boxShadow = "0 8px 24px rgba(0, 0, 0, 0.45)";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = "rgba(19, 23, 34, 0.85)";
-                    e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.07)";
+                    e.currentTarget.style.backgroundColor = "rgba(18, 23, 35, 0.92)";
+                    e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.08)";
                     e.currentTarget.style.transform = "none";
+                    e.currentTarget.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.25)";
                   }}
                 >
-                  {/* Column 1: Material Visual & Title */}
-                  <div style={{ display: "flex", alignItems: "center", gap: "14px", width: "290px", flexShrink: 0 }}>
+                  {/* Column 1: Material Visual (58px) & Title (15px) */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "16px", width: "320px", flexShrink: 0 }}>
                     {item.imageUrl ? (
                       <img
                         src={item.imageUrl}
                         alt={item.name}
                         style={{
-                          width: 44,
-                          height: 44,
-                          borderRadius: "4px",
+                          width: 58,
+                          height: 58,
+                          borderRadius: "6px",
                           objectFit: "cover",
-                          border: "1px solid rgba(255, 255, 255, 0.12)",
+                          border: "1px solid rgba(255, 255, 255, 0.14)",
+                          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
                           flexShrink: 0,
                         }}
                       />
                     ) : (
                       <div
                         style={{
-                          width: 44,
-                          height: 44,
-                          borderRadius: "4px",
+                          width: 58,
+                          height: 58,
+                          borderRadius: "6px",
                           backgroundColor: item.iconBg,
-                          border: "1px solid rgba(255, 255, 255, 0.08)",
+                          border: "1px solid rgba(255, 255, 255, 0.1)",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
+                          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
                           flexShrink: 0,
                         }}
                       >
-                        <Icon name={item.iconName} size={20} color={item.iconColor} />
+                        <Icon name={item.iconName} size={24} color={item.iconColor} />
                       </div>
                     )}
 
-                    <div style={{ display: "flex", flexDirection: "column", gap: "2px", overflow: "hidden" }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "3px", overflow: "hidden" }}>
                       <span
                         style={{
-                          fontSize: "13.5px",
+                          fontSize: "15px",
                           fontWeight: 700,
-                          color: "#fff",
+                          color: "#ffffff",
                           whiteSpace: "nowrap",
                           overflow: "hidden",
                           textOverflow: "ellipsis",
+                          letterSpacing: "-0.15px",
                         }}
                       >
                         {item.name}
                       </span>
-                      <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>
-                        {categoryBadge} • Code: {item.code}
+                      <span style={{ fontSize: "12px", color: "var(--text-secondary)", fontWeight: 500 }}>
+                        {categoryBadge}
                       </span>
                     </div>
                   </div>
 
                   {/* Column 2: Total Used & Consumed */}
-                  <div style={{ display: "flex", flexDirection: "column", gap: "2px", width: "130px", flexShrink: 0 }}>
-                    <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>Material Used</span>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "3px", width: "135px", flexShrink: 0 }}>
+                    <span style={{ fontSize: "11px", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 600 }}>
+                      Material Used
+                    </span>
                     <div style={{ display: "flex", alignItems: "baseline", gap: "5px" }}>
-                      <span style={{ fontFamily: "var(--font-mono)", fontSize: "14px", fontWeight: 800, color: "#ff8a73" }}>
+                      <span style={{ fontFamily: "var(--font-mono)", fontSize: "15.5px", fontWeight: 800, color: "#ff8a73" }}>
                         {item.used_stock.toLocaleString()}
                       </span>
-                      <span style={{ fontSize: "10.5px", color: "var(--text-muted)" }}>{item.unit}</span>
+                      <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 500 }}>{item.unit}</span>
                     </div>
-                    <span style={{ fontSize: "10.5px", color: "#38bdf8", fontWeight: 600 }}>{usageRate}% of Total Run</span>
+                    <span style={{ fontSize: "11px", color: "#38bdf8", fontWeight: 600 }}>{usageRate}% of Total Run</span>
                   </div>
 
                   {/* Column 3: Consumption Rate Arc Gauge */}
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "2px", width: "80px", flexShrink: 0 }}>
-                    <span style={{ fontSize: "10px", fontWeight: 700, color: gaugeColor }}>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "3px", width: "85px", flexShrink: 0 }}>
+                    <span style={{ fontSize: "11px", fontWeight: 700, color: gaugeColor }}>
                       {usageStatus}
                     </span>
                     <StockGaugeArc percentage={usageRate} color={gaugeColor} />
                   </div>
 
                   {/* Column 4: Available Stock Remaining */}
-                  <div style={{ display: "flex", flexDirection: "column", gap: "2px", width: "130px", flexShrink: 0 }}>
-                    <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>Stock Remaining</span>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "3px", width: "135px", flexShrink: 0 }}>
+                    <span style={{ fontSize: "11px", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 600 }}>
+                      Stock Remaining
+                    </span>
                     <div style={{ display: "flex", alignItems: "baseline", gap: "5px" }}>
-                      <span style={{ fontFamily: "var(--font-mono)", fontSize: "13px", fontWeight: 700, color: "#fff" }}>
+                      <span style={{ fontFamily: "var(--font-mono)", fontSize: "15.5px", fontWeight: 800, color: "#ffffff" }}>
                         {item.available_stock.toLocaleString()}
                       </span>
-                      <span style={{ fontSize: "10.5px", color: "var(--text-muted)" }}>{item.unit}</span>
+                      <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 500 }}>{item.unit}</span>
                     </div>
-                    <span style={{ fontSize: "10px", color: "var(--text-muted)" }}>
-                      Floor Unit: {item.defaultDestination}
+                    <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>
+                      Floor: {item.defaultDestination}
                     </span>
                   </div>
 
                   {/* Column 5: Consumed Valuation */}
-                  <div style={{ display: "flex", flexDirection: "column", gap: "2px", width: "130px", flexShrink: 0 }}>
-                    <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>Usage Valuation</span>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "3px", width: "135px", flexShrink: 0 }}>
+                    <span style={{ fontSize: "11px", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 600 }}>
+                      Usage Valuation
+                    </span>
                     <div style={{ display: "flex", alignItems: "baseline", gap: "4px" }}>
-                      <span style={{ fontFamily: "var(--font-mono)", fontSize: "13.5px", fontWeight: 700, color: "#34d399" }}>
+                      <span style={{ fontFamily: "var(--font-mono)", fontSize: "15.5px", fontWeight: 800, color: "#34d399" }}>
                         ₹{consumedValue.toLocaleString("en-IN")}
                       </span>
                     </div>
-                    <span style={{ fontSize: "10px", color: "var(--text-muted)" }}>
+                    <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>
                       ₹{item.item_price.toFixed(2)} / {item.unit}
                     </span>
                   </div>
 
-                  {/* Column 6: Action Buttons (Only 2 buttons: + Add Report and − Usage Report) */}
-                  <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
+                  {/* Column 6: Action Buttons (High-End Tactile Buttons) */}
+                  <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
                     {/* 1. Add Addition Report button */}
                     <button
                       type="button"
@@ -1182,29 +1224,38 @@ export const StockDashboardView: React.FC = () => {
                       style={{
                         display: "inline-flex",
                         alignItems: "center",
-                        gap: "4px",
-                        padding: "5px 11px",
+                        gap: "6px",
+                        height: "36px",
+                        padding: "0 15px",
                         borderRadius: "4px",
-                        backgroundColor: "rgba(16, 185, 129, 0.12)",
-                        border: "1px solid rgba(16, 185, 129, 0.3)",
+                        backgroundColor: "rgba(16, 185, 129, 0.14)",
+                        backgroundImage: "linear-gradient(135deg, rgba(16, 185, 129, 0.16) 0%, rgba(5, 150, 105, 0.26) 100%)",
+                        border: "1px solid rgba(52, 211, 153, 0.4)",
                         color: "#34d399",
-                        fontSize: "11.5px",
-                        fontWeight: 650,
+                        fontSize: "12.5px",
+                        fontWeight: 700,
+                        letterSpacing: "0.2px",
                         cursor: "pointer",
                         whiteSpace: "nowrap",
                         lineHeight: 1,
+                        boxShadow: "0 2px 6px rgba(0, 0, 0, 0.25)",
                         transition: "all 0.15s ease",
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = "#10b981";
+                        e.currentTarget.style.backgroundImage = "linear-gradient(135deg, #10b981 0%, #059669 100%)";
                         e.currentTarget.style.color = "#090c13";
+                        e.currentTarget.style.boxShadow = "0 4px 14px rgba(16, 185, 129, 0.4)";
+                        e.currentTarget.style.transform = "translateY(-1px)";
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = "rgba(16, 185, 129, 0.12)";
+                        e.currentTarget.style.backgroundImage = "linear-gradient(135deg, rgba(16, 185, 129, 0.16) 0%, rgba(5, 150, 105, 0.26) 100%)";
                         e.currentTarget.style.color = "#34d399";
+                        e.currentTarget.style.boxShadow = "0 2px 6px rgba(0, 0, 0, 0.25)";
+                        e.currentTarget.style.transform = "none";
                       }}
                     >
-                      <span>+ Add Report</span>
+                      <span style={{ fontSize: "14px", fontWeight: 900 }}>+</span>
+                      <span>Add Report</span>
                     </button>
 
                     {/* 2. Usage Report button */}
@@ -1220,29 +1271,38 @@ export const StockDashboardView: React.FC = () => {
                       style={{
                         display: "inline-flex",
                         alignItems: "center",
-                        gap: "4px",
-                        padding: "5px 11px",
+                        gap: "6px",
+                        height: "36px",
+                        padding: "0 15px",
                         borderRadius: "4px",
                         backgroundColor: "rgba(255, 138, 115, 0.14)",
-                        border: "1px solid var(--accent-border)",
+                        backgroundImage: "linear-gradient(135deg, rgba(255, 138, 115, 0.16) 0%, rgba(244, 63, 94, 0.22) 100%)",
+                        border: "1px solid rgba(255, 138, 115, 0.45)",
                         color: "var(--accent-text)",
-                        fontSize: "11.5px",
-                        fontWeight: 650,
+                        fontSize: "12.5px",
+                        fontWeight: 700,
+                        letterSpacing: "0.2px",
                         cursor: "pointer",
                         whiteSpace: "nowrap",
                         lineHeight: 1,
+                        boxShadow: "0 2px 6px rgba(0, 0, 0, 0.25)",
                         transition: "all 0.15s ease",
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = "var(--accent)";
+                        e.currentTarget.style.backgroundImage = "linear-gradient(135deg, #ff8a73 0%, #ff6b8b 100%)";
                         e.currentTarget.style.color = "#090c13";
+                        e.currentTarget.style.boxShadow = "0 4px 14px rgba(255, 107, 139, 0.4)";
+                        e.currentTarget.style.transform = "translateY(-1px)";
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = "rgba(255, 138, 115, 0.14)";
+                        e.currentTarget.style.backgroundImage = "linear-gradient(135deg, rgba(255, 138, 115, 0.16) 0%, rgba(244, 63, 94, 0.22) 100%)";
                         e.currentTarget.style.color = "var(--accent-text)";
+                        e.currentTarget.style.boxShadow = "0 2px 6px rgba(0, 0, 0, 0.25)";
+                        e.currentTarget.style.transform = "none";
                       }}
                     >
-                      <span>− Usage Report</span>
+                      <span style={{ fontSize: "14px", fontWeight: 900 }}>−</span>
+                      <span>Usage Report</span>
                     </button>
                   </div>
                 </div>
@@ -1656,27 +1716,54 @@ export const StockDashboardView: React.FC = () => {
         </>
       )}
 
-      {/* 2. Modal: Update Quantity Anytime */}
+      {/* 2. Modal: Update Quantity / Stock Addition Report */}
       {isQtyModalOpen && (
         <Modal
           isOpen={isQtyModalOpen}
           onClose={() => setIsQtyModalOpen(false)}
-          title={`Update Stock Quantity: ${targetItem.name}`}
+          title={`Stock Report: ${targetItem.name}`}
         >
-          <form onSubmit={handleUpdateQuantity} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-            <div style={{ padding: "10px 12px", backgroundColor: "rgba(255, 255, 255, 0.03)", borderRadius: "4px", border: "1px solid rgba(255, 255, 255, 0.06)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>Current Available:</span>
-              <span style={{ fontFamily: "var(--font-mono)", fontSize: "14px", fontWeight: 700, color: "#fff" }}>
-                {targetItem.available_stock.toLocaleString()} {targetItem.unit}
-              </span>
+          <form onSubmit={handleUpdateQuantity} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            {/* Target Product Banner */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "14px",
+                padding: "12px 16px",
+                backgroundColor: "rgba(255, 255, 255, 0.03)",
+                borderRadius: "6px",
+                border: "1px solid rgba(255, 255, 255, 0.08)",
+              }}
+            >
+              {targetItem.imageUrl ? (
+                <img
+                  src={targetItem.imageUrl}
+                  alt={targetItem.name}
+                  style={{ width: 46, height: 46, borderRadius: "5px", objectFit: "cover", border: "1px solid rgba(255, 255, 255, 0.15)" }}
+                />
+              ) : (
+                <div style={{ width: 46, height: 46, borderRadius: "5px", backgroundColor: targetItem.iconBg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Icon name={targetItem.iconName} size={22} color={targetItem.iconColor} />
+                </div>
+              )}
+              <div style={{ display: "flex", flexDirection: "column", gap: "2px", flex: 1 }}>
+                <span style={{ fontSize: "14px", fontWeight: 700, color: "#fff" }}>{targetItem.name}</span>
+                <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                  <span style={{ fontSize: "11.5px", color: "var(--text-muted)" }}>Current Available:</span>
+                  <span style={{ fontFamily: "var(--font-mono)", fontSize: "13.5px", fontWeight: 700, color: "#38bdf8" }}>
+                    {targetItem.available_stock.toLocaleString()} {targetItem.unit}
+                  </span>
+                </div>
+              </div>
             </div>
 
             {/* Mode selection chips */}
             <div style={{ display: "flex", gap: "8px" }}>
               {[
-                { id: "ADD" as const, label: "➕ Add Stock", color: "#10b981" },
-                { id: "DEDUCT" as const, label: "➖ Deduct Qty", color: "#ef4444" },
-                { id: "SET" as const, label: "🟰 Set Exact Count", color: "#38bdf8" },
+                { id: "ADD" as const, label: "➕ Add Stock", color: "#10b981", activeBg: "rgba(16, 185, 129, 0.18)" },
+                { id: "DEDUCT" as const, label: "➖ Deduct Qty", color: "#ef4444", activeBg: "rgba(239, 68, 68, 0.18)" },
+                { id: "SET" as const, label: "🟰 Set Exact Count", color: "#38bdf8", activeBg: "rgba(56, 189, 248, 0.18)" },
               ].map((m) => (
                 <button
                   key={m.id}
@@ -1684,14 +1771,15 @@ export const StockDashboardView: React.FC = () => {
                   onClick={() => setQtyMode(m.id)}
                   style={{
                     flex: 1,
-                    padding: "8px 10px",
-                    borderRadius: "4px",
-                    border: qtyMode === m.id ? `1px solid ${m.color}` : "1px solid rgba(255, 255, 255, 0.08)",
-                    backgroundColor: qtyMode === m.id ? "rgba(255, 255, 255, 0.08)" : "transparent",
+                    padding: "10px 12px",
+                    borderRadius: "5px",
+                    border: qtyMode === m.id ? `1.5px solid ${m.color}` : "1px solid rgba(255, 255, 255, 0.08)",
+                    backgroundColor: qtyMode === m.id ? m.activeBg : "rgba(255, 255, 255, 0.02)",
                     color: qtyMode === m.id ? m.color : "var(--text-secondary)",
-                    fontSize: "11.5px",
+                    fontSize: "12px",
                     fontWeight: qtyMode === m.id ? 700 : 500,
                     cursor: "pointer",
+                    transition: "all 0.15s ease",
                   }}
                 >
                   {m.label}
@@ -1699,13 +1787,79 @@ export const StockDashboardView: React.FC = () => {
               ))}
             </div>
 
-            <Input
-              label={`Quantity to ${qtyMode === "ADD" ? "Add" : qtyMode === "DEDUCT" ? "Deduct" : "Set Directly"}`}
-              type="number"
-              value={adjustQty}
-              onChange={(e) => setAdjustQty(e.target.value)}
-              required
-            />
+            {/* Quantity Input + Quick Add Chips */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              <Input
+                label={`Quantity to ${qtyMode === "ADD" ? "Add" : qtyMode === "DEDUCT" ? "Deduct" : "Set Directly"}`}
+                type="number"
+                value={adjustQty}
+                onChange={(e) => setAdjustQty(e.target.value)}
+                required
+              />
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", marginTop: "2px" }}>
+                <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>Quick Set:</span>
+                {[100, 250, 500, 1000, 2500, 5000].map((q) => (
+                  <button
+                    key={q}
+                    type="button"
+                    onClick={() => setAdjustQty(q.toString())}
+                    style={{
+                      background: "rgba(255, 255, 255, 0.04)",
+                      border: "1px solid rgba(255, 255, 255, 0.08)",
+                      borderRadius: "3px",
+                      color: "var(--text-secondary)",
+                      padding: "3px 8px",
+                      fontSize: "11px",
+                      cursor: "pointer",
+                      fontFamily: "var(--font-mono)",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = "var(--accent)";
+                      e.currentTarget.style.color = "#fff";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.08)";
+                      e.currentTarget.style.color = "var(--text-secondary)";
+                    }}
+                  >
+                    +{q.toLocaleString()}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Live Calculation Preview Card */}
+            {(() => {
+              const delta = parseInt(adjustQty, 10) || 0;
+              let nextAvailable = targetItem.available_stock;
+              if (qtyMode === "ADD") nextAvailable += delta;
+              else if (qtyMode === "DEDUCT") nextAvailable = Math.max(0, nextAvailable - delta);
+              else if (qtyMode === "SET") nextAvailable = delta;
+
+              return (
+                <div
+                  style={{
+                    padding: "10px 14px",
+                    borderRadius: "5px",
+                    backgroundColor: "rgba(16, 185, 129, 0.08)",
+                    border: "1px solid rgba(16, 185, 129, 0.2)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>
+                    {qtyMode === "ADD" ? "Adding" : qtyMode === "DEDUCT" ? "Deducting" : "Setting"}: <strong style={{ color: "#fff" }}>{delta.toLocaleString()} {targetItem.unit}</strong>
+                  </span>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>Resulting Stock:</span>
+                    <span style={{ fontFamily: "var(--font-mono)", fontSize: "14px", fontWeight: 800, color: "#34d399" }}>
+                      {nextAvailable.toLocaleString()} {targetItem.unit}
+                    </span>
+                  </div>
+                </div>
+              );
+            })()}
 
             <Input
               label="Audit Note / Reason"
@@ -1714,12 +1868,12 @@ export const StockDashboardView: React.FC = () => {
               placeholder="e.g. GRN shipment receipt or physical floor audit"
             />
 
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px", marginTop: "8px" }}>
-              <Button variant="secondary" size="sm" onClick={() => setIsQtyModalOpen(false)}>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "4px" }}>
+              <Button variant="secondary" size="md" onClick={() => setIsQtyModalOpen(false)}>
                 Cancel
               </Button>
-              <Button variant="primary" size="sm" type="submit">
-                Apply Quantity Update
+              <Button variant="primary" size="md" type="submit">
+                Record Addition Report
               </Button>
             </div>
           </form>
@@ -1731,29 +1885,124 @@ export const StockDashboardView: React.FC = () => {
         <Modal
           isOpen={isUsageModalOpen}
           onClose={() => setIsUsageModalOpen(false)}
-          title={`Report Material Usage: ${targetItem.name}`}
+          title={`Log Material Usage: ${targetItem.name}`}
         >
-          <form onSubmit={handleLogUsage} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-            <div style={{ padding: "10px 12px", backgroundColor: "rgba(255, 255, 255, 0.03)", borderRadius: "4px", border: "1px solid rgba(255, 255, 255, 0.06)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>Available for Production:</span>
-              <span style={{ fontFamily: "var(--font-mono)", fontSize: "14px", fontWeight: 700, color: "#10b981" }}>
-                {targetItem.available_stock.toLocaleString()} {targetItem.unit}
-              </span>
+          <form onSubmit={handleLogUsage} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            {/* Target Product Banner */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "14px",
+                padding: "12px 16px",
+                backgroundColor: "rgba(255, 138, 115, 0.06)",
+                borderRadius: "6px",
+                border: "1px solid rgba(255, 138, 115, 0.18)",
+              }}
+            >
+              {targetItem.imageUrl ? (
+                <img
+                  src={targetItem.imageUrl}
+                  alt={targetItem.name}
+                  style={{ width: 46, height: 46, borderRadius: "5px", objectFit: "cover", border: "1px solid rgba(255, 255, 255, 0.15)" }}
+                />
+              ) : (
+                <div style={{ width: 46, height: 46, borderRadius: "5px", backgroundColor: targetItem.iconBg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Icon name={targetItem.iconName} size={22} color={targetItem.iconColor} />
+                </div>
+              )}
+              <div style={{ display: "flex", flexDirection: "column", gap: "2px", flex: 1 }}>
+                <span style={{ fontSize: "14px", fontWeight: 700, color: "#fff" }}>{targetItem.name}</span>
+                <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                  <span style={{ fontSize: "11.5px", color: "var(--text-muted)" }}>Floor Stock:</span>
+                  <span style={{ fontFamily: "var(--font-mono)", fontSize: "13.5px", fontWeight: 700, color: "#ff8a73" }}>
+                    {targetItem.available_stock.toLocaleString()} {targetItem.unit}
+                  </span>
+                  <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>• ₹{targetItem.item_price.toFixed(2)}/{targetItem.unit}</span>
+                </div>
+              </div>
             </div>
 
-            <Input
-              label="Quantity Consumed / Used"
-              type="number"
-              value={useQty}
-              onChange={(e) => setUseQty(e.target.value)}
-              required
-            />
+            {/* Quantity Input + Quick Use Chips */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              <Input
+                label="Quantity Consumed / Used in Production"
+                type="number"
+                value={useQty}
+                onChange={(e) => setUseQty(e.target.value)}
+                required
+              />
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", marginTop: "2px" }}>
+                <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>Quick Set:</span>
+                {[50, 100, 250, 500, 1000].map((q) => (
+                  <button
+                    key={q}
+                    type="button"
+                    onClick={() => setUseQty(q.toString())}
+                    style={{
+                      background: "rgba(255, 255, 255, 0.04)",
+                      border: "1px solid rgba(255, 255, 255, 0.08)",
+                      borderRadius: "3px",
+                      color: "var(--text-secondary)",
+                      padding: "3px 8px",
+                      fontSize: "11px",
+                      cursor: "pointer",
+                      fontFamily: "var(--font-mono)",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = "var(--accent)";
+                      e.currentTarget.style.color = "#fff";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.08)";
+                      e.currentTarget.style.color = "var(--text-secondary)";
+                    }}
+                  >
+                    −{q.toLocaleString()}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Live Financial Valuation & Balance Card */}
+            {(() => {
+              const qty = parseInt(useQty, 10) || 0;
+              const val = qty * targetItem.item_price;
+              const remaining = Math.max(0, targetItem.available_stock - qty);
+
+              return (
+                <div
+                  style={{
+                    padding: "12px 14px",
+                    borderRadius: "5px",
+                    backgroundColor: "rgba(255, 138, 115, 0.08)",
+                    border: "1px solid rgba(255, 138, 115, 0.25)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                    <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>Usage Financial Value</span>
+                    <span style={{ fontFamily: "var(--font-mono)", fontSize: "15px", fontWeight: 800, color: "#34d399" }}>
+                      ₹{val.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "2px", alignItems: "flex-end" }}>
+                    <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>Remaining Floor Stock</span>
+                    <span style={{ fontFamily: "var(--font-mono)", fontSize: "14px", fontWeight: 700, color: "#fff" }}>
+                      {remaining.toLocaleString()} {targetItem.unit}
+                    </span>
+                  </div>
+                </div>
+              );
+            })()}
 
             <Input
               label="Production Workstation / Line"
               value={useDestination}
               onChange={(e) => setUseDestination(e.target.value)}
-              placeholder="e.g. Press Floor Line 1, Assembly Bench 3"
+              placeholder="e.g. Thermal Card Press Floor, Line 1"
               required
             />
 
@@ -1761,16 +2010,16 @@ export const StockDashboardView: React.FC = () => {
               label="Job Order / Reason"
               value={useReason}
               onChange={(e) => setUseReason(e.target.value)}
-              placeholder="e.g. Order #ORD-2026-0001 (500 lanyards run)"
+              placeholder="e.g. Production run for Order #ORD-2026-0001"
               required
             />
 
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px", marginTop: "8px" }}>
-              <Button variant="secondary" size="sm" onClick={() => setIsUsageModalOpen(false)}>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "4px" }}>
+              <Button variant="secondary" size="md" onClick={() => setIsUsageModalOpen(false)}>
                 Cancel
               </Button>
-              <Button variant="primary" size="sm" type="submit">
-                Record Material Usage
+              <Button variant="primary" size="md" type="submit">
+                Submit Usage Report
               </Button>
             </div>
           </form>
