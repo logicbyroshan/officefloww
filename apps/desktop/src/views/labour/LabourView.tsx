@@ -436,7 +436,7 @@ export const LabourView: React.FC = () => {
                         {c.name}
                       </h3>
                       <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>
-                        Task-Based Contract • ₹{c.pieceRate.toFixed(2)}/unit
+                        Task-Based Contractor • {c.workstation}
                       </span>
                     </div>
                   </div>
@@ -519,9 +519,9 @@ export const LabourView: React.FC = () => {
                   </div>
 
                   <div style={{ display: "flex", flexDirection: "column", gap: "2px", borderLeft: "1px solid rgba(255, 255, 255, 0.06)", paddingLeft: "8px" }}>
-                    <span style={{ fontSize: "10px", color: "var(--text-muted)", textTransform: "uppercase" }}>Payable</span>
+                    <span style={{ fontSize: "10px", color: "var(--text-muted)", textTransform: "uppercase" }}>Completion</span>
                     <strong style={{ fontSize: "15px", color: "#a855f7", fontFamily: "var(--font-mono)" }}>
-                      ₹{c.amountDue.toLocaleString()}
+                      {Math.round((c.assembledReturned / (c.lanyardsGiven || 1)) * 100)}%
                     </strong>
                   </div>
                 </div>

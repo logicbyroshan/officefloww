@@ -97,12 +97,10 @@ export const StaffDetailProfileView: React.FC<StaffDetailProfileViewProps> = ({
 }) => {
   const { success } = useToast();
 
-  // Top header tab: Overview | Tasks (Kanban) | Salary Management
-  const [activeProfileTab, setActiveProfileTab] = useState<"overview" | "tasks" | "salary">("overview");
+  // Top header tab: Overview | Tasks (Kanban)
+  const [activeProfileTab, setActiveProfileTab] = useState<"overview" | "tasks">("overview");
 
   // Modals
-  const [showPayModal, setShowPayModal] = useState(false);
-  const [payMethod, setPayMethod] = useState<"neft" | "cash" | "upi">("neft");
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
   const [editPhone, setEditPhone] = useState(staff.phone || "+91 98200 11002");
   const [editEmail, setEditEmail] = useState(staff.email);
@@ -117,25 +115,6 @@ export const StaffDetailProfileView: React.FC<StaffDetailProfileViewProps> = ({
   // Days of current month for attendance widget
   const calendarDays = Array.from({ length: 30 }, (_, i) => i + 1);
 
-  // Hourly Salary & Inactivity Deduction Engine
-  const baseSalary = staff.role === "ADMIN" ? 45000 : staff.role === "OPERATOR" ? 28000 : isLabour ? 15000 : 18000;
-  const standardMonthlyHours = 160;
-  const hourlyRate = Math.round(baseSalary / standardMonthlyHours); // e.g. 175/hr for operator
-  const idleHoursThisMonth = isLabour ? 0 : 18.5; // 18.5 hours detected as inactive
-  const idleDeduction = Math.round(idleHoursThisMonth * hourlyRate); // Minus salary hourly based on inactivity!
-  const productionAllowance = 3500;
-  const overtimeIncentive = 2800;
-  const attendanceBonus = 1200;
-  const pfDeduction = isLabour ? 0 : 1800;
-  const esicDeduction = isLabour ? 0 : 420;
-  const netMonthlyCalculated = baseSalary - idleDeduction + productionAllowance + overtimeIncentive + attendanceBonus - pfDeduction - esicDeduction;
-
-  // Past 3 Months Salary Records
-  const [pastPayRecords, setPastPayRecords] = useState([
-    { month: "August 2026", gross: baseSalary, idleDeduction: Math.round(12 * hourlyRate), allowances: 6500, netPaid: baseSalary - Math.round(12 * hourlyRate) + 6500 - pfDeduction - esicDeduction, paidAt: "31 Aug 2026", mode: "Direct NEFT", status: "PAID" },
-    { month: "July 2026", gross: baseSalary, idleDeduction: Math.round(8 * hourlyRate), allowances: 7200, netPaid: baseSalary - Math.round(8 * hourlyRate) + 7200 - pfDeduction - esicDeduction, paidAt: "31 Jul 2026", mode: "Direct NEFT", status: "PAID" },
-    { month: "June 2026", gross: baseSalary, idleDeduction: Math.round(16 * hourlyRate), allowances: 6000, netPaid: baseSalary - Math.round(16 * hourlyRate) + 6000 - pfDeduction - esicDeduction, paidAt: "30 Jun 2026", mode: "Direct NEFT", status: "PAID" },
-  ]);
 
   // Kanban Tasks for this staff member
   const [kanbanTasks, setKanbanTasks] = useState<KanbanTask[]>([
@@ -202,23 +181,6 @@ export const StaffDetailProfileView: React.FC<StaffDetailProfileViewProps> = ({
       prev.map((t) => (t.id === taskId ? { ...t, column: targetCol } : t))
     );
     success("Task Updated", "Moved task in Kanban workflow.");
-  };
-
-  const handleDisbursePayment = (e: React.FormEvent) => {
-    e.preventDefault();
-    setShowPayModal(false);
-    const newRecord = {
-      month: "September 2026",
-      gross: baseSalary,
-      idleDeduction: idleDeduction,
-      allowances: productionAllowance + overtimeIncentive + attendanceBonus,
-      netPaid: netMonthlyCalculated,
-      paidAt: "Today (Instant)",
-      mode: payMethod === "neft" ? "Direct NEFT" : payMethod === "upi" ? "UPI Payout" : "Cash Voucher",
-      status: "PAID",
-    };
-    setPastPayRecords([newRecord, ...pastPayRecords]);
-    success("Salary Disbursed", `₹${netMonthlyCalculated.toLocaleString("en-IN")} transferred to ${staff.name} via ${newRecord.mode}.`);
   };
 
   // Work Sessions for Employee & Worker
@@ -353,12 +315,11 @@ export const StaffDetailProfileView: React.FC<StaffDetailProfileViewProps> = ({
             <span>Back to Workforce</span>
           </button>
 
-          {/* Top Tabs (Overview, Tasks Kanban, Salary Management) */}
+          {/* Top Tabs (Overview, Tasks Kanban) */}
           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
             {[
               { id: "overview" as const, label: "Overview", icon: "user" as const },
               { id: "tasks" as const, label: "Assigned Tasks (Kanban)", icon: "tasks" as const, count: kanbanTasks.length },
-              { id: "salary" as const, label: "Salary & Hourly Ledger", icon: "billing" as const },
             ].map((tab) => {
               const isActive = activeProfileTab === tab.id;
               return (
@@ -415,7 +376,7 @@ export const StaffDetailProfileView: React.FC<StaffDetailProfileViewProps> = ({
           </div>
         </div>
 
-        {/* Right: Actions (Pay Salary & Edit Profile, No Badge!) */}
+        {/* Right: Actions (Edit Profile) */}
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           <Button
             variant="secondary"
@@ -424,22 +385,6 @@ export const StaffDetailProfileView: React.FC<StaffDetailProfileViewProps> = ({
             onClick={() => setShowEditProfileModal(true)}
           >
             Edit Profile
-          </Button>
-
-          <Button
-            variant="primary"
-            size="sm"
-            icon="credit-card"
-            style={{
-              borderRadius: "2px",
-              backgroundColor: "#2563eb",
-              backgroundImage: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
-              border: "1px solid rgba(59, 130, 246, 0.4)",
-              boxShadow: "0 2px 8px rgba(37, 99, 235, 0.35)",
-            }}
-            onClick={() => setShowPayModal(true)}
-          >
-            Pay Salary
           </Button>
         </div>
       </div>
@@ -556,8 +501,8 @@ export const StaffDetailProfileView: React.FC<StaffDetailProfileViewProps> = ({
                   <strong style={{ color: "#fff" }}>{isLabour ? "Contract Labour" : isWorker ? "Floor Production" : "Desktop Admin"}</strong>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px" }}>
-                  <span style={{ color: "var(--text-muted)" }}>Compensation Model</span>
-                  <strong style={{ color: "#fff" }}>{isLabour ? "Piece-Rate (₹1.50/unit)" : `Hourly ₹${hourlyRate}/hr`}</strong>
+                  <span style={{ color: "var(--text-muted)" }}>Employment Type</span>
+                  <strong style={{ color: "#fff" }}>{isLabour ? "Contract Worker" : isWorker ? "Floor Production" : "Permanent Staff"}</strong>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px" }}>
                   <span style={{ color: "var(--text-muted)" }}>Join Date</span>
@@ -1228,89 +1173,10 @@ export const StaffDetailProfileView: React.FC<StaffDetailProfileViewProps> = ({
                   <span>Half Day</span>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                  <span style={{ width: 8, height: 8, borderRadius: "1px", backgroundColor: "#ef4444" }} />
-                  <span>Leave</span>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
                   <span style={{ width: 8, height: 8, borderRadius: "1px", backgroundColor: "rgba(255,255,255,0.3)" }} />
                   <span>Off</span>
                 </div>
               </div>
-            </div>
-
-            {/* Quick Payroll Card with Hourly Inactivity Deduction */}
-            <div
-              style={{
-                backgroundColor: "rgba(19, 23, 34, 0.85)",
-                backdropFilter: "blur(14px)",
-                border: "1px solid rgba(255, 255, 255, 0.08)",
-                borderRadius: "3px",
-                padding: "16px 18px",
-                display: "flex",
-                flexDirection: "column",
-                gap: "10px",
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <span style={{ fontSize: "13px", fontWeight: 700, color: "#fff" }}>
-                  Current Month Accrual
-                </span>
-                <span
-                  onClick={() => setActiveProfileTab("salary")}
-                  style={{ fontSize: "11px", color: "#60a5fa", cursor: "pointer", fontWeight: 600 }}
-                >
-                  View Details →
-                </span>
-              </div>
-
-              <div style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "11.5px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ color: "var(--text-muted)" }}>Base Salary:</span>
-                  <strong style={{ color: "#fff", fontFamily: "var(--font-mono)" }}>₹{baseSalary.toLocaleString()}</strong>
-                </div>
-
-                {!isLabour && (
-                  <div style={{ display: "flex", justifyContent: "space-between", color: "#f87171" }}>
-                    <span>Inactivity ({idleHoursThisMonth}h @ ₹{hourlyRate}/hr):</span>
-                    <strong style={{ fontFamily: "var(--font-mono)" }}>-₹{idleDeduction.toLocaleString()}</strong>
-                  </div>
-                )}
-
-                <div style={{ display: "flex", justifyContent: "space-between", color: "#34d399" }}>
-                  <span>Net Allowances & Bonus:</span>
-                  <strong style={{ fontFamily: "var(--font-mono)" }}>+₹{(productionAllowance + overtimeIncentive + attendanceBonus).toLocaleString()}</strong>
-                </div>
-
-                <div style={{ display: "flex", justifyContent: "space-between", color: "#f87171" }}>
-                  <span>Statutory PF & ESIC:</span>
-                  <strong style={{ fontFamily: "var(--font-mono)" }}>-₹{(pfDeduction + esicDeduction).toLocaleString()}</strong>
-                </div>
-              </div>
-
-              <div style={{ borderTop: "1px solid rgba(255, 255, 255, 0.08)", paddingTop: "8px", display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
-                <span style={{ fontSize: "11.5px", fontWeight: 700, color: "#fff" }}>Net Payout Due:</span>
-                <strong style={{ fontSize: "16px", color: "#34d399", fontFamily: "var(--font-mono)" }}>
-                  ₹{netMonthlyCalculated.toLocaleString()}
-                </strong>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setShowPayModal(true)}
-                style={{
-                  marginTop: "4px",
-                  height: "32px",
-                  borderRadius: "2px",
-                  backgroundColor: "#2563eb",
-                  border: "none",
-                  color: "#fff",
-                  fontSize: "12px",
-                  fontWeight: 700,
-                  cursor: "pointer",
-                }}
-              >
-                Disburse Payout Now →
-              </button>
             </div>
           </div>
         </div>
@@ -1477,266 +1343,7 @@ export const StaffDetailProfileView: React.FC<StaffDetailProfileViewProps> = ({
         </div>
       )}
 
-      {/* =========================================================================
-          TAB 3: SALARY MANAGEMENT & HOURLY CALCULATION LEDGER
-          ========================================================================= */}
-      {activeProfileTab === "salary" && (
-        <div style={{ padding: "24px 28px", display: "flex", flexDirection: "column", gap: "22px", width: "100%", boxSizing: "border-box" }}>
-          {/* Header & Pay Button */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
-              <h2 style={{ fontSize: "18px", fontWeight: 800, color: "#fff", margin: 0 }}>
-                Compensation Ledger & Hourly Inactivity Deduction Engine
-              </h2>
-              <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>
-                Calculates live salary on an hourly basis: gross earnings minus non-active/idle time
-              </span>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setShowPayModal(true)}
-              style={{
-                height: "38px",
-                padding: "0 18px",
-                borderRadius: "2px",
-                backgroundColor: "#2563eb",
-                backgroundImage: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
-                border: "none",
-                color: "#fff",
-                fontSize: "13px",
-                fontWeight: 700,
-                cursor: "pointer",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
-              }}
-            >
-              <Icon name="credit-card" size={14} color="#fff" />
-              <span>Pay Current Salary (₹{netMonthlyCalculated.toLocaleString()})</span>
-            </button>
-          </div>
-
-          {/* Live Calculation Cards Row */}
-          <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "20px" }}>
-            {/* Breakdown Formula Card */}
-            <div
-              style={{
-                backgroundColor: "rgba(19, 23, 34, 0.85)",
-                border: "1px solid rgba(255, 255, 255, 0.08)",
-                borderRadius: "3px",
-                padding: "20px 24px",
-                display: "flex",
-                flexDirection: "column",
-                gap: "14px",
-              }}
-            >
-              <span style={{ fontSize: "14px", fontWeight: 700, color: "#fff" }}>
-                Current Cycle Itemized Salary (September 2026)
-              </span>
-
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px", fontSize: "13px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ color: "var(--text-muted)" }}>Base Monthly Salary (160 Hours Standard):</span>
-                  <strong style={{ color: "#fff", fontFamily: "var(--font-mono)" }}>₹{baseSalary.toLocaleString()}</strong>
-                </div>
-
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ color: "var(--text-muted)" }}>Standard Hourly Wage Benchmark:</span>
-                  <strong style={{ color: "var(--accent-text)", fontFamily: "var(--font-mono)" }}>₹{hourlyRate}.00 / hr</strong>
-                </div>
-
-                {!isLabour ? (
-                  <div style={{ display: "flex", justifyContent: "space-between", backgroundColor: "rgba(239, 68, 68, 0.06)", padding: "8px 10px", borderRadius: "2px", border: "1px solid rgba(239, 68, 68, 0.15)" }}>
-                    <div style={{ display: "flex", flexDirection: "column" }}>
-                      <span style={{ color: "#f87171", fontWeight: 700 }}>
-                        Inactivity & Idle Screen Deduction:
-                      </span>
-                      <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>
-                        {idleHoursThisMonth} hours idle logged on workstation @ ₹{hourlyRate}/hr
-                      </span>
-                    </div>
-                    <strong style={{ color: "#f87171", fontFamily: "var(--font-mono)", fontSize: "14px" }}>
-                      -₹{idleDeduction.toLocaleString()}
-                    </strong>
-                  </div>
-                ) : (
-                  <div style={{ display: "flex", justifyContent: "space-between", backgroundColor: "rgba(16, 185, 129, 0.06)", padding: "8px 10px", borderRadius: "2px", border: "1px solid rgba(16, 185, 129, 0.15)" }}>
-                    <span style={{ color: "#34d399", fontWeight: 700 }}>Piece-Rate Assembly Completed:</span>
-                    <strong style={{ color: "#34d399", fontFamily: "var(--font-mono)" }}>2,000 units × ₹1.50 = ₹3,000</strong>
-                  </div>
-                )}
-
-                <div style={{ display: "flex", justifyContent: "space-between", color: "#34d399" }}>
-                  <span>Production Incentive & Overtime Bonus:</span>
-                  <strong style={{ fontFamily: "var(--font-mono)" }}>+₹{(productionAllowance + overtimeIncentive + attendanceBonus).toLocaleString()}</strong>
-                </div>
-
-                <div style={{ display: "flex", justifyContent: "space-between", color: "#f87171" }}>
-                  <span>Statutory PF (12%) & ESIC Coverage:</span>
-                  <strong style={{ fontFamily: "var(--font-mono)" }}>-₹{(pfDeduction + esicDeduction).toLocaleString()}</strong>
-                </div>
-
-                <div style={{ borderTop: "1px solid rgba(255, 255, 255, 0.1)", paddingTop: "12px", display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                  <span style={{ fontSize: "14px", fontWeight: 800, color: "#fff" }}>Net Payout Amount:</span>
-                  <strong style={{ fontSize: "22px", color: "#34d399", fontFamily: "var(--font-mono)", fontWeight: 800 }}>
-                    ₹{netMonthlyCalculated.toLocaleString()}
-                  </strong>
-                </div>
-              </div>
-            </div>
-
-            {/* Inactivity Telemetry Rules Card */}
-            <div
-              style={{
-                backgroundColor: "rgba(19, 23, 34, 0.85)",
-                border: "1px solid rgba(255, 255, 255, 0.08)",
-                borderRadius: "3px",
-                padding: "20px 24px",
-                display: "flex",
-                flexDirection: "column",
-                gap: "12px",
-              }}
-            >
-              <span style={{ fontSize: "14px", fontWeight: 700, color: "#fff" }}>
-                Automatic Idle Hour Deduction Policy
-              </span>
-
-              <p style={{ fontSize: "12px", color: "var(--text-secondary)", lineHeight: 1.5, margin: 0 }}>
-                Under the OfficeFloww Industrial OS policy, employees are contracted on an hourly productive baseline.
-                When a desktop terminal or workstation line logs inactivity (no keystrokes or task handoffs), time is tallied into the monthly deduction ledger.
-              </p>
-
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "4px" }}>
-                <div style={{ padding: "8px 12px", borderRadius: "2px", backgroundColor: "rgba(255,255,255,0.03)", fontSize: "12px", display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ color: "var(--text-muted)" }}>Total Shift Recorded:</span>
-                  <strong style={{ color: "#fff" }}>160.0 Hours</strong>
-                </div>
-                <div style={{ padding: "8px 12px", borderRadius: "2px", backgroundColor: "rgba(16, 185, 129, 0.05)", fontSize: "12px", display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ color: "#10b981" }}>Productive Active Hours:</span>
-                  <strong style={{ color: "#10b981" }}>{(standardMonthlyHours - idleHoursThisMonth).toFixed(1)} Hours</strong>
-                </div>
-                <div style={{ padding: "8px 12px", borderRadius: "2px", backgroundColor: "rgba(239, 68, 68, 0.05)", fontSize: "12px", display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ color: "#f87171" }}>Non-Active Idle Time:</span>
-                  <strong style={{ color: "#f87171" }}>{idleHoursThisMonth} Hours (-₹{idleDeduction.toLocaleString()})</strong>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Past Salary History Table */}
-          <div
-            style={{
-              backgroundColor: "rgba(18, 23, 35, 0.75)",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
-              borderRadius: "3px",
-              overflow: "hidden",
-            }}
-          >
-            <div style={{ padding: "16px 20px", borderBottom: "1px solid rgba(255, 255, 255, 0.08)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <strong style={{ fontSize: "13.5px", color: "#fff" }}>
-                Historical Disbursed Pay Stubs
-              </strong>
-              <span style={{ fontSize: "11.5px", color: "var(--text-muted)" }}>
-                Showing last 3 months settlements
-              </span>
-            </div>
-
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", textAlign: "left" }}>
-              <thead>
-                <tr style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.08)", color: "var(--text-muted)", fontSize: "11px", textTransform: "uppercase" }}>
-                  <th style={{ padding: "14px 20px" }}>Billing Period</th>
-                  <th style={{ padding: "14px 20px" }}>Gross Base</th>
-                  <th style={{ padding: "14px 20px", color: "#f87171" }}>Idle Deductions</th>
-                  <th style={{ padding: "14px 20px", color: "#34d399" }}>Allowances</th>
-                  <th style={{ padding: "14px 20px", textAlign: "right" }}>Net Disbursed</th>
-                  <th style={{ padding: "14px 20px" }}>Disbursement Date</th>
-                  <th style={{ padding: "14px 20px" }}>Payment Mode</th>
-                  <th style={{ padding: "14px 20px" }}>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pastPayRecords.map((rec, idx) => (
-                  <tr key={idx} style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.05)" }}>
-                    <td style={{ padding: "14px 20px", fontWeight: 700, color: "#fff" }}>{rec.month}</td>
-                    <td style={{ padding: "14px 20px", fontFamily: "var(--font-mono)" }}>₹{rec.gross.toLocaleString()}</td>
-                    <td style={{ padding: "14px 20px", color: "#f87171", fontFamily: "var(--font-mono)" }}>-₹{rec.idleDeduction.toLocaleString()}</td>
-                    <td style={{ padding: "14px 20px", color: "#34d399", fontFamily: "var(--font-mono)" }}>+₹{rec.allowances.toLocaleString()}</td>
-                    <td style={{ padding: "14px 20px", textAlign: "right", fontFamily: "var(--font-mono)", fontWeight: 800, color: "#fff" }}>
-                      ₹{rec.netPaid.toLocaleString()}
-                    </td>
-                    <td style={{ padding: "14px 20px", color: "var(--text-secondary)" }}>{rec.paidAt}</td>
-                    <td style={{ padding: "14px 20px", color: "var(--text-secondary)" }}>{rec.mode}</td>
-                    <td style={{ padding: "14px 20px" }}>
-                      <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 6px", borderRadius: "2px", backgroundColor: "rgba(16, 185, 129, 0.15)", color: "#10b981" }}>
-                        {rec.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL 1: PAY SALARY / DISBURSE SETTLEMENT */}
-      {showPayModal && (
-        <Modal
-          isOpen={showPayModal}
-          onClose={() => setShowPayModal(false)}
-          title={`Disburse Payout: ${staff.name} (${staff.role})`}
-        >
-          <form onSubmit={handleDisbursePayment} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-            <div style={{ padding: "12px", backgroundColor: "rgba(255,255,255,0.03)", borderRadius: "2px", display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-              <span style={{ fontSize: "13px", color: "var(--text-muted)" }}>Total Calculated Net Payout:</span>
-              <strong style={{ fontSize: "20px", color: "#34d399", fontFamily: "var(--font-mono)" }}>
-                ₹{netMonthlyCalculated.toLocaleString("en-IN")}
-              </strong>
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-              <label style={{ fontSize: "12px", color: "var(--text-muted)" }}>Settlement Disbursement Channel</label>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px" }}>
-                {[
-                  { id: "neft" as const, label: "Direct NEFT / Bank" },
-                  { id: "upi" as const, label: "Instant UPI Payout" },
-                  { id: "cash" as const, label: "Plant Cash Voucher" },
-                ].map((m) => (
-                  <button
-                    key={m.id}
-                    type="button"
-                    onClick={() => setPayMethod(m.id)}
-                    style={{
-                      padding: "8px",
-                      borderRadius: "2px",
-                      border: "1px solid " + (payMethod === m.id ? "var(--accent-border)" : "rgba(255,255,255,0.1)"),
-                      backgroundColor: payMethod === m.id ? "rgba(255, 138, 115, 0.15)" : "transparent",
-                      color: payMethod === m.id ? "var(--accent-text)" : "var(--text-secondary)",
-                      fontSize: "11.5px",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                    }}
-                  >
-                    {m.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "8px" }}>
-              <Button variant="secondary" size="md" style={{ borderRadius: "2px" }} onClick={() => setShowPayModal(false)}>
-                Cancel
-              </Button>
-              <Button variant="primary" size="md" type="submit" style={{ borderRadius: "2px" }}>
-                Confirm & Disburse ₹{netMonthlyCalculated.toLocaleString()}
-              </Button>
-            </div>
-          </form>
-        </Modal>
-      )}
-
-      {/* MODAL 2: EDIT PROFILE */}
+      {/* MODAL: EDIT PROFILE */}
       {showEditProfileModal && (
         <Modal
           isOpen={showEditProfileModal}
