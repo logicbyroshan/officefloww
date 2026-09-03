@@ -16,10 +16,11 @@ interface StockRecord {
   physical_stock: number;
   reserved_stock: number;
   available_stock: number;
-  used_stock: number; // Total units used/consumed in production
+  used_stock: number; // Total units consumed in production
   min_stock_level: number;
-  item_price: number; // Renamed from cost_price / product price
+  item_price: number; // Renamed to Item Price
   active: boolean;
+  defaultDestination: string;
   iconName: "layers" | "package" | "tool" | "file-text" | "sliders" | "cpu";
   iconColor: string;
   iconBg: string;
@@ -37,26 +38,6 @@ interface MovementRecord {
   reason: string;
 }
 
-interface SupplierRecord {
-  id: string;
-  code: string;
-  name: string;
-  contact_person: string;
-  phone: string;
-  materials: string;
-  rating: string;
-}
-
-interface PurchaseOrderRecord {
-  id: string;
-  po_number: string;
-  supplier_name: string;
-  order_date: string;
-  items_summary: string;
-  total_amount: number;
-  status: "ORDERED" | "RECEIVED" | "INSPECTED";
-}
-
 const SEED_STOCK_ITEMS: StockRecord[] = [
   {
     id: "stk-01",
@@ -71,6 +52,7 @@ const SEED_STOCK_ITEMS: StockRecord[] = [
     min_stock_level: 10000,
     item_price: 4.20,
     active: true,
+    defaultDestination: "Thermal Card Press Floor",
     iconName: "layers",
     iconColor: "#38bdf8",
     iconBg: "rgba(56, 189, 248, 0.12)",
@@ -88,6 +70,7 @@ const SEED_STOCK_ITEMS: StockRecord[] = [
     min_stock_level: 3000,
     item_price: 1.80,
     active: true,
+    defaultDestination: "Sublimation Press Line 1",
     iconName: "package",
     iconColor: "#ff8a73",
     iconBg: "rgba(255, 138, 115, 0.14)",
@@ -105,6 +88,7 @@ const SEED_STOCK_ITEMS: StockRecord[] = [
     min_stock_level: 8000,
     item_price: 0.95,
     active: true,
+    defaultDestination: "Lanyard Stitching Bench 2",
     iconName: "tool",
     iconColor: "#c084fc",
     iconBg: "rgba(168, 85, 247, 0.12)",
@@ -122,6 +106,7 @@ const SEED_STOCK_ITEMS: StockRecord[] = [
     min_stock_level: 15,
     item_price: 420.0,
     active: true,
+    defaultDestination: "Lamination Cleanroom",
     iconName: "file-text",
     iconColor: "#34d399",
     iconBg: "rgba(16, 185, 129, 0.12)",
@@ -139,6 +124,7 @@ const SEED_STOCK_ITEMS: StockRecord[] = [
     min_stock_level: 5,
     item_price: 1850.0,
     active: true,
+    defaultDestination: "Digital Print Station",
     iconName: "sliders",
     iconColor: "#f59e0b",
     iconBg: "rgba(245, 158, 11, 0.14)",
@@ -156,6 +142,7 @@ const SEED_STOCK_ITEMS: StockRecord[] = [
     min_stock_level: 5000,
     item_price: 1.25,
     active: true,
+    defaultDestination: "ID Badge Assembly Bench",
     iconName: "tool",
     iconColor: "#a78bfa",
     iconBg: "rgba(167, 139, 250, 0.12)",
@@ -173,6 +160,7 @@ const SEED_STOCK_ITEMS: StockRecord[] = [
     min_stock_level: 25,
     item_price: 680.0,
     active: true,
+    defaultDestination: "Laser Cutting Unit",
     iconName: "layers",
     iconColor: "#38bdf8",
     iconBg: "rgba(56, 189, 248, 0.12)",
@@ -190,6 +178,7 @@ const SEED_STOCK_ITEMS: StockRecord[] = [
     min_stock_level: 2000,
     item_price: 8.50,
     active: true,
+    defaultDestination: "Smart Card Encoding Unit",
     iconName: "cpu",
     iconColor: "#ec4899",
     iconBg: "rgba(236, 72, 153, 0.12)",
@@ -201,7 +190,7 @@ const SEED_MOVEMENTS: MovementRecord[] = [
     id: "mov-01",
     timestamp: "2026-09-03T11:42:00Z",
     item_code: "HDW-DOGHOOK-20MM",
-    item_name: "Metal Dog-Hook 20mm (Nickel Plated)",
+    item_name: "20mm Nickel-Plated Metal Dog-Hook Fitting",
     type: "USAGE",
     quantity: 500,
     destination: "Labour Workshop (Ramesh)",
@@ -212,7 +201,7 @@ const SEED_MOVEMENTS: MovementRecord[] = [
     id: "mov-02",
     timestamp: "2026-09-03T10:15:00Z",
     item_code: "RAW-SATIN-20MM-WHT",
-    item_name: "Satin Lanyard Ribbon 20mm (White)",
+    item_name: "20mm White Satin Polyester Ribbon Roll",
     type: "USAGE",
     quantity: 2500,
     destination: "Press Floor Line 1",
@@ -232,58 +221,7 @@ const SEED_MOVEMENTS: MovementRecord[] = [
   },
 ];
 
-const SEED_SUPPLIERS: SupplierRecord[] = [
-  {
-    id: "sup-01",
-    code: "SUP-POLY-01",
-    name: "Apex Polymers & PVC Sheets Ltd.",
-    contact_person: "Vikas Aggarwal",
-    phone: "+91 98110 55441",
-    materials: "PVC Core Sheets, Polycarbonate Overlays",
-    rating: "PREMIUM (99% on-time)",
-  },
-  {
-    id: "sup-02",
-    code: "SUP-TEXTILE-02",
-    name: "Surat Satin Ribbons & Webbing Mill",
-    contact_person: "Ketan Patel",
-    phone: "+91 98250 88772",
-    materials: "Polyester Satin Ribbon, Cotton Lanyard Tape",
-    rating: "EXCELLENT",
-  },
-  {
-    id: "sup-03",
-    code: "SUP-HARDWARE-03",
-    name: "Global Metal Fittings & Dog-Hooks Co.",
-    contact_person: "Sunil Jain",
-    phone: "+91 98200 33221",
-    materials: "Dog Hooks, Alligator Clips, Breakaway Buckles",
-    rating: "EXCELLENT",
-  },
-];
-
-const SEED_PURCHASE_ORDERS: PurchaseOrderRecord[] = [
-  {
-    id: "po-01",
-    po_number: "PO-2026-0012",
-    supplier_name: "Global Metal Fittings & Dog-Hooks Co.",
-    order_date: "02 Sep 2026",
-    items_summary: "5,000 pcs 20mm Dog Hooks",
-    total_amount: 4750.0,
-    status: "ORDERED",
-  },
-  {
-    id: "po-02",
-    po_number: "PO-2026-0011",
-    supplier_name: "Apex Polymers & PVC Sheets Ltd.",
-    order_date: "28 Aug 2026",
-    items_summary: "20,000 sheets 0.76mm Gloss PVC Core",
-    total_amount: 84000.0,
-    status: "RECEIVED",
-  },
-];
-
-/** SVG Semi-Circle Arc Gauge displaying Usage & Stock Performance */
+/** SVG Semi-Circle Arc Gauge */
 const StockGaugeArc: React.FC<{ percentage: number; color?: string }> = ({ percentage, color = "#10b981" }) => {
   const radius = 20;
   const strokeWidth = 4.5;
@@ -322,9 +260,8 @@ const StockGaugeArc: React.FC<{ percentage: number; color?: string }> = ({ perce
 export const StockDashboardView: React.FC = () => {
   const { success, error: toastError } = useToast();
 
-  const [activeTab, setActiveTab] = useState<
-    "inventory" | "transactions" | "low" | "purchasing" | "suppliers"
-  >("inventory");
+  // Clean 2-tab navigation: Stocks Inventory & Material Usage
+  const [activeTab, setActiveTab] = useState<"inventory" | "usage">("inventory");
 
   const [search, setSearch] = useState("");
   const [stockItems, setStockItems] = useState<StockRecord[]>(SEED_STOCK_ITEMS);
@@ -333,6 +270,7 @@ export const StockDashboardView: React.FC = () => {
   const [showStatsCard, setShowStatsCard] = useState(true);
   const [sortBy, setSortBy] = useState<"highest" | "lowest" | "name" | "price" | "used">("highest");
   const [categoryFilter, setCategoryFilter] = useState<string>("ALL");
+  const [showRecentLog, setShowRecentLog] = useState(false);
 
   // Modals
   const [isNewItemModalOpen, setIsNewItemModalOpen] = useState(false);
@@ -364,7 +302,7 @@ export const StockDashboardView: React.FC = () => {
   const totalPhysical = useMemo(() => stockItems.reduce((acc, i) => acc + i.physical_stock, 0), [stockItems]);
   const totalAvailable = useMemo(() => stockItems.reduce((acc, i) => acc + i.available_stock, 0), [stockItems]);
   const totalUsed = useMemo(() => stockItems.reduce((acc, i) => acc + i.used_stock, 0), [stockItems]);
-  const lowStockCount = useMemo(() => stockItems.filter((i) => i.available_stock <= i.min_stock_level).length, [stockItems]);
+  const totalValuation = useMemo(() => stockItems.reduce((acc, i) => acc + (i.available_stock * i.item_price), 0), [stockItems]);
   const mostUsedItem = useMemo(() => [...stockItems].sort((a, b) => b.used_stock - a.used_stock)[0] || stockItems[0], [stockItems]);
 
   const filteredItems = useMemo(() => {
@@ -377,9 +315,6 @@ export const StockDashboardView: React.FC = () => {
 
       if (!matchSearch) return false;
       if (categoryFilter !== "ALL" && item.category !== categoryFilter) return false;
-      if (activeTab === "low") {
-        return item.available_stock <= item.min_stock_level;
-      }
       return true;
     });
 
@@ -393,7 +328,7 @@ export const StockDashboardView: React.FC = () => {
     });
 
     return list;
-  }, [stockItems, search, categoryFilter, activeTab, sortBy]);
+  }, [stockItems, search, categoryFilter, sortBy]);
 
   // Action: Toggle item visibility
   const handleToggleActive = (id: string, e: React.MouseEvent) => {
@@ -428,6 +363,7 @@ export const StockDashboardView: React.FC = () => {
       min_stock_level: minLevel,
       item_price: price,
       active: true,
+      defaultDestination: "General Production Floor",
       iconName: newCategory === "HARDWARE" ? "tool" : newCategory === "CONSUMABLE" ? "sliders" : "layers",
       iconColor: newCategory === "HARDWARE" ? "#c084fc" : newCategory === "CONSUMABLE" ? "#f59e0b" : "#38bdf8",
       iconBg: newCategory === "HARDWARE" ? "rgba(168, 85, 247, 0.12)" : newCategory === "CONSUMABLE" ? "rgba(245, 158, 11, 0.14)" : "rgba(56, 189, 248, 0.12)",
@@ -523,11 +459,11 @@ export const StockDashboardView: React.FC = () => {
     };
     setMovements((prev) => [newMovement, ...prev]);
 
-    success("Material Usage Reported", `Logged ${qtyVal} ${targetItem.unit} of ${targetItem.name} consumed in production.`);
+    success("Material Usage Reported", `Logged ${qtyVal} ${targetItem.unit} of ${targetItem.name} consumed.`);
     setIsUsageModalOpen(false);
   };
 
-  // Movement columns
+  // Movement columns for recent log table
   const transactionColumns: Column<MovementRecord>[] = [
     {
       key: "timestamp",
@@ -541,7 +477,7 @@ export const StockDashboardView: React.FC = () => {
     },
     {
       key: "item_name",
-      header: "Material / Item Name",
+      header: "Material Name",
       render: (m) => (
         <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>
           {m.item_name || m.item_code}
@@ -549,48 +485,19 @@ export const StockDashboardView: React.FC = () => {
       ),
     },
     {
-      key: "type",
-      header: "Action",
-      width: "110px",
-      render: (m) => (
-        <span
-          style={{
-            fontSize: "10.5px",
-            fontWeight: 700,
-            padding: "2px 8px",
-            borderRadius: "3px",
-            backgroundColor:
-              m.type === "USAGE"
-                ? "rgba(239, 68, 68, 0.15)"
-                : m.type === "RECEIPT"
-                ? "rgba(16, 185, 129, 0.15)"
-                : "rgba(56, 189, 248, 0.15)",
-            color:
-              m.type === "USAGE"
-                ? "#ef4444"
-                : m.type === "RECEIPT"
-                ? "#10b981"
-                : "#38bdf8",
-          }}
-        >
-          {m.type}
-        </span>
-      ),
-    },
-    {
       key: "quantity",
-      header: "Quantity",
+      header: "Quantity Consumed",
       align: "right",
-      width: "100px",
+      width: "140px",
       render: (m) => (
-        <span style={{ fontFamily: "var(--font-mono)", fontSize: "12.5px", fontWeight: 700, color: "#fff" }}>
-          {m.quantity.toLocaleString()}
+        <span style={{ fontFamily: "var(--font-mono)", fontSize: "12.5px", fontWeight: 700, color: "#ff8a73" }}>
+          {m.quantity.toLocaleString()} units
         </span>
       ),
     },
     {
       key: "destination",
-      header: "Target / Workstation",
+      header: "Workstation / Target",
       render: (m) => (
         <span style={{ fontSize: "12px", color: "var(--text-primary)" }}>
           {m.destination}
@@ -599,16 +506,22 @@ export const StockDashboardView: React.FC = () => {
     },
     {
       key: "reason",
-      header: "Job / Order Purpose",
+      header: "Order / Job Reason",
       render: (m) => <span style={{ fontSize: "11.5px", color: "var(--text-muted)" }}>{m.reason}</span>,
+    },
+    {
+      key: "user_name",
+      header: "Operator",
+      width: "120px",
+      render: (m) => <span style={{ fontSize: "11.5px", color: "var(--text-muted)" }}>{m.user_name}</span>,
     },
   ];
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", overflowY: "auto" }}>
-      {/* Header */}
+      {/* Header renamed to Stocks Inventory */}
       <PageHeader
-        title="Stock & Material Register"
+        title="Stocks Inventory"
         badge={
           <span
             style={{
@@ -635,16 +548,16 @@ export const StockDashboardView: React.FC = () => {
             size="sm"
             onClick={() => {
               setTargetItem(stockItems[0]);
-              setIsQtyModalOpen(true);
+              setIsUsageModalOpen(true);
             }}
           >
-            ± Adjust Stock
+            + Log Usage
           </Button>
         }
       />
 
       <div style={{ padding: "16px 24px", display: "flex", flexDirection: "column", gap: "14px" }}>
-        {/* Navigation Tabs Bar */}
+        {/* Navigation Tabs Bar (Just 2 clean tabs: Stocks Inventory & Material Usage) */}
         <div
           style={{
             display: "flex",
@@ -656,13 +569,10 @@ export const StockDashboardView: React.FC = () => {
             flexWrap: "wrap",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
             {[
-              { id: "inventory" as const, label: "All Product List" },
-              { id: "transactions" as const, label: "Usage & Ledger Movements" },
-              { id: "low" as const, label: "Low Stock Alerts", badge: lowStockCount },
-              { id: "purchasing" as const, label: "Purchase Orders" },
-              { id: "suppliers" as const, label: "Suppliers Directory" },
+              { id: "inventory" as const, label: "Stocks Inventory", icon: "layers" as const },
+              { id: "usage" as const, label: "Material Usage", icon: "sliders" as const },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -671,33 +581,21 @@ export const StockDashboardView: React.FC = () => {
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
-                  gap: "6px",
-                  padding: "6px 12px",
+                  gap: "7px",
+                  padding: "7px 14px",
                   borderRadius: "4px",
                   border: "none",
                   backgroundColor:
-                    activeTab === tab.id ? "rgba(255, 138, 115, 0.14)" : "transparent",
+                    activeTab === tab.id ? "rgba(255, 138, 115, 0.16)" : "transparent",
                   color: activeTab === tab.id ? "var(--accent-text)" : "var(--text-secondary)",
-                  fontSize: "12.5px",
-                  fontWeight: activeTab === tab.id ? 600 : 500,
+                  fontSize: "13px",
+                  fontWeight: activeTab === tab.id ? 700 : 500,
                   cursor: "pointer",
+                  transition: "all 0.15s ease",
                 }}
               >
+                <Icon name={tab.icon} size={14} color={activeTab === tab.id ? "var(--accent-text)" : "var(--text-muted)"} />
                 <span>{tab.label}</span>
-                {tab.badge !== undefined && tab.badge > 0 && (
-                  <span
-                    style={{
-                      fontSize: "10px",
-                      padding: "1px 5px",
-                      borderRadius: "10px",
-                      backgroundColor: "var(--status-error)",
-                      color: "#fff",
-                      fontWeight: 700,
-                    }}
-                  >
-                    {tab.badge}
-                  </span>
-                )}
               </button>
             ))}
           </div>
@@ -718,7 +616,7 @@ export const StockDashboardView: React.FC = () => {
               <Icon name="search" size={13} color="var(--text-muted)" />
               <input
                 type="text"
-                placeholder="Search Product..."
+                placeholder={activeTab === "inventory" ? "Search Product..." : "Search Material Usage..."}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 style={{
@@ -777,203 +675,113 @@ export const StockDashboardView: React.FC = () => {
           </div>
         </div>
 
-        {/* Product Statistic Card (Matching reference top section) */}
-        {activeTab === "inventory" && (
-          <div
-            style={{
-              backgroundColor: "rgba(19, 23, 34, 0.8)",
-              backdropFilter: "blur(14px)",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
-              borderRadius: "4px",
-              padding: "14px 18px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "12px",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <span style={{ fontSize: "13px", fontWeight: 700, color: "#fff" }}>
-                Product Statistic
-              </span>
-              <button
-                type="button"
-                onClick={() => setShowStatsCard(!showStatsCard)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: "var(--text-muted)",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  padding: 2,
-                }}
-              >
-                <Icon name={showStatsCard ? "chevron-up" : "chevron-down"} size={16} />
-              </button>
-            </div>
+        {/* Product Statistic Card (Low stock alert removed as requested) */}
+        <div
+          style={{
+            backgroundColor: "rgba(19, 23, 34, 0.8)",
+            backdropFilter: "blur(14px)",
+            border: "1px solid rgba(255, 255, 255, 0.08)",
+            borderRadius: "4px",
+            padding: "14px 18px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "12px",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <span style={{ fontSize: "13px", fontWeight: 700, color: "#fff" }}>
+              Product Statistic
+            </span>
+            <button
+              type="button"
+              onClick={() => setShowStatsCard(!showStatsCard)}
+              style={{
+                background: "none",
+                border: "none",
+                color: "var(--text-muted)",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                padding: 2,
+              }}
+            >
+              <Icon name={showStatsCard ? "chevron-up" : "chevron-down"} size={16} />
+            </button>
+          </div>
 
-            {showStatsCard && (
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(5, 1fr)",
-                  gap: "14px",
-                  paddingTop: "6px",
-                  borderTop: "1px solid rgba(255, 255, 255, 0.06)",
-                }}
-              >
-                {/* 1. Active Product */}
-                <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                  <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 500 }}>Active Product</span>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
-                    <span style={{ fontSize: "20px", fontWeight: 800, color: "#fff" }}>{stockItems.length}</span>
-                    <span style={{ fontSize: "11.5px", color: "var(--text-secondary)" }}>Product</span>
-                  </div>
-                </div>
-
-                {/* 2. Winning Product (Highest Usage) */}
-                <div style={{ display: "flex", flexDirection: "column", gap: "2px", borderLeft: "1px solid rgba(255, 255, 255, 0.06)", paddingLeft: "14px" }}>
-                  <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 500 }}>Top Consumed Item</span>
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px", overflow: "hidden" }}>
-                    <span style={{ fontSize: "14px" }}>📦</span>
-                    <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--accent-text)", whiteSpace: "nowrap", textOverflow: "ellipsis", overflow: "hidden" }}>
-                      {mostUsedItem.name.slice(0, 16)}...
-                    </span>
-                  </div>
-                </div>
-
-                {/* 3. Average Performance based on usage & availability */}
-                <div style={{ display: "flex", flexDirection: "column", gap: "2px", borderLeft: "1px solid rgba(255, 255, 255, 0.06)", paddingLeft: "14px" }}>
-                  <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 500 }}>Average Performance</span>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <StockGaugeArc percentage={88} color="#10b981" />
-                    <span style={{ fontSize: "13px", fontWeight: 700, color: "#10b981" }}>Good!</span>
-                  </div>
-                </div>
-
-                {/* 4. Total Material Used Reporting */}
-                <div style={{ display: "flex", flexDirection: "column", gap: "2px", borderLeft: "1px solid rgba(255, 255, 255, 0.06)", paddingLeft: "14px" }}>
-                  <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 500 }}>Total Used / Consumed</span>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
-                    <span style={{ fontSize: "20px", fontWeight: 800, color: "#ff8a73" }}>{totalUsed.toLocaleString()}</span>
-                    <span style={{ fontSize: "11.5px", color: "var(--text-secondary)" }}>Units</span>
-                  </div>
-                </div>
-
-                {/* 5. Reorder Alerts */}
-                <div style={{ display: "flex", flexDirection: "column", gap: "2px", borderLeft: "1px solid rgba(255, 255, 255, 0.06)", paddingLeft: "14px" }}>
-                  <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 500 }}>Reorder Alerts</span>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
-                    <span style={{ fontSize: "20px", fontWeight: 800, color: lowStockCount > 0 ? "var(--status-warning)" : "#10b981" }}>
-                      {lowStockCount}
-                    </span>
-                    <span style={{ fontSize: "11.5px", color: "var(--text-secondary)" }}>Items</span>
-                  </div>
+          {showStatsCard && (
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(5, 1fr)",
+                gap: "14px",
+                paddingTop: "6px",
+                borderTop: "1px solid rgba(255, 255, 255, 0.06)",
+              }}
+            >
+              {/* 1. Active Product */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 500 }}>Active Product</span>
+                <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
+                  <span style={{ fontSize: "20px", fontWeight: 800, color: "#fff" }}>{stockItems.length}</span>
+                  <span style={{ fontSize: "11.5px", color: "var(--text-secondary)" }}>Product</span>
                 </div>
               </div>
-            )}
-          </div>
-        )}
 
-        {/* Tab View Contents */}
-        {activeTab === "transactions" ? (
-          <div
-            style={{
-              backgroundColor: "rgba(19, 23, 34, 0.75)",
-              backdropFilter: "blur(14px)",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
-              borderRadius: "4px",
-              overflow: "hidden",
-            }}
-          >
-            <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255, 255, 255, 0.06)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontSize: "13px", fontWeight: 700, color: "#fff" }}>Material Usage & Consumption Audit</span>
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={() => {
-                  setTargetItem(stockItems[0]);
-                  setIsUsageModalOpen(true);
-                }}
-              >
-                + Log Material Usage
-              </Button>
+              {/* 2. Winning Product (Highest Usage) */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "2px", borderLeft: "1px solid rgba(255, 255, 255, 0.06)", paddingLeft: "14px" }}>
+                <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 500 }}>Top Consumed Item</span>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", overflow: "hidden" }}>
+                  <span style={{ fontSize: "14px" }}>📦</span>
+                  <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--accent-text)", whiteSpace: "nowrap", textOverflow: "ellipsis", overflow: "hidden" }}>
+                    {mostUsedItem.name.slice(0, 16)}...
+                  </span>
+                </div>
+              </div>
+
+              {/* 3. Average Performance */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "2px", borderLeft: "1px solid rgba(255, 255, 255, 0.06)", paddingLeft: "14px" }}>
+                <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 500 }}>Average Performance</span>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <StockGaugeArc percentage={88} color="#10b981" />
+                  <span style={{ fontSize: "13px", fontWeight: 700, color: "#10b981" }}>Good!</span>
+                </div>
+              </div>
+
+              {/* 4. Floor Stock Units */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "2px", borderLeft: "1px solid rgba(255, 255, 255, 0.06)", paddingLeft: "14px" }}>
+                <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 500 }}>Floor Stock Units</span>
+                <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
+                  <span style={{ fontSize: "20px", fontWeight: 800, color: "#38bdf8" }}>{totalAvailable.toLocaleString()}</span>
+                  <span style={{ fontSize: "11.5px", color: "var(--text-secondary)" }}>Items</span>
+                </div>
+              </div>
+
+              {/* 5. Total Material Used / Consumed */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "2px", borderLeft: "1px solid rgba(255, 255, 255, 0.06)", paddingLeft: "14px" }}>
+                <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 500 }}>Total Units Used</span>
+                <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
+                  <span style={{ fontSize: "20px", fontWeight: 800, color: "#ff8a73" }}>{totalUsed.toLocaleString()}</span>
+                  <span style={{ fontSize: "11.5px", color: "var(--text-secondary)" }}>Units</span>
+                </div>
+              </div>
             </div>
-            <Table
-              columns={transactionColumns}
-              data={movements}
-              emptyText="No material movements recorded today."
-            />
-          </div>
-        ) : activeTab === "purchasing" ? (
-          <div
-            style={{
-              backgroundColor: "rgba(19, 23, 34, 0.75)",
-              backdropFilter: "blur(14px)",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
-              borderRadius: "4px",
-              overflow: "hidden",
-            }}
-          >
-            <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255, 255, 255, 0.06)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontSize: "13px", fontWeight: 700, color: "#fff" }}>Purchase Orders & Requisitions</span>
-              <Button variant="primary" size="sm" onClick={() => success("New PO", "Purchase Order drafting initiated.")}>
-                + New Purchase Order
-              </Button>
-            </div>
-            <Table
-              columns={[
-                { key: "po_number", header: "PO Number", render: (p) => <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: "var(--accent-text)" }}>{p.po_number}</span> },
-                { key: "supplier_name", header: "Supplier Vendor", render: (p) => <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>{p.supplier_name}</span> },
-                { key: "order_date", header: "Date", render: (p) => <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>{p.order_date}</span> },
-                { key: "items_summary", header: "Ordered Items", render: (p) => <span style={{ fontSize: "12px", color: "var(--text-secondary)" }}>{p.items_summary}</span> },
-                { key: "total_amount", header: "PO Total", align: "right", render: (p) => <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: "#34d399" }}>₹{p.total_amount.toLocaleString()}</span> },
-                { key: "status", header: "Status", render: (p) => <span style={{ fontSize: "10.5px", fontWeight: 700, padding: "2px 6px", borderRadius: "3px", backgroundColor: p.status === "RECEIVED" ? "rgba(16, 185, 129, 0.15)" : "rgba(255, 138, 115, 0.15)", color: p.status === "RECEIVED" ? "#10b981" : "var(--accent-text)" }}>{p.status}</span> },
-              ]}
-              data={SEED_PURCHASE_ORDERS}
-              emptyText="No active purchase orders."
-            />
-          </div>
-        ) : activeTab === "suppliers" ? (
-          <div
-            style={{
-              backgroundColor: "rgba(19, 23, 34, 0.75)",
-              backdropFilter: "blur(14px)",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
-              borderRadius: "4px",
-              overflow: "hidden",
-            }}
-          >
-            <Table
-              columns={[
-                { key: "code", header: "Supplier Code", render: (s) => <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: "var(--accent-text)" }}>{s.code}</span> },
-                { key: "name", header: "Vendor Name", render: (s) => <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>{s.name}</span> },
-                { key: "contact_person", header: "Contact", render: (s) => <span style={{ fontSize: "12px", color: "var(--text-secondary)" }}>{s.contact_person} ({s.phone})</span> },
-                { key: "materials", header: "Materials Supplied", render: (s) => <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>{s.materials}</span> },
-                { key: "rating", header: "Vendor Reliability", render: (s) => <span style={{ fontSize: "11px", color: "#10b981", fontWeight: 600 }}>{s.rating}</span> },
-              ]}
-              data={SEED_SUPPLIERS}
-              emptyText="No suppliers registered."
-            />
-          </div>
-        ) : (
-          /* Main Card Rows List (Clean without store/reviews) */
+          )}
+        </div>
+
+        {/* TAB 1: Stocks Inventory View (Card Rows) */}
+        {activeTab === "inventory" && (
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
             {filteredItems.map((item) => {
-              const isLow = item.available_stock <= item.min_stock_level;
               const totalThroughput = item.available_stock + item.used_stock;
               const usageRate = totalThroughput > 0 ? Math.round((item.used_stock / totalThroughput) * 100) : 0;
 
-              // Performance calculated from actual usage vs available stock
+              // Performance calculated from usage vs stock
               let performanceScore = 75;
               let performanceLabel = "Steady";
               let gaugeColor = "#10b981";
 
-              if (isLow) {
-                performanceScore = Math.max(15, Math.round((item.available_stock / item.min_stock_level) * 45));
-                performanceLabel = "Low Stock";
-                gaugeColor = "#ef4444";
-              } else if (usageRate >= 45) {
+              if (usageRate >= 45) {
                 performanceScore = 95;
                 performanceLabel = "High Demand";
                 gaugeColor = "#10b981";
@@ -1001,7 +809,7 @@ export const StockDashboardView: React.FC = () => {
                   style={{
                     backgroundColor: "rgba(19, 23, 34, 0.85)",
                     backdropFilter: "blur(14px)",
-                    border: "1px solid " + (isLow ? "rgba(239, 68, 68, 0.35)" : "rgba(255, 255, 255, 0.07)"),
+                    border: "1px solid rgba(255, 255, 255, 0.07)",
                     borderRadius: "4px",
                     padding: "12px 18px",
                     display: "flex",
@@ -1018,11 +826,11 @@ export const StockDashboardView: React.FC = () => {
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.backgroundColor = "rgba(19, 23, 34, 0.85)";
-                    e.currentTarget.style.borderColor = isLow ? "rgba(239, 68, 68, 0.35)" : "rgba(255, 255, 255, 0.07)";
+                    e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.07)";
                     e.currentTarget.style.transform = "none";
                   }}
                 >
-                  {/* Column 1: Visual + Title + Category (Store location removed as requested) */}
+                  {/* Column 1: Visual + Title + Category (Store location removed) */}
                   <div style={{ display: "flex", alignItems: "center", gap: "14px", width: "290px", flexShrink: 0 }}>
                     <div
                       style={{
@@ -1059,7 +867,7 @@ export const StockDashboardView: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Column 2: Usage Reporting ("How much is used") */}
+                  {/* Column 2: Usage Reporting */}
                   <div style={{ display: "flex", flexDirection: "column", gap: "2px", width: "130px", flexShrink: 0 }}>
                     <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>Total Used</span>
                     <div style={{ display: "flex", alignItems: "baseline", gap: "5px" }}>
@@ -1071,13 +879,11 @@ export const StockDashboardView: React.FC = () => {
                     <span style={{ fontSize: "10px", color: "var(--text-muted)" }}>{usageRate}% consumption</span>
                   </div>
 
-                  {/* Column 3: Performance Arc Gauge (calculated from usage & remaining stock) */}
+                  {/* Column 3: Performance Arc Gauge */}
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "2px", width: "80px", flexShrink: 0 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                      <span style={{ fontSize: "10px", fontWeight: 700, color: gaugeColor }}>
-                        {performanceLabel}
-                      </span>
-                    </div>
+                    <span style={{ fontSize: "10px", fontWeight: 700, color: gaugeColor }}>
+                      {performanceLabel}
+                    </span>
                     <StockGaugeArc percentage={performanceScore} color={gaugeColor} />
                   </div>
 
@@ -1086,7 +892,7 @@ export const StockDashboardView: React.FC = () => {
                     <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>Stock</span>
                     <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                       <span style={{ fontSize: "12px" }}>📦</span>
-                      <span style={{ fontFamily: "var(--font-mono)", fontSize: "13.5px", fontWeight: 700, color: isLow ? "var(--status-error)" : "#fff" }}>
+                      <span style={{ fontFamily: "var(--font-mono)", fontSize: "13.5px", fontWeight: 700, color: "#fff" }}>
                         {item.available_stock.toLocaleString()}
                       </span>
                       <span style={{ fontSize: "10.5px", color: "var(--text-muted)" }}>{item.unit}</span>
@@ -1098,7 +904,7 @@ export const StockDashboardView: React.FC = () => {
                     )}
                   </div>
 
-                  {/* Column 5: Item Price (called "Item Price", NOT "Product Price") */}
+                  {/* Column 5: Item Price (Named Item Price) */}
                   <div style={{ display: "flex", flexDirection: "column", gap: "2px", width: "120px", flexShrink: 0 }}>
                     <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>Item Price</span>
                     <div style={{ display: "flex", alignItems: "baseline", gap: "4px" }}>
@@ -1139,7 +945,7 @@ export const StockDashboardView: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Column 7: Quick Actions (Update Qty, Log Usage, Ledger) */}
+                  {/* Column 7: Quick Actions */}
                   <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
                     {/* Update Quantity button */}
                     <button
@@ -1264,64 +1070,351 @@ export const StockDashboardView: React.FC = () => {
                 </div>
               );
             })}
-
-            {/* Bottom Pagination Bar matching reference */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                padding: "14px 6px 6px 6px",
-                borderTop: "1px solid rgba(255, 255, 255, 0.06)",
-                marginTop: "6px",
-              }}
-            >
-              <button
-                type="button"
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  padding: "6px 14px",
-                  borderRadius: "4px",
-                  backgroundColor: "rgba(255, 255, 255, 0.04)",
-                  border: "1px solid rgba(255, 255, 255, 0.08)",
-                  color: "var(--text-muted)",
-                  fontSize: "12px",
-                  cursor: "not-allowed",
-                  fontWeight: 500,
-                }}
-                disabled
-              >
-                Previous
-              </button>
-
-              <span style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 500 }}>
-                Page 1 of 1 • ({filteredItems.length} Products)
-              </span>
-
-              <button
-                type="button"
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  padding: "6px 14px",
-                  borderRadius: "4px",
-                  backgroundColor: "rgba(255, 255, 255, 0.04)",
-                  border: "1px solid rgba(255, 255, 255, 0.08)",
-                  color: "var(--text-muted)",
-                  fontSize: "12px",
-                  cursor: "not-allowed",
-                  fontWeight: 500,
-                }}
-                disabled
-              >
-                Next
-              </button>
-            </div>
           </div>
         )}
+
+        {/* TAB 2: Material Usage View (Made similar to All Product list in card rows!) */}
+        {activeTab === "usage" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            {/* Header controls for Usage tab */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "4px 2px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <span style={{ fontSize: "13px", fontWeight: 700, color: "#fff" }}>
+                  Material Usage & Factory Consumption Register
+                </span>
+                <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>
+                  ({filteredItems.length} Materials Active)
+                </span>
+              </div>
+
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <button
+                  type="button"
+                  onClick={() => setShowRecentLog(!showRecentLog)}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    padding: "4px 10px",
+                    borderRadius: "4px",
+                    backgroundColor: showRecentLog ? "rgba(255, 138, 115, 0.15)" : "rgba(255, 255, 255, 0.04)",
+                    border: "1px solid " + (showRecentLog ? "var(--accent-border)" : "rgba(255, 255, 255, 0.08)"),
+                    color: showRecentLog ? "var(--accent-text)" : "var(--text-secondary)",
+                    fontSize: "11.5px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                >
+                  <Icon name="file-text" size={12} />
+                  <span>{showRecentLog ? "Hide History Table" : "Show Recent Logs (" + movements.length + ")"}</span>
+                </button>
+
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => {
+                    setTargetItem(stockItems[0]);
+                    setIsUsageModalOpen(true);
+                  }}
+                >
+                  + Log Material Usage
+                </Button>
+              </div>
+            </div>
+
+            {/* Optional Recent Logs Table */}
+            {showRecentLog && (
+              <div
+                style={{
+                  backgroundColor: "rgba(19, 23, 34, 0.75)",
+                  backdropFilter: "blur(14px)",
+                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                  borderRadius: "4px",
+                  overflow: "hidden",
+                  marginBottom: "8px",
+                }}
+              >
+                <Table
+                  columns={transactionColumns}
+                  data={movements}
+                  emptyText="No material movements recorded today."
+                />
+              </div>
+            )}
+
+            {/* Usage Card Rows (Identical sleek structure as Stocks Inventory) */}
+            {filteredItems.map((item) => {
+              const totalThroughput = item.available_stock + item.used_stock;
+              const usageRate = totalThroughput > 0 ? Math.round((item.used_stock / totalThroughput) * 100) : 0;
+              const consumedValue = item.used_stock * item.item_price;
+
+              let usageStatus = "High Usage";
+              let gaugeColor = "#10b981";
+              if (usageRate < 20) {
+                usageStatus = "Low Usage";
+                gaugeColor = "#f59e0b";
+              } else if (usageRate < 45) {
+                usageStatus = "Moderate";
+                gaugeColor = "#38bdf8";
+              }
+
+              const categoryBadge =
+                item.category === "RAW_MATERIAL"
+                  ? "Raw Material"
+                  : item.category === "HARDWARE"
+                  ? "Hardware Fitting"
+                  : "Consumable";
+
+              return (
+                <div
+                  key={item.id}
+                  onClick={() => setSelectedItem(item)}
+                  style={{
+                    backgroundColor: "rgba(19, 23, 34, 0.85)",
+                    backdropFilter: "blur(14px)",
+                    border: "1px solid rgba(255, 255, 255, 0.07)",
+                    borderRadius: "4px",
+                    padding: "12px 18px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: "14px",
+                    cursor: "pointer",
+                    transition: "all 0.15s ease",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = "rgba(25, 32, 47, 0.95)";
+                    e.currentTarget.style.borderColor = "var(--accent-border)";
+                    e.currentTarget.style.transform = "translateY(-1px)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = "rgba(19, 23, 34, 0.85)";
+                    e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.07)";
+                    e.currentTarget.style.transform = "none";
+                  }}
+                >
+                  {/* Column 1: Material Visual & Title */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "14px", width: "290px", flexShrink: 0 }}>
+                    <div
+                      style={{
+                        width: 44,
+                        height: 44,
+                        borderRadius: "4px",
+                        backgroundColor: item.iconBg,
+                        border: "1px solid rgba(255, 255, 255, 0.08)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <Icon name={item.iconName} size={20} color={item.iconColor} />
+                    </div>
+
+                    <div style={{ display: "flex", flexDirection: "column", gap: "2px", overflow: "hidden" }}>
+                      <span
+                        style={{
+                          fontSize: "13.5px",
+                          fontWeight: 700,
+                          color: "#fff",
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                        }}
+                      >
+                        {item.name}
+                      </span>
+                      <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>
+                        {categoryBadge} • Code: {item.code}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Column 2: Total Used & Consumed */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "2px", width: "130px", flexShrink: 0 }}>
+                    <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>Material Used</span>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: "5px" }}>
+                      <span style={{ fontFamily: "var(--font-mono)", fontSize: "14px", fontWeight: 800, color: "#ff8a73" }}>
+                        {item.used_stock.toLocaleString()}
+                      </span>
+                      <span style={{ fontSize: "10.5px", color: "var(--text-muted)" }}>{item.unit}</span>
+                    </div>
+                    <span style={{ fontSize: "10.5px", color: "#38bdf8", fontWeight: 600 }}>{usageRate}% of Total Run</span>
+                  </div>
+
+                  {/* Column 3: Consumption Rate Arc Gauge */}
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "2px", width: "80px", flexShrink: 0 }}>
+                    <span style={{ fontSize: "10px", fontWeight: 700, color: gaugeColor }}>
+                      {usageStatus}
+                    </span>
+                    <StockGaugeArc percentage={usageRate} color={gaugeColor} />
+                  </div>
+
+                  {/* Column 4: Available Stock Remaining */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "2px", width: "130px", flexShrink: 0 }}>
+                    <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>Stock Remaining</span>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: "5px" }}>
+                      <span style={{ fontFamily: "var(--font-mono)", fontSize: "13px", fontWeight: 700, color: "#fff" }}>
+                        {item.available_stock.toLocaleString()}
+                      </span>
+                      <span style={{ fontSize: "10.5px", color: "var(--text-muted)" }}>{item.unit}</span>
+                    </div>
+                    <span style={{ fontSize: "10px", color: "var(--text-muted)" }}>
+                      Floor Unit: {item.defaultDestination}
+                    </span>
+                  </div>
+
+                  {/* Column 5: Consumed Valuation */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "2px", width: "130px", flexShrink: 0 }}>
+                    <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>Usage Valuation</span>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: "4px" }}>
+                      <span style={{ fontFamily: "var(--font-mono)", fontSize: "13.5px", fontWeight: 700, color: "#34d399" }}>
+                        ₹{consumedValue.toLocaleString("en-IN")}
+                      </span>
+                    </div>
+                    <span style={{ fontSize: "10px", color: "var(--text-muted)" }}>
+                      ₹{item.item_price.toFixed(2)} / {item.unit}
+                    </span>
+                  </div>
+
+                  {/* Column 6: Action Buttons */}
+                  <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
+                    <button
+                      type="button"
+                      title="Log Usage"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setTargetItem(item);
+                        setUseQty("100");
+                        setIsUsageModalOpen(true);
+                      }}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        padding: "5px 10px",
+                        borderRadius: "4px",
+                        backgroundColor: "rgba(239, 68, 68, 0.12)",
+                        border: "1px solid rgba(239, 68, 68, 0.25)",
+                        color: "#ff8a73",
+                        fontSize: "11.5px",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        whiteSpace: "nowrap",
+                        lineHeight: 1,
+                        transition: "all 0.15s ease",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = "var(--accent)";
+                        e.currentTarget.style.color = "#090c13";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = "rgba(239, 68, 68, 0.12)";
+                        e.currentTarget.style.color = "#ff8a73";
+                      }}
+                    >
+                      <span>− Log Usage</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      title="View Details"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedItem(item);
+                      }}
+                      style={{
+                        display: "inline-flex",
+                        flexDirection: "row",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "4px",
+                        padding: "5px 10px",
+                        borderRadius: "4px",
+                        backgroundColor: "rgba(255, 255, 255, 0.05)",
+                        border: "1px solid rgba(255, 255, 255, 0.1)",
+                        color: "var(--text-secondary)",
+                        fontSize: "11.5px",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        whiteSpace: "nowrap",
+                        lineHeight: 1,
+                        transition: "all 0.15s ease",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.1)";
+                        e.currentTarget.style.color = "#fff";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
+                        e.currentTarget.style.color = "var(--text-secondary)";
+                      }}
+                    >
+                      <span>Ledger</span>
+                      <span style={{ fontSize: "10.5px" }}>→</span>
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Bottom Pagination Bar */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "14px 6px 6px 6px",
+            borderTop: "1px solid rgba(255, 255, 255, 0.06)",
+            marginTop: "6px",
+          }}
+        >
+          <button
+            type="button"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "6px 14px",
+              borderRadius: "4px",
+              backgroundColor: "rgba(255, 255, 255, 0.04)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              color: "var(--text-muted)",
+              fontSize: "12px",
+              cursor: "not-allowed",
+              fontWeight: 500,
+            }}
+            disabled
+          >
+            Previous
+          </button>
+
+          <span style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 500 }}>
+            Page 1 of 1 • ({filteredItems.length} Products)
+          </span>
+
+          <button
+            type="button"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "6px 14px",
+              borderRadius: "4px",
+              backgroundColor: "rgba(255, 255, 255, 0.04)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              color: "var(--text-muted)",
+              fontSize: "12px",
+              cursor: "not-allowed",
+              fontWeight: 500,
+            }}
+            disabled
+          >
+            Next
+          </button>
+        </div>
       </div>
 
       {/* 1. Modal: New Product / Material Entry Form */}
