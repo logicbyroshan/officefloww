@@ -652,102 +652,8 @@ export const StockDashboardView: React.FC = () => {
         </div>
       </div>
 
-      {/* 2. Middle Scrollable Content (Statistic Card + Items) */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px", display: "flex", flexDirection: "column", gap: "12px" }}>
-        {/* Product Statistic Card (Low stock alert removed as requested) */}
-        <div
-          style={{
-            backgroundColor: "rgba(19, 23, 34, 0.8)",
-            backdropFilter: "blur(14px)",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
-            borderRadius: "4px",
-            padding: "14px 18px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "12px",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <span style={{ fontSize: "13px", fontWeight: 700, color: "#fff" }}>
-              Product Statistic
-            </span>
-            <button
-              type="button"
-              onClick={() => setShowStatsCard(!showStatsCard)}
-              style={{
-                background: "none",
-                border: "none",
-                color: "var(--text-muted)",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                padding: 2,
-              }}
-            >
-              <Icon name={showStatsCard ? "chevron-up" : "chevron-down"} size={16} />
-            </button>
-          </div>
-
-          {showStatsCard && (
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(5, 1fr)",
-                gap: "14px",
-                paddingTop: "6px",
-                borderTop: "1px solid rgba(255, 255, 255, 0.06)",
-              }}
-            >
-              {/* 1. Active Product */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 500 }}>Active Product</span>
-                <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
-                  <span style={{ fontSize: "20px", fontWeight: 800, color: "#fff" }}>{stockItems.length}</span>
-                  <span style={{ fontSize: "11.5px", color: "var(--text-secondary)" }}>Product</span>
-                </div>
-              </div>
-
-              {/* 2. Winning Product (Highest Usage) */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "2px", borderLeft: "1px solid rgba(255, 255, 255, 0.06)", paddingLeft: "14px" }}>
-                <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 500 }}>Top Consumed Item</span>
-                <div style={{ display: "flex", alignItems: "center", gap: "6px", overflow: "hidden" }}>
-                  <span style={{ fontSize: "14px" }}>📦</span>
-                  <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--accent-text)", whiteSpace: "nowrap", textOverflow: "ellipsis", overflow: "hidden" }}>
-                    {mostUsedItem.name.slice(0, 16)}...
-                  </span>
-                </div>
-              </div>
-
-              {/* 3. Average Performance */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "2px", borderLeft: "1px solid rgba(255, 255, 255, 0.06)", paddingLeft: "14px" }}>
-                <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 500 }}>Average Performance</span>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <StockGaugeArc percentage={88} color="#10b981" />
-                  <span style={{ fontSize: "13px", fontWeight: 700, color: "#10b981" }}>Good!</span>
-                </div>
-              </div>
-
-              {/* 4. Floor Stock Units */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "2px", borderLeft: "1px solid rgba(255, 255, 255, 0.06)", paddingLeft: "14px" }}>
-                <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 500 }}>Floor Stock Units</span>
-                <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
-                  <span style={{ fontSize: "20px", fontWeight: 800, color: "#38bdf8" }}>{totalAvailable.toLocaleString()}</span>
-                  <span style={{ fontSize: "11.5px", color: "var(--text-secondary)" }}>Items</span>
-                </div>
-              </div>
-
-              {/* 5. Total Material Used / Consumed */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "2px", borderLeft: "1px solid rgba(255, 255, 255, 0.06)", paddingLeft: "14px" }}>
-                <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 500 }}>Total Units Used</span>
-                <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
-                  <span style={{ fontSize: "20px", fontWeight: 800, color: "#ff8a73" }}>{totalUsed.toLocaleString()}</span>
-                  <span style={{ fontSize: "11.5px", color: "var(--text-secondary)" }}>Units</span>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
+      {/* 2. Middle Scrollable Content (Items start immediately) */}
+      <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px", display: "flex", flexDirection: "column", gap: "10px" }}>
         {/* TAB 1: Stocks Inventory View (Card Rows) */}
         {activeTab === "inventory" && (
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
@@ -924,12 +830,12 @@ export const StockDashboardView: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Column 7: Quick Actions */}
+                  {/* Column 7: Action Buttons (Only 2 buttons: + Add Report and − Usage Report) */}
                   <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
-                    {/* Update Quantity button */}
+                    {/* 1. Add Addition Report button */}
                     <button
                       type="button"
-                      title="Update Quantity Anytime"
+                      title="Report Stock Addition"
                       onClick={(e) => {
                         e.stopPropagation();
                         setTargetItem(item);
@@ -940,34 +846,32 @@ export const StockDashboardView: React.FC = () => {
                       style={{
                         display: "inline-flex",
                         alignItems: "center",
-                        gap: "3px",
-                        padding: "4px 8px",
+                        gap: "4px",
+                        padding: "5px 11px",
                         borderRadius: "4px",
-                        backgroundColor: "rgba(255, 255, 255, 0.04)",
-                        border: "1px solid rgba(255, 255, 255, 0.1)",
-                        color: "var(--text-secondary)",
-                        fontSize: "11px",
-                        fontWeight: 600,
+                        backgroundColor: "rgba(16, 185, 129, 0.12)",
+                        border: "1px solid rgba(16, 185, 129, 0.3)",
+                        color: "#34d399",
+                        fontSize: "11.5px",
+                        fontWeight: 650,
                         cursor: "pointer",
                         whiteSpace: "nowrap",
                         lineHeight: 1,
                         transition: "all 0.15s ease",
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = "rgba(56, 189, 248, 0.15)";
-                        e.currentTarget.style.borderColor = "#38bdf8";
-                        e.currentTarget.style.color = "#38bdf8";
+                        e.currentTarget.style.backgroundColor = "#10b981";
+                        e.currentTarget.style.color = "#090c13";
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.04)";
-                        e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
-                        e.currentTarget.style.color = "var(--text-secondary)";
+                        e.currentTarget.style.backgroundColor = "rgba(16, 185, 129, 0.12)";
+                        e.currentTarget.style.color = "#34d399";
                       }}
                     >
-                      <span>± Qty</span>
+                      <span>+ Add Report</span>
                     </button>
 
-                    {/* Report Usage button */}
+                    {/* 2. Usage Report button */}
                     <button
                       type="button"
                       title="Report Material Usage"
@@ -980,54 +884,14 @@ export const StockDashboardView: React.FC = () => {
                       style={{
                         display: "inline-flex",
                         alignItems: "center",
-                        gap: "3px",
-                        padding: "4px 8px",
-                        borderRadius: "4px",
-                        backgroundColor: "rgba(239, 68, 68, 0.08)",
-                        border: "1px solid rgba(239, 68, 68, 0.2)",
-                        color: "#f87171",
-                        fontSize: "11px",
-                        fontWeight: 600,
-                        cursor: "pointer",
-                        whiteSpace: "nowrap",
-                        lineHeight: 1,
-                        transition: "all 0.15s ease",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = "rgba(239, 68, 68, 0.18)";
-                        e.currentTarget.style.borderColor = "#ef4444";
-                        e.currentTarget.style.color = "#fff";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = "rgba(239, 68, 68, 0.08)";
-                        e.currentTarget.style.borderColor = "rgba(239, 68, 68, 0.2)";
-                        e.currentTarget.style.color = "#f87171";
-                      }}
-                    >
-                      <span>− Use</span>
-                    </button>
-
-                    {/* View Ledger */}
-                    <button
-                      type="button"
-                      title="View Ledger Movements"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedItem(item);
-                      }}
-                      style={{
-                        display: "inline-flex",
-                        flexDirection: "row",
-                        alignItems: "center",
-                        justifyContent: "center",
                         gap: "4px",
-                        padding: "4px 9px",
+                        padding: "5px 11px",
                         borderRadius: "4px",
-                        backgroundColor: "rgba(255, 138, 115, 0.12)",
+                        backgroundColor: "rgba(255, 138, 115, 0.14)",
                         border: "1px solid var(--accent-border)",
                         color: "var(--accent-text)",
-                        fontSize: "11px",
-                        fontWeight: 600,
+                        fontSize: "11.5px",
+                        fontWeight: 650,
                         cursor: "pointer",
                         whiteSpace: "nowrap",
                         lineHeight: 1,
@@ -1038,12 +902,11 @@ export const StockDashboardView: React.FC = () => {
                         e.currentTarget.style.color = "#090c13";
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = "rgba(255, 138, 115, 0.12)";
+                        e.currentTarget.style.backgroundColor = "rgba(255, 138, 115, 0.14)";
                         e.currentTarget.style.color = "var(--accent-text)";
                       }}
                     >
-                      <span>Ledger</span>
-                      <span style={{ fontSize: "10.5px" }}>→</span>
+                      <span>− Usage Report</span>
                     </button>
                   </div>
                 </div>
@@ -1245,11 +1108,51 @@ export const StockDashboardView: React.FC = () => {
                     </span>
                   </div>
 
-                  {/* Column 6: Action Buttons */}
+                  {/* Column 6: Action Buttons (Only 2 buttons: + Add Report and − Usage Report) */}
                   <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
+                    {/* 1. Add Addition Report button */}
                     <button
                       type="button"
-                      title="Log Usage"
+                      title="Report Stock Addition"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setTargetItem(item);
+                        setQtyMode("ADD");
+                        setAdjustQty("500");
+                        setIsQtyModalOpen(true);
+                      }}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        padding: "5px 11px",
+                        borderRadius: "4px",
+                        backgroundColor: "rgba(16, 185, 129, 0.12)",
+                        border: "1px solid rgba(16, 185, 129, 0.3)",
+                        color: "#34d399",
+                        fontSize: "11.5px",
+                        fontWeight: 650,
+                        cursor: "pointer",
+                        whiteSpace: "nowrap",
+                        lineHeight: 1,
+                        transition: "all 0.15s ease",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = "#10b981";
+                        e.currentTarget.style.color = "#090c13";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = "rgba(16, 185, 129, 0.12)";
+                        e.currentTarget.style.color = "#34d399";
+                      }}
+                    >
+                      <span>+ Add Report</span>
+                    </button>
+
+                    {/* 2. Usage Report button */}
+                    <button
+                      type="button"
+                      title="Report Material Usage"
                       onClick={(e) => {
                         e.stopPropagation();
                         setTargetItem(item);
@@ -1260,13 +1163,13 @@ export const StockDashboardView: React.FC = () => {
                         display: "inline-flex",
                         alignItems: "center",
                         gap: "4px",
-                        padding: "5px 10px",
+                        padding: "5px 11px",
                         borderRadius: "4px",
-                        backgroundColor: "rgba(239, 68, 68, 0.12)",
-                        border: "1px solid rgba(239, 68, 68, 0.25)",
-                        color: "#ff8a73",
+                        backgroundColor: "rgba(255, 138, 115, 0.14)",
+                        border: "1px solid var(--accent-border)",
+                        color: "var(--accent-text)",
                         fontSize: "11.5px",
-                        fontWeight: 600,
+                        fontWeight: 650,
                         cursor: "pointer",
                         whiteSpace: "nowrap",
                         lineHeight: 1,
@@ -1277,49 +1180,11 @@ export const StockDashboardView: React.FC = () => {
                         e.currentTarget.style.color = "#090c13";
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = "rgba(239, 68, 68, 0.12)";
-                        e.currentTarget.style.color = "#ff8a73";
+                        e.currentTarget.style.backgroundColor = "rgba(255, 138, 115, 0.14)";
+                        e.currentTarget.style.color = "var(--accent-text)";
                       }}
                     >
-                      <span>− Log Usage</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      title="View Details"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedItem(item);
-                      }}
-                      style={{
-                        display: "inline-flex",
-                        flexDirection: "row",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: "4px",
-                        padding: "5px 10px",
-                        borderRadius: "4px",
-                        backgroundColor: "rgba(255, 255, 255, 0.05)",
-                        border: "1px solid rgba(255, 255, 255, 0.1)",
-                        color: "var(--text-secondary)",
-                        fontSize: "11.5px",
-                        fontWeight: 600,
-                        cursor: "pointer",
-                        whiteSpace: "nowrap",
-                        lineHeight: 1,
-                        transition: "all 0.15s ease",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.1)";
-                        e.currentTarget.style.color = "#fff";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
-                        e.currentTarget.style.color = "var(--text-secondary)";
-                      }}
-                    >
-                      <span>Ledger</span>
-                      <span style={{ fontSize: "10.5px" }}>→</span>
+                      <span>− Usage Report</span>
                     </button>
                   </div>
                 </div>
