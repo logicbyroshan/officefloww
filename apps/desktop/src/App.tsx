@@ -149,6 +149,7 @@ const MainApp: React.FC = () => {
       case "orders":
         return (
           <OrdersWorkspaceView
+            clients={clients}
             onSelectOrder={(id) => setSelectedOrderId(id)}
           />
         );
