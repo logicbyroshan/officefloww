@@ -100,9 +100,6 @@ export const StaffDetailProfileView: React.FC<StaffDetailProfileViewProps> = ({
   // Top header tab: Overview | Tasks (Kanban) | Salary Management
   const [activeProfileTab, setActiveProfileTab] = useState<"overview" | "tasks" | "salary">("overview");
 
-  // Telemetry view toggle inside overview
-  const [activeHoursView, setActiveHoursView] = useState<"today" | "weekly">("today");
-
   // Modals
   const [showPayModal, setShowPayModal] = useState(false);
   const [payMethod, setPayMethod] = useState<"neft" | "cash" | "upi">("neft");
@@ -119,17 +116,6 @@ export const StaffDetailProfileView: React.FC<StaffDetailProfileViewProps> = ({
 
   // Days of current month for attendance widget
   const calendarDays = Array.from({ length: 30 }, (_, i) => i + 1);
-
-  // Weekly hours logged
-  const weekDays = [
-    { day: "M", hours: 8.0, label: "8:00" },
-    { day: "T", hours: 7.5, label: "7:30" },
-    { day: "W", hours: 4.0, label: "4:00" },
-    { day: "T", hours: 8.5, label: "8:30" },
-    { day: "F", hours: 7.0, label: "7:00" },
-    { day: "S", hours: 3.5, label: "3:30" },
-    { day: "S", hours: 0.0, label: "0:00" },
-  ];
 
   // Hourly Salary & Inactivity Deduction Engine
   const baseSalary = staff.role === "ADMIN" ? 45000 : staff.role === "OPERATOR" ? 28000 : isLabour ? 15000 : 18000;
@@ -465,7 +451,7 @@ export const StaffDetailProfileView: React.FC<StaffDetailProfileViewProps> = ({
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "280px 1fr 300px",
+            gridTemplateColumns: "260px 1fr 370px",
             gap: "20px",
             padding: "24px 28px",
             alignItems: "start",
@@ -895,41 +881,22 @@ export const StaffDetailProfileView: React.FC<StaffDetailProfileViewProps> = ({
                     </span>
                   </div>
 
-                  {/* View Mode Toggle */}
-                  <div style={{ display: "flex", gap: "4px", backgroundColor: "rgba(0,0,0,0.35)", padding: "3px", borderRadius: "2px" }}>
-                    <button
-                      type="button"
-                      onClick={() => setActiveHoursView("today")}
-                      style={{
-                        padding: "4px 12px",
-                        borderRadius: "2px",
-                        border: "none",
-                        backgroundColor: activeHoursView === "today" ? "rgba(255, 138, 115, 0.2)" : "transparent",
-                        color: activeHoursView === "today" ? "var(--accent-text)" : "var(--text-muted)",
-                        fontSize: "11px",
-                        fontWeight: 700,
-                        cursor: "pointer",
-                      }}
-                    >
-                      Today's Shift (Live)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setActiveHoursView("weekly")}
-                      style={{
-                        padding: "4px 12px",
-                        borderRadius: "2px",
-                        border: "none",
-                        backgroundColor: activeHoursView === "weekly" ? "rgba(255, 138, 115, 0.2)" : "transparent",
-                        color: activeHoursView === "weekly" ? "var(--accent-text)" : "var(--text-muted)",
-                        fontSize: "11px",
-                        fontWeight: 700,
-                        cursor: "pointer",
-                      }}
-                    >
-                      Weekly History
-                    </button>
-                  </div>
+                  <span
+                    style={{
+                      fontSize: "11px",
+                      fontWeight: 700,
+                      padding: "3px 8px",
+                      borderRadius: "2px",
+                      backgroundColor: "rgba(16, 185, 129, 0.15)",
+                      color: "#34d399",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "5px",
+                    }}
+                  >
+                    <span style={{ width: 6, height: 6, borderRadius: "1px", backgroundColor: "#10b981" }} />
+                    <span>Live Shift Today</span>
+                  </span>
                 </div>
 
                 {/* Shift KPI Metrics Strip */}
@@ -977,28 +944,6 @@ export const StaffDetailProfileView: React.FC<StaffDetailProfileViewProps> = ({
                     </strong>
                     <span style={{ fontSize: "10.5px", color: "var(--text-secondary)" }}>Zero defects recorded</span>
                   </div>
-                </div>
-
-                {/* Telemetry Notice Box */}
-                <div
-                  style={{
-                    backgroundColor: "rgba(255, 255, 255, 0.02)",
-                    border: "1px solid rgba(255, 255, 255, 0.06)",
-                    borderRadius: "3px",
-                    padding: "12px 14px",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "4px",
-                  }}
-                >
-                  <span style={{ fontSize: "11px", fontWeight: 700, color: isDesktop ? "#60a5fa" : "#f59e0b", textTransform: "uppercase" }}>
-                    {isDesktop ? "🖥️ Workstation Device Telemetry (Adharsh Plant PC-01)" : "⚙️ Floor Task Cycle & Machine Telemetry (Station Press Line)"}
-                  </span>
-                  <p style={{ fontSize: "12px", color: "var(--text-secondary)", margin: 0, lineHeight: 1.4 }}>
-                    {isDesktop
-                      ? "Monitors active keyboard, mouse, and ERP application input. When no active desktop interaction is detected for >5 minutes, time is automatically classified into 'Idle / Standby' until task execution resumes."
-                      : "Monitors production task lifecycle. Logs duration spent actively pressing/stitching batches versus floor idle time while awaiting new order allocations or raw stock deliveries from warehouse."}
-                  </p>
                 </div>
 
                 {/* Segmented Timeline */}
@@ -1058,62 +1003,238 @@ export const StaffDetailProfileView: React.FC<StaffDetailProfileViewProps> = ({
 
           {/* COLUMN 3: Right Shift Calendar & Quick Payroll View */}
           <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
-            {/* Monthly Attendance Calendar Card (Sharp Corners) */}
+            {/* Monthly Attendance Calendar Card (Bigger in Height, Detailed Green/Half-Day Tracking) */}
             <div
               style={{
                 backgroundColor: "rgba(19, 23, 34, 0.85)",
                 backdropFilter: "blur(14px)",
                 border: "1px solid rgba(255, 255, 255, 0.08)",
                 borderRadius: "3px",
-                padding: "16px 18px",
+                padding: "18px 20px",
                 display: "flex",
                 flexDirection: "column",
-                gap: "12px",
+                gap: "14px",
               }}
             >
+              {/* Header */}
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <span style={{ fontSize: "13px", fontWeight: 700, color: "#fff" }}>
-                  September 2026 Shift
+                <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                  <span style={{ fontSize: "14px", fontWeight: 800, color: "#fff" }}>
+                    September 2026 Shift Attendance
+                  </span>
+                  <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>
+                    Biometric Fingerprint & Workstation Punch
+                  </span>
+                </div>
+                <span
+                  style={{
+                    fontSize: "11px",
+                    fontWeight: 700,
+                    padding: "2px 7px",
+                    borderRadius: "2px",
+                    backgroundColor: "rgba(16, 185, 129, 0.15)",
+                    color: "#34d399",
+                  }}
+                >
+                  95.4% Rate
                 </span>
-                <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>Biometric Live</span>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", textAlign: "center", fontSize: "10.5px", color: "var(--text-muted)", fontWeight: 600 }}>
-                <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
+              {/* Attendance Quick Stats Strip */}
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(4, 1fr)",
+                  gap: "6px",
+                  backgroundColor: "rgba(0, 0, 0, 0.25)",
+                  border: "1px solid rgba(255, 255, 255, 0.06)",
+                  borderRadius: "2px",
+                  padding: "8px 10px",
+                  textAlign: "center",
+                }}
+              >
+                <div style={{ display: "flex", flexDirection: "column" }}>
+                  <strong style={{ fontSize: "13px", color: "#34d399", fontFamily: "var(--font-mono)" }}>21</strong>
+                  <span style={{ fontSize: "9.5px", color: "var(--text-muted)" }}>Full Days</span>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", borderLeft: "1px solid rgba(255, 255, 255, 0.06)" }}>
+                  <strong style={{ fontSize: "13px", color: "#fbbf24", fontFamily: "var(--font-mono)" }}>2</strong>
+                  <span style={{ fontSize: "9.5px", color: "var(--text-muted)" }}>Half Days</span>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", borderLeft: "1px solid rgba(255, 255, 255, 0.06)" }}>
+                  <strong style={{ fontSize: "13px", color: "#f87171", fontFamily: "var(--font-mono)" }}>1</strong>
+                  <span style={{ fontSize: "9.5px", color: "var(--text-muted)" }}>Leave</span>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", borderLeft: "1px solid rgba(255, 255, 255, 0.06)" }}>
+                  <strong style={{ fontSize: "13px", color: "var(--text-secondary)", fontFamily: "var(--font-mono)" }}>4</strong>
+                  <span style={{ fontSize: "9.5px", color: "var(--text-muted)" }}>Off</span>
+                </div>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "4px", textAlign: "center" }}>
-                <span />
+              {/* Weekday labels */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", textAlign: "center", fontSize: "10.5px", color: "var(--text-muted)", fontWeight: 700 }}>
+                <span>SUN</span><span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span>
+              </div>
+
+              {/* Day Cells Grid (Bigger Height: 54px with Green Boxes & Half-Days) */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "5px" }}>
+                {/* 2 initial blank cells for Sep 1 starting on Tuesday */}
+                <div style={{ height: "54px" }} />
+                <div style={{ height: "54px" }} />
+
                 {calendarDays.map((d) => {
                   const isToday = d === 3;
-                  const isPastPresent = d <= 3;
+                  const isSunday = d === 6 || d === 13 || d === 20 || d === 27;
+                  const isHalfDay = d === 9 || d === 18;
                   const isLeave = d === 12;
 
                   return (
                     <div
                       key={d}
                       style={{
-                        height: 28,
+                        height: "54px",
                         display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
+                        flexDirection: "column",
+                        justifyContent: "space-between",
+                        padding: "4px 5px",
                         borderRadius: "2px",
-                        fontSize: "11px",
-                        fontWeight: isToday ? 800 : 500,
                         backgroundColor: isToday
-                          ? "var(--accent)"
-                          : isPastPresent
-                          ? "rgba(16, 185, 129, 0.2)"
-                          : isLeave
-                          ? "rgba(245, 158, 11, 0.2)"
-                          : "transparent",
-                        color: isToday ? "#090c13" : isPastPresent ? "#10b981" : isLeave ? "#f59e0b" : "var(--text-secondary)",
+                          ? "rgba(255, 138, 115, 0.12)"
+                          : "rgba(255, 255, 255, 0.02)",
+                        border: isToday
+                          ? "1px solid var(--accent)"
+                          : "1px solid rgba(255, 255, 255, 0.06)",
+                        boxSizing: "border-box",
+                        transition: "transform 0.1s ease",
                       }}
                     >
-                      {d}
+                      {/* Top Day Number */}
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                        <span
+                          style={{
+                            fontSize: "11px",
+                            fontFamily: "var(--font-mono)",
+                            fontWeight: isToday ? 800 : 600,
+                            color: isToday ? "var(--accent-text)" : isSunday ? "var(--text-muted)" : "#fff",
+                          }}
+                        >
+                          {d}
+                        </span>
+                        {isToday && (
+                          <span style={{ width: 5, height: 5, borderRadius: "1px", backgroundColor: "var(--accent)" }} />
+                        )}
+                      </div>
+
+                      {/* Status Box Inside Cell */}
+                      {isToday ? (
+                        <div
+                          style={{
+                            backgroundColor: "var(--accent)",
+                            color: "#0a0d14",
+                            borderRadius: "2px",
+                            padding: "2px 0",
+                            textAlign: "center",
+                            fontSize: "9px",
+                            fontWeight: 800,
+                            letterSpacing: "0.2px",
+                          }}
+                        >
+                          LIVE 8h
+                        </div>
+                      ) : isHalfDay ? (
+                        <div
+                          style={{
+                            backgroundColor: "rgba(245, 158, 11, 0.2)",
+                            border: "1px solid rgba(245, 158, 11, 0.45)",
+                            color: "#fbbf24",
+                            borderRadius: "2px",
+                            padding: "2px 0",
+                            textAlign: "center",
+                            fontSize: "9px",
+                            fontWeight: 700,
+                          }}
+                        >
+                          ½ 4h
+                        </div>
+                      ) : isLeave ? (
+                        <div
+                          style={{
+                            backgroundColor: "rgba(239, 68, 68, 0.2)",
+                            border: "1px solid rgba(239, 68, 68, 0.45)",
+                            color: "#f87171",
+                            borderRadius: "2px",
+                            padding: "2px 0",
+                            textAlign: "center",
+                            fontSize: "8.5px",
+                            fontWeight: 700,
+                          }}
+                        >
+                          LEAVE
+                        </div>
+                      ) : isSunday ? (
+                        <div
+                          style={{
+                            backgroundColor: "rgba(255, 255, 255, 0.04)",
+                            border: "1px solid rgba(255, 255, 255, 0.06)",
+                            color: "var(--text-muted)",
+                            borderRadius: "2px",
+                            padding: "2px 0",
+                            textAlign: "center",
+                            fontSize: "8.5px",
+                            fontWeight: 600,
+                          }}
+                        >
+                          OFF
+                        </div>
+                      ) : (
+                        <div
+                          style={{
+                            backgroundColor: "rgba(16, 185, 129, 0.16)",
+                            border: "1px solid rgba(16, 185, 129, 0.35)",
+                            color: "#34d399",
+                            borderRadius: "2px",
+                            padding: "2px 0",
+                            textAlign: "center",
+                            fontSize: "9px",
+                            fontWeight: 700,
+                          }}
+                        >
+                          ✓ 8.5h
+                        </div>
+                      )}
                     </div>
                   );
                 })}
+              </div>
+
+              {/* Legend Footer */}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  borderTop: "1px solid rgba(255, 255, 255, 0.06)",
+                  paddingTop: "10px",
+                  fontSize: "10.5px",
+                  color: "var(--text-secondary)",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                  <span style={{ width: 8, height: 8, borderRadius: "1px", backgroundColor: "#10b981" }} />
+                  <span>Full Day</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                  <span style={{ width: 8, height: 8, borderRadius: "1px", backgroundColor: "#f59e0b" }} />
+                  <span>Half Day</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                  <span style={{ width: 8, height: 8, borderRadius: "1px", backgroundColor: "#ef4444" }} />
+                  <span>Leave</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                  <span style={{ width: 8, height: 8, borderRadius: "1px", backgroundColor: "rgba(255,255,255,0.3)" }} />
+                  <span>Off</span>
+                </div>
               </div>
             </div>
 
