@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { PageHeader } from "../../design-system/layouts/PageHeader";
 import { Table, Column } from "../../design-system/components/Table";
-import { Button } from "../../design-system/components/Button";
+import { Button, IconButton } from "../../design-system/components/Button";
 import { Icon } from "../../design-system/components/Icon";
 import { Modal } from "../../design-system/components/Modal";
 import { Input, Select, Textarea } from "../../design-system/components/Input";
@@ -11,7 +11,7 @@ interface StockRecord {
   id: string;
   code: string;
   name: string;
-  category: string;
+  category: "RAW_MATERIAL" | "HARDWARE" | "CONSUMABLE";
   unit: string;
   physical_stock: number;
   reserved_stock: number;
@@ -19,6 +19,10 @@ interface StockRecord {
   min_stock_level: number;
   cost_price: number;
   location: string;
+  active: boolean;
+  iconName: "layers" | "package" | "tool" | "file-text" | "sliders" | "cpu";
+  iconColor: string;
+  iconBg: string;
 }
 
 interface MovementRecord {
@@ -67,6 +71,10 @@ const SEED_STOCK_ITEMS: StockRecord[] = [
     min_stock_level: 10000,
     cost_price: 4.20,
     location: "Main Store - Rack A1",
+    active: true,
+    iconName: "layers",
+    iconColor: "#38bdf8",
+    iconBg: "rgba(56, 189, 248, 0.12)",
   },
   {
     id: "stk-02",
@@ -80,6 +88,10 @@ const SEED_STOCK_ITEMS: StockRecord[] = [
     min_stock_level: 3000,
     cost_price: 1.80,
     location: "Main Store - Rack B2",
+    active: true,
+    iconName: "package",
+    iconColor: "#ff8a73",
+    iconBg: "rgba(255, 138, 115, 0.14)",
   },
   {
     id: "stk-03",
@@ -93,6 +105,10 @@ const SEED_STOCK_ITEMS: StockRecord[] = [
     min_stock_level: 8000,
     cost_price: 0.95,
     location: "Hardware Bin #04",
+    active: true,
+    iconName: "tool",
+    iconColor: "#c084fc",
+    iconBg: "rgba(168, 85, 247, 0.12)",
   },
   {
     id: "stk-04",
@@ -106,6 +122,10 @@ const SEED_STOCK_ITEMS: StockRecord[] = [
     min_stock_level: 15,
     cost_price: 420.0,
     location: "Cleanroom Film Cabinet",
+    active: true,
+    iconName: "file-text",
+    iconColor: "#34d399",
+    iconBg: "rgba(16, 185, 129, 0.12)",
   },
   {
     id: "stk-05",
@@ -119,6 +139,61 @@ const SEED_STOCK_ITEMS: StockRecord[] = [
     min_stock_level: 5,
     cost_price: 1850.0,
     location: "Ink Vault - Bay 1",
+    active: true,
+    iconName: "sliders",
+    iconColor: "#f59e0b",
+    iconBg: "rgba(245, 158, 11, 0.14)",
+  },
+  {
+    id: "stk-06",
+    code: "HDW-CLIPS-ALGT",
+    name: "Alligator Clip with Clear PVC Strap",
+    category: "HARDWARE",
+    unit: "pieces",
+    physical_stock: 15000,
+    reserved_stock: 1200,
+    available_stock: 13800,
+    min_stock_level: 5000,
+    cost_price: 1.25,
+    location: "Hardware Bin #08",
+    active: true,
+    iconName: "tool",
+    iconColor: "#a78bfa",
+    iconBg: "rgba(167, 139, 250, 0.12)",
+  },
+  {
+    id: "stk-07",
+    code: "RAW-ACRYLIC-3MM",
+    name: "3mm Cast Transparent Acrylic Sheet (1220x915mm)",
+    category: "RAW_MATERIAL",
+    unit: "sheets",
+    physical_stock: 120,
+    reserved_stock: 10,
+    available_stock: 110,
+    min_stock_level: 25,
+    cost_price: 680.0,
+    location: "Acrylic Bay #2",
+    active: true,
+    iconName: "layers",
+    iconColor: "#38bdf8",
+    iconBg: "rgba(56, 189, 248, 0.12)",
+  },
+  {
+    id: "stk-08",
+    code: "RAW-RFID-CHIP",
+    name: "13.56MHz Mifare 1K Contactless Inlay",
+    category: "HARDWARE",
+    unit: "pieces",
+    physical_stock: 8000,
+    reserved_stock: 800,
+    available_stock: 7200,
+    min_stock_level: 2000,
+    cost_price: 8.50,
+    location: "Electronics Vault - Shelf 3",
+    active: true,
+    iconName: "cpu",
+    iconColor: "#ec4899",
+    iconBg: "rgba(236, 72, 153, 0.12)",
   },
 ];
 
@@ -200,25 +275,70 @@ const SEED_PURCHASE_ORDERS: PurchaseOrderRecord[] = [
   },
 ];
 
+/** SVG Semi-Circle Arc Gauge matching reference image */
+const StockGaugeArc: React.FC<{ percentage: number; isLow: boolean }> = ({ percentage, isLow }) => {
+  const radius = 20;
+  const strokeWidth = 4.5;
+  const circumference = Math.PI * radius;
+  const clamped = Math.min(Math.max(percentage, 5), 100);
+  const strokeDashoffset = circumference - (clamped / 100) * circumference;
+  const color = isLow ? "#ef4444" : clamped < 50 ? "#f59e0b" : "#10b981";
+
+  return (
+    <div style={{ position: "relative", width: 50, height: 28, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+      <svg width={50} height={28} viewBox="0 0 50 28">
+        <path
+          d="M 5 25 A 20 20 0 0 1 45 25"
+          fill="none"
+          stroke="rgba(255, 255, 255, 0.08)"
+          strokeWidth={strokeWidth}
+          strokeLinecap="round"
+        />
+        <path
+          d="M 5 25 A 20 20 0 0 1 45 25"
+          fill="none"
+          stroke={color}
+          strokeWidth={strokeWidth}
+          strokeDasharray={circumference}
+          strokeDashoffset={strokeDashoffset}
+          strokeLinecap="round"
+          style={{ transition: "stroke-dashoffset 0.4s ease" }}
+        />
+      </svg>
+      <span style={{ position: "absolute", bottom: -2, fontSize: "9px", fontFamily: "var(--font-mono)", fontWeight: 700, color }}>
+        {percentage}%
+      </span>
+    </div>
+  );
+};
+
 export const StockDashboardView: React.FC = () => {
   const { success } = useToast();
 
   const [activeTab, setActiveTab] = useState<
-    "inventory" | "transactions" | "reservations" | "low" | "purchasing" | "suppliers"
+    "inventory" | "transactions" | "low" | "purchasing" | "suppliers"
   >("inventory");
 
   const [search, setSearch] = useState("");
   const [stockItems, setStockItems] = useState<StockRecord[]>(SEED_STOCK_ITEMS);
   const [selectedItem, setSelectedItem] = useState<StockRecord | null>(null);
   const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
+  const [showStatsCard, setShowStatsCard] = useState(true);
+  const [sortBy, setSortBy] = useState<"highest" | "lowest" | "name" | "price">("highest");
+  const [categoryFilter, setCategoryFilter] = useState<string>("ALL");
 
   // New stock receipt form
   const [receiptItem, setReceiptItem] = useState(SEED_STOCK_ITEMS[0].id);
   const [receiptQty, setReceiptQty] = useState("1000");
   const [receiptNotes, setReceiptNotes] = useState("GRN Batch arrival inspection passed");
 
+  // KPI calculations
+  const totalPhysical = useMemo(() => stockItems.reduce((acc, i) => acc + i.physical_stock, 0), [stockItems]);
+  const lowStockCount = useMemo(() => stockItems.filter((i) => i.available_stock <= i.min_stock_level).length, [stockItems]);
+  const fastMovingItem = stockItems[0]; // PVC Core Sheet
+
   const filteredItems = useMemo(() => {
-    return stockItems.filter((item) => {
+    let list = stockItems.filter((item) => {
       const q = search.toLowerCase();
       const matchSearch =
         !q ||
@@ -227,12 +347,30 @@ export const StockDashboardView: React.FC = () => {
         item.location.toLowerCase().includes(q);
 
       if (!matchSearch) return false;
+      if (categoryFilter !== "ALL" && item.category !== categoryFilter) return false;
       if (activeTab === "low") {
         return item.available_stock <= item.min_stock_level;
       }
       return true;
     });
-  }, [stockItems, search, activeTab]);
+
+    list.sort((a, b) => {
+      if (sortBy === "highest") return b.available_stock - a.available_stock;
+      if (sortBy === "lowest") return a.available_stock - b.available_stock;
+      if (sortBy === "name") return a.name.localeCompare(b.name);
+      if (sortBy === "price") return b.cost_price - a.cost_price;
+      return 0;
+    });
+
+    return list;
+  }, [stockItems, search, categoryFilter, activeTab, sortBy]);
+
+  const handleToggleActive = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setStockItems((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, active: !item.active } : item))
+    );
+  };
 
   const handleRecordReceipt = (e: React.FormEvent) => {
     e.preventDefault();
@@ -252,127 +390,6 @@ export const StockDashboardView: React.FC = () => {
     setIsReceiptModalOpen(false);
   };
 
-  const inventoryColumns: Column<StockRecord>[] = [
-    {
-      key: "name",
-      header: "Material / Component Description",
-      render: (s) => (
-        <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-          <span style={{ fontWeight: 600, color: "var(--text-primary)", fontSize: "13px" }}>{s.name}</span>
-          <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>
-            {s.location} • {s.category}
-          </span>
-        </div>
-      ),
-    },
-    {
-      key: "physical_stock",
-      header: "Physical",
-      align: "right",
-      width: "110px",
-      render: (s) => (
-        <span style={{ fontFamily: "var(--font-mono)", fontSize: "12.5px", fontWeight: 600, color: "#fff" }}>
-          {s.physical_stock.toLocaleString()}
-        </span>
-      ),
-    },
-    {
-      key: "reserved_stock",
-      header: "Reserved",
-      align: "right",
-      width: "110px",
-      render: (s) => (
-        <span style={{ fontFamily: "var(--font-mono)", fontSize: "12.5px", color: "var(--status-warning)" }}>
-          {s.reserved_stock.toLocaleString()}
-        </span>
-      ),
-    },
-    {
-      key: "available_stock",
-      header: "Available",
-      align: "right",
-      width: "120px",
-      render: (s) => {
-        const isLow = s.available_stock <= s.min_stock_level;
-        return (
-          <span
-            style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: "13px",
-              fontWeight: 700,
-              color: isLow ? "var(--status-error)" : "#10b981",
-            }}
-          >
-            {s.available_stock.toLocaleString()}
-          </span>
-        );
-      },
-    },
-    {
-      key: "min_stock_level",
-      header: "Minimum",
-      align: "right",
-      width: "100px",
-      render: (s) => (
-        <span style={{ fontFamily: "var(--font-mono)", fontSize: "12px", color: "var(--text-muted)" }}>
-          {s.min_stock_level.toLocaleString()}
-        </span>
-      ),
-    },
-    {
-      key: "unit",
-      header: "Unit",
-      width: "80px",
-      render: (s) => <span style={{ fontSize: "11.5px", color: "var(--text-secondary)" }}>{s.unit}</span>,
-    },
-    {
-      key: "actions",
-      header: "",
-      width: "95px",
-      align: "right",
-      render: (s) => (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            setSelectedItem(s);
-          }}
-          style={{
-            display: "inline-flex",
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "5px",
-            padding: "5px 12px",
-            borderRadius: "4px",
-            backgroundColor: "rgba(255, 255, 255, 0.05)",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
-            color: "var(--text-secondary)",
-            fontSize: "12px",
-            fontWeight: 500,
-            cursor: "pointer",
-            whiteSpace: "nowrap",
-            lineHeight: 1,
-            transition: "all 0.15s ease",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = "rgba(255, 138, 115, 0.15)";
-            e.currentTarget.style.borderColor = "var(--accent-border)";
-            e.currentTarget.style.color = "var(--accent-text)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
-            e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
-            e.currentTarget.style.color = "var(--text-secondary)";
-          }}
-        >
-          <span>Ledger</span>
-          <span style={{ fontSize: "11px" }}>→</span>
-        </button>
-      ),
-    },
-  ];
-
   const transactionColumns: Column<MovementRecord>[] = [
     {
       key: "timestamp",
@@ -385,19 +402,18 @@ export const StockDashboardView: React.FC = () => {
       ),
     },
     {
-      key: "item_code",
-      header: "Material / Component",
-      width: "200px",
+      key: "item_name",
+      header: "Material Name",
       render: (m) => (
-        <span style={{ fontWeight: 600, color: "var(--text-primary)", fontSize: "12.5px" }}>
+        <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>
           {m.item_name || m.item_code}
         </span>
       ),
     },
     {
       key: "type",
-      header: "Type",
-      width: "90px",
+      header: "Action",
+      width: "100px",
       render: (m) => (
         <span
           style={{
@@ -405,8 +421,8 @@ export const StockDashboardView: React.FC = () => {
             fontWeight: 700,
             padding: "2px 6px",
             borderRadius: "3px",
-            backgroundColor: m.type === "ISSUE" ? "rgba(239, 68, 68, 0.15)" : "rgba(16, 185, 129, 0.15)",
-            color: m.type === "ISSUE" ? "var(--status-error)" : "#10b981",
+            backgroundColor: m.type === "ISSUE" ? "rgba(255, 138, 115, 0.15)" : "rgba(56, 189, 248, 0.15)",
+            color: m.type === "ISSUE" ? "var(--accent-text)" : "#38bdf8",
           }}
         >
           {m.type}
@@ -415,7 +431,7 @@ export const StockDashboardView: React.FC = () => {
     },
     {
       key: "quantity",
-      header: "Qty",
+      header: "Quantity",
       align: "right",
       width: "100px",
       render: (m) => (
@@ -483,9 +499,9 @@ export const StockDashboardView: React.FC = () => {
         >
           <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
             {[
-              { id: "inventory" as const, label: "Inventory Register" },
+              { id: "inventory" as const, label: "All Product List" },
               { id: "transactions" as const, label: "Ledger Movements" },
-              { id: "low" as const, label: "Low Stock Alerts" },
+              { id: "low" as const, label: "Low Stock Alerts", badge: lowStockCount },
               { id: "purchasing" as const, label: "Purchase Orders" },
               { id: "suppliers" as const, label: "Suppliers Directory" },
             ].map((tab) => (
@@ -496,6 +512,7 @@ export const StockDashboardView: React.FC = () => {
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
+                  gap: "6px",
                   padding: "6px 12px",
                   borderRadius: "4px",
                   border: "none",
@@ -508,38 +525,195 @@ export const StockDashboardView: React.FC = () => {
                 }}
               >
                 <span>{tab.label}</span>
+                {tab.badge !== undefined && tab.badge > 0 && (
+                  <span
+                    style={{
+                      fontSize: "10px",
+                      padding: "1px 5px",
+                      borderRadius: "10px",
+                      backgroundColor: "var(--status-error)",
+                      color: "#fff",
+                      fontWeight: 700,
+                    }}
+                  >
+                    {tab.badge}
+                  </span>
+                )}
               </button>
             ))}
           </div>
 
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              backgroundColor: "rgba(0, 0, 0, 0.25)",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
-              borderRadius: "4px",
-              padding: "4px 10px",
-            }}
-          >
-            <Icon name="search" size={13} color="var(--text-muted)" />
-            <input
-              type="text"
-              placeholder="Search materials, category, location..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            {/* Search Bar matching reference */}
+            <div
               style={{
-                background: "none",
-                border: "none",
-                color: "#fff",
-                fontSize: "12px",
-                outline: "none",
-                width: "160px",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                backgroundColor: "rgba(0, 0, 0, 0.28)",
+                border: "1px solid rgba(255, 255, 255, 0.08)",
+                borderRadius: "4px",
+                padding: "5px 12px",
               }}
-            />
+            >
+              <Icon name="search" size={13} color="var(--text-muted)" />
+              <input
+                type="text"
+                placeholder="Search Product..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "#fff",
+                  fontSize: "12px",
+                  outline: "none",
+                  width: "180px",
+                }}
+              />
+            </div>
+
+            {/* Sort By selector */}
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as any)}
+              style={{
+                backgroundColor: "rgba(255, 255, 255, 0.04)",
+                border: "1px solid rgba(255, 255, 255, 0.08)",
+                borderRadius: "4px",
+                color: "var(--text-secondary)",
+                fontSize: "12px",
+                padding: "5px 10px",
+                cursor: "pointer",
+                outline: "none",
+              }}
+            >
+              <option value="highest" style={{ backgroundColor: "#0e121a" }}>Sort By: Highest Stock</option>
+              <option value="lowest" style={{ backgroundColor: "#0e121a" }}>Sort By: Lowest Stock</option>
+              <option value="name" style={{ backgroundColor: "#0e121a" }}>Sort By: Material Name</option>
+              <option value="price" style={{ backgroundColor: "#0e121a" }}>Sort By: Unit Price</option>
+            </select>
+
+            {/* Category Filter */}
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              style={{
+                backgroundColor: "rgba(255, 255, 255, 0.04)",
+                border: "1px solid rgba(255, 255, 255, 0.08)",
+                borderRadius: "4px",
+                color: "var(--text-secondary)",
+                fontSize: "12px",
+                padding: "5px 10px",
+                cursor: "pointer",
+                outline: "none",
+              }}
+            >
+              <option value="ALL" style={{ backgroundColor: "#0e121a" }}>Show All Product ({stockItems.length})</option>
+              <option value="RAW_MATERIAL" style={{ backgroundColor: "#0e121a" }}>Raw Materials</option>
+              <option value="HARDWARE" style={{ backgroundColor: "#0e121a" }}>Hardware Fittings</option>
+              <option value="CONSUMABLE" style={{ backgroundColor: "#0e121a" }}>Consumables</option>
+            </select>
           </div>
         </div>
+
+        {/* Product Statistic Card (Matching reference top section) */}
+        {activeTab === "inventory" && (
+          <div
+            style={{
+              backgroundColor: "rgba(19, 23, 34, 0.8)",
+              backdropFilter: "blur(14px)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              borderRadius: "4px",
+              padding: "14px 18px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "12px",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span style={{ fontSize: "13px", fontWeight: 700, color: "#fff" }}>
+                Product Statistic
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowStatsCard(!showStatsCard)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "var(--text-muted)",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  padding: 2,
+                }}
+              >
+                <Icon name={showStatsCard ? "chevron-up" : "chevron-down"} size={16} />
+              </button>
+            </div>
+
+            {showStatsCard && (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(5, 1fr)",
+                  gap: "14px",
+                  paddingTop: "6px",
+                  borderTop: "1px solid rgba(255, 255, 255, 0.06)",
+                }}
+              >
+                {/* 1. Active Product */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                  <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 500 }}>Active Product</span>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
+                    <span style={{ fontSize: "20px", fontWeight: 800, color: "#fff" }}>{stockItems.length}</span>
+                    <span style={{ fontSize: "11.5px", color: "var(--text-secondary)" }}>Product</span>
+                  </div>
+                </div>
+
+                {/* 2. Winning / Fast Moving Product */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "2px", borderLeft: "1px solid rgba(255, 255, 255, 0.06)", paddingLeft: "14px" }}>
+                  <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 500 }}>Winning Product</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", overflow: "hidden" }}>
+                    <span style={{ fontSize: "14px" }}>📦</span>
+                    <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--accent-text)", whiteSpace: "nowrap", textOverflow: "ellipsis", overflow: "hidden" }}>
+                      {fastMovingItem.name.slice(0, 16)}...
+                    </span>
+                  </div>
+                </div>
+
+                {/* 3. Average Performance / Stock Health */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "2px", borderLeft: "1px solid rgba(255, 255, 255, 0.06)", paddingLeft: "14px" }}>
+                  <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 500 }}>Average Performance</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <StockGaugeArc percentage={94} isLow={false} />
+                    <span style={{ fontSize: "13px", fontWeight: 700, color: "#10b981" }}>Good!</span>
+                  </div>
+                </div>
+
+                {/* 4. Product Sold / Physical Units */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "2px", borderLeft: "1px solid rgba(255, 255, 255, 0.06)", paddingLeft: "14px" }}>
+                  <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 500 }}>Floor Stock Units</span>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
+                    <span style={{ fontSize: "20px", fontWeight: 800, color: "#38bdf8" }}>{totalPhysical.toLocaleString()}</span>
+                    <span style={{ fontSize: "11.5px", color: "var(--text-secondary)" }}>Items</span>
+                  </div>
+                </div>
+
+                {/* 5. Product Low / Reorder Alerts */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "2px", borderLeft: "1px solid rgba(255, 255, 255, 0.06)", paddingLeft: "14px" }}>
+                  <span style={{ fontSize: "11px", color: "var(--text-muted)", fontWeight: 500 }}>Reorder Alerts</span>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
+                    <span style={{ fontSize: "20px", fontWeight: 800, color: lowStockCount > 0 ? "var(--status-warning)" : "#10b981" }}>
+                      {lowStockCount}
+                    </span>
+                    <span style={{ fontSize: "11.5px", color: "var(--text-secondary)" }}>Items</span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Tab View Contents */}
         {activeTab === "transactions" ? (
@@ -610,22 +784,288 @@ export const StockDashboardView: React.FC = () => {
             />
           </div>
         ) : (
-          /* Main Spreadsheet-Style Table */
-          <div
-            style={{
-              backgroundColor: "rgba(19, 23, 34, 0.75)",
-              backdropFilter: "blur(14px)",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
-              borderRadius: "4px",
-              overflow: "hidden",
-            }}
-          >
-            <Table
-              columns={inventoryColumns}
-              data={filteredItems}
-              onRowClick={(s) => setSelectedItem(s)}
-              emptyText="No stock records match the query."
-            />
+          /* Main Reference-Style Item Rows List */
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            {filteredItems.map((item) => {
+              const isLow = item.available_stock <= item.min_stock_level;
+              const healthPercent = Math.min(Math.round((item.available_stock / (item.min_stock_level * 2)) * 100), 100);
+              const performanceLabel = healthPercent >= 80 ? "Excellent" : healthPercent >= 50 ? "Good" : "Low";
+              const totalValue = item.available_stock * item.cost_price;
+
+              return (
+                <div
+                  key={item.id}
+                  onClick={() => setSelectedItem(item)}
+                  style={{
+                    backgroundColor: "rgba(19, 23, 34, 0.85)",
+                    backdropFilter: "blur(14px)",
+                    border: "1px solid " + (isLow ? "rgba(239, 68, 68, 0.35)" : "rgba(255, 255, 255, 0.07)"),
+                    borderRadius: "4px",
+                    padding: "12px 18px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: "16px",
+                    cursor: "pointer",
+                    transition: "all 0.15s ease",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = "rgba(25, 32, 47, 0.95)";
+                    e.currentTarget.style.borderColor = "var(--accent-border)";
+                    e.currentTarget.style.transform = "translateY(-1px)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = "rgba(19, 23, 34, 0.85)";
+                    e.currentTarget.style.borderColor = isLow ? "rgba(239, 68, 68, 0.35)" : "rgba(255, 255, 255, 0.07)";
+                    e.currentTarget.style.transform = "none";
+                  }}
+                >
+                  {/* Left Column: Visual Thumbnail + Clean Title & Spec (No reviews as requested) */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "14px", width: "320px", flexShrink: 0 }}>
+                    <div
+                      style={{
+                        width: 44,
+                        height: 44,
+                        borderRadius: "4px",
+                        backgroundColor: item.iconBg,
+                        border: "1px solid rgba(255, 255, 255, 0.08)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <Icon name={item.iconName} size={20} color={item.iconColor} />
+                    </div>
+
+                    <div style={{ display: "flex", flexDirection: "column", gap: "3px", overflow: "hidden" }}>
+                      <span
+                        style={{
+                          fontSize: "13.5px",
+                          fontWeight: 700,
+                          color: "#fff",
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                        }}
+                      >
+                        {item.name}
+                      </span>
+                      <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>
+                        {item.location} • {item.category.replace("_", " ")}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Column 2: Allocation (Available / Reserved) */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "2px", width: "130px", flexShrink: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>Performance</span>
+                      <span
+                        style={{
+                          fontSize: "10px",
+                          fontWeight: 700,
+                          color: isLow ? "#ef4444" : healthPercent >= 80 ? "#10b981" : "#f59e0b",
+                        }}
+                      >
+                        {performanceLabel}
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "11px", color: "var(--text-secondary)", fontFamily: "var(--font-mono)" }}>
+                      <span>📈 {item.available_stock.toLocaleString()}</span>
+                      <span>🔒 {item.reserved_stock.toLocaleString()}</span>
+                    </div>
+                  </div>
+
+                  {/* Column 3: Semi-Circle Gauge Arc */}
+                  <div style={{ display: "flex", alignItems: "center", width: "65px", flexShrink: 0 }}>
+                    <StockGaugeArc percentage={healthPercent} isLow={isLow} />
+                  </div>
+
+                  {/* Column 4: Stock Quantity */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "2px", width: "120px", flexShrink: 0 }}>
+                    <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>Stock</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      <span style={{ fontSize: "12px" }}>📦</span>
+                      <span style={{ fontFamily: "var(--font-mono)", fontSize: "13.5px", fontWeight: 700, color: isLow ? "var(--status-error)" : "#fff" }}>
+                        {item.available_stock.toLocaleString()}
+                      </span>
+                      <span style={{ fontSize: "10.5px", color: "var(--text-muted)" }}>{item.unit}</span>
+                    </div>
+                  </div>
+
+                  {/* Column 5: Product Price & Total Valuation */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "2px", width: "130px", flexShrink: 0 }}>
+                    <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>Product Price</span>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: "4px" }}>
+                      <span style={{ fontFamily: "var(--font-mono)", fontSize: "13.5px", fontWeight: 700, color: "#34d399" }}>
+                        ₹{item.cost_price.toFixed(2)}
+                      </span>
+                      <span style={{ fontSize: "10px", color: "var(--text-muted)" }}>/ {item.unit}</span>
+                    </div>
+                  </div>
+
+                  {/* Column 6: Visibility / In-Stock Toggle Switch */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", width: "90px", flexShrink: 0 }}>
+                    <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>Visibility</span>
+                    <div
+                      onClick={(e) => handleToggleActive(item.id, e)}
+                      style={{
+                        width: 32,
+                        height: 18,
+                        borderRadius: "10px",
+                        backgroundColor: item.active ? "var(--accent)" : "rgba(255, 255, 255, 0.15)",
+                        position: "relative",
+                        cursor: "pointer",
+                        transition: "background-color 0.2s ease",
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: 14,
+                          height: 14,
+                          borderRadius: "50%",
+                          backgroundColor: item.active ? "#090c13" : "#cbd5e1",
+                          position: "absolute",
+                          top: 2,
+                          left: item.active ? 16 : 2,
+                          transition: "left 0.2s ease",
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Column 7: Quick Actions (Pencil, Eye/Ledger, More) */}
+                  <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
+                    <button
+                      type="button"
+                      title="Edit Material Specs"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        success("Edit Material", `Editing specifications for ${item.name}`);
+                      }}
+                      style={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: "4px",
+                        backgroundColor: "rgba(255, 255, 255, 0.04)",
+                        border: "1px solid rgba(255, 255, 255, 0.08)",
+                        color: "var(--text-secondary)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        cursor: "pointer",
+                        transition: "all 0.15s ease",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.1)";
+                        e.currentTarget.style.color = "#fff";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.04)";
+                        e.currentTarget.style.color = "var(--text-secondary)";
+                      }}
+                    >
+                      <Icon name="sliders" size={13} />
+                    </button>
+
+                    <button
+                      type="button"
+                      title="View Ledger Movements"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedItem(item);
+                      }}
+                      style={{
+                        display: "inline-flex",
+                        flexDirection: "row",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "4px",
+                        padding: "5px 10px",
+                        borderRadius: "4px",
+                        backgroundColor: "rgba(255, 138, 115, 0.12)",
+                        border: "1px solid var(--accent-border)",
+                        color: "var(--accent-text)",
+                        fontSize: "11.5px",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        whiteSpace: "nowrap",
+                        lineHeight: 1,
+                        transition: "all 0.15s ease",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = "var(--accent)";
+                        e.currentTarget.style.color = "#090c13";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = "rgba(255, 138, 115, 0.12)";
+                        e.currentTarget.style.color = "var(--accent-text)";
+                      }}
+                    >
+                      <span>Ledger</span>
+                      <span style={{ fontSize: "11px" }}>→</span>
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Bottom Pagination Bar matching reference */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "14px 6px 6px 6px",
+                borderTop: "1px solid rgba(255, 255, 255, 0.06)",
+                marginTop: "6px",
+              }}
+            >
+              <button
+                type="button"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  padding: "6px 14px",
+                  borderRadius: "4px",
+                  backgroundColor: "rgba(255, 255, 255, 0.04)",
+                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                  color: "var(--text-muted)",
+                  fontSize: "12px",
+                  cursor: "not-allowed",
+                  fontWeight: 500,
+                }}
+                disabled
+              >
+                Previous
+              </button>
+
+              <span style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 500 }}>
+                Page 1 of 1 • ({filteredItems.length} Products)
+              </span>
+
+              <button
+                type="button"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  padding: "6px 14px",
+                  borderRadius: "4px",
+                  backgroundColor: "rgba(255, 255, 255, 0.04)",
+                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                  color: "var(--text-muted)",
+                  fontSize: "12px",
+                  cursor: "not-allowed",
+                  fontWeight: 500,
+                }}
+                disabled
+              >
+                Next
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -663,7 +1103,7 @@ export const StockDashboardView: React.FC = () => {
                 {selectedItem.name}
               </h3>
               <span style={{ fontSize: "11.5px", color: "var(--accent-text)" }}>
-                {selectedItem.location} • {selectedItem.category}
+                {selectedItem.location} • {selectedItem.category.replace("_", " ")}
               </span>
             </div>
             <button
