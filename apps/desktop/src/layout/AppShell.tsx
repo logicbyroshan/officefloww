@@ -25,6 +25,7 @@ export const AppShell: React.FC<AppShellProps> = ({
 }) => {
   const { connected, checkConnection } = useConnection();
   const [isVoiceActive, setIsVoiceActive] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   // Keyboard shortcut Ctrl+Shift+V for voice
   useEffect(() => {
@@ -102,8 +103,8 @@ export const AppShell: React.FC<AppShellProps> = ({
             onSelectSection={onSelectSection}
             pendingApprovalsCount={pendingApprovalsCount}
             urgentTasksCount={urgentTasksCount}
-            isCollapsed={false}
-            onToggleCollapse={() => {}}
+            isCollapsed={isSidebarCollapsed}
+            onToggleCollapse={() => setIsSidebarCollapsed((prev) => !prev)}
           />
           <main
             style={{

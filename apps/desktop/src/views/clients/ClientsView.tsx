@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { Client, Order, OrderPriority, OrderStatus, ClientContact } from "@officefloww/api-types";
 import { PageHeader } from "../../design-system/layouts/PageHeader";
-import { Table, Column } from "../../design-system/components/Table";
 import { Button } from "../../design-system/components/Button";
 import { Icon } from "../../design-system/components/Icon";
 import { PriorityBadge, OrderStatusBadge } from "../../design-system/components/Badge";
@@ -25,7 +24,8 @@ export interface ClientsViewProps {
 interface ClientActivityItem {
   id: string;
   actorName: string;
-  actorAvatar: string;
+  actorRole: string;
+  actionType: "dispatch" | "invoice" | "proof" | "deal" | "note";
   actionText: string;
   targetText?: string;
   timeAgo: string;
@@ -73,51 +73,56 @@ const getAvatarColor = (name: string) => {
   return colors[Math.abs(hash) % colors.length];
 };
 
-// Initial Mock Activity entries matching user's reference screenshot
+// Initial Realistic Activities
 const INITIAL_ACTIVITIES: Record<string, ClientActivityItem[]> = {
   default: [
     {
       id: "act-1",
-      actorName: "Wei Chen",
-      actorAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80",
-      actionText: "logged 2h 30m on",
-      targetText: "Photo art direction",
-      timeAgo: "18 minutes ago",
+      actorName: "Rajesh Sharma",
+      actorRole: "Production Head",
+      actionType: "dispatch",
+      actionText: "completed batch QA & dispatched 5,000 RFID PVC Cards batch 1 for",
+      targetText: "Production Run ORD-2026-0001",
+      timeAgo: "22 minutes ago",
       timestamp: "2026-09-03T10:40:00Z",
     },
     {
       id: "act-2",
-      actorName: "Sophia Williams",
-      actorAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80",
-      actionText: "moved Brand system refresh to",
-      targetText: "Negotiation",
+      actorName: "Ananya Roy",
+      actorRole: "Finance & Accounts",
+      actionType: "invoice",
+      actionText: "generated GST Tax Invoice",
+      targetText: "INV 2026-044 for ₹1,82,500",
       timeAgo: "1 hour ago",
       timestamp: "2026-09-03T09:40:00Z",
     },
     {
       id: "act-3",
-      actorName: "Laura Perez",
-      actorAvatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&auto=format&fit=crop&q=80",
-      actionText: "sent a payment reminder for",
-      targetText: "INV 2026-044",
+      actorName: "Vikram Singh",
+      actorRole: "Design Studio",
+      actionType: "proof",
+      actionText: "uploaded updated artwork proof",
+      targetText: "PRF-LANYARD-01 (Multicolor Sublimation)",
       timeAgo: "3 hours ago",
       timestamp: "2026-09-03T07:40:00Z",
     },
     {
       id: "act-4",
-      actorName: "Emma Wright",
-      actorAvatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&auto=format&fit=crop&q=80",
-      actionText: "completed Label dielines on",
-      targetText: "Kaya packaging",
+      actorName: "Sophia Williams",
+      actorRole: "Managing Director",
+      actionType: "deal",
+      actionText: "approved commercial quotation for",
+      targetText: "Annual Student RFID Smartcard Retainer",
       timeAgo: "Yesterday",
       timestamp: "2026-09-02T14:20:00Z",
     },
     {
       id: "act-5",
       actorName: "Arthur Taylor",
-      actorAvatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80",
-      actionText: "created proposal",
-      targetText: "Design ops audit",
+      actorRole: "Senior Estimator",
+      actionType: "note",
+      actionText: "logged client review on sample cards:",
+      targetText: "Approved frosted finish with magnetic stripe",
       timeAgo: "Yesterday",
       timestamp: "2026-09-02T11:00:00Z",
     },
@@ -128,25 +133,25 @@ const INITIAL_DEALS: Record<string, ClientDealItem[]> = {
   default: [
     {
       id: "dl-1",
-      title: "Brand System Refresh & Cafe Signage",
+      title: "Annual Student RFID Smartcards & Lanyards (15,000 units)",
       stage: "Negotiation",
-      value: 12400,
+      value: 1850000,
       probability: 85,
       expectedClose: "2026-09-28",
     },
     {
       id: "dl-2",
-      title: "Smart NFC Member Loyalty Cards (10,000 units)",
+      title: "Smart NFC Access Control Cards (5,000 Staff Units)",
       stage: "Proposal Sent",
-      value: 38000,
+      value: 620000,
       probability: 65,
       expectedClose: "2026-10-15",
     },
     {
       id: "dl-3",
-      title: "Custom Frosted Nitro Cups & Sleeve Packaging",
+      title: "Custom Frosted Metal Clip Badges & Sublimation Ribbons",
       stage: "Won",
-      value: 7600,
+      value: 380000,
       probability: 100,
       expectedClose: "2026-08-14",
     },
@@ -157,32 +162,32 @@ const INITIAL_INVOICES: Record<string, ClientInvoiceItem[]> = {
   default: [
     {
       id: "inv-01",
-      invoiceNumber: "INV 2026-044",
-      orderNumber: "ORD-2026-0000",
+      invoiceNumber: "INV-2026-0042",
+      orderNumber: "ORD-2026-0001",
       issueDate: "2026-08-20",
       dueDate: "2026-09-20",
-      total: 12400,
-      paid: 0,
-      status: "PENDING",
+      total: 182500,
+      paid: 120000,
+      status: "PARTIAL",
     },
     {
       id: "inv-02",
-      invoiceNumber: "INV 2026-028",
+      invoiceNumber: "INV-2026-0028",
       orderNumber: "ORD-2026-0012",
       issueDate: "2026-07-15",
       dueDate: "2026-08-15",
-      total: 24500,
-      paid: 24500,
+      total: 350000,
+      paid: 350000,
       status: "PAID",
     },
     {
       id: "inv-03",
-      invoiceNumber: "INV 2026-011",
+      invoiceNumber: "INV-2026-0011",
       orderNumber: "ORD-2026-0004",
       issueDate: "2026-05-10",
       dueDate: "2026-06-10",
-      total: 21100,
-      paid: 21100,
+      total: 245000,
+      paid: 245000,
       status: "PAID",
     },
   ],
@@ -200,12 +205,12 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
 }) => {
   const { success } = useToast();
 
-  // Selected client for details view (defaults to first client e.g. Northwind Coffee)
+  // Selected client for details view (defaults to first client e.g. St. Xavier's or Northwind)
   const [selectedClientId, setSelectedClientId] = useState<string | null>(
     clients.length > 0 ? clients[0].id : null
   );
 
-  // Active Tab inside Client Management View (matching screenshot)
+  // Active Tab inside Client Management View
   const [clientTab, setClientTab] = useState<
     "overview" | "contacts" | "deals" | "projects" | "invoices" | "activity"
   >("activity");
@@ -220,11 +225,9 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
   const [messageBody, setMessageBody] = useState("");
 
   const [showNewProjectModal, setShowNewProjectModal] = useState(false);
-  const [newProjectName, setNewProjectName] = useState("");
-  const [newProjectAmount, setNewProjectAmount] = useState("15000");
 
   const [showNewInvoiceModal, setShowNewInvoiceModal] = useState(false);
-  const [newInvoiceAmount, setNewInvoiceAmount] = useState("12400");
+  const [newInvoiceAmount, setNewInvoiceAmount] = useState("182500");
   const [newInvoiceDue, setNewInvoiceDue] = useState("2026-09-30");
 
   const [showNewContactModal, setShowNewContactModal] = useState(false);
@@ -235,10 +238,11 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
 
   const [showNewDealModal, setShowNewDealModal] = useState(false);
   const [newDealTitle, setNewDealTitle] = useState("");
-  const [newDealValue, setNewDealValue] = useState("25000");
+  const [newDealValue, setNewDealValue] = useState("500000");
   const [newDealStage, setNewDealStage] = useState<"Qualified" | "Proposal Sent" | "Negotiation" | "Won">("Proposal Sent");
 
   // Quick activity log state
+  const [quickActivityType, setQuickActivityType] = useState<"note" | "dispatch" | "proof" | "invoice">("note");
   const [quickActivityText, setQuickActivityText] = useState("");
 
   // Dynamic state stores
@@ -282,27 +286,59 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
     if (!selectedClient) return [];
     const base = selectedClient.contacts || [];
     const extra = extraContactsMap[selectedClient.id] || [];
+    if (base.length === 0 && extra.length === 0) {
+      return [
+        {
+          id: "cnt-seed-1",
+          client_id: selectedClient.id,
+          name: "Rajesh Sharma",
+          email: "procurement@institution.org",
+          phone: "+91 98260 12345",
+          designation: "Director of Procurement & Administration",
+          is_primary: true,
+          is_active: true,
+          created_at: "2024-01-01T00:00:00Z",
+          updated_at: "2026-09-01T00:00:00Z",
+        },
+        {
+          id: "cnt-seed-2",
+          client_id: selectedClient.id,
+          name: "Ananya Roy",
+          email: "accounts@institution.org",
+          phone: "+91 98260 67890",
+          designation: "Accounts & Billing Controller",
+          is_primary: false,
+          is_active: true,
+          created_at: "2024-01-01T00:00:00Z",
+          updated_at: "2026-09-01T00:00:00Z",
+        },
+        {
+          id: "cnt-seed-3",
+          client_id: selectedClient.id,
+          name: "Vikram Singh",
+          email: "operations@institution.org",
+          phone: "+91 98260 99881",
+          designation: "Head of Security Systems & Access",
+          is_primary: false,
+          is_active: true,
+          created_at: "2024-01-01T00:00:00Z",
+          updated_at: "2026-09-01T00:00:00Z",
+        },
+      ];
+    }
     return [...base, ...extra];
   }, [selectedClient, extraContactsMap]);
 
   // Computed Financials
   const metrics = useMemo(() => {
-    if (!selectedClient) return { revenue: 58000, outstanding: 12400, avgDays: 13, activeProjects: 1 };
-    if (selectedClient.organization_name === "Northwind Coffee") {
-      return {
-        revenue: 58000,
-        outstanding: 12400,
-        avgDays: 13,
-        activeProjects: Math.max(1, clientOrders.length),
-      };
-    }
-    const totalRev = clientOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0) || 85000;
-    const unpaid = Math.round(totalRev * 0.22);
+    if (!selectedClient) return { revenue: 3850000, outstanding: 425000, avgDays: 13, activeProjects: 2 };
+    const totalRev = clientOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0) || 3850000;
+    const unpaid = Math.round(totalRev * 0.14) || 425000;
     return {
       revenue: totalRev,
       outstanding: unpaid,
-      avgDays: 14,
-      activeProjects: clientOrders.filter((o) => o.status !== OrderStatus.COMPLETED).length || 1,
+      avgDays: 13,
+      activeProjects: Math.max(1, clientOrders.filter((o) => o.status !== OrderStatus.COMPLETED).length || 2),
     };
   }, [selectedClient, clientOrders]);
 
@@ -311,11 +347,19 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
     e.preventDefault();
     if (!quickActivityText.trim() || !selectedClient) return;
 
+    const actionTextMap = {
+      note: "logged production update:",
+      dispatch: "dispatched material consignment for",
+      proof: "uploaded digital proof approval for",
+      invoice: "sent commercial ledger reminder for",
+    };
+
     const newItem: ClientActivityItem = {
       id: `act-${Date.now()}`,
       actorName: "Rohan Sharma",
-      actorAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80",
-      actionText: "posted update:",
+      actorRole: "Plant Administrator",
+      actionType: quickActivityType,
+      actionText: actionTextMap[quickActivityType],
       targetText: quickActivityText.trim(),
       timeAgo: "Just now",
       timestamp: new Date().toISOString(),
@@ -337,9 +381,10 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
     const newItem: ClientActivityItem = {
       id: `act-${Date.now()}`,
       actorName: "Rohan Sharma",
-      actorAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80",
-      actionText: `sent message "${messageSubject}":`,
-      targetText: messageBody.slice(0, 45) + (messageBody.length > 45 ? "..." : ""),
+      actorRole: "Client Desk",
+      actionType: "note",
+      actionText: `dispatched client notice "${messageSubject}":`,
+      targetText: messageBody.slice(0, 50) + (messageBody.length > 50 ? "..." : ""),
       timeAgo: "Just now",
       timestamp: new Date().toISOString(),
     };
@@ -359,13 +404,13 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
     e.preventDefault();
     if (!selectedClient) return;
 
-    const amt = parseFloat(newInvoiceAmount) || 12000;
-    const invNumber = `INV 2026-0${Math.floor(Math.random() * 90 + 10)}`;
+    const amt = parseFloat(newInvoiceAmount) || 182500;
+    const invNumber = `INV-2026-${Math.floor(Math.random() * 900 + 100)}`;
 
     const newInv: ClientInvoiceItem = {
       id: `inv-${Date.now()}`,
       invoiceNumber: invNumber,
-      orderNumber: clientOrders[0]?.order_number || "ORD-2026-0000",
+      orderNumber: clientOrders[0]?.order_number || "ORD-2026-0001",
       issueDate: new Date().toISOString().slice(0, 10),
       dueDate: newInvoiceDue,
       total: amt,
@@ -378,12 +423,12 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
       [selectedClient.id]: [newInv, ...(prev[selectedClient.id] || prev.default || [])],
     }));
 
-    // Post to activity
     const newItem: ClientActivityItem = {
       id: `act-${Date.now()}`,
       actorName: "Rohan Sharma",
-      actorAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80",
-      actionText: "issued tax invoice",
+      actorRole: "Accounts",
+      actionType: "invoice",
+      actionText: "generated tax invoice",
       targetText: `${invNumber} for ₹${amt.toLocaleString("en-IN")}`,
       timeAgo: "Just now",
       timestamp: new Date().toISOString(),
@@ -395,7 +440,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
     }));
 
     setShowNewInvoiceModal(false);
-    success("Invoice Created", `Invoice ${invNumber} generated.`);
+    success("Tax Invoice Drafted", `Invoice ${invNumber} generated.`);
   };
 
   const handleAddContact = (e: React.FormEvent) => {
@@ -408,7 +453,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
       name: newContactName,
       email: newContactEmail || "contact@client.com",
       phone: newContactPhone || "+91 98000 00000",
-      designation: newContactRole || "Stakeholder",
+      designation: newContactRole || "Decision Maker",
       is_primary: false,
       is_active: true,
       created_at: new Date().toISOString(),
@@ -425,20 +470,20 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
     setNewContactEmail("");
     setNewContactPhone("");
     setNewContactRole("");
-    success("Contact Added", `${contact.name} added to client directory.`);
+    success("Contact Registered", `${contact.name} added to client directory.`);
   };
 
   const handleCreateDeal = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedClient || !newDealTitle) return;
 
-    const val = parseFloat(newDealValue) || 10000;
+    const val = parseFloat(newDealValue) || 250000;
     const deal: ClientDealItem = {
       id: `dl-${Date.now()}`,
       title: newDealTitle,
       stage: newDealStage,
       value: val,
-      probability: newDealStage === "Won" ? 100 : newDealStage === "Negotiation" ? 80 : 50,
+      probability: newDealStage === "Won" ? 100 : newDealStage === "Negotiation" ? 80 : 60,
       expectedClose: "2026-10-30",
     };
 
@@ -449,7 +494,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
 
     setShowNewDealModal(false);
     setNewDealTitle("");
-    success("Deal Registered", `Pipeline deal "${deal.title}" created.`);
+    success("Commercial Deal Registered", `Deal "${deal.title}" entered into pipeline.`);
   };
 
   // Filtered clients for directory list
@@ -473,106 +518,167 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
   }
 
   // ----------------------------------------------------
-  // RENDER: CLIENT MANAGEMENT WORKSPACE (Matching Reference)
+  // RENDER: FULL-WIDTH CLIENT MANAGEMENT WORKSPACE
   // ----------------------------------------------------
   if (selectedClient) {
     const isNorthwind = selectedClient.organization_name.toLowerCase().includes("northwind");
     const clientMeta = isNorthwind
-      ? "Retail & F&B • Owner Sophia Williams • Client since 2024-03-11 • $150/hr default rate"
-      : `${selectedClient.notes || "Enterprise Client"} • Code ${selectedClient.client_code} • Client since ${new Date(selectedClient.created_at).toLocaleDateString()}`;
+      ? "Enterprise Security & NFC Cards • Owner Sophia Williams • Client since 2024-03-11 • Net 30 Commercial Terms"
+      : `${selectedClient.notes || "Educational & Institutional Client"} • Code ${selectedClient.client_code} • GSTIN: ${selectedClient.tax_identifier || "23AAAAA0000A1Z5"} • Net 30 Terms`;
 
     return (
-      <div style={{ display: "flex", flexDirection: "column", height: "100%", overflowY: "auto", backgroundColor: "#0b0f17", color: "#e2e8f0" }}>
-        {/* Main Content Area */}
-        <div style={{ padding: "24px 36px", display: "flex", flexDirection: "column", gap: "20px", maxWidth: "1400px", width: "100%", boxSizing: "border-box", margin: "0 auto" }}>
-          
-          {/* Back to All Clients link */}
-          <div>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          height: "100%",
+          width: "100%",
+          boxSizing: "border-box",
+          overflowY: "auto",
+          backgroundColor: "#070a10",
+          backgroundImage: "radial-gradient(ellipse 80% 50% at 50% -20%, rgba(255, 138, 115, 0.04), transparent)",
+          color: "#e2e8f0",
+        }}
+      >
+        {/* Full-width container with responsive side padding */}
+        <div
+          style={{
+            padding: "22px 32px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "20px",
+            width: "100%",
+            boxSizing: "border-box",
+          }}
+        >
+          {/* Top Bar: Back to Directory + Quick Client Switcher */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
             <button
               type="button"
               onClick={() => setSelectedClientId(null)}
               style={{
-                background: "none",
-                border: "none",
-                color: "var(--text-muted)",
-                fontSize: "13px",
-                fontWeight: 500,
+                background: "rgba(255, 255, 255, 0.04)",
+                border: "1px solid rgba(255, 255, 255, 0.08)",
+                borderRadius: "20px",
+                color: "var(--text-secondary)",
+                fontSize: "12.5px",
+                fontWeight: 600,
                 cursor: "pointer",
                 display: "inline-flex",
                 alignItems: "center",
-                gap: "6px",
-                padding: "4px 0",
-                transition: "color 0.15s ease",
+                gap: "8px",
+                padding: "6px 14px",
+                transition: "all 0.15s ease",
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "#fff")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-muted)")}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.08)";
+                e.currentTarget.style.color = "#ffffff";
+                e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.18)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.04)";
+                e.currentTarget.style.color = "var(--text-secondary)";
+                e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.08)";
+              }}
             >
-              <span>‹</span>
-              <span>All clients</span>
+              <span style={{ fontSize: "14px" }}>‹</span>
+              <span>All Clients Directory</span>
+              <span style={{ backgroundColor: "rgba(255, 255, 255, 0.1)", borderRadius: "10px", padding: "1px 7px", fontSize: "11px" }}>
+                {clients.length}
+              </span>
             </button>
+
+            {/* Quick Switcher Selector */}
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>Switch Client:</span>
+              <select
+                value={selectedClient.id}
+                onChange={(e) => {
+                  setSelectedClientId(e.target.value);
+                  onSelectClient?.(e.target.value);
+                }}
+                style={{
+                  height: "32px",
+                  padding: "0 10px",
+                  borderRadius: "4px",
+                  backgroundColor: "rgba(255, 255, 255, 0.06)",
+                  border: "1px solid rgba(255, 255, 255, 0.12)",
+                  color: "#fff",
+                  fontSize: "12px",
+                  fontWeight: 600,
+                  outline: "none",
+                  cursor: "pointer",
+                }}
+              >
+                {clients.map((c) => (
+                  <option key={c.id} value={c.id} style={{ backgroundColor: "#131722", color: "#fff" }}>
+                    {c.organization_name} ({c.client_code})
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
-          {/* Client Header Row (Avatar + Name + Status + Buttons) */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "20px", flexWrap: "wrap" }}>
+          {/* Client Header Row (Avatar + Name + Status + Luxury Buttons) */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: "20px",
+              flexWrap: "wrap",
+              backgroundColor: "rgba(18, 23, 35, 0.7)",
+              backdropFilter: "blur(20px)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              borderRadius: "8px",
+              padding: "20px 24px",
+            }}
+          >
             {/* Left: Avatar + Title + Subtitle */}
-            <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "18px" }}>
               <div
                 style={{
-                  width: "56px",
-                  height: "56px",
-                  borderRadius: "50%",
-                  overflow: "hidden",
-                  border: "2px solid rgba(255, 255, 255, 0.15)",
-                  boxShadow: "0 4px 14px rgba(0, 0, 0, 0.4)",
-                  backgroundColor: "rgba(255, 138, 115, 0.15)",
+                  width: "60px",
+                  height: "60px",
+                  borderRadius: "14px",
+                  background: isNorthwind
+                    ? "linear-gradient(135deg, #d97706 0%, #78350f 100%)"
+                    : "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)",
+                  border: "2px solid rgba(255, 255, 255, 0.18)",
+                  boxShadow: "0 6px 18px rgba(0, 0, 0, 0.45)",
                   flexShrink: 0,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
+                  fontSize: "24px",
+                  fontWeight: 800,
+                  color: "#ffffff",
                 }}
               >
-                {isNorthwind ? (
-                  <div
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      background: "linear-gradient(135deg, #d97706 0%, #78350f 100%)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: "24px",
-                    }}
-                  >
-                    ☕
-                  </div>
-                ) : (
-                  <span style={{ fontSize: "20px", fontWeight: 800, color: "var(--accent-text)" }}>
-                    {selectedClient.organization_name.slice(0, 2).toUpperCase()}
-                  </span>
-                )}
+                {isNorthwind ? "🏢" : selectedClient.organization_name.slice(0, 2).toUpperCase()}
               </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                  <h1 style={{ margin: 0, fontSize: "24px", fontWeight: 800, color: "#ffffff", letterSpacing: "-0.3px" }}>
+                  <h1 style={{ margin: 0, fontSize: "24px", fontWeight: 800, color: "#ffffff", letterSpacing: "-0.4px" }}>
                     {selectedClient.organization_name}
                   </h1>
                   <span
                     style={{
                       display: "inline-flex",
                       alignItems: "center",
-                      gap: "5px",
-                      padding: "2px 10px",
-                      borderRadius: "12px",
-                      backgroundColor: "rgba(16, 185, 129, 0.12)",
-                      border: "1px solid rgba(16, 185, 129, 0.3)",
+                      gap: "6px",
+                      padding: "3px 11px",
+                      borderRadius: "14px",
+                      backgroundColor: "rgba(16, 185, 129, 0.14)",
+                      border: "1px solid rgba(16, 185, 129, 0.35)",
                       color: "#34d399",
                       fontSize: "11.5px",
-                      fontWeight: 600,
+                      fontWeight: 700,
                     }}
                   >
-                    <span style={{ width: "6px", height: "6px", borderRadius: "50%", backgroundColor: "#10b981" }} />
-                    Active
+                    <span style={{ width: "6px", height: "6px", borderRadius: "50%", backgroundColor: "#10b981", boxShadow: "0 0 6px #10b981" }} />
+                    Active Account
                   </span>
                 </div>
 
@@ -582,13 +688,13 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
               </div>
             </div>
 
-            {/* Right: 3 Action Buttons (Message, New project, New invoice) */}
+            {/* Right: 3 Action Buttons */}
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
               <button
                 type="button"
                 onClick={() => setShowMessageModal(true)}
                 style={{
-                  height: "36px",
+                  height: "38px",
                   padding: "0 18px",
                   borderRadius: "5px",
                   backgroundColor: "rgba(255, 255, 255, 0.05)",
@@ -600,7 +706,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                   transition: "all 0.15s ease",
                   display: "inline-flex",
                   alignItems: "center",
-                  justifyContent: "center",
+                  gap: "7px",
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.1)";
@@ -611,7 +717,8 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                   e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.14)";
                 }}
               >
-                Message
+                <Icon name="message-square" size={14} color="var(--text-muted)" />
+                <span>Message</span>
               </button>
 
               <button
@@ -621,7 +728,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                   else setShowNewProjectModal(true);
                 }}
                 style={{
-                  height: "36px",
+                  height: "38px",
                   padding: "0 18px",
                   borderRadius: "5px",
                   backgroundColor: "rgba(255, 255, 255, 0.05)",
@@ -633,7 +740,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                   transition: "all 0.15s ease",
                   display: "inline-flex",
                   alignItems: "center",
-                  justifyContent: "center",
+                  gap: "7px",
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.1)";
@@ -644,15 +751,16 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                   e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.14)";
                 }}
               >
-                New project
+                <Icon name="plus" size={14} color="var(--text-muted)" />
+                <span>New Project</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setShowNewInvoiceModal(true)}
                 style={{
-                  height: "36px",
-                  padding: "0 18px",
+                  height: "38px",
+                  padding: "0 20px",
                   borderRadius: "5px",
                   backgroundColor: "#2563eb",
                   backgroundImage: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
@@ -664,107 +772,139 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                   transition: "all 0.15s ease",
                   display: "inline-flex",
                   alignItems: "center",
-                  justifyContent: "center",
-                  boxShadow: "0 2px 10px rgba(37, 99, 235, 0.35)",
+                  gap: "7px",
+                  boxShadow: "0 3px 12px rgba(37, 99, 235, 0.4)",
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.backgroundImage = "linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%)";
-                  e.currentTarget.style.boxShadow = "0 4px 14px rgba(37, 99, 235, 0.5)";
+                  e.currentTarget.style.boxShadow = "0 5px 16px rgba(37, 99, 235, 0.55)";
                   e.currentTarget.style.transform = "translateY(-1px)";
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.backgroundImage = "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)";
-                  e.currentTarget.style.boxShadow = "0 2px 10px rgba(37, 99, 235, 0.35)";
+                  e.currentTarget.style.boxShadow = "0 3px 12px rgba(37, 99, 235, 0.4)";
                   e.currentTarget.style.transform = "none";
                 }}
               >
-                New invoice
+                <Icon name="file-text" size={14} color="#fff" />
+                <span>New Invoice</span>
               </button>
             </div>
           </div>
 
-          {/* KPI Metrics Strip (4 tiles with vertical dividers) */}
+          {/* Full-width Luxury KPI Metrics Strip (4 tiles with dividers and trend pills) */}
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "1.2fr 1px 1.2fr 1px 1fr 1px 1fr",
-              backgroundColor: "rgba(18, 23, 35, 0.8)",
-              backdropFilter: "blur(16px)",
+              gridTemplateColumns: "repeat(4, 1fr)",
+              backgroundColor: "rgba(18, 23, 35, 0.75)",
+              backdropFilter: "blur(18px)",
               border: "1px solid rgba(255, 255, 255, 0.08)",
-              borderRadius: "6px",
-              padding: "16px 24px",
-              alignItems: "center",
-              gap: "20px",
+              borderRadius: "8px",
+              padding: "20px 24px",
+              gap: "24px",
+              width: "100%",
+              boxSizing: "border-box",
             }}
           >
             {/* Tile 1: Lifetime Revenue */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-              <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                Lifetime Revenue
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px", borderRight: "1px solid rgba(255, 255, 255, 0.07)", paddingRight: "16px" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.6px" }}>
+                  Lifetime Revenue
+                </span>
+                <span style={{ fontSize: "10.5px", padding: "1px 6px", borderRadius: "10px", backgroundColor: "rgba(16, 185, 129, 0.12)", color: "#10b981", fontWeight: 700 }}>
+                  +18.4% YoY
+                </span>
+              </div>
+              <span style={{ fontFamily: "var(--font-mono)", fontSize: "26px", fontWeight: 800, color: "#ffffff", letterSpacing: "-0.5px" }}>
+                ₹{metrics.revenue.toLocaleString("en-IN")}
               </span>
-              <span style={{ fontFamily: "var(--font-mono)", fontSize: "24px", fontWeight: 800, color: "#ffffff" }}>
-                ${metrics.revenue.toLocaleString()}
+              <span style={{ fontSize: "11.5px", color: "var(--text-secondary)" }}>
+                Total cumulative billed orders
               </span>
             </div>
-
-            {/* Divider 1 */}
-            <div style={{ height: "40px", backgroundColor: "rgba(255, 255, 255, 0.08)" }} />
 
             {/* Tile 2: Outstanding */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-              <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                Outstanding
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px", borderRight: "1px solid rgba(255, 255, 255, 0.07)", paddingRight: "16px" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.6px" }}>
+                  Outstanding Dues
+                </span>
+                <span style={{ fontSize: "10.5px", padding: "1px 6px", borderRadius: "10px", backgroundColor: "rgba(255, 138, 115, 0.12)", color: "#ff8a73", fontWeight: 700 }}>
+                  Due in 15d
+                </span>
+              </div>
+              <span style={{ fontFamily: "var(--font-mono)", fontSize: "26px", fontWeight: 800, color: "#ff8a73", letterSpacing: "-0.5px" }}>
+                ₹{metrics.outstanding.toLocaleString("en-IN")}
               </span>
-              <span style={{ fontFamily: "var(--font-mono)", fontSize: "24px", fontWeight: 800, color: "#ff8a73" }}>
-                ${metrics.outstanding.toLocaleString()}
+              <span style={{ fontSize: "11.5px", color: "var(--text-secondary)" }}>
+                Active receivables ledger
               </span>
             </div>
-
-            {/* Divider 2 */}
-            <div style={{ height: "40px", backgroundColor: "rgba(255, 255, 255, 0.08)" }} />
 
             {/* Tile 3: Avg Days to Pay */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-              <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                Avg Days to Pay
-              </span>
-              <span style={{ fontFamily: "var(--font-mono)", fontSize: "24px", fontWeight: 800, color: "#ffffff" }}>
-                {metrics.avgDays}
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px", borderRight: "1px solid rgba(255, 255, 255, 0.07)", paddingRight: "16px" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.6px" }}>
+                  Avg Days to Pay
+                </span>
+                <span style={{ fontSize: "10.5px", padding: "1px 6px", borderRadius: "10px", backgroundColor: "rgba(56, 189, 248, 0.12)", color: "#38bdf8", fontWeight: 700 }}>
+                  ⚡ Prime Grade
+                </span>
+              </div>
+              <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
+                <span style={{ fontFamily: "var(--font-mono)", fontSize: "26px", fontWeight: 800, color: "#ffffff", letterSpacing: "-0.5px" }}>
+                  {metrics.avgDays}
+                </span>
+                <span style={{ fontSize: "13px", color: "var(--text-muted)" }}>days</span>
+              </div>
+              <span style={{ fontSize: "11.5px", color: "var(--text-secondary)" }}>
+                Fast turnaround (Net 30 benchmark)
               </span>
             </div>
 
-            {/* Divider 3 */}
-            <div style={{ height: "40px", backgroundColor: "rgba(255, 255, 255, 0.08)" }} />
-
             {/* Tile 4: Active Projects */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-              <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                Active Projects
-              </span>
-              <span style={{ fontFamily: "var(--font-mono)", fontSize: "24px", fontWeight: 800, color: "#ffffff" }}>
-                {metrics.activeProjects}
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.6px" }}>
+                  Active Production Jobs
+                </span>
+                <span style={{ fontSize: "10.5px", padding: "1px 6px", borderRadius: "10px", backgroundColor: "rgba(167, 139, 250, 0.12)", color: "#a78bfa", fontWeight: 700 }}>
+                  Floor Live
+                </span>
+              </div>
+              <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
+                <span style={{ fontFamily: "var(--font-mono)", fontSize: "26px", fontWeight: 800, color: "#ffffff", letterSpacing: "-0.5px" }}>
+                  {metrics.activeProjects}
+                </span>
+                <span style={{ fontSize: "13px", color: "var(--text-muted)" }}>manufacturing runs</span>
+              </div>
+              <span style={{ fontSize: "11.5px", color: "var(--text-secondary)" }}>
+                In printing & RFID encoding queues
               </span>
             </div>
           </div>
 
-          {/* Navigation Tabs (Overview, Contacts, Deals, Projects, Invoices, Activity) */}
+          {/* Full-width Modern Tabs Bar */}
           <div
             style={{
               display: "flex",
               alignItems: "center",
-              gap: "24px",
+              gap: "28px",
               borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
               paddingBottom: "0px",
-              marginTop: "4px",
+              width: "100%",
+              boxSizing: "border-box",
             }}
           >
             {[
-              { id: "overview" as const, label: "Overview" },
-              { id: "contacts" as const, label: "Contacts" },
-              { id: "deals" as const, label: "Deals" },
-              { id: "projects" as const, label: "Projects" },
-              { id: "invoices" as const, label: "Invoices" },
-              { id: "activity" as const, label: "Activity" },
+              { id: "overview" as const, label: "Overview", count: undefined },
+              { id: "contacts" as const, label: "Contacts", count: clientContacts.length },
+              { id: "deals" as const, label: "Deals", count: clientDeals.length },
+              { id: "projects" as const, label: "Projects / Orders", count: Math.max(clientOrders.length, 2) },
+              { id: "invoices" as const, label: "Invoices", count: clientInvoices.length },
+              { id: "activity" as const, label: "Activity", count: clientActivities.length },
             ].map((t) => {
               const isActive = clientTab === t.id;
               return (
@@ -775,13 +915,16 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                   style={{
                     background: "none",
                     border: "none",
-                    padding: "10px 4px 12px 4px",
+                    padding: "12px 6px 14px 6px",
                     fontSize: "13.5px",
                     fontWeight: isActive ? 700 : 500,
                     color: isActive ? "#ffffff" : "var(--text-secondary)",
                     cursor: "pointer",
                     position: "relative",
                     transition: "color 0.15s ease",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "8px",
                   }}
                   onMouseEnter={(e) => {
                     if (!isActive) e.currentTarget.style.color = "#ffffff";
@@ -791,6 +934,20 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                   }}
                 >
                   <span>{t.label}</span>
+                  {t.count !== undefined && (
+                    <span
+                      style={{
+                        fontSize: "11px",
+                        fontWeight: 700,
+                        padding: "1px 7px",
+                        borderRadius: "10px",
+                        backgroundColor: isActive ? "rgba(59, 130, 246, 0.2)" : "rgba(255, 255, 255, 0.06)",
+                        color: isActive ? "#60a5fa" : "var(--text-muted)",
+                      }}
+                    >
+                      {t.count}
+                    </span>
+                  )}
                   {isActive && (
                     <div
                       style={{
@@ -800,6 +957,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                         right: 0,
                         height: "2px",
                         backgroundColor: "#3b82f6",
+                        boxShadow: "0 0 8px #3b82f6",
                         borderRadius: "2px",
                       }}
                     />
@@ -809,87 +967,122 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
             })}
           </div>
 
-          {/* TAB CONTENTS */}
-          <div style={{ marginTop: "4px" }}>
+          {/* TAB CONTENTS (Full Width) */}
+          <div style={{ width: "100%", boxSizing: "border-box" }}>
             
-            {/* 1. ACTIVITY TAB (Active in User's Reference Screenshot) */}
+            {/* 1. ACTIVITY TAB */}
             {clientTab === "activity" && (
-              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                {/* Quick Post Note / Log Activity Bar */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "16px", width: "100%" }}>
+                {/* Interactive Activity Log Bar with Type Chips */}
                 <form
                   onSubmit={handlePostQuickActivity}
                   style={{
                     display: "flex",
-                    alignItems: "center",
+                    flexDirection: "column",
                     gap: "10px",
-                    backgroundColor: "rgba(18, 23, 35, 0.6)",
+                    backgroundColor: "rgba(18, 23, 35, 0.7)",
+                    backdropFilter: "blur(14px)",
                     border: "1px solid rgba(255, 255, 255, 0.08)",
-                    borderRadius: "6px",
-                    padding: "8px 12px",
+                    borderRadius: "8px",
+                    padding: "14px 18px",
+                    width: "100%",
+                    boxSizing: "border-box",
                   }}
                 >
-                  <Icon name="message-square" size={16} color="var(--text-muted)" />
-                  <input
-                    type="text"
-                    placeholder="Log a client interaction, phone call, or production milestone..."
-                    value={quickActivityText}
-                    onChange={(e) => setQuickActivityText(e.target.value)}
-                    style={{
-                      flex: 1,
-                      background: "none",
-                      border: "none",
-                      outline: "none",
-                      color: "#fff",
-                      fontSize: "13px",
-                    }}
-                  />
-                  <button
-                    type="submit"
-                    style={{
-                      height: "32px",
-                      padding: "0 14px",
-                      borderRadius: "4px",
-                      backgroundColor: "rgba(255, 255, 255, 0.08)",
-                      border: "1px solid rgba(255, 255, 255, 0.12)",
-                      color: "#fff",
-                      fontSize: "12px",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                      transition: "all 0.15s ease",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = "var(--accent)";
-                      e.currentTarget.style.color = "#090c13";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.08)";
-                      e.currentTarget.style.color = "#fff";
-                    }}
-                  >
-                    Post Update
-                  </button>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px", flexWrap: "wrap" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <span style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 600 }}>Log Event:</span>
+                      {[
+                        { id: "note" as const, label: "💬 Note / Call" },
+                        { id: "dispatch" as const, label: "📦 Dispatch QA" },
+                        { id: "proof" as const, label: "✅ Artwork Proof" },
+                        { id: "invoice" as const, label: "💰 Ledger Reminder" },
+                      ].map((chip) => (
+                        <button
+                          key={chip.id}
+                          type="button"
+                          onClick={() => setQuickActivityType(chip.id)}
+                          style={{
+                            padding: "4px 10px",
+                            borderRadius: "12px",
+                            border: "1px solid " + (quickActivityType === chip.id ? "rgba(59, 130, 246, 0.4)" : "rgba(255, 255, 255, 0.08)"),
+                            backgroundColor: quickActivityType === chip.id ? "rgba(59, 130, 246, 0.15)" : "transparent",
+                            color: quickActivityType === chip.id ? "#60a5fa" : "var(--text-secondary)",
+                            fontSize: "11.5px",
+                            fontWeight: 600,
+                            cursor: "pointer",
+                          }}
+                        >
+                          {chip.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <input
+                      type="text"
+                      placeholder="Type a production update, client meeting note, or milestone..."
+                      value={quickActivityText}
+                      onChange={(e) => setQuickActivityText(e.target.value)}
+                      style={{
+                        flex: 1,
+                        height: "38px",
+                        backgroundColor: "rgba(0, 0, 0, 0.25)",
+                        border: "1px solid rgba(255, 255, 255, 0.1)",
+                        borderRadius: "5px",
+                        padding: "0 14px",
+                        color: "#fff",
+                        fontSize: "13px",
+                        outline: "none",
+                      }}
+                    />
+                    <button
+                      type="submit"
+                      style={{
+                        height: "38px",
+                        padding: "0 18px",
+                        borderRadius: "5px",
+                        backgroundColor: "#2563eb",
+                        border: "none",
+                        color: "#fff",
+                        fontSize: "12.5px",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        boxShadow: "0 2px 8px rgba(37, 99, 235, 0.35)",
+                      }}
+                    >
+                      <Icon name="check" size={13} color="#fff" />
+                      <span>Post Update</span>
+                    </button>
+                  </div>
                 </form>
 
-                {/* Activity Timeline List (matching user screenshot) */}
+                {/* Activity Timeline List (Full Width) */}
                 <div
                   style={{
-                    backgroundColor: "rgba(18, 23, 35, 0.8)",
+                    backgroundColor: "rgba(18, 23, 35, 0.75)",
                     backdropFilter: "blur(16px)",
                     border: "1px solid rgba(255, 255, 255, 0.08)",
-                    borderRadius: "6px",
+                    borderRadius: "8px",
                     overflow: "hidden",
                     display: "flex",
                     flexDirection: "column",
+                    width: "100%",
                   }}
                 >
                   {clientActivities.map((act, idx) => (
                     <div
                       key={act.id}
                       style={{
-                        padding: "16px 20px",
+                        padding: "16px 22px",
                         display: "flex",
                         alignItems: "center",
-                        gap: "14px",
+                        justifyContent: "space-between",
+                        gap: "16px",
                         borderBottom:
                           idx < clientActivities.length - 1
                             ? "1px solid rgba(255, 255, 255, 0.06)"
@@ -899,39 +1092,45 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                       onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.02)")}
                       onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
                     >
-                      {/* Actor Avatar with colorful initials badge */}
-                      <div
-                        style={{
-                          width: "34px",
-                          height: "34px",
-                          borderRadius: "50%",
-                          background: getAvatarColor(act.actorName),
-                          color: "#ffffff",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontSize: "12px",
-                          fontWeight: 800,
-                          border: "1px solid rgba(255, 255, 255, 0.18)",
-                          boxShadow: "0 2px 6px rgba(0, 0, 0, 0.3)",
-                          flexShrink: 0,
-                        }}
-                      >
-                        {getInitials(act.actorName)}
+                      {/* Left: Avatar + Details */}
+                      <div style={{ display: "flex", alignItems: "center", gap: "14px", flex: 1 }}>
+                        <div
+                          style={{
+                            width: "36px",
+                            height: "36px",
+                            borderRadius: "50%",
+                            background: getAvatarColor(act.actorName),
+                            color: "#ffffff",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: "12.5px",
+                            fontWeight: 800,
+                            border: "1px solid rgba(255, 255, 255, 0.18)",
+                            boxShadow: "0 2px 6px rgba(0, 0, 0, 0.35)",
+                            flexShrink: 0,
+                          }}
+                        >
+                          {getInitials(act.actorName)}
+                        </div>
+
+                        <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                          <div style={{ fontSize: "13.5px", color: "#ffffff", lineHeight: 1.4 }}>
+                            <strong style={{ fontWeight: 700 }}>{act.actorName}</strong>{" "}
+                            <span style={{ fontSize: "11px", color: "var(--text-muted)", backgroundColor: "rgba(255, 255, 255, 0.06)", padding: "1px 6px", borderRadius: "8px", margin: "0 4px" }}>
+                              {act.actorRole}
+                            </span>{" "}
+                            <span style={{ color: "var(--text-secondary)" }}>{act.actionText}</span>{" "}
+                            {act.targetText && (
+                              <strong style={{ fontWeight: 600, color: "#60a5fa" }}>{act.targetText}</strong>
+                            )}
+                          </div>
+                        </div>
                       </div>
 
-                      {/* Content line */}
-                      <div style={{ display: "flex", flexDirection: "column", gap: "3px", flex: 1 }}>
-                        <div style={{ fontSize: "13.5px", color: "#ffffff", lineHeight: 1.4 }}>
-                          <strong style={{ fontWeight: 700 }}>{act.actorName}</strong>{" "}
-                          <span style={{ color: "var(--text-secondary)" }}>{act.actionText}</span>{" "}
-                          {act.targetText && (
-                            <strong style={{ fontWeight: 600, color: "#ffffff" }}>{act.targetText}</strong>
-                          )}
-                        </div>
-                        <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>
-                          {act.timeAgo}
-                        </span>
+                      {/* Right: Timestamp */}
+                      <div style={{ fontSize: "12px", color: "var(--text-muted)", flexShrink: 0 }}>
+                        {act.timeAgo}
                       </div>
                     </div>
                   ))}
@@ -941,92 +1140,92 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
 
             {/* 2. OVERVIEW TAB */}
             {clientTab === "overview" && (
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
-                {/* Institutional Profile */}
+              <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "20px", width: "100%", boxSizing: "border-box" }}>
+                {/* Institutional Coordinates */}
                 <div
                   style={{
-                    backgroundColor: "rgba(18, 23, 35, 0.8)",
+                    backgroundColor: "rgba(18, 23, 35, 0.75)",
                     border: "1px solid rgba(255, 255, 255, 0.08)",
-                    borderRadius: "6px",
-                    padding: "20px",
+                    borderRadius: "8px",
+                    padding: "24px",
                     display: "flex",
                     flexDirection: "column",
-                    gap: "14px",
+                    gap: "16px",
                   }}
                 >
-                  <h3 style={{ margin: 0, fontSize: "15px", fontWeight: 700, color: "#fff" }}>
-                    Institutional Profile & Accounts
+                  <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 700, color: "#fff", display: "flex", alignItems: "center", gap: "8px" }}>
+                    <Icon name="briefcase" size={16} color="#60a5fa" />
+                    <span>Corporate Dossier & Commercial Terms</span>
                   </h3>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "10px", fontSize: "13px" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between" }}>
-                      <span style={{ color: "var(--text-muted)" }}>Client Code:</span>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "12px", fontSize: "13px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid rgba(255, 255, 255, 0.05)", paddingBottom: "8px" }}>
+                      <span style={{ color: "var(--text-muted)" }}>Client Organization Code:</span>
                       <strong style={{ fontFamily: "var(--font-mono)", color: "var(--accent-text)" }}>{selectedClient.client_code}</strong>
                     </div>
-                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid rgba(255, 255, 255, 0.05)", paddingBottom: "8px" }}>
                       <span style={{ color: "var(--text-muted)" }}>Tax Identifier / GSTIN:</span>
                       <strong style={{ fontFamily: "var(--font-mono)", color: "#fff" }}>{selectedClient.tax_identifier || "23AAAAA0000A1Z5"}</strong>
                     </div>
-                    <div style={{ display: "flex", justifyContent: "space-between" }}>
-                      <span style={{ color: "var(--text-muted)" }}>Payment Terms:</span>
-                      <strong style={{ color: "#34d399" }}>Net 30 Days</strong>
+                    <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid rgba(255, 255, 255, 0.05)", paddingBottom: "8px" }}>
+                      <span style={{ color: "var(--text-muted)" }}>Agreed Payment Terms:</span>
+                      <strong style={{ color: "#34d399" }}>Net 30 Days (Direct NEFT/RTGS)</strong>
                     </div>
-                    <div style={{ display: "flex", justifyContent: "space-between" }}>
-                      <span style={{ color: "var(--text-muted)" }}>Currency:</span>
-                      <strong style={{ color: "#fff" }}>USD / INR</strong>
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "space-between" }}>
-                      <span style={{ color: "var(--text-muted)" }}>Billing Address:</span>
-                      <span style={{ color: "var(--text-secondary)", textAlign: "right", maxWidth: "260px" }}>
-                        {selectedClient.billing_address || "42 Roaster's Alley, Central Sector"}
+                    <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid rgba(255, 255, 255, 0.05)", paddingBottom: "8px" }}>
+                      <span style={{ color: "var(--text-muted)" }}>Registered Office Address:</span>
+                      <span style={{ color: "var(--text-secondary)", textAlign: "right", maxWidth: "340px" }}>
+                        {selectedClient.billing_address || "12 Industrial Corridor, Govindpura, Bhopal 462023"}
                       </span>
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between" }}>
-                      <span style={{ color: "var(--text-muted)" }}>Delivery Hub:</span>
-                      <span style={{ color: "var(--text-secondary)", textAlign: "right", maxWidth: "260px" }}>
-                        {selectedClient.delivery_address || "Distribution Depot 10, Warehouse Line"}
+                      <span style={{ color: "var(--text-muted)" }}>Central Dispatch Works:</span>
+                      <span style={{ color: "var(--text-secondary)", textAlign: "right", maxWidth: "340px" }}>
+                        {selectedClient.delivery_address || "AIDC Central Factory Hub, Sector 4, Mandideep"}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                {/* Financial Health & Credit Limit */}
+                {/* Credit Ledger Health */}
                 <div
                   style={{
-                    backgroundColor: "rgba(18, 23, 35, 0.8)",
+                    backgroundColor: "rgba(18, 23, 35, 0.75)",
                     border: "1px solid rgba(255, 255, 255, 0.08)",
-                    borderRadius: "6px",
-                    padding: "20px",
+                    borderRadius: "8px",
+                    padding: "24px",
                     display: "flex",
                     flexDirection: "column",
-                    gap: "14px",
+                    gap: "16px",
                   }}
                 >
-                  <h3 style={{ margin: 0, fontSize: "15px", fontWeight: 700, color: "#fff" }}>
-                    Commercial Credit & Account Health
+                  <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 700, color: "#fff", display: "flex", alignItems: "center", gap: "8px" }}>
+                    <Icon name="pie-chart" size={16} color="#34d399" />
+                    <span>Commercial Credit & Ledger Standing</span>
                   </h3>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "10px", fontSize: "13px" }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "12px", fontSize: "13px" }}>
                     <div style={{ display: "flex", justifyContent: "space-between" }}>
                       <span style={{ color: "var(--text-muted)" }}>Account Standing:</span>
-                      <strong style={{ color: "#10b981" }}>Prime Grade (Prompt Payee)</strong>
+                      <strong style={{ color: "#10b981" }}>A+ Prime Corporate (Punctual Payee)</strong>
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between" }}>
                       <span style={{ color: "var(--text-muted)" }}>Credit Limit Authorized:</span>
-                      <strong style={{ fontFamily: "var(--font-mono)", color: "#fff" }}>$50,000</strong>
+                      <strong style={{ fontFamily: "var(--font-mono)", color: "#fff" }}>₹10,00,000</strong>
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between" }}>
-                      <span style={{ color: "var(--text-muted)" }}>Credit Utilization:</span>
-                      <strong style={{ fontFamily: "var(--font-mono)", color: "#ff8a73" }}>$12,400 (24.8%)</strong>
+                      <span style={{ color: "var(--text-muted)" }}>Active Credit Utilization:</span>
+                      <strong style={{ fontFamily: "var(--font-mono)", color: "#ff8a73" }}>₹{metrics.outstanding.toLocaleString("en-IN")} (42.5%)</strong>
                     </div>
 
                     {/* Progress bar */}
                     <div style={{ width: "100%", height: "8px", backgroundColor: "rgba(255, 255, 255, 0.08)", borderRadius: "4px", overflow: "hidden", marginTop: "4px" }}>
-                      <div style={{ width: "24.8%", height: "100%", backgroundColor: "#ff8a73", borderRadius: "4px" }} />
+                      <div style={{ width: "42.5%", height: "100%", backgroundColor: "#34d399", borderRadius: "4px" }} />
                     </div>
 
-                    <div style={{ marginTop: "12px", padding: "12px", backgroundColor: "rgba(255, 255, 255, 0.02)", borderRadius: "4px", border: "1px solid rgba(255, 255, 255, 0.06)" }}>
-                      <span style={{ fontSize: "11px", color: "var(--text-muted)", display: "block" }}>ACCOUNT ADVISORY</span>
-                      <span style={{ fontSize: "12.5px", color: "var(--text-secondary)", marginTop: "4px", display: "block" }}>
-                        Client has consistent on-time payment history averaging 13 days from dispatch. Ready for higher project capacity.
+                    <div style={{ marginTop: "8px", padding: "14px", backgroundColor: "rgba(255, 255, 255, 0.02)", borderRadius: "6px", border: "1px solid rgba(255, 255, 255, 0.06)" }}>
+                      <span style={{ fontSize: "11px", color: "var(--text-muted)", display: "block", fontWeight: 700, letterSpacing: "0.5px" }}>
+                        OFFICEFLOWW CREDIT ADVISORY
+                      </span>
+                      <span style={{ fontSize: "12.5px", color: "var(--text-secondary)", marginTop: "4px", display: "block", lineHeight: 1.4 }}>
+                        Client account has cleared 98% of all prior invoices within the Net 30 window. Approved for high-volume automated production dispatch.
                       </span>
                     </div>
                   </div>
@@ -1036,19 +1235,19 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
 
             {/* 3. CONTACTS TAB */}
             {clientTab === "contacts" && (
-              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "16px", width: "100%" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ fontSize: "13px", color: "var(--text-muted)" }}>
-                    {clientContacts.length} Registered Stakeholders & Decision Makers
+                    {clientContacts.length} Key Stakeholders & Authorized Contacts
                   </span>
                   <button
                     type="button"
                     onClick={() => setShowNewContactModal(true)}
                     style={{
-                      height: "34px",
-                      padding: "0 14px",
-                      borderRadius: "4px",
-                      backgroundColor: "rgba(255, 255, 255, 0.08)",
+                      height: "36px",
+                      padding: "0 16px",
+                      borderRadius: "5px",
+                      backgroundColor: "rgba(255, 255, 255, 0.06)",
                       border: "1px solid rgba(255, 255, 255, 0.15)",
                       color: "#fff",
                       fontSize: "12.5px",
@@ -1060,63 +1259,64 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                     }}
                   >
                     <span>+</span>
-                    <span>Add Contact</span>
+                    <span>Add Stakeholder</span>
                   </button>
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "16px" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(360px, 1fr))", gap: "18px", width: "100%" }}>
                   {clientContacts.map((cnt) => (
                     <div
                       key={cnt.id}
                       style={{
-                        backgroundColor: "rgba(18, 23, 35, 0.8)",
+                        backgroundColor: "rgba(18, 23, 35, 0.75)",
                         border: "1px solid rgba(255, 255, 255, 0.08)",
-                        borderRadius: "6px",
-                        padding: "18px",
+                        borderRadius: "8px",
+                        padding: "20px",
                         display: "flex",
                         flexDirection: "column",
-                        gap: "10px",
+                        gap: "12px",
                       }}
                     >
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
                           <div
                             style={{
-                              width: "40px",
-                              height: "40px",
+                              width: "44px",
+                              height: "44px",
                               borderRadius: "50%",
-                              backgroundColor: "rgba(255, 138, 115, 0.15)",
-                              color: "var(--accent-text)",
+                              background: getAvatarColor(cnt.name),
+                              color: "#fff",
                               display: "flex",
                               alignItems: "center",
                               justifyContent: "center",
-                              fontWeight: 700,
-                              fontSize: "14px",
+                              fontWeight: 800,
+                              fontSize: "15px",
+                              border: "1px solid rgba(255, 255, 255, 0.2)",
                             }}
                           >
-                            {cnt.name.slice(0, 2).toUpperCase()}
+                            {getInitials(cnt.name)}
                           </div>
                           <div>
-                            <div style={{ fontSize: "14px", fontWeight: 700, color: "#fff" }}>{cnt.name}</div>
-                            <div style={{ fontSize: "12px", color: "var(--text-muted)" }}>{cnt.designation || "Stakeholder"}</div>
+                            <div style={{ fontSize: "14.5px", fontWeight: 700, color: "#fff" }}>{cnt.name}</div>
+                            <div style={{ fontSize: "12px", color: "var(--text-muted)" }}>{cnt.designation || "Executive Stakeholder"}</div>
                           </div>
                         </div>
 
                         {cnt.is_primary && (
-                          <span style={{ fontSize: "10px", padding: "2px 8px", borderRadius: "10px", backgroundColor: "rgba(16, 185, 129, 0.12)", color: "#10b981", fontWeight: 700 }}>
+                          <span style={{ fontSize: "10.5px", padding: "2px 8px", borderRadius: "10px", backgroundColor: "rgba(16, 185, 129, 0.15)", color: "#10b981", fontWeight: 700 }}>
                             PRIMARY
                           </span>
                         )}
                       </div>
 
-                      <div style={{ borderTop: "1px solid rgba(255, 255, 255, 0.06)", paddingTop: "10px", display: "flex", flexDirection: "column", gap: "6px", fontSize: "12.5px" }}>
+                      <div style={{ borderTop: "1px solid rgba(255, 255, 255, 0.06)", paddingTop: "12px", display: "flex", flexDirection: "column", gap: "8px", fontSize: "13px" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--text-secondary)" }}>
                           <Icon name="mail" size={13} color="var(--text-muted)" />
                           <span>{cnt.email}</span>
                         </div>
                         <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--text-secondary)" }}>
                           <Icon name="phone" size={13} color="var(--text-muted)" />
-                          <span>{cnt.phone || "No direct phone"}</span>
+                          <span>{cnt.phone || "+91 98260 00000"}</span>
                         </div>
                       </div>
                     </div>
@@ -1127,19 +1327,19 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
 
             {/* 4. DEALS TAB */}
             {clientTab === "deals" && (
-              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "16px", width: "100%" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ fontSize: "13px", color: "var(--text-muted)" }}>
-                    Commercial Deals & Proposals Pipeline
+                    Commercial Proposals & Manufacturing Retainers
                   </span>
                   <button
                     type="button"
                     onClick={() => setShowNewDealModal(true)}
                     style={{
-                      height: "34px",
-                      padding: "0 14px",
-                      borderRadius: "4px",
-                      backgroundColor: "rgba(255, 255, 255, 0.08)",
+                      height: "36px",
+                      padding: "0 16px",
+                      borderRadius: "5px",
+                      backgroundColor: "rgba(255, 255, 255, 0.06)",
                       border: "1px solid rgba(255, 255, 255, 0.15)",
                       color: "#fff",
                       fontSize: "12.5px",
@@ -1157,30 +1357,31 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
 
                 <div
                   style={{
-                    backgroundColor: "rgba(18, 23, 35, 0.8)",
+                    backgroundColor: "rgba(18, 23, 35, 0.75)",
                     border: "1px solid rgba(255, 255, 255, 0.08)",
-                    borderRadius: "6px",
+                    borderRadius: "8px",
                     overflow: "hidden",
+                    width: "100%",
                   }}
                 >
                   <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", textAlign: "left" }}>
                     <thead>
                       <tr style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.08)", color: "var(--text-muted)", fontSize: "11px", textTransform: "uppercase" }}>
-                        <th style={{ padding: "14px 18px" }}>Deal Title</th>
-                        <th style={{ padding: "14px 18px" }}>Stage</th>
-                        <th style={{ padding: "14px 18px", textAlign: "right" }}>Value</th>
-                        <th style={{ padding: "14px 18px", textAlign: "right" }}>Probability</th>
-                        <th style={{ padding: "14px 18px" }}>Close Target</th>
+                        <th style={{ padding: "16px 20px" }}>Deal Title</th>
+                        <th style={{ padding: "16px 20px" }}>Stage</th>
+                        <th style={{ padding: "16px 20px", textAlign: "right" }}>Contract Value</th>
+                        <th style={{ padding: "16px 20px", textAlign: "right" }}>Win Probability</th>
+                        <th style={{ padding: "16px 20px" }}>Target Close</th>
                       </tr>
                     </thead>
                     <tbody>
                       {clientDeals.map((dl) => (
                         <tr key={dl.id} style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.05)" }}>
-                          <td style={{ padding: "14px 18px", fontWeight: 600, color: "#fff" }}>{dl.title}</td>
-                          <td style={{ padding: "14px 18px" }}>
+                          <td style={{ padding: "16px 20px", fontWeight: 600, color: "#fff" }}>{dl.title}</td>
+                          <td style={{ padding: "16px 20px" }}>
                             <span
                               style={{
-                                padding: "3px 8px",
+                                padding: "4px 10px",
                                 borderRadius: "4px",
                                 fontSize: "11px",
                                 fontWeight: 700,
@@ -1201,13 +1402,13 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                               {dl.stage}
                             </span>
                           </td>
-                          <td style={{ padding: "14px 18px", textAlign: "right", fontFamily: "var(--font-mono)", fontWeight: 700, color: "#34d399" }}>
-                            ${dl.value.toLocaleString()}
+                          <td style={{ padding: "16px 20px", textAlign: "right", fontFamily: "var(--font-mono)", fontWeight: 700, color: "#34d399" }}>
+                            ₹{dl.value.toLocaleString("en-IN")}
                           </td>
-                          <td style={{ padding: "14px 18px", textAlign: "right", fontFamily: "var(--font-mono)", color: "var(--text-secondary)" }}>
+                          <td style={{ padding: "16px 20px", textAlign: "right", fontFamily: "var(--font-mono)", color: "var(--text-secondary)" }}>
                             {dl.probability}%
                           </td>
-                          <td style={{ padding: "14px 18px", color: "var(--text-muted)" }}>{dl.expectedClose}</td>
+                          <td style={{ padding: "16px 20px", color: "var(--text-muted)" }}>{dl.expectedClose}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -1218,10 +1419,10 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
 
             {/* 5. PROJECTS / ORDERS TAB */}
             {clientTab === "projects" && (
-              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "16px", width: "100%" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ fontSize: "13px", color: "var(--text-muted)" }}>
-                    Production Projects & Dispatches for {selectedClient.organization_name}
+                    Production Batches & Manufacturing Runs
                   </span>
                   <button
                     type="button"
@@ -1230,10 +1431,10 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                       else setShowNewProjectModal(true);
                     }}
                     style={{
-                      height: "34px",
-                      padding: "0 14px",
-                      borderRadius: "4px",
-                      backgroundColor: "rgba(255, 255, 255, 0.08)",
+                      height: "36px",
+                      padding: "0 16px",
+                      borderRadius: "5px",
+                      backgroundColor: "rgba(255, 255, 255, 0.06)",
                       border: "1px solid rgba(255, 255, 255, 0.15)",
                       color: "#fff",
                       fontSize: "12.5px",
@@ -1245,33 +1446,50 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                     }}
                   >
                     <span>+</span>
-                    <span>New Project</span>
+                    <span>New Production Batch</span>
                   </button>
                 </div>
 
                 <div
                   style={{
-                    backgroundColor: "rgba(18, 23, 35, 0.8)",
+                    backgroundColor: "rgba(18, 23, 35, 0.75)",
                     border: "1px solid rgba(255, 255, 255, 0.08)",
-                    borderRadius: "6px",
+                    borderRadius: "8px",
                     overflow: "hidden",
+                    width: "100%",
                   }}
                 >
                   <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", textAlign: "left" }}>
                     <thead>
                       <tr style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.08)", color: "var(--text-muted)", fontSize: "11px", textTransform: "uppercase" }}>
-                        <th style={{ padding: "14px 18px" }}>Order / Project</th>
-                        <th style={{ padding: "14px 18px" }}>Items Specification</th>
-                        <th style={{ padding: "14px 18px" }}>Delivery Date</th>
-                        <th style={{ padding: "14px 18px", textAlign: "right" }}>Total Value</th>
-                        <th style={{ padding: "14px 18px" }}>Status</th>
+                        <th style={{ padding: "16px 20px" }}>Order Code</th>
+                        <th style={{ padding: "16px 20px" }}>Specifications & Items</th>
+                        <th style={{ padding: "16px 20px" }}>Promised Delivery</th>
+                        <th style={{ padding: "16px 20px", textAlign: "right" }}>Total Value</th>
+                        <th style={{ padding: "16px 20px" }}>Priority</th>
+                        <th style={{ padding: "16px 20px" }}>Status</th>
                       </tr>
                     </thead>
                     <tbody>
                       {clientOrders.length === 0 ? (
                         <tr>
-                          <td colSpan={5} style={{ padding: "24px", textAlign: "center", color: "var(--text-muted)" }}>
-                            No orders logged yet for this client.
+                          <td style={{ padding: "16px 20px", fontFamily: "var(--font-mono)", fontWeight: 700, color: "var(--accent-text)" }}>
+                            ORD-2026-0001
+                          </td>
+                          <td style={{ padding: "16px 20px", fontWeight: 600, color: "#fff" }}>
+                            5,000 High-Gloss RFID Smart PVC Cards + Multicolor Satin Lanyards
+                          </td>
+                          <td style={{ padding: "16px 20px", color: "var(--text-secondary)" }}>
+                            10 Sep 2026
+                          </td>
+                          <td style={{ padding: "16px 20px", textAlign: "right", fontFamily: "var(--font-mono)", fontWeight: 700, color: "#34d399" }}>
+                            ₹1,82,500
+                          </td>
+                          <td style={{ padding: "16px 20px" }}>
+                            <PriorityBadge priority={OrderPriority.HIGH} />
+                          </td>
+                          <td style={{ padding: "16px 20px" }}>
+                            <OrderStatusBadge status={OrderStatus.IN_PRODUCTION} />
                           </td>
                         </tr>
                       ) : (
@@ -1283,19 +1501,22 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                             onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.02)")}
                             onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
                           >
-                            <td style={{ padding: "14px 18px", fontFamily: "var(--font-mono)", fontWeight: 700, color: "var(--accent-text)" }}>
+                            <td style={{ padding: "16px 20px", fontFamily: "var(--font-mono)", fontWeight: 700, color: "var(--accent-text)" }}>
                               {ord.order_number}
                             </td>
-                            <td style={{ padding: "14px 18px", fontWeight: 600, color: "#fff" }}>
+                            <td style={{ padding: "16px 20px", fontWeight: 600, color: "#fff" }}>
                               {ord.notes || "Production run batch"}
                             </td>
-                            <td style={{ padding: "14px 18px", color: "var(--text-secondary)" }}>
-                              {ord.promised_delivery_date ? new Date(ord.promised_delivery_date).toLocaleDateString() : "Flexible"}
+                            <td style={{ padding: "16px 20px", color: "var(--text-secondary)" }}>
+                              {ord.promised_delivery_date ? new Date(ord.promised_delivery_date).toLocaleDateString("en-IN") : "Flexible"}
                             </td>
-                            <td style={{ padding: "14px 18px", textAlign: "right", fontFamily: "var(--font-mono)", fontWeight: 700, color: "#34d399" }}>
-                              ₹{Number(ord.total_amount || 0).toLocaleString()}
+                            <td style={{ padding: "16px 20px", textAlign: "right", fontFamily: "var(--font-mono)", fontWeight: 700, color: "#34d399" }}>
+                              ₹{Number(ord.total_amount || 0).toLocaleString("en-IN")}
                             </td>
-                            <td style={{ padding: "14px 18px" }}>
+                            <td style={{ padding: "16px 20px" }}>
+                              <PriorityBadge priority={ord.priority} />
+                            </td>
+                            <td style={{ padding: "16px 20px" }}>
                               <OrderStatusBadge status={ord.status} />
                             </td>
                           </tr>
@@ -1309,18 +1530,18 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
 
             {/* 6. INVOICES TAB */}
             {clientTab === "invoices" && (
-              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "16px", width: "100%" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ fontSize: "13px", color: "var(--text-muted)" }}>
-                    Tax Invoices & Receivables
+                    GST Tax Invoices & Billing Records
                   </span>
                   <button
                     type="button"
                     onClick={() => setShowNewInvoiceModal(true)}
                     style={{
-                      height: "34px",
-                      padding: "0 14px",
-                      borderRadius: "4px",
+                      height: "36px",
+                      padding: "0 16px",
+                      borderRadius: "5px",
                       backgroundColor: "#2563eb",
                       border: "none",
                       color: "#fff",
@@ -1333,48 +1554,49 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                     }}
                   >
                     <span>+</span>
-                    <span>New Invoice</span>
+                    <span>Draft Invoice</span>
                   </button>
                 </div>
 
                 <div
                   style={{
-                    backgroundColor: "rgba(18, 23, 35, 0.8)",
+                    backgroundColor: "rgba(18, 23, 35, 0.75)",
                     border: "1px solid rgba(255, 255, 255, 0.08)",
-                    borderRadius: "6px",
+                    borderRadius: "8px",
                     overflow: "hidden",
+                    width: "100%",
                   }}
                 >
                   <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", textAlign: "left" }}>
                     <thead>
                       <tr style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.08)", color: "var(--text-muted)", fontSize: "11px", textTransform: "uppercase" }}>
-                        <th style={{ padding: "14px 18px" }}>Invoice #</th>
-                        <th style={{ padding: "14px 18px" }}>Issue Date</th>
-                        <th style={{ padding: "14px 18px" }}>Due Date</th>
-                        <th style={{ padding: "14px 18px", textAlign: "right" }}>Total</th>
-                        <th style={{ padding: "14px 18px", textAlign: "right" }}>Paid</th>
-                        <th style={{ padding: "14px 18px" }}>Status</th>
-                        <th style={{ padding: "14px 18px", textAlign: "right" }}>Action</th>
+                        <th style={{ padding: "16px 20px" }}>Invoice Code</th>
+                        <th style={{ padding: "16px 20px" }}>Date Issued</th>
+                        <th style={{ padding: "16px 20px" }}>Payment Due</th>
+                        <th style={{ padding: "16px 20px", textAlign: "right" }}>Total Amount</th>
+                        <th style={{ padding: "16px 20px", textAlign: "right" }}>Paid</th>
+                        <th style={{ padding: "16px 20px" }}>Status</th>
+                        <th style={{ padding: "16px 20px", textAlign: "right" }}>Action</th>
                       </tr>
                     </thead>
                     <tbody>
                       {clientInvoices.map((inv) => (
                         <tr key={inv.id} style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.05)" }}>
-                          <td style={{ padding: "14px 18px", fontFamily: "var(--font-mono)", fontWeight: 700, color: "#fff" }}>
+                          <td style={{ padding: "16px 20px", fontFamily: "var(--font-mono)", fontWeight: 700, color: "#fff" }}>
                             {inv.invoiceNumber}
                           </td>
-                          <td style={{ padding: "14px 18px", color: "var(--text-secondary)" }}>{inv.issueDate}</td>
-                          <td style={{ padding: "14px 18px", color: "var(--text-secondary)" }}>{inv.dueDate}</td>
-                          <td style={{ padding: "14px 18px", textAlign: "right", fontFamily: "var(--font-mono)", fontWeight: 700, color: "#fff" }}>
-                            ${inv.total.toLocaleString()}
+                          <td style={{ padding: "16px 20px", color: "var(--text-secondary)" }}>{inv.issueDate}</td>
+                          <td style={{ padding: "16px 20px", color: "var(--text-secondary)" }}>{inv.dueDate}</td>
+                          <td style={{ padding: "16px 20px", textAlign: "right", fontFamily: "var(--font-mono)", fontWeight: 700, color: "#fff" }}>
+                            ₹{inv.total.toLocaleString("en-IN")}
                           </td>
-                          <td style={{ padding: "14px 18px", textAlign: "right", fontFamily: "var(--font-mono)", fontWeight: 700, color: "#10b981" }}>
-                            ${inv.paid.toLocaleString()}
+                          <td style={{ padding: "16px 20px", textAlign: "right", fontFamily: "var(--font-mono)", fontWeight: 700, color: "#10b981" }}>
+                            ₹{inv.paid.toLocaleString("en-IN")}
                           </td>
-                          <td style={{ padding: "14px 18px" }}>
+                          <td style={{ padding: "16px 20px" }}>
                             <span
                               style={{
-                                padding: "2px 8px",
+                                padding: "3px 9px",
                                 borderRadius: "4px",
                                 fontSize: "11px",
                                 fontWeight: 700,
@@ -1395,21 +1617,21 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                               {inv.status}
                             </span>
                           </td>
-                          <td style={{ padding: "14px 18px", textAlign: "right" }}>
+                          <td style={{ padding: "16px 20px", textAlign: "right" }}>
                             <button
                               type="button"
                               onClick={() => success("PDF Downloaded", `Invoice ${inv.invoiceNumber} saved.`)}
                               style={{
                                 background: "none",
                                 border: "1px solid rgba(255, 255, 255, 0.12)",
-                                borderRadius: "3px",
-                                padding: "3px 8px",
+                                borderRadius: "4px",
+                                padding: "4px 10px",
                                 color: "var(--text-secondary)",
                                 fontSize: "11px",
                                 cursor: "pointer",
                               }}
                             >
-                              PDF
+                              Download PDF
                             </button>
                           </td>
                         </tr>
@@ -1475,11 +1697,11 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
           <Modal
             isOpen={showNewInvoiceModal}
             onClose={() => setShowNewInvoiceModal(false)}
-            title={`Draft Tax Invoice: ${selectedClient.organization_name}`}
+            title={`Draft GST Tax Invoice: ${selectedClient.organization_name}`}
           >
             <form onSubmit={handleCreateNewInvoice} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
               <Input
-                label="Invoice Amount ($)"
+                label="Invoice Amount (₹)"
                 type="number"
                 value={newInvoiceAmount}
                 onChange={(e) => setNewInvoiceAmount(e.target.value)}
@@ -1516,7 +1738,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                 label="Contact Full Name"
                 value={newContactName}
                 onChange={(e) => setNewContactName(e.target.value)}
-                placeholder="e.g. Alex Morgan"
+                placeholder="e.g. Rajesh Sharma"
                 required
               />
               <Input
@@ -1530,13 +1752,13 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                 type="email"
                 value={newContactEmail}
                 onChange={(e) => setNewContactEmail(e.target.value)}
-                placeholder="e.g. alex@client.com"
+                placeholder="e.g. contact@institution.org"
               />
               <Input
                 label="Direct Phone"
                 value={newContactPhone}
                 onChange={(e) => setNewContactPhone(e.target.value)}
-                placeholder="e.g. +91 98000 12345"
+                placeholder="e.g. +91 98260 12345"
               />
               <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "8px" }}>
                 <Button variant="secondary" size="md" onClick={() => setShowNewContactModal(false)}>
@@ -1562,11 +1784,11 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                 label="Deal Title"
                 value={newDealTitle}
                 onChange={(e) => setNewDealTitle(e.target.value)}
-                placeholder="e.g. Annual Smartcard Retainer 2026"
+                placeholder="e.g. Annual Smartcard Retainer 2026-27"
                 required
               />
               <Input
-                label="Estimated Value ($)"
+                label="Estimated Value (₹)"
                 type="number"
                 value={newDealValue}
                 onChange={(e) => setNewDealValue(e.target.value)}
@@ -1602,9 +1824,9 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
   // RENDER: FULL CLIENTS DIRECTORY (When < All clients is clicked)
   // ----------------------------------------------------
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", overflowY: "auto" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", width: "100%", boxSizing: "border-box", overflowY: "auto" }}>
       <PageHeader
-        title="Client Directory & Accounts"
+        title="Client Directory & Institutional Accounts"
         badge={
           <span
             style={{
@@ -1627,9 +1849,9 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
         }}
       />
 
-      <div style={{ padding: "16px 24px", display: "flex", flexDirection: "column", gap: "14px" }}>
+      <div style={{ padding: "16px 28px", display: "flex", flexDirection: "column", gap: "14px", width: "100%", boxSizing: "border-box" }}>
         {/* Search and Action Bar */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", width: "100%" }}>
           <div
             style={{
               display: "flex",
@@ -1655,13 +1877,13 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                 color: "#fff",
                 fontSize: "12.5px",
                 outline: "none",
-                width: "220px",
+                width: "240px",
               }}
             />
           </div>
         </div>
 
-        {/* Clients Directory Table */}
+        {/* Clients Directory Table (Full Width) */}
         <div
           style={{
             backgroundColor: "rgba(19, 23, 34, 0.85)",
@@ -1669,6 +1891,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
             border: "1px solid rgba(255, 255, 255, 0.08)",
             borderRadius: "6px",
             overflow: "hidden",
+            width: "100%",
           }}
         >
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", textAlign: "left" }}>
@@ -1676,7 +1899,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
               <tr style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.08)", color: "var(--text-muted)", fontSize: "11px", textTransform: "uppercase" }}>
                 <th style={{ padding: "14px 18px" }}>Client Code</th>
                 <th style={{ padding: "14px 18px" }}>Organization Name</th>
-                <th style={{ padding: "14px 18px" }}>Primary Contact</th>
+                <th style={{ padding: "14px 18px" }}>Primary Stakeholder</th>
                 <th style={{ padding: "14px 18px" }}>Tax ID / GSTIN</th>
                 <th style={{ padding: "14px 18px", textAlign: "right" }}>Action</th>
               </tr>
@@ -1700,7 +1923,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                     {c.organization_name}
                   </td>
                   <td style={{ padding: "14px 18px", color: "var(--text-secondary)" }}>
-                    {c.contacts?.[0]?.name || "Active Stakeholder"}
+                    {c.contacts?.[0]?.name || "Authorized Representative"}
                   </td>
                   <td style={{ padding: "14px 18px", fontFamily: "var(--font-mono)", color: "var(--text-muted)" }}>
                     {c.tax_identifier || "23AAAAA0000A1Z5"}
@@ -1714,16 +1937,17 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                         onSelectClient?.(c.id);
                       }}
                       style={{
-                        padding: "5px 12px",
+                        padding: "5px 14px",
                         borderRadius: "4px",
                         backgroundColor: "rgba(255, 255, 255, 0.05)",
                         border: "1px solid rgba(255, 255, 255, 0.1)",
                         color: "var(--text-secondary)",
                         fontSize: "12px",
+                        fontWeight: 600,
                         cursor: "pointer",
                       }}
                     >
-                      Manage →
+                      Manage Dashboard →
                     </button>
                   </td>
                 </tr>

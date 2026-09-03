@@ -308,6 +308,40 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {!isCollapsed && <span>Settings</span>}
           </button>
         )}
+
+        {/* Collapse / Expand Toggle Button */}
+        <button
+          type="button"
+          onClick={onToggleCollapse}
+          title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: isCollapsed ? "center" : "flex-start",
+            gap: isCollapsed ? "0" : "10px",
+            padding: isCollapsed ? "8px 0" : "8px 12px",
+            borderRadius: "4px",
+            border: "1px solid transparent",
+            backgroundColor: "transparent",
+            color: "var(--text-muted)",
+            fontSize: "12px",
+            cursor: "pointer",
+            width: "100%",
+            textAlign: "left",
+            transition: "all 0.15s ease",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.04)";
+            e.currentTarget.style.color = "var(--text-primary)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = "transparent";
+            e.currentTarget.style.color = "var(--text-muted)";
+          }}
+        >
+          <span style={{ fontSize: "14px", fontWeight: 700 }}>{isCollapsed ? "»" : "«"}</span>
+          {!isCollapsed && <span>Collapse Sidebar</span>}
+        </button>
       </div>
     </aside>
   );
