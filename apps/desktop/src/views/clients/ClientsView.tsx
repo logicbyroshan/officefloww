@@ -1,12 +1,11 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Client, Order, OrderPriority, OrderStatus, ClientContact } from "@officefloww/api-types";
-import { PageHeader } from "../../design-system/layouts/PageHeader";
 import { Button } from "../../design-system/components/Button";
 import { Icon } from "../../design-system/components/Icon";
 import { PriorityBadge, OrderStatusBadge } from "../../design-system/components/Badge";
 import { LoadingState, ErrorState } from "../../design-system/components/FeedbackStates";
 import { Modal } from "../../design-system/components/Modal";
-import { Input, Select } from "../../design-system/components/Input";
+import { Input } from "../../design-system/components/Input";
 import { useToast } from "../../design-system/components/Toast";
 import { NewClientModal } from "./NewClientModal";
 
@@ -16,29 +15,21 @@ export interface ClientsViewProps {
   loading: boolean;
   error: Error | null;
   onRefresh: () => void;
+  initialClientId?: string | null;
   onSelectClient?: (clientId: string) => void;
   onSelectOrder?: (orderId: string) => void;
   onNewOrder?: () => void;
 }
 
-interface ClientActivityItem {
+interface ClientLogItem {
   id: string;
   actorName: string;
   actorRole: string;
-  actionType: "dispatch" | "invoice" | "proof" | "deal" | "note";
+  actionType: "dispatch" | "invoice" | "proof" | "note";
   actionText: string;
   targetText?: string;
   timeAgo: string;
   timestamp: string;
-}
-
-interface ClientDealItem {
-  id: string;
-  title: string;
-  stage: "Qualified" | "Proposal Sent" | "Negotiation" | "Won";
-  value: number;
-  probability: number;
-  expectedClose: string;
 }
 
 interface ClientInvoiceItem {
@@ -73,51 +64,51 @@ const getAvatarColor = (name: string) => {
   return colors[Math.abs(hash) % colors.length];
 };
 
-// Initial Realistic Activities
-const INITIAL_ACTIVITIES: Record<string, ClientActivityItem[]> = {
+// Initial Realistic Production Logs
+const INITIAL_LOGS: Record<string, ClientLogItem[]> = {
   default: [
     {
-      id: "act-1",
+      id: "log-1",
       actorName: "Rajesh Sharma",
       actorRole: "Production Head",
       actionType: "dispatch",
       actionText: "completed batch QA & dispatched 5,000 RFID PVC Cards batch 1 for",
-      targetText: "Production Run ORD-2026-0001",
+      targetText: "Campus Student Identification Project",
       timeAgo: "22 minutes ago",
       timestamp: "2026-09-03T10:40:00Z",
     },
     {
-      id: "act-2",
+      id: "log-2",
       actorName: "Ananya Roy",
       actorRole: "Finance & Accounts",
       actionType: "invoice",
-      actionText: "generated GST Tax Invoice",
-      targetText: "INV 2026-044 for ₹1,82,500",
+      actionText: "generated GST Tax Invoice for",
+      targetText: "₹1,82,500 Direct Settlement",
       timeAgo: "1 hour ago",
       timestamp: "2026-09-03T09:40:00Z",
     },
     {
-      id: "act-3",
+      id: "log-3",
       actorName: "Vikram Singh",
       actorRole: "Design Studio",
       actionType: "proof",
-      actionText: "uploaded updated artwork proof",
-      targetText: "PRF-LANYARD-01 (Multicolor Sublimation)",
+      actionText: "uploaded updated artwork proof for",
+      targetText: "Multicolor Sublimation Satin Lanyards",
       timeAgo: "3 hours ago",
       timestamp: "2026-09-03T07:40:00Z",
     },
     {
-      id: "act-4",
+      id: "log-4",
       actorName: "Sophia Williams",
       actorRole: "Managing Director",
-      actionType: "deal",
-      actionText: "approved commercial quotation for",
+      actionType: "note",
+      actionText: "approved production contract for",
       targetText: "Annual Student RFID Smartcard Retainer",
       timeAgo: "Yesterday",
       timestamp: "2026-09-02T14:20:00Z",
     },
     {
-      id: "act-5",
+      id: "log-5",
       actorName: "Arthur Taylor",
       actorRole: "Senior Estimator",
       actionType: "note",
@@ -129,41 +120,12 @@ const INITIAL_ACTIVITIES: Record<string, ClientActivityItem[]> = {
   ],
 };
 
-const INITIAL_DEALS: Record<string, ClientDealItem[]> = {
-  default: [
-    {
-      id: "dl-1",
-      title: "Annual Student RFID Smartcards & Lanyards (15,000 units)",
-      stage: "Negotiation",
-      value: 1850000,
-      probability: 85,
-      expectedClose: "2026-09-28",
-    },
-    {
-      id: "dl-2",
-      title: "Smart NFC Access Control Cards (5,000 Staff Units)",
-      stage: "Proposal Sent",
-      value: 620000,
-      probability: 65,
-      expectedClose: "2026-10-15",
-    },
-    {
-      id: "dl-3",
-      title: "Custom Frosted Metal Clip Badges & Sublimation Ribbons",
-      stage: "Won",
-      value: 380000,
-      probability: 100,
-      expectedClose: "2026-08-14",
-    },
-  ],
-};
-
 const INITIAL_INVOICES: Record<string, ClientInvoiceItem[]> = {
   default: [
     {
       id: "inv-01",
-      invoiceNumber: "INV-2026-0042",
-      orderNumber: "ORD-2026-0001",
+      invoiceNumber: "Invoice #42",
+      orderNumber: "Smartcard Batch",
       issueDate: "2026-08-20",
       dueDate: "2026-09-20",
       total: 182500,
@@ -172,8 +134,8 @@ const INITIAL_INVOICES: Record<string, ClientInvoiceItem[]> = {
     },
     {
       id: "inv-02",
-      invoiceNumber: "INV-2026-0028",
-      orderNumber: "ORD-2026-0012",
+      invoiceNumber: "Invoice #28",
+      orderNumber: "Lanyard Sublimation",
       issueDate: "2026-07-15",
       dueDate: "2026-08-15",
       total: 350000,
@@ -182,8 +144,8 @@ const INITIAL_INVOICES: Record<string, ClientInvoiceItem[]> = {
     },
     {
       id: "inv-03",
-      invoiceNumber: "INV-2026-0011",
-      orderNumber: "ORD-2026-0004",
+      invoiceNumber: "Invoice #11",
+      orderNumber: "Frosted ID Badges",
       issueDate: "2026-05-10",
       dueDate: "2026-06-10",
       total: 245000,
@@ -199,6 +161,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
   loading,
   error,
   onRefresh,
+  initialClientId,
   onSelectClient,
   onSelectOrder,
   onNewOrder,
@@ -206,12 +169,18 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
   const { success } = useToast();
 
   // Selected client for details view (defaults to null so directory list is shown first)
-  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(initialClientId || null);
 
-  // Active Tab inside Client Management View
+  useEffect(() => {
+    if (initialClientId !== undefined) {
+      setSelectedClientId(initialClientId);
+    }
+  }, [initialClientId]);
+
+  // Active Tab inside Client Management View (Tabs at top header: Overview, Contacts, Projects, Invoices, Logs)
   const [clientTab, setClientTab] = useState<
-    "overview" | "contacts" | "deals" | "projects" | "invoices" | "activity"
-  >("activity");
+    "overview" | "contacts" | "projects" | "invoices" | "logs"
+  >("overview");
 
   // Directory search filter
   const [search, setSearch] = useState("");
@@ -234,18 +203,12 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
   const [newContactPhone, setNewContactPhone] = useState("");
   const [newContactRole, setNewContactRole] = useState("");
 
-  const [showNewDealModal, setShowNewDealModal] = useState(false);
-  const [newDealTitle, setNewDealTitle] = useState("");
-  const [newDealValue, setNewDealValue] = useState("500000");
-  const [newDealStage, setNewDealStage] = useState<"Qualified" | "Proposal Sent" | "Negotiation" | "Won">("Proposal Sent");
-
-  // Quick activity log state
-  const [quickActivityType, setQuickActivityType] = useState<"note" | "dispatch" | "proof" | "invoice">("note");
-  const [quickActivityText, setQuickActivityText] = useState("");
+  // Quick log state
+  const [quickLogType, setQuickLogType] = useState<"note" | "dispatch" | "proof" | "invoice">("note");
+  const [quickLogText, setQuickLogText] = useState("");
 
   // Dynamic state stores
-  const [activitiesMap, setActivitiesMap] = useState<Record<string, ClientActivityItem[]>>(INITIAL_ACTIVITIES);
-  const [dealsMap, setDealsMap] = useState<Record<string, ClientDealItem[]>>(INITIAL_DEALS);
+  const [logsMap, setLogsMap] = useState<Record<string, ClientLogItem[]>>(INITIAL_LOGS);
   const [invoicesMap, setInvoicesMap] = useState<Record<string, ClientInvoiceItem[]>>(INITIAL_INVOICES);
   const [extraContactsMap, setExtraContactsMap] = useState<Record<string, ClientContact[]>>({});
 
@@ -255,17 +218,11 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
     return clients.find((c) => c.id === selectedClientId) || clients[0] || null;
   }, [clients, selectedClientId]);
 
-  // Client activities
-  const clientActivities = useMemo(() => {
+  // Client logs
+  const clientLogs = useMemo(() => {
     if (!selectedClient) return [];
-    return activitiesMap[selectedClient.id] || activitiesMap.default || [];
-  }, [activitiesMap, selectedClient]);
-
-  // Client deals
-  const clientDeals = useMemo(() => {
-    if (!selectedClient) return [];
-    return dealsMap[selectedClient.id] || dealsMap.default || [];
-  }, [dealsMap, selectedClient]);
+    return logsMap[selectedClient.id] || logsMap.default || [];
+  }, [logsMap, selectedClient]);
 
   // Client invoices
   const clientInvoices = useMemo(() => {
@@ -341,9 +298,9 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
   }, [selectedClient, clientOrders]);
 
   // Handlers
-  const handlePostQuickActivity = (e: React.FormEvent) => {
+  const handlePostQuickLog = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!quickActivityText.trim() || !selectedClient) return;
+    if (!quickLogText.trim() || !selectedClient) return;
 
     const actionTextMap = {
       note: "logged production update:",
@@ -352,32 +309,32 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
       invoice: "sent commercial ledger reminder for",
     };
 
-    const newItem: ClientActivityItem = {
-      id: `act-${Date.now()}`,
+    const newItem: ClientLogItem = {
+      id: `log-${Date.now()}`,
       actorName: "Rohan Sharma",
       actorRole: "Plant Administrator",
-      actionType: quickActivityType,
-      actionText: actionTextMap[quickActivityType],
-      targetText: quickActivityText.trim(),
+      actionType: quickLogType,
+      actionText: actionTextMap[quickLogType],
+      targetText: quickLogText.trim(),
       timeAgo: "Just now",
       timestamp: new Date().toISOString(),
     };
 
-    setActivitiesMap((prev) => ({
+    setLogsMap((prev) => ({
       ...prev,
       [selectedClient.id]: [newItem, ...(prev[selectedClient.id] || prev.default || [])],
     }));
 
-    setQuickActivityText("");
-    success("Activity Logged", "New timeline event recorded.");
+    setQuickLogText("");
+    success("Log Recorded", "Timeline entry added to client logs.");
   };
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedClient) return;
 
-    const newItem: ClientActivityItem = {
-      id: `act-${Date.now()}`,
+    const newItem: ClientLogItem = {
+      id: `log-${Date.now()}`,
       actorName: "Rohan Sharma",
       actorRole: "Client Desk",
       actionType: "note",
@@ -387,7 +344,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
       timestamp: new Date().toISOString(),
     };
 
-    setActivitiesMap((prev) => ({
+    setLogsMap((prev) => ({
       ...prev,
       [selectedClient.id]: [newItem, ...(prev[selectedClient.id] || prev.default || [])],
     }));
@@ -403,12 +360,12 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
     if (!selectedClient) return;
 
     const amt = parseFloat(newInvoiceAmount) || 182500;
-    const invNumber = `INV-2026-${Math.floor(Math.random() * 900 + 100)}`;
+    const invNumber = `Invoice #${Math.floor(Math.random() * 900 + 100)}`;
 
     const newInv: ClientInvoiceItem = {
       id: `inv-${Date.now()}`,
       invoiceNumber: invNumber,
-      orderNumber: clientOrders[0]?.order_number || "ORD-2026-0001",
+      orderNumber: "Production Batch",
       issueDate: new Date().toISOString().slice(0, 10),
       dueDate: newInvoiceDue,
       total: amt,
@@ -421,8 +378,8 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
       [selectedClient.id]: [newInv, ...(prev[selectedClient.id] || prev.default || [])],
     }));
 
-    const newItem: ClientActivityItem = {
-      id: `act-${Date.now()}`,
+    const newItem: ClientLogItem = {
+      id: `log-${Date.now()}`,
       actorName: "Rohan Sharma",
       actorRole: "Accounts",
       actionType: "invoice",
@@ -432,13 +389,13 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
       timestamp: new Date().toISOString(),
     };
 
-    setActivitiesMap((prev) => ({
+    setLogsMap((prev) => ({
       ...prev,
       [selectedClient.id]: [newItem, ...(prev[selectedClient.id] || prev.default || [])],
     }));
 
     setShowNewInvoiceModal(false);
-    success("Tax Invoice Drafted", `Invoice ${invNumber} generated.`);
+    success("Tax Invoice Drafted", `${invNumber} generated.`);
   };
 
   const handleAddContact = (e: React.FormEvent) => {
@@ -471,30 +428,6 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
     success("Contact Registered", `${contact.name} added to client directory.`);
   };
 
-  const handleCreateDeal = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedClient || !newDealTitle) return;
-
-    const val = parseFloat(newDealValue) || 250000;
-    const deal: ClientDealItem = {
-      id: `dl-${Date.now()}`,
-      title: newDealTitle,
-      stage: newDealStage,
-      value: val,
-      probability: newDealStage === "Won" ? 100 : newDealStage === "Negotiation" ? 80 : 60,
-      expectedClose: "2026-10-30",
-    };
-
-    setDealsMap((prev) => ({
-      ...prev,
-      [selectedClient.id]: [deal, ...(prev[selectedClient.id] || prev.default || [])],
-    }));
-
-    setShowNewDealModal(false);
-    setNewDealTitle("");
-    success("Commercial Deal Registered", `Deal "${deal.title}" entered into pipeline.`);
-  };
-
   // Filtered clients for directory list
   const filteredClients = useMemo(() => {
     return clients.filter((c) => {
@@ -502,7 +435,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
       return (
         !q ||
         c.organization_name.toLowerCase().includes(q) ||
-        c.client_code.toLowerCase().includes(q)
+        (c.notes && c.notes.toLowerCase().includes(q))
       );
     });
   }, [clients, search]);
@@ -516,13 +449,13 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
   }
 
   // ----------------------------------------------------
-  // RENDER: FULL-WIDTH CLIENT MANAGEMENT WORKSPACE
+  // RENDER 1: CLIENT PROFILE PAGE (With Tabs Moved to Header)
   // ----------------------------------------------------
   if (selectedClient) {
     const isNorthwind = selectedClient.organization_name.toLowerCase().includes("northwind");
     const clientMeta = isNorthwind
-      ? "Enterprise Security & NFC Cards • Owner Sophia Williams • Client since 2024-03-11 • Net 30 Commercial Terms"
-      : `${selectedClient.notes || "Educational & Institutional Client"} • Code ${selectedClient.client_code} • GSTIN: ${selectedClient.tax_identifier || "23AAAAA0000A1Z5"} • Net 30 Terms`;
+      ? "Enterprise Security & NFC Smartcard Systems • Owner Sophia Williams • Net 30 Commercial Terms"
+      : `${selectedClient.notes || "Educational & Institutional Client"} • GSTIN: ${selectedClient.tax_identifier || "23AAAAA0000A1Z5"} • Net 30 Commercial Terms`;
 
     return (
       <div
@@ -538,86 +471,233 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
           color: "#e2e8f0",
         }}
       >
-        {/* Full-width container with responsive side padding */}
+        {/* TOP HEADER BAR: Back Link + TABS MOVED TO TOP AS HEADER + Actions */}
         <div
           style={{
-            padding: "22px 32px",
             display: "flex",
-            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "14px 28px",
+            backgroundColor: "rgba(14, 18, 28, 0.95)",
+            backdropFilter: "blur(20px)",
+            borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
             gap: "20px",
+            flexWrap: "wrap",
+            position: "sticky",
+            top: 0,
+            zIndex: 30,
             width: "100%",
             boxSizing: "border-box",
           }}
         >
-          {/* Top Bar: Back to Directory + Quick Client Switcher */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
+          {/* Left: Back button & Tabs Bar */}
+          <div style={{ display: "flex", alignItems: "center", gap: "24px" }}>
             <button
               type="button"
               onClick={() => setSelectedClientId(null)}
               style={{
-                background: "rgba(255, 255, 255, 0.04)",
-                border: "1px solid rgba(255, 255, 255, 0.08)",
+                background: "rgba(255, 255, 255, 0.05)",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
                 borderRadius: "20px",
-                color: "var(--text-secondary)",
+                color: "#e2e8f0",
                 fontSize: "12.5px",
                 fontWeight: 600,
                 cursor: "pointer",
                 display: "inline-flex",
                 alignItems: "center",
-                gap: "8px",
+                gap: "6px",
                 padding: "6px 14px",
                 transition: "all 0.15s ease",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.08)";
-                e.currentTarget.style.color = "#ffffff";
-                e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.18)";
+                e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.1)";
+                e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.2)";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.04)";
-                e.currentTarget.style.color = "var(--text-secondary)";
-                e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.08)";
+                e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
+                e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
               }}
             >
               <span style={{ fontSize: "14px" }}>‹</span>
-              <span>All Clients Directory</span>
-              <span style={{ backgroundColor: "rgba(255, 255, 255, 0.1)", borderRadius: "10px", padding: "1px 7px", fontSize: "11px" }}>
-                {clients.length}
-              </span>
+              <span>All Clients</span>
             </button>
 
-            {/* Quick Switcher Selector */}
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>Switch Client:</span>
-              <select
-                value={selectedClient.id}
-                onChange={(e) => {
-                  setSelectedClientId(e.target.value);
-                  onSelectClient?.(e.target.value);
-                }}
-                style={{
-                  height: "32px",
-                  padding: "0 10px",
-                  borderRadius: "4px",
-                  backgroundColor: "rgba(255, 255, 255, 0.06)",
-                  border: "1px solid rgba(255, 255, 255, 0.12)",
-                  color: "#fff",
-                  fontSize: "12px",
-                  fontWeight: 600,
-                  outline: "none",
-                  cursor: "pointer",
-                }}
-              >
-                {clients.map((c) => (
-                  <option key={c.id} value={c.id} style={{ backgroundColor: "#131722", color: "#fff" }}>
-                    {c.organization_name} ({c.client_code})
-                  </option>
-                ))}
-              </select>
+            {/* TABS IN HEADER (Overview, Contacts, Projects, Invoices, Logs) */}
+            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              {[
+                { id: "overview" as const, label: "Overview", count: undefined },
+                { id: "contacts" as const, label: "Contacts", count: clientContacts.length },
+                { id: "projects" as const, label: "Projects", count: Math.max(clientOrders.length, 2) },
+                { id: "invoices" as const, label: "Invoices", count: clientInvoices.length },
+                { id: "logs" as const, label: "Logs", count: clientLogs.length },
+              ].map((t) => {
+                const isActive = clientTab === t.id;
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => setClientTab(t.id)}
+                    style={{
+                      border: "none",
+                      backgroundColor: isActive ? "rgba(255, 138, 115, 0.15)" : "transparent",
+                      borderRadius: "6px",
+                      padding: "8px 14px",
+                      fontSize: "13px",
+                      fontWeight: isActive ? 700 : 500,
+                      color: isActive ? "var(--accent-text)" : "var(--text-secondary)",
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      transition: "all 0.15s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isActive) {
+                        e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
+                        e.currentTarget.style.color = "#ffffff";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isActive) {
+                        e.currentTarget.style.backgroundColor = "transparent";
+                        e.currentTarget.style.color = "var(--text-secondary)";
+                      }
+                    }}
+                  >
+                    <span>{t.label}</span>
+                    {t.count !== undefined && (
+                      <span
+                        style={{
+                          fontSize: "11px",
+                          fontWeight: 700,
+                          padding: "1px 6px",
+                          borderRadius: "10px",
+                          backgroundColor: isActive ? "rgba(255, 138, 115, 0.25)" : "rgba(255, 255, 255, 0.06)",
+                          color: isActive ? "var(--accent-text)" : "var(--text-muted)",
+                        }}
+                      >
+                        {t.count}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
-          {/* Client Header Row (Avatar + Name + Status + Luxury Buttons) */}
+          {/* Right: Switcher & Quick Actions */}
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <select
+              value={selectedClient.id}
+              onChange={(e) => {
+                setSelectedClientId(e.target.value);
+                onSelectClient?.(e.target.value);
+              }}
+              style={{
+                height: "34px",
+                padding: "0 10px",
+                borderRadius: "4px",
+                backgroundColor: "rgba(255, 255, 255, 0.06)",
+                border: "1px solid rgba(255, 255, 255, 0.12)",
+                color: "#fff",
+                fontSize: "12px",
+                fontWeight: 600,
+                outline: "none",
+                cursor: "pointer",
+              }}
+            >
+              {clients.map((c) => (
+                <option key={c.id} value={c.id} style={{ backgroundColor: "#131722", color: "#fff" }}>
+                  {c.organization_name}
+                </option>
+              ))}
+            </select>
+
+            <button
+              type="button"
+              onClick={() => setShowMessageModal(true)}
+              style={{
+                height: "34px",
+                padding: "0 14px",
+                borderRadius: "4px",
+                backgroundColor: "rgba(255, 255, 255, 0.05)",
+                border: "1px solid rgba(255, 255, 255, 0.14)",
+                color: "#ffffff",
+                fontSize: "12.5px",
+                fontWeight: 600,
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
+            >
+              <Icon name="message-square" size={13} color="var(--text-muted)" />
+              <span>Message</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                if (onNewOrder) onNewOrder();
+                else setShowNewProjectModal(true);
+              }}
+              style={{
+                height: "34px",
+                padding: "0 14px",
+                borderRadius: "4px",
+                backgroundColor: "rgba(255, 255, 255, 0.05)",
+                border: "1px solid rgba(255, 255, 255, 0.14)",
+                color: "#ffffff",
+                fontSize: "12.5px",
+                fontWeight: 600,
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
+            >
+              <Icon name="plus" size={13} color="var(--text-muted)" />
+              <span>New Project</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowNewInvoiceModal(true)}
+              style={{
+                height: "34px",
+                padding: "0 16px",
+                borderRadius: "4px",
+                backgroundColor: "#2563eb",
+                backgroundImage: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
+                border: "1px solid rgba(59, 130, 246, 0.4)",
+                color: "#ffffff",
+                fontSize: "12.5px",
+                fontWeight: 700,
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                boxShadow: "0 2px 8px rgba(37, 99, 235, 0.35)",
+              }}
+            >
+              <Icon name="file-text" size={13} color="#fff" />
+              <span>New Invoice</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Content Area */}
+        <div
+          style={{
+            padding: "20px 28px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "18px",
+            width: "100%",
+            boxSizing: "border-box",
+          }}
+        >
+          {/* Client Identity Banner (NO CRYPTIC CODES) */}
           <div
             style={{
               display: "flex",
@@ -629,26 +709,25 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
               backdropFilter: "blur(20px)",
               border: "1px solid rgba(255, 255, 255, 0.08)",
               borderRadius: "8px",
-              padding: "20px 24px",
+              padding: "18px 24px",
             }}
           >
-            {/* Left: Avatar + Title + Subtitle */}
-            <div style={{ display: "flex", alignItems: "center", gap: "18px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
               <div
                 style={{
-                  width: "60px",
-                  height: "60px",
-                  borderRadius: "14px",
+                  width: "56px",
+                  height: "56px",
+                  borderRadius: "12px",
                   background: isNorthwind
                     ? "linear-gradient(135deg, #d97706 0%, #78350f 100%)"
                     : "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)",
                   border: "2px solid rgba(255, 255, 255, 0.18)",
-                  boxShadow: "0 6px 18px rgba(0, 0, 0, 0.45)",
+                  boxShadow: "0 4px 14px rgba(0, 0, 0, 0.45)",
                   flexShrink: 0,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  fontSize: "24px",
+                  fontSize: "22px",
                   fontWeight: 800,
                   color: "#ffffff",
                 }}
@@ -658,139 +737,36 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
 
               <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                  <h1 style={{ margin: 0, fontSize: "24px", fontWeight: 800, color: "#ffffff", letterSpacing: "-0.4px" }}>
+                  <h1 style={{ margin: 0, fontSize: "22px", fontWeight: 800, color: "#ffffff", letterSpacing: "-0.4px" }}>
                     {selectedClient.organization_name}
                   </h1>
                   <span
                     style={{
                       display: "inline-flex",
                       alignItems: "center",
-                      gap: "6px",
-                      padding: "3px 11px",
+                      gap: "5px",
+                      padding: "2px 10px",
                       borderRadius: "14px",
                       backgroundColor: "rgba(16, 185, 129, 0.14)",
                       border: "1px solid rgba(16, 185, 129, 0.35)",
                       color: "#34d399",
-                      fontSize: "11.5px",
+                      fontSize: "11px",
                       fontWeight: 700,
                     }}
                   >
-                    <span style={{ width: "6px", height: "6px", borderRadius: "50%", backgroundColor: "#10b981", boxShadow: "0 0 6px #10b981" }} />
+                    <span style={{ width: "5px", height: "5px", borderRadius: "50%", backgroundColor: "#10b981", boxShadow: "0 0 6px #10b981" }} />
                     Active Account
                   </span>
                 </div>
 
-                <span style={{ fontSize: "13px", color: "var(--text-secondary)" }}>
+                <span style={{ fontSize: "12.5px", color: "var(--text-secondary)" }}>
                   {clientMeta}
                 </span>
               </div>
             </div>
-
-            {/* Right: 3 Action Buttons */}
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <button
-                type="button"
-                onClick={() => setShowMessageModal(true)}
-                style={{
-                  height: "38px",
-                  padding: "0 18px",
-                  borderRadius: "5px",
-                  backgroundColor: "rgba(255, 255, 255, 0.05)",
-                  border: "1px solid rgba(255, 255, 255, 0.14)",
-                  color: "#ffffff",
-                  fontSize: "13px",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  transition: "all 0.15s ease",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "7px",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.1)";
-                  e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.25)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
-                  e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.14)";
-                }}
-              >
-                <Icon name="message-square" size={14} color="var(--text-muted)" />
-                <span>Message</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  if (onNewOrder) onNewOrder();
-                  else setShowNewProjectModal(true);
-                }}
-                style={{
-                  height: "38px",
-                  padding: "0 18px",
-                  borderRadius: "5px",
-                  backgroundColor: "rgba(255, 255, 255, 0.05)",
-                  border: "1px solid rgba(255, 255, 255, 0.14)",
-                  color: "#ffffff",
-                  fontSize: "13px",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  transition: "all 0.15s ease",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "7px",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.1)";
-                  e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.25)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
-                  e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.14)";
-                }}
-              >
-                <Icon name="plus" size={14} color="var(--text-muted)" />
-                <span>New Project</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setShowNewInvoiceModal(true)}
-                style={{
-                  height: "38px",
-                  padding: "0 20px",
-                  borderRadius: "5px",
-                  backgroundColor: "#2563eb",
-                  backgroundImage: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
-                  border: "1px solid rgba(59, 130, 246, 0.4)",
-                  color: "#ffffff",
-                  fontSize: "13px",
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  transition: "all 0.15s ease",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "7px",
-                  boxShadow: "0 3px 12px rgba(37, 99, 235, 0.4)",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundImage = "linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%)";
-                  e.currentTarget.style.boxShadow = "0 5px 16px rgba(37, 99, 235, 0.55)";
-                  e.currentTarget.style.transform = "translateY(-1px)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundImage = "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)";
-                  e.currentTarget.style.boxShadow = "0 3px 12px rgba(37, 99, 235, 0.4)";
-                  e.currentTarget.style.transform = "none";
-                }}
-              >
-                <Icon name="file-text" size={14} color="#fff" />
-                <span>New Invoice</span>
-              </button>
-            </div>
           </div>
 
-          {/* Full-width Luxury KPI Metrics Strip (4 tiles with dividers and trend pills) */}
+          {/* Full-width KPI Metrics Strip (NO CRYPTIC CODES) */}
           <div
             style={{
               display: "grid",
@@ -799,14 +775,14 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
               backdropFilter: "blur(18px)",
               border: "1px solid rgba(255, 255, 255, 0.08)",
               borderRadius: "8px",
-              padding: "20px 24px",
-              gap: "24px",
+              padding: "18px 22px",
+              gap: "20px",
               width: "100%",
               boxSizing: "border-box",
             }}
           >
             {/* Tile 1: Lifetime Revenue */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "6px", borderRight: "1px solid rgba(255, 255, 255, 0.07)", paddingRight: "16px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "4px", borderRight: "1px solid rgba(255, 255, 255, 0.07)", paddingRight: "14px" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.6px" }}>
                   Lifetime Revenue
@@ -815,16 +791,16 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                   +18.4% YoY
                 </span>
               </div>
-              <span style={{ fontFamily: "var(--font-mono)", fontSize: "26px", fontWeight: 800, color: "#ffffff", letterSpacing: "-0.5px" }}>
+              <span style={{ fontFamily: "var(--font-mono)", fontSize: "24px", fontWeight: 800, color: "#ffffff", letterSpacing: "-0.5px" }}>
                 ₹{metrics.revenue.toLocaleString("en-IN")}
               </span>
-              <span style={{ fontSize: "11.5px", color: "var(--text-secondary)" }}>
+              <span style={{ fontSize: "11px", color: "var(--text-secondary)" }}>
                 Total cumulative billed orders
               </span>
             </div>
 
             {/* Tile 2: Outstanding */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "6px", borderRight: "1px solid rgba(255, 255, 255, 0.07)", paddingRight: "16px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "4px", borderRight: "1px solid rgba(255, 255, 255, 0.07)", paddingRight: "14px" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.6px" }}>
                   Outstanding Dues
@@ -833,16 +809,16 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                   Due in 15d
                 </span>
               </div>
-              <span style={{ fontFamily: "var(--font-mono)", fontSize: "26px", fontWeight: 800, color: "#ff8a73", letterSpacing: "-0.5px" }}>
+              <span style={{ fontFamily: "var(--font-mono)", fontSize: "24px", fontWeight: 800, color: "#ff8a73", letterSpacing: "-0.5px" }}>
                 ₹{metrics.outstanding.toLocaleString("en-IN")}
               </span>
-              <span style={{ fontSize: "11.5px", color: "var(--text-secondary)" }}>
+              <span style={{ fontSize: "11px", color: "var(--text-secondary)" }}>
                 Active receivables ledger
               </span>
             </div>
 
             {/* Tile 3: Avg Days to Pay */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "6px", borderRight: "1px solid rgba(255, 255, 255, 0.07)", paddingRight: "16px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "4px", borderRight: "1px solid rgba(255, 255, 255, 0.07)", paddingRight: "14px" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.6px" }}>
                   Avg Days to Pay
@@ -852,18 +828,18 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                 </span>
               </div>
               <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
-                <span style={{ fontFamily: "var(--font-mono)", fontSize: "26px", fontWeight: 800, color: "#ffffff", letterSpacing: "-0.5px" }}>
+                <span style={{ fontFamily: "var(--font-mono)", fontSize: "24px", fontWeight: 800, color: "#ffffff", letterSpacing: "-0.5px" }}>
                   {metrics.avgDays}
                 </span>
-                <span style={{ fontSize: "13px", color: "var(--text-muted)" }}>days</span>
+                <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>days</span>
               </div>
-              <span style={{ fontSize: "11.5px", color: "var(--text-secondary)" }}>
-                Fast turnaround (Net 30 benchmark)
+              <span style={{ fontSize: "11px", color: "var(--text-secondary)" }}>
+                Net 30 benchmark
               </span>
             </div>
 
             {/* Tile 4: Active Projects */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.6px" }}>
                   Active Production Jobs
@@ -873,270 +849,21 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                 </span>
               </div>
               <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
-                <span style={{ fontFamily: "var(--font-mono)", fontSize: "26px", fontWeight: 800, color: "#ffffff", letterSpacing: "-0.5px" }}>
+                <span style={{ fontFamily: "var(--font-mono)", fontSize: "24px", fontWeight: 800, color: "#ffffff", letterSpacing: "-0.5px" }}>
                   {metrics.activeProjects}
                 </span>
-                <span style={{ fontSize: "13px", color: "var(--text-muted)" }}>manufacturing runs</span>
+                <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>manufacturing runs</span>
               </div>
-              <span style={{ fontSize: "11.5px", color: "var(--text-secondary)" }}>
-                In printing & RFID encoding queues
+              <span style={{ fontSize: "11px", color: "var(--text-secondary)" }}>
+                In printing & encoding queues
               </span>
             </div>
           </div>
 
-          {/* Full-width Modern Tabs Bar */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "28px",
-              borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
-              paddingBottom: "0px",
-              width: "100%",
-              boxSizing: "border-box",
-            }}
-          >
-            {[
-              { id: "overview" as const, label: "Overview", count: undefined },
-              { id: "contacts" as const, label: "Contacts", count: clientContacts.length },
-              { id: "deals" as const, label: "Deals", count: clientDeals.length },
-              { id: "projects" as const, label: "Projects / Orders", count: Math.max(clientOrders.length, 2) },
-              { id: "invoices" as const, label: "Invoices", count: clientInvoices.length },
-              { id: "activity" as const, label: "Activity", count: clientActivities.length },
-            ].map((t) => {
-              const isActive = clientTab === t.id;
-              return (
-                <button
-                  key={t.id}
-                  type="button"
-                  onClick={() => setClientTab(t.id)}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    padding: "12px 6px 14px 6px",
-                    fontSize: "13.5px",
-                    fontWeight: isActive ? 700 : 500,
-                    color: isActive ? "#ffffff" : "var(--text-secondary)",
-                    cursor: "pointer",
-                    position: "relative",
-                    transition: "color 0.15s ease",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "8px",
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isActive) e.currentTarget.style.color = "#ffffff";
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isActive) e.currentTarget.style.color = "var(--text-secondary)";
-                  }}
-                >
-                  <span>{t.label}</span>
-                  {t.count !== undefined && (
-                    <span
-                      style={{
-                        fontSize: "11px",
-                        fontWeight: 700,
-                        padding: "1px 7px",
-                        borderRadius: "10px",
-                        backgroundColor: isActive ? "rgba(59, 130, 246, 0.2)" : "rgba(255, 255, 255, 0.06)",
-                        color: isActive ? "#60a5fa" : "var(--text-muted)",
-                      }}
-                    >
-                      {t.count}
-                    </span>
-                  )}
-                  {isActive && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        bottom: "-1px",
-                        left: 0,
-                        right: 0,
-                        height: "2px",
-                        backgroundColor: "#3b82f6",
-                        boxShadow: "0 0 8px #3b82f6",
-                        borderRadius: "2px",
-                      }}
-                    />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* TAB CONTENTS (Full Width) */}
+          {/* TAB CONTENTS */}
           <div style={{ width: "100%", boxSizing: "border-box" }}>
             
-            {/* 1. ACTIVITY TAB */}
-            {clientTab === "activity" && (
-              <div style={{ display: "flex", flexDirection: "column", gap: "16px", width: "100%" }}>
-                {/* Interactive Activity Log Bar with Type Chips */}
-                <form
-                  onSubmit={handlePostQuickActivity}
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "10px",
-                    backgroundColor: "rgba(18, 23, 35, 0.7)",
-                    backdropFilter: "blur(14px)",
-                    border: "1px solid rgba(255, 255, 255, 0.08)",
-                    borderRadius: "8px",
-                    padding: "14px 18px",
-                    width: "100%",
-                    boxSizing: "border-box",
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px", flexWrap: "wrap" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <span style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 600 }}>Log Event:</span>
-                      {[
-                        { id: "note" as const, label: "💬 Note / Call" },
-                        { id: "dispatch" as const, label: "📦 Dispatch QA" },
-                        { id: "proof" as const, label: "✅ Artwork Proof" },
-                        { id: "invoice" as const, label: "💰 Ledger Reminder" },
-                      ].map((chip) => (
-                        <button
-                          key={chip.id}
-                          type="button"
-                          onClick={() => setQuickActivityType(chip.id)}
-                          style={{
-                            padding: "4px 10px",
-                            borderRadius: "12px",
-                            border: "1px solid " + (quickActivityType === chip.id ? "rgba(59, 130, 246, 0.4)" : "rgba(255, 255, 255, 0.08)"),
-                            backgroundColor: quickActivityType === chip.id ? "rgba(59, 130, 246, 0.15)" : "transparent",
-                            color: quickActivityType === chip.id ? "#60a5fa" : "var(--text-secondary)",
-                            fontSize: "11.5px",
-                            fontWeight: 600,
-                            cursor: "pointer",
-                          }}
-                        >
-                          {chip.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                    <input
-                      type="text"
-                      placeholder="Type a production update, client meeting note, or milestone..."
-                      value={quickActivityText}
-                      onChange={(e) => setQuickActivityText(e.target.value)}
-                      style={{
-                        flex: 1,
-                        height: "38px",
-                        backgroundColor: "rgba(0, 0, 0, 0.25)",
-                        border: "1px solid rgba(255, 255, 255, 0.1)",
-                        borderRadius: "5px",
-                        padding: "0 14px",
-                        color: "#fff",
-                        fontSize: "13px",
-                        outline: "none",
-                      }}
-                    />
-                    <button
-                      type="submit"
-                      style={{
-                        height: "38px",
-                        padding: "0 18px",
-                        borderRadius: "5px",
-                        backgroundColor: "#2563eb",
-                        border: "none",
-                        color: "#fff",
-                        fontSize: "12.5px",
-                        fontWeight: 700,
-                        cursor: "pointer",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "6px",
-                        boxShadow: "0 2px 8px rgba(37, 99, 235, 0.35)",
-                      }}
-                    >
-                      <Icon name="check" size={13} color="#fff" />
-                      <span>Post Update</span>
-                    </button>
-                  </div>
-                </form>
-
-                {/* Activity Timeline List (Full Width) */}
-                <div
-                  style={{
-                    backgroundColor: "rgba(18, 23, 35, 0.75)",
-                    backdropFilter: "blur(16px)",
-                    border: "1px solid rgba(255, 255, 255, 0.08)",
-                    borderRadius: "8px",
-                    overflow: "hidden",
-                    display: "flex",
-                    flexDirection: "column",
-                    width: "100%",
-                  }}
-                >
-                  {clientActivities.map((act, idx) => (
-                    <div
-                      key={act.id}
-                      style={{
-                        padding: "16px 22px",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        gap: "16px",
-                        borderBottom:
-                          idx < clientActivities.length - 1
-                            ? "1px solid rgba(255, 255, 255, 0.06)"
-                            : "none",
-                        transition: "background-color 0.12s ease",
-                      }}
-                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.02)")}
-                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
-                    >
-                      {/* Left: Avatar + Details */}
-                      <div style={{ display: "flex", alignItems: "center", gap: "14px", flex: 1 }}>
-                        <div
-                          style={{
-                            width: "36px",
-                            height: "36px",
-                            borderRadius: "50%",
-                            background: getAvatarColor(act.actorName),
-                            color: "#ffffff",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            fontSize: "12.5px",
-                            fontWeight: 800,
-                            border: "1px solid rgba(255, 255, 255, 0.18)",
-                            boxShadow: "0 2px 6px rgba(0, 0, 0, 0.35)",
-                            flexShrink: 0,
-                          }}
-                        >
-                          {getInitials(act.actorName)}
-                        </div>
-
-                        <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
-                          <div style={{ fontSize: "13.5px", color: "#ffffff", lineHeight: 1.4 }}>
-                            <strong style={{ fontWeight: 700 }}>{act.actorName}</strong>{" "}
-                            <span style={{ fontSize: "11px", color: "var(--text-muted)", backgroundColor: "rgba(255, 255, 255, 0.06)", padding: "1px 6px", borderRadius: "8px", margin: "0 4px" }}>
-                              {act.actorRole}
-                            </span>{" "}
-                            <span style={{ color: "var(--text-secondary)" }}>{act.actionText}</span>{" "}
-                            {act.targetText && (
-                              <strong style={{ fontWeight: 600, color: "#60a5fa" }}>{act.targetText}</strong>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Right: Timestamp */}
-                      <div style={{ fontSize: "12px", color: "var(--text-muted)", flexShrink: 0 }}>
-                        {act.timeAgo}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* 2. OVERVIEW TAB */}
+            {/* 1. OVERVIEW TAB */}
             {clientTab === "overview" && (
               <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "20px", width: "100%", boxSizing: "border-box" }}>
                 {/* Institutional Coordinates */}
@@ -1151,15 +878,11 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                     gap: "16px",
                   }}
                 >
-                  <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 700, color: "#fff", display: "flex", alignItems: "center", gap: "8px" }}>
-                    <Icon name="briefcase" size={16} color="#60a5fa" />
+                  <h3 style={{ margin: 0, fontSize: "15px", fontWeight: 700, color: "#fff", display: "flex", alignItems: "center", gap: "8px" }}>
+                    <Icon name="briefcase" size={15} color="#60a5fa" />
                     <span>Corporate Dossier & Commercial Terms</span>
                   </h3>
                   <div style={{ display: "flex", flexDirection: "column", gap: "12px", fontSize: "13px" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid rgba(255, 255, 255, 0.05)", paddingBottom: "8px" }}>
-                      <span style={{ color: "var(--text-muted)" }}>Client Organization Code:</span>
-                      <strong style={{ fontFamily: "var(--font-mono)", color: "var(--accent-text)" }}>{selectedClient.client_code}</strong>
-                    </div>
                     <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid rgba(255, 255, 255, 0.05)", paddingBottom: "8px" }}>
                       <span style={{ color: "var(--text-muted)" }}>Tax Identifier / GSTIN:</span>
                       <strong style={{ fontFamily: "var(--font-mono)", color: "#fff" }}>{selectedClient.tax_identifier || "23AAAAA0000A1Z5"}</strong>
@@ -1195,8 +918,8 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                     gap: "16px",
                   }}
                 >
-                  <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 700, color: "#fff", display: "flex", alignItems: "center", gap: "8px" }}>
-                    <Icon name="pie-chart" size={16} color="#34d399" />
+                  <h3 style={{ margin: 0, fontSize: "15px", fontWeight: 700, color: "#fff", display: "flex", alignItems: "center", gap: "8px" }}>
+                    <Icon name="pie-chart" size={15} color="#34d399" />
                     <span>Commercial Credit & Ledger Standing</span>
                   </h3>
                   <div style={{ display: "flex", flexDirection: "column", gap: "12px", fontSize: "13px" }}>
@@ -1222,7 +945,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                       <span style={{ fontSize: "11px", color: "var(--text-muted)", display: "block", fontWeight: 700, letterSpacing: "0.5px" }}>
                         OFFICEFLOWW CREDIT ADVISORY
                       </span>
-                      <span style={{ fontSize: "12.5px", color: "var(--text-secondary)", marginTop: "4px", display: "block", lineHeight: 1.4 }}>
+                      <span style={{ fontSize: "12px", color: "var(--text-secondary)", marginTop: "4px", display: "block", lineHeight: 1.4 }}>
                         Client account has cleared 98% of all prior invoices within the Net 30 window. Approved for high-volume automated production dispatch.
                       </span>
                     </div>
@@ -1231,7 +954,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
               </div>
             )}
 
-            {/* 3. CONTACTS TAB */}
+            {/* 2. CONTACTS TAB */}
             {clientTab === "contacts" && (
               <div style={{ display: "flex", flexDirection: "column", gap: "16px", width: "100%" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -1323,104 +1046,12 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
               </div>
             )}
 
-            {/* 4. DEALS TAB */}
-            {clientTab === "deals" && (
-              <div style={{ display: "flex", flexDirection: "column", gap: "16px", width: "100%" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontSize: "13px", color: "var(--text-muted)" }}>
-                    Commercial Proposals & Manufacturing Retainers
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setShowNewDealModal(true)}
-                    style={{
-                      height: "36px",
-                      padding: "0 16px",
-                      borderRadius: "5px",
-                      backgroundColor: "rgba(255, 255, 255, 0.06)",
-                      border: "1px solid rgba(255, 255, 255, 0.15)",
-                      color: "#fff",
-                      fontSize: "12.5px",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "6px",
-                    }}
-                  >
-                    <span>+</span>
-                    <span>New Deal</span>
-                  </button>
-                </div>
-
-                <div
-                  style={{
-                    backgroundColor: "rgba(18, 23, 35, 0.75)",
-                    border: "1px solid rgba(255, 255, 255, 0.08)",
-                    borderRadius: "8px",
-                    overflow: "hidden",
-                    width: "100%",
-                  }}
-                >
-                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", textAlign: "left" }}>
-                    <thead>
-                      <tr style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.08)", color: "var(--text-muted)", fontSize: "11px", textTransform: "uppercase" }}>
-                        <th style={{ padding: "16px 20px" }}>Deal Title</th>
-                        <th style={{ padding: "16px 20px" }}>Stage</th>
-                        <th style={{ padding: "16px 20px", textAlign: "right" }}>Contract Value</th>
-                        <th style={{ padding: "16px 20px", textAlign: "right" }}>Win Probability</th>
-                        <th style={{ padding: "16px 20px" }}>Target Close</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {clientDeals.map((dl) => (
-                        <tr key={dl.id} style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.05)" }}>
-                          <td style={{ padding: "16px 20px", fontWeight: 600, color: "#fff" }}>{dl.title}</td>
-                          <td style={{ padding: "16px 20px" }}>
-                            <span
-                              style={{
-                                padding: "4px 10px",
-                                borderRadius: "4px",
-                                fontSize: "11px",
-                                fontWeight: 700,
-                                backgroundColor:
-                                  dl.stage === "Won"
-                                    ? "rgba(16, 185, 129, 0.15)"
-                                    : dl.stage === "Negotiation"
-                                    ? "rgba(56, 189, 248, 0.15)"
-                                    : "rgba(255, 138, 115, 0.15)",
-                                color:
-                                  dl.stage === "Won"
-                                    ? "#10b981"
-                                    : dl.stage === "Negotiation"
-                                    ? "#38bdf8"
-                                    : "var(--accent-text)",
-                              }}
-                            >
-                              {dl.stage}
-                            </span>
-                          </td>
-                          <td style={{ padding: "16px 20px", textAlign: "right", fontFamily: "var(--font-mono)", fontWeight: 700, color: "#34d399" }}>
-                            ₹{dl.value.toLocaleString("en-IN")}
-                          </td>
-                          <td style={{ padding: "16px 20px", textAlign: "right", fontFamily: "var(--font-mono)", color: "var(--text-secondary)" }}>
-                            {dl.probability}%
-                          </td>
-                          <td style={{ padding: "16px 20px", color: "var(--text-muted)" }}>{dl.expectedClose}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-            {/* 5. PROJECTS / ORDERS TAB */}
+            {/* 3. PROJECTS TAB (NO CRYPTIC CODES) */}
             {clientTab === "projects" && (
               <div style={{ display: "flex", flexDirection: "column", gap: "16px", width: "100%" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ fontSize: "13px", color: "var(--text-muted)" }}>
-                    Production Batches & Manufacturing Runs
+                    Production Batches & Manufacturing Orders
                   </span>
                   <button
                     type="button"
@@ -1460,8 +1091,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                   <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", textAlign: "left" }}>
                     <thead>
                       <tr style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.08)", color: "var(--text-muted)", fontSize: "11px", textTransform: "uppercase" }}>
-                        <th style={{ padding: "16px 20px" }}>Order Code</th>
-                        <th style={{ padding: "16px 20px" }}>Specifications & Items</th>
+                        <th style={{ padding: "16px 20px" }}>Project / Specification</th>
                         <th style={{ padding: "16px 20px" }}>Promised Delivery</th>
                         <th style={{ padding: "16px 20px", textAlign: "right" }}>Total Value</th>
                         <th style={{ padding: "16px 20px" }}>Priority</th>
@@ -1471,11 +1101,13 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                     <tbody>
                       {clientOrders.length === 0 ? (
                         <tr>
-                          <td style={{ padding: "16px 20px", fontFamily: "var(--font-mono)", fontWeight: 700, color: "var(--accent-text)" }}>
-                            ORD-2026-0001
-                          </td>
-                          <td style={{ padding: "16px 20px", fontWeight: 600, color: "#fff" }}>
-                            5,000 High-Gloss RFID Smart PVC Cards + Multicolor Satin Lanyards
+                          <td style={{ padding: "16px 20px" }}>
+                            <div style={{ fontWeight: 700, color: "#fff" }}>
+                              5,000 High-Gloss RFID Smart PVC Cards + Multicolor Satin Lanyards
+                            </div>
+                            <div style={{ fontSize: "11.5px", color: "var(--text-muted)", marginTop: "2px" }}>
+                              Campus Identification & Access Control Package
+                            </div>
                           </td>
                           <td style={{ padding: "16px 20px", color: "var(--text-secondary)" }}>
                             10 Sep 2026
@@ -1499,11 +1131,13 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                             onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.02)")}
                             onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
                           >
-                            <td style={{ padding: "16px 20px", fontFamily: "var(--font-mono)", fontWeight: 700, color: "var(--accent-text)" }}>
-                              {ord.order_number}
-                            </td>
-                            <td style={{ padding: "16px 20px", fontWeight: 600, color: "#fff" }}>
-                              {ord.notes || "Production run batch"}
+                            <td style={{ padding: "16px 20px" }}>
+                              <div style={{ fontWeight: 700, color: "#fff" }}>
+                                {ord.notes || "Production Manufacturing Run"}
+                              </div>
+                              <div style={{ fontSize: "11.5px", color: "var(--text-muted)", marginTop: "2px" }}>
+                                Floor Workstation: Offset & Thermal Transfer Line
+                              </div>
                             </td>
                             <td style={{ padding: "16px 20px", color: "var(--text-secondary)" }}>
                               {ord.promised_delivery_date ? new Date(ord.promised_delivery_date).toLocaleDateString("en-IN") : "Flexible"}
@@ -1526,7 +1160,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
               </div>
             )}
 
-            {/* 6. INVOICES TAB */}
+            {/* 4. INVOICES TAB (NO CRYPTIC CODES) */}
             {clientTab === "invoices" && (
               <div style={{ display: "flex", flexDirection: "column", gap: "16px", width: "100%" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -1568,7 +1202,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                   <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", textAlign: "left" }}>
                     <thead>
                       <tr style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.08)", color: "var(--text-muted)", fontSize: "11px", textTransform: "uppercase" }}>
-                        <th style={{ padding: "16px 20px" }}>Invoice Code</th>
+                        <th style={{ padding: "16px 20px" }}>Tax Invoice</th>
                         <th style={{ padding: "16px 20px" }}>Date Issued</th>
                         <th style={{ padding: "16px 20px" }}>Payment Due</th>
                         <th style={{ padding: "16px 20px", textAlign: "right" }}>Total Amount</th>
@@ -1580,7 +1214,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                     <tbody>
                       {clientInvoices.map((inv) => (
                         <tr key={inv.id} style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.05)" }}>
-                          <td style={{ padding: "16px 20px", fontFamily: "var(--font-mono)", fontWeight: 700, color: "#fff" }}>
+                          <td style={{ padding: "16px 20px", fontWeight: 700, color: "#fff" }}>
                             {inv.invoiceNumber}
                           </td>
                           <td style={{ padding: "16px 20px", color: "var(--text-secondary)" }}>{inv.issueDate}</td>
@@ -1618,7 +1252,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                           <td style={{ padding: "16px 20px", textAlign: "right" }}>
                             <button
                               type="button"
-                              onClick={() => success("PDF Downloaded", `Invoice ${inv.invoiceNumber} saved.`)}
+                              onClick={() => success("PDF Downloaded", `${inv.invoiceNumber} saved.`)}
                               style={{
                                 background: "none",
                                 border: "1px solid rgba(255, 255, 255, 0.12)",
@@ -1640,10 +1274,176 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
               </div>
             )}
 
+            {/* 5. LOGS TAB (RENAMED FROM ACTIVITY, NO CRYPTIC CODES) */}
+            {clientTab === "logs" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "16px", width: "100%" }}>
+                {/* Interactive Log Bar */}
+                <form
+                  onSubmit={handlePostQuickLog}
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "10px",
+                    backgroundColor: "rgba(18, 23, 35, 0.7)",
+                    backdropFilter: "blur(14px)",
+                    border: "1px solid rgba(255, 255, 255, 0.08)",
+                    borderRadius: "8px",
+                    padding: "14px 18px",
+                    width: "100%",
+                    boxSizing: "border-box",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px", flexWrap: "wrap" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <span style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 600 }}>Log Type:</span>
+                      {[
+                        { id: "note" as const, label: "💬 Note / Call" },
+                        { id: "dispatch" as const, label: "📦 Dispatch QA" },
+                        { id: "proof" as const, label: "✅ Artwork Proof" },
+                        { id: "invoice" as const, label: "💰 Ledger Reminder" },
+                      ].map((chip) => (
+                        <button
+                          key={chip.id}
+                          type="button"
+                          onClick={() => setQuickLogType(chip.id)}
+                          style={{
+                            padding: "4px 10px",
+                            borderRadius: "12px",
+                            border: "1px solid " + (quickLogType === chip.id ? "rgba(255, 138, 115, 0.4)" : "rgba(255, 255, 255, 0.08)"),
+                            backgroundColor: quickLogType === chip.id ? "rgba(255, 138, 115, 0.15)" : "transparent",
+                            color: quickLogType === chip.id ? "var(--accent-text)" : "var(--text-secondary)",
+                            fontSize: "11.5px",
+                            fontWeight: 600,
+                            cursor: "pointer",
+                          }}
+                        >
+                          {chip.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <input
+                      type="text"
+                      placeholder="Type a production log, client meeting note, or milestone..."
+                      value={quickLogText}
+                      onChange={(e) => setQuickLogText(e.target.value)}
+                      style={{
+                        flex: 1,
+                        height: "38px",
+                        backgroundColor: "rgba(0, 0, 0, 0.25)",
+                        border: "1px solid rgba(255, 255, 255, 0.1)",
+                        borderRadius: "5px",
+                        padding: "0 14px",
+                        color: "#fff",
+                        fontSize: "13px",
+                        outline: "none",
+                      }}
+                    />
+                    <button
+                      type="submit"
+                      style={{
+                        height: "38px",
+                        padding: "0 18px",
+                        borderRadius: "5px",
+                        backgroundColor: "#2563eb",
+                        border: "none",
+                        color: "#fff",
+                        fontSize: "12.5px",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        boxShadow: "0 2px 8px rgba(37, 99, 235, 0.35)",
+                      }}
+                    >
+                      <Icon name="check" size={13} color="#fff" />
+                      <span>Post Log</span>
+                    </button>
+                  </div>
+                </form>
+
+                {/* Logs Timeline List */}
+                <div
+                  style={{
+                    backgroundColor: "rgba(18, 23, 35, 0.75)",
+                    backdropFilter: "blur(16px)",
+                    border: "1px solid rgba(255, 255, 255, 0.08)",
+                    borderRadius: "8px",
+                    overflow: "hidden",
+                    display: "flex",
+                    flexDirection: "column",
+                    width: "100%",
+                  }}
+                >
+                  {clientLogs.map((log, idx) => (
+                    <div
+                      key={log.id}
+                      style={{
+                        padding: "16px 22px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: "16px",
+                        borderBottom:
+                          idx < clientLogs.length - 1
+                            ? "1px solid rgba(255, 255, 255, 0.06)"
+                            : "none",
+                        transition: "background-color 0.12s ease",
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.02)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: "14px", flex: 1 }}>
+                        <div
+                          style={{
+                            width: "36px",
+                            height: "36px",
+                            borderRadius: "50%",
+                            background: getAvatarColor(log.actorName),
+                            color: "#ffffff",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: "12.5px",
+                            fontWeight: 800,
+                            border: "1px solid rgba(255, 255, 255, 0.18)",
+                            boxShadow: "0 2px 6px rgba(0, 0, 0, 0.35)",
+                            flexShrink: 0,
+                          }}
+                        >
+                          {getInitials(log.actorName)}
+                        </div>
+
+                        <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                          <div style={{ fontSize: "13.5px", color: "#ffffff", lineHeight: 1.4 }}>
+                            <strong style={{ fontWeight: 700 }}>{log.actorName}</strong>{" "}
+                            <span style={{ fontSize: "11px", color: "var(--text-muted)", backgroundColor: "rgba(255, 255, 255, 0.06)", padding: "1px 6px", borderRadius: "8px", margin: "0 4px" }}>
+                              {log.actorRole}
+                            </span>{" "}
+                            <span style={{ color: "var(--text-secondary)" }}>{log.actionText}</span>{" "}
+                            {log.targetText && (
+                              <strong style={{ fontWeight: 600, color: "#60a5fa" }}>{log.targetText}</strong>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style={{ fontSize: "12px", color: "var(--text-muted)", flexShrink: 0 }}>
+                        {log.timeAgo}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
           </div>
         </div>
 
-        {/* MODAL 1: MESSAGE TO CLIENT */}
+        {/* MODAL 1: MESSAGE */}
         {showMessageModal && (
           <Modal
             isOpen={showMessageModal}
@@ -1769,57 +1569,12 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
             </form>
           </Modal>
         )}
-
-        {/* MODAL 4: NEW DEAL */}
-        {showNewDealModal && (
-          <Modal
-            isOpen={showNewDealModal}
-            onClose={() => setShowNewDealModal(false)}
-            title={`Create Deal Proposal: ${selectedClient.organization_name}`}
-          >
-            <form onSubmit={handleCreateDeal} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-              <Input
-                label="Deal Title"
-                value={newDealTitle}
-                onChange={(e) => setNewDealTitle(e.target.value)}
-                placeholder="e.g. Annual Smartcard Retainer 2026-27"
-                required
-              />
-              <Input
-                label="Estimated Value (₹)"
-                type="number"
-                value={newDealValue}
-                onChange={(e) => setNewDealValue(e.target.value)}
-                required
-              />
-              <Select
-                label="Pipeline Stage"
-                value={newDealStage}
-                onChange={(e) => setNewDealStage(e.target.value as any)}
-                options={[
-                  { value: "Qualified", label: "Qualified Lead" },
-                  { value: "Proposal Sent", label: "Proposal Sent" },
-                  { value: "Negotiation", label: "Negotiation" },
-                  { value: "Won", label: "Closed / Won" },
-                ]}
-              />
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "8px" }}>
-                <Button variant="secondary" size="md" onClick={() => setShowNewDealModal(false)}>
-                  Cancel
-                </Button>
-                <Button variant="primary" size="md" type="submit">
-                  Save Pipeline Deal
-                </Button>
-              </div>
-            </form>
-          </Modal>
-        )}
       </div>
     );
   }
 
   // ----------------------------------------------------
-  // RENDER: FULL CLIENTS DIRECTORY (When < All clients is clicked or on initial visit)
+  // RENDER 2: CLIENT DIRECTORY IN CARDS (NO TABLE, NO TITLE, SEARCH ON TOP HEADER)
   // ----------------------------------------------------
   return (
     <div
@@ -1835,136 +1590,52 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
         color: "#e2e8f0",
       }}
     >
-      <PageHeader
-        title="Client Directory & Institutional Accounts"
-        badge={
-          <span
+      {/* TOP HEADER: SEARCH BAR & CONTROLS ON TOP (NO REDUNDANT TITLE) */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "14px 28px",
+          backgroundColor: "rgba(14, 18, 28, 0.95)",
+          backdropFilter: "blur(20px)",
+          borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+          gap: "16px",
+          flexWrap: "wrap",
+          position: "sticky",
+          top: 0,
+          zIndex: 30,
+          width: "100%",
+          boxSizing: "border-box",
+        }}
+      >
+        {/* Left: Organization count badge */}
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <div
             style={{
-              fontSize: "11px",
-              fontWeight: 600,
-              color: "var(--accent-text)",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "5px 12px",
+              borderRadius: "20px",
               backgroundColor: "rgba(255, 138, 115, 0.12)",
               border: "1px solid var(--accent-border)",
-              borderRadius: "4px",
-              padding: "2px 8px",
+              color: "var(--accent-text)",
+              fontSize: "12.5px",
+              fontWeight: 700,
             }}
           >
-            {clients.length} Client Organizations
+            <span style={{ width: "6px", height: "6px", borderRadius: "50%", backgroundColor: "var(--accent)" }} />
+            <span>{clients.length} Client Organizations</span>
+          </div>
+
+          <span style={{ fontSize: "12.5px", color: "var(--text-muted)" }}>
+            Showing {filteredClients.length} of {clients.length} accounts
           </span>
-        }
-        primaryAction={{
-          label: "New Client",
-          icon: "plus",
-          onClick: () => setShowNewClientModal(true),
-        }}
-      />
-
-      <div style={{ padding: "20px 32px", display: "flex", flexDirection: "column", gap: "18px", width: "100%", boxSizing: "border-box" }}>
-        {/* KPI Summary Tiles for Directory */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(4, 1fr)",
-            gap: "16px",
-            width: "100%",
-            boxSizing: "border-box",
-          }}
-        >
-          <div
-            style={{
-              backgroundColor: "rgba(18, 23, 35, 0.75)",
-              backdropFilter: "blur(16px)",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
-              borderRadius: "8px",
-              padding: "16px 20px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "4px",
-            }}
-          >
-            <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-              Total Registered Clients
-            </span>
-            <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
-              <span style={{ fontFamily: "var(--font-mono)", fontSize: "24px", fontWeight: 800, color: "#fff" }}>
-                {clients.length}
-              </span>
-              <span style={{ fontSize: "12px", color: "#34d399", fontWeight: 600 }}>Active Institutions</span>
-            </div>
-          </div>
-
-          <div
-            style={{
-              backgroundColor: "rgba(18, 23, 35, 0.75)",
-              backdropFilter: "blur(16px)",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
-              borderRadius: "8px",
-              padding: "16px 20px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "4px",
-            }}
-          >
-            <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-              Total Contract Book
-            </span>
-            <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
-              <span style={{ fontFamily: "var(--font-mono)", fontSize: "24px", fontWeight: 800, color: "#ffffff" }}>
-                ₹48.25 L
-              </span>
-              <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>Order Value</span>
-            </div>
-          </div>
-
-          <div
-            style={{
-              backgroundColor: "rgba(18, 23, 35, 0.75)",
-              backdropFilter: "blur(16px)",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
-              borderRadius: "8px",
-              padding: "16px 20px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "4px",
-            }}
-          >
-            <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-              Active Floor Batches
-            </span>
-            <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
-              <span style={{ fontFamily: "var(--font-mono)", fontSize: "24px", fontWeight: 800, color: "#38bdf8" }}>
-                8 Runs
-              </span>
-              <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>In Manufacturing</span>
-            </div>
-          </div>
-
-          <div
-            style={{
-              backgroundColor: "rgba(18, 23, 35, 0.75)",
-              backdropFilter: "blur(16px)",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
-              borderRadius: "8px",
-              padding: "16px 20px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "4px",
-            }}
-          >
-            <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-              Settlement Health
-            </span>
-            <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
-              <span style={{ fontFamily: "var(--font-mono)", fontSize: "24px", fontWeight: 800, color: "#34d399" }}>
-                98.4%
-              </span>
-              <span style={{ fontSize: "12px", color: "#10b981", fontWeight: 600 }}>Prime Recovery</span>
-            </div>
-          </div>
         </div>
 
-        {/* Search and Filter Controls */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", width: "100%" }}>
+        {/* Right: Search Bar & New Client Action */}
+        <div style={{ display: "flex", alignItems: "center", gap: "12px", flex: 1, justifyContent: "flex-end", maxWidth: "600px" }}>
           <div
             style={{
               display: "flex",
@@ -1976,13 +1647,14 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
               border: "1px solid rgba(255, 255, 255, 0.1)",
               borderRadius: "5px",
               padding: "0 14px",
-              width: "320px",
+              flex: 1,
+              maxWidth: "380px",
             }}
           >
             <Icon name="search" size={14} color="var(--text-muted)" />
             <input
               type="text"
-              placeholder="Search by client name, code, GSTIN..."
+              placeholder="Search clients by name, contact, city..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               style={{
@@ -1996,167 +1668,224 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
             />
           </div>
 
-          <span style={{ fontSize: "12.5px", color: "var(--text-muted)" }}>
-            Showing {filteredClients.length} of {clients.length} institutions
-          </span>
+          <button
+            type="button"
+            onClick={() => setShowNewClientModal(true)}
+            style={{
+              height: "38px",
+              padding: "0 16px",
+              borderRadius: "5px",
+              backgroundColor: "var(--accent)",
+              backgroundImage: "linear-gradient(135deg, #ff8a73 0%, #ea580c 100%)",
+              border: "none",
+              color: "#ffffff",
+              fontSize: "13px",
+              fontWeight: 700,
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              boxShadow: "0 2px 10px rgba(234, 88, 12, 0.35)",
+              flexShrink: 0,
+            }}
+          >
+            <Icon name="plus" size={14} color="#fff" />
+            <span>New Client</span>
+          </button>
         </div>
+      </div>
 
-        {/* Clients Directory Table (Full Width with Luxury Styling) */}
+      {/* BODY AREA: CARDS GRID (NO TABLES!) */}
+      <div style={{ padding: "24px 32px", display: "flex", flexDirection: "column", gap: "20px", width: "100%", boxSizing: "border-box" }}>
+        
+        {/* CARDS GRID */}
         <div
           style={{
-            backgroundColor: "rgba(18, 23, 35, 0.75)",
-            backdropFilter: "blur(18px)",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
-            borderRadius: "8px",
-            overflow: "hidden",
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(380px, 1fr))",
+            gap: "20px",
             width: "100%",
             boxSizing: "border-box",
           }}
         >
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", textAlign: "left" }}>
-            <thead>
-              <tr style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.08)", color: "var(--text-muted)", fontSize: "11px", textTransform: "uppercase" }}>
-                <th style={{ padding: "16px 22px" }}>Client Organization</th>
-                <th style={{ padding: "16px 22px" }}>Code</th>
-                <th style={{ padding: "16px 22px" }}>Key Stakeholder</th>
-                <th style={{ padding: "16px 22px" }}>Tax GSTIN</th>
-                <th style={{ padding: "16px 22px" }}>Status</th>
-                <th style={{ padding: "16px 22px", textAlign: "right" }}>Workspace Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredClients.map((c) => {
-                const isNw = c.organization_name.toLowerCase().includes("northwind");
-                const subtitle = isNw
-                  ? "Enterprise NFC & Smartcard Access Control"
-                  : c.notes || "Institutional RFID Badges & Security Systems";
+          {filteredClients.map((c) => {
+            const isNw = c.organization_name.toLowerCase().includes("northwind");
+            const subtitle = isNw
+              ? "Enterprise NFC & Smartcard Access Control"
+              : c.notes || "Institutional RFID Badges & Security Systems";
 
-                return (
-                  <tr
-                    key={c.id}
-                    onClick={() => {
+            const primaryContact = c.contacts?.[0] || {
+              name: "Rajesh Sharma",
+              designation: "Procurement Director",
+              phone: "+91 98260 12345",
+              email: "contact@institution.org",
+            };
+
+            return (
+              <div
+                key={c.id}
+                onClick={() => {
+                  setSelectedClientId(c.id);
+                  onSelectClient?.(c.id);
+                }}
+                style={{
+                  backgroundColor: "rgba(18, 23, 35, 0.75)",
+                  backdropFilter: "blur(18px)",
+                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                  borderRadius: "10px",
+                  padding: "22px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "16px",
+                  cursor: "pointer",
+                  transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
+                  position: "relative",
+                  overflow: "hidden",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "translateY(-3px)";
+                  e.currentTarget.style.borderColor = "rgba(255, 138, 115, 0.35)";
+                  e.currentTarget.style.boxShadow = "0 8px 24px rgba(0, 0, 0, 0.4)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "none";
+                  e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.08)";
+                  e.currentTarget.style.boxShadow = "none";
+                }}
+              >
+                {/* Top Row: Avatar + Organization Name + Active Badge */}
+                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "14px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+                    <div
+                      style={{
+                        width: "48px",
+                        height: "48px",
+                        borderRadius: "12px",
+                        background: isNw
+                          ? "linear-gradient(135deg, #d97706 0%, #78350f 100%)"
+                          : "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: "20px",
+                        fontWeight: 800,
+                        color: "#fff",
+                        flexShrink: 0,
+                        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.35)",
+                      }}
+                    >
+                      {isNw ? "🏢" : c.organization_name.slice(0, 2).toUpperCase()}
+                    </div>
+
+                    <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                      <h3 style={{ margin: 0, fontSize: "16.5px", fontWeight: 700, color: "#ffffff", letterSpacing: "-0.2px" }}>
+                        {c.organization_name}
+                      </h3>
+                      <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>
+                        {subtitle}
+                      </span>
+                    </div>
+                  </div>
+
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      padding: "2px 8px",
+                      borderRadius: "10px",
+                      backgroundColor: "rgba(16, 185, 129, 0.12)",
+                      border: "1px solid rgba(16, 185, 129, 0.3)",
+                      color: "#34d399",
+                      fontSize: "11px",
+                      fontWeight: 700,
+                      flexShrink: 0,
+                    }}
+                  >
+                    <span style={{ width: "5px", height: "5px", borderRadius: "50%", backgroundColor: "#10b981" }} />
+                    Active
+                  </span>
+                </div>
+
+                {/* Middle Details Section */}
+                <div
+                  style={{
+                    backgroundColor: "rgba(0, 0, 0, 0.2)",
+                    borderRadius: "6px",
+                    border: "1px solid rgba(255, 255, 255, 0.05)",
+                    padding: "12px 14px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "8px",
+                    fontSize: "12.5px",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#ffffff" }}>
+                    <Icon name="user" size={13} color="var(--text-muted)" />
+                    <span style={{ fontWeight: 600 }}>{primaryContact.name}</span>
+                    <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>({primaryContact.designation || "Primary Contact"})</span>
+                  </div>
+
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--text-secondary)" }}>
+                    <Icon name="phone" size={13} color="var(--text-muted)" />
+                    <span>{primaryContact.phone || "+91 98260 00000"}</span>
+                    <span style={{ margin: "0 4px", color: "rgba(255, 255, 255, 0.2)" }}>•</span>
+                    <span style={{ color: "var(--text-muted)" }}>{primaryContact.email || "contact@org.in"}</span>
+                  </div>
+
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--text-muted)" }}>
+                    <Icon name="map-pin" size={13} color="var(--text-muted)" />
+                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {c.billing_address || "Bhopal Industrial Zone, Sector 2, MP"}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Bottom Card Footer with Production Status and Button */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: "4px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>Terms:</span>
+                    <span style={{ fontSize: "11.5px", fontWeight: 700, color: "#34d399" }}>Net 30 Days</span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
                       setSelectedClientId(c.id);
                       onSelectClient?.(c.id);
                     }}
-                    style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.05)", cursor: "pointer", transition: "background-color 0.15s ease" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.03)")}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+                    style={{
+                      height: "32px",
+                      padding: "0 14px",
+                      borderRadius: "4px",
+                      backgroundColor: "rgba(59, 130, 246, 0.12)",
+                      border: "1px solid rgba(59, 130, 246, 0.3)",
+                      color: "#60a5fa",
+                      fontSize: "12px",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      transition: "all 0.15s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = "#2563eb";
+                      e.currentTarget.style.color = "#ffffff";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = "rgba(59, 130, 246, 0.12)";
+                      e.currentTarget.style.color = "#60a5fa";
+                    }}
                   >
-                    {/* Organization with Logo Avatar */}
-                    <td style={{ padding: "16px 22px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-                        <div
-                          style={{
-                            width: "42px",
-                            height: "42px",
-                            borderRadius: "10px",
-                            background: isNw
-                              ? "linear-gradient(135deg, #d97706 0%, #78350f 100%)"
-                              : "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            fontSize: "18px",
-                            fontWeight: 800,
-                            color: "#fff",
-                            flexShrink: 0,
-                            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.35)",
-                          }}
-                        >
-                          {isNw ? "🏢" : c.organization_name.slice(0, 2).toUpperCase()}
-                        </div>
-                        <div>
-                          <div style={{ fontWeight: 700, color: "#fff", fontSize: "14px" }}>{c.organization_name}</div>
-                          <div style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "2px" }}>{subtitle}</div>
-                        </div>
-                      </div>
-                    </td>
-
-                    {/* Client Code */}
-                    <td style={{ padding: "16px 22px", fontFamily: "var(--font-mono)", fontWeight: 700, color: "var(--accent-text)" }}>
-                      {c.client_code}
-                    </td>
-
-                    {/* Primary Contact */}
-                    <td style={{ padding: "16px 22px" }}>
-                      <div style={{ fontWeight: 600, color: "#e2e8f0" }}>
-                        {c.contacts?.[0]?.name || "Authorized Director"}
-                      </div>
-                      <div style={{ fontSize: "11.5px", color: "var(--text-muted)" }}>
-                        {c.contacts?.[0]?.phone || "+91 98260 00000"}
-                      </div>
-                    </td>
-
-                    {/* Tax ID */}
-                    <td style={{ padding: "16px 22px", fontFamily: "var(--font-mono)", color: "var(--text-secondary)" }}>
-                      {c.tax_identifier || "23AAAAA0000A1Z5"}
-                    </td>
-
-                    {/* Status */}
-                    <td style={{ padding: "16px 22px" }}>
-                      <span
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "5px",
-                          padding: "2px 8px",
-                          borderRadius: "10px",
-                          backgroundColor: "rgba(16, 185, 129, 0.12)",
-                          border: "1px solid rgba(16, 185, 129, 0.3)",
-                          color: "#34d399",
-                          fontSize: "11px",
-                          fontWeight: 700,
-                        }}
-                      >
-                        <span style={{ width: "5px", height: "5px", borderRadius: "50%", backgroundColor: "#10b981" }} />
-                        Active Contract
-                      </span>
-                    </td>
-
-                    {/* Action Button */}
-                    <td style={{ padding: "16px 22px", textAlign: "right" }}>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedClientId(c.id);
-                          onSelectClient?.(c.id);
-                        }}
-                        style={{
-                          height: "34px",
-                          padding: "0 16px",
-                          borderRadius: "4px",
-                          backgroundColor: "rgba(59, 130, 246, 0.12)",
-                          border: "1px solid rgba(59, 130, 246, 0.3)",
-                          color: "#60a5fa",
-                          fontSize: "12.5px",
-                          fontWeight: 700,
-                          cursor: "pointer",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "6px",
-                          transition: "all 0.15s ease",
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = "#2563eb";
-                          e.currentTarget.style.color = "#ffffff";
-                          e.currentTarget.style.boxShadow = "0 3px 10px rgba(37, 99, 235, 0.4)";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = "rgba(59, 130, 246, 0.12)";
-                          e.currentTarget.style.color = "#60a5fa";
-                          e.currentTarget.style.boxShadow = "none";
-                        }}
-                      >
-                        <span>Open Workspace</span>
-                        <span>→</span>
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                    <span>Open Workspace</span>
+                    <span>→</span>
+                  </button>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 

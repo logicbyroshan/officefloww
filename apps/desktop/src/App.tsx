@@ -22,7 +22,6 @@ import { TasksView } from "./views/tasks/TasksView";
 import { StaffView } from "./views/staff/StaffView";
 import { StockDashboardView } from "./views/stock/StockDashboardView";
 import { ClientsView } from "./views/clients/ClientsView";
-import { ClientDetailView } from "./views/clients/ClientDetailView";
 import { OrderDetailView } from "./views/orders/OrderDetailView";
 import { NewOrderModal } from "./views/orders/NewOrderModal";
 import { NewClientModal } from "./views/clients/NewClientModal";
@@ -124,18 +123,7 @@ const MainApp: React.FC = () => {
       );
     }
 
-    // 2. Client Detail View (accessible from Clients)
-    if (selectedClientId) {
-      return (
-        <ClientDetailView
-          clientId={selectedClientId}
-          onBack={() => setSelectedClientId(null)}
-          onClientUpdated={refreshClients}
-        />
-      );
-    }
-
-    // 3. Primary Workspaces
+    // 2. Primary Workspaces
     switch (activeSection) {
       case "dashboard":
         return (
@@ -181,6 +169,7 @@ const MainApp: React.FC = () => {
             loading={clientsLoading}
             error={clientsError}
             onRefresh={refreshClients}
+            initialClientId={selectedClientId}
             onSelectClient={(id) => setSelectedClientId(id)}
             onSelectOrder={(id) => setSelectedOrderId(id)}
             onNewOrder={() => setIsNewOrderOpen(true)}

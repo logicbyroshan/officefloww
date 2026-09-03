@@ -154,13 +154,12 @@ export const TasksView: React.FC<TasksViewProps> = ({
       render: (t) => (
         <span
           style={{
-            fontFamily: "var(--font-mono)",
             fontSize: "12px",
             color: "var(--accent-text)",
             fontWeight: 600,
           }}
         >
-          {t.order_id ? `#ORD-${t.order_id.slice(0, 8)}` : "Internal Job"}
+          {t.order_id ? "Client Production" : "Internal Floor Job"}
         </span>
       ),
     },

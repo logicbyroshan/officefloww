@@ -54,11 +54,10 @@ export const OrdersView: React.FC<OrdersViewProps> = ({
   const columns: Column<Order>[] = [
     {
       key: "order_number",
-      header: "Order Number",
-      width: "140px",
+      header: "Production Order",
       render: (o) => (
-        <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: "var(--accent-text)" }}>
-          {o.order_number}
+        <span style={{ fontWeight: 700, color: "#ffffff" }}>
+          {o.notes || "Custom Production Batch"}
         </span>
       ),
     },
