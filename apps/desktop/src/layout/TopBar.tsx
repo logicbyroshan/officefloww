@@ -279,15 +279,29 @@ export const TopBar: React.FC<TopBarProps> = ({
             gap: "7px",
             fontSize: "12px",
             fontWeight: 500,
-            color: connected ? "var(--text-secondary)" : "var(--status-error)",
+            color: connected
+              ? "#34d399"
+              : localStorage.getItem("officefloww_offline_mode") === "true"
+              ? "#f59e0b"
+              : "var(--status-error)",
             padding: "5px 10px",
-            backgroundColor: connected ? "rgba(255, 255, 255, 0.03)" : "var(--status-error-soft)",
+            backgroundColor: connected
+              ? "rgba(16, 185, 129, 0.1)"
+              : localStorage.getItem("officefloww_offline_mode") === "true"
+              ? "rgba(245, 158, 11, 0.1)"
+              : "var(--status-error-soft)",
             borderRadius: "4px",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
+            border: "1px solid " + (connected ? "rgba(16, 185, 129, 0.25)" : "rgba(255, 255, 255, 0.08)"),
           }}
         >
           <StatusDot status={connected ? "online" : "offline"} size={7} />
-          <span>{connected ? "FastAPI Connected" : "Disconnected"}</span>
+          <span>
+            {connected
+              ? "FastAPI Connected"
+              : localStorage.getItem("officefloww_offline_mode") === "true"
+              ? "Local Mode"
+              : "Disconnected"}
+          </span>
         </div>
 
         {/* User Account / Role Switcher Popover */}

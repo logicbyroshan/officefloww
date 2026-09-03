@@ -111,7 +111,8 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
     {
       key: "actions",
       header: "",
-      width: "80px",
+      width: "95px",
+      align: "right",
       render: (c) => (
         <button
           type="button"
@@ -120,16 +121,36 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
             onSelectClient(c.id);
           }}
           style={{
-            padding: "4px 8px",
-            borderRadius: "3px",
-            backgroundColor: "rgba(255, 255, 255, 0.04)",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
+            display: "inline-flex",
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "5px",
+            padding: "5px 12px",
+            borderRadius: "4px",
+            backgroundColor: "rgba(255, 255, 255, 0.05)",
+            border: "1px solid rgba(255, 255, 255, 0.1)",
             color: "var(--text-secondary)",
-            fontSize: "11.5px",
+            fontSize: "12px",
+            fontWeight: 500,
             cursor: "pointer",
+            whiteSpace: "nowrap",
+            lineHeight: 1,
+            transition: "all 0.15s ease",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = "rgba(255, 138, 115, 0.15)";
+            e.currentTarget.style.borderColor = "var(--accent-border)";
+            e.currentTarget.style.color = "var(--accent-text)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
+            e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
+            e.currentTarget.style.color = "var(--text-secondary)";
           }}
         >
-          View →
+          <span>View</span>
+          <span style={{ fontSize: "11px" }}>→</span>
         </button>
       ),
     },

@@ -264,7 +264,7 @@ export const BillingView: React.FC = () => {
       header: "",
       width: "120px",
       render: (inv) => (
-        <div style={{ display: "flex", gap: "6px" }}>
+        <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
           {inv.total > inv.paid_amount && (
             <button
               type="button"
@@ -274,7 +274,11 @@ export const BillingView: React.FC = () => {
                 setIsPaymentModalOpen(true);
               }}
               style={{
-                padding: "3px 8px",
+                display: "inline-flex",
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: "4px 8px",
                 borderRadius: "3px",
                 backgroundColor: "rgba(255, 138, 115, 0.15)",
                 border: "1px solid var(--accent-border)",
@@ -282,6 +286,8 @@ export const BillingView: React.FC = () => {
                 fontSize: "11px",
                 fontWeight: 600,
                 cursor: "pointer",
+                whiteSpace: "nowrap",
+                lineHeight: 1,
               }}
             >
               Collect
@@ -291,13 +297,19 @@ export const BillingView: React.FC = () => {
             type="button"
             onClick={() => success("PDF Generated", `Invoice ${inv.invoice_number} downloaded.`)}
             style={{
-              padding: "3px 6px",
+              display: "inline-flex",
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "4px 8px",
               borderRadius: "3px",
-              backgroundColor: "rgba(255, 255, 255, 0.04)",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
+              backgroundColor: "rgba(255, 255, 255, 0.05)",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
               color: "var(--text-secondary)",
               fontSize: "11px",
               cursor: "pointer",
+              whiteSpace: "nowrap",
+              lineHeight: 1,
             }}
           >
             PDF

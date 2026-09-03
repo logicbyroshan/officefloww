@@ -125,7 +125,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     <div style={{ display: "flex", flexDirection: "column", height: "100%", overflowY: "auto" }}>
       {/* Header with live operational status */}
       <PageHeader
-        title="Dashboard"
+        title="Home"
         badge={
           <span
             style={{

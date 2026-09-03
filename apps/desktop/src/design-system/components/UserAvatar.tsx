@@ -58,41 +58,84 @@ export const ConnectionBanner: React.FC<{
   connected: boolean;
   onRetry?: () => void;
 }> = ({ connected, onRetry }) => {
-  if (connected) return null;
+  const isOfflineMode = localStorage.getItem("officefloww_offline_mode") === "true";
 
-  return (
-    <div
-      style={{
-        backgroundColor: "var(--status-error)",
-        color: "#ffffff",
-        padding: "6px 16px",
-        fontSize: "12px",
-        fontWeight: 600,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        zIndex: 900,
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-        <span>⚠️ Connection to backend lost. Changes cannot be saved.</span>
+  // If in deliberate offline mode, show a subtle amber notice — not an error
+  if (!connected && isOfflineMode) {
+    return (
+      <div
+        style={{
+          backgroundColor: "rgba(245, 158, 11, 0.12)",
+          borderBottom: "1px solid rgba(245, 158, 11, 0.25)",
+          color: "#f59e0b",
+          padding: "4px 16px",
+          fontSize: "11.5px",
+          fontWeight: 500,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          zIndex: 900,
+        }}
+      >
+        <span>⚡ Offline Mode — data is local. Connect backend at Settings → FastAPI Core Server to sync.</span>
+        {onRetry && (
+          <button
+            onClick={onRetry}
+            style={{
+              backgroundColor: "rgba(245, 158, 11, 0.15)",
+              border: "1px solid rgba(245, 158, 11, 0.3)",
+              color: "#f59e0b",
+              padding: "2px 10px",
+              fontSize: "11px",
+              fontWeight: 600,
+              borderRadius: "3px",
+              cursor: "pointer",
+            }}
+          >
+            Retry
+          </button>
+        )}
       </div>
-      {onRetry && (
-        <button
-          onClick={onRetry}
-          style={{
-            backgroundColor: "rgba(255,255,255,0.2)",
-            border: "1px solid rgba(255,255,255,0.4)",
-            color: "#fff",
-            padding: "2px 8px",
-            fontSize: "11px",
-            borderRadius: "var(--radius-xs)",
-            cursor: "pointer",
-          }}
-        >
-          Retry Connection
-        </button>
-      )}
-    </div>
-  );
+    );
+  }
+
+  // Unexpected disconnection — show red error
+  if (!connected) {
+    return (
+      <div
+        style={{
+          backgroundColor: "var(--status-error)",
+          color: "#ffffff",
+          padding: "5px 16px",
+          fontSize: "12px",
+          fontWeight: 600,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          zIndex: 900,
+        }}
+      >
+        <span>⚠️ Connection to backend lost. Changes cannot be saved.</span>
+        {onRetry && (
+          <button
+            onClick={onRetry}
+            style={{
+              backgroundColor: "rgba(255,255,255,0.2)",
+              border: "1px solid rgba(255,255,255,0.4)",
+              color: "#fff",
+              padding: "2px 8px",
+              fontSize: "11px",
+              borderRadius: "3px",
+              cursor: "pointer",
+            }}
+          >
+            Retry Connection
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  return null;
 };
+

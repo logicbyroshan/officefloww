@@ -21,42 +21,47 @@ export const Button: React.FC<ButtonProps> = ({
   ...props
 }) => {
   const getStyles = (): React.CSSProperties => {
-    let bg = "var(--accent-gradient, var(--accent))";
-    let color = "var(--accent-contrast, #111827)";
-    let border = "none";
-    let hoverBg = "var(--accent-hover)";
+    let background = "linear-gradient(135deg, #ff9980 0%, #ff6b8b 100%)";
+    let color = "#0f172a";
+    let border = "1px solid rgba(255, 255, 255, 0.25)";
+    let fontWeight = 650;
+    let boxShadow = "0 2px 8px rgba(255, 107, 139, 0.25)";
 
     if (variant === "secondary") {
-      bg = "var(--bg-muted)";
-      color = "var(--text-primary)";
-      border = "1px solid var(--border-medium)";
-      hoverBg = "var(--bg-card-hover)";
+      background = "rgba(255, 255, 255, 0.05)";
+      color = "var(--text-primary, #f8fafc)";
+      border = "1px solid rgba(255, 255, 255, 0.12)";
+      fontWeight = 500;
+      boxShadow = "none";
     } else if (variant === "outline") {
-      bg = "transparent";
-      color = "var(--text-primary)";
-      border = "1px solid var(--border-medium)";
-      hoverBg = "var(--bg-muted)";
+      background = "transparent";
+      color = "var(--text-primary, #f8fafc)";
+      border = "1px solid var(--border-medium, #2a3346)";
+      fontWeight = 500;
+      boxShadow = "none";
     } else if (variant === "danger") {
-      bg = "var(--status-error)";
-      color = "#fff";
-      border = "1px solid var(--status-error)";
-      hoverBg = "#dc2626";
+      background = "var(--status-error, #ef4444)";
+      color = "#ffffff";
+      border = "1px solid rgba(255, 255, 255, 0.2)";
+      fontWeight = 600;
+      boxShadow = "0 2px 6px rgba(239, 68, 68, 0.25)";
     } else if (variant === "ghost") {
-      bg = "transparent";
-      color = "var(--text-secondary)";
+      background = "transparent";
+      color = "var(--text-secondary, #cbd5e1)";
       border = "1px solid transparent";
-      hoverBg = "var(--bg-muted)";
+      fontWeight = 500;
+      boxShadow = "none";
     }
 
-    let padding = "6px 12px";
+    let padding = "6px 14px";
     let fontSize = "12px";
     let height = "30px";
     if (size === "sm") {
-      padding = "4px 8px";
-      fontSize = "11px";
-      height = "24px";
+      padding = "5px 10px";
+      fontSize = "11.5px";
+      height = "26px";
     } else if (size === "lg") {
-      padding = "8px 16px";
+      padding = "9px 18px";
       fontSize = "13px";
       height = "36px";
     }
@@ -69,17 +74,18 @@ export const Button: React.FC<ButtonProps> = ({
       gap: "6px",
       padding,
       fontSize,
-      fontWeight: 500,
+      fontWeight,
       height,
       boxSizing: "border-box",
       lineHeight: 1,
-      backgroundColor: bg,
+      background,
       color,
       border,
-      borderRadius: "var(--radius-sm)",
+      boxShadow,
+      borderRadius: "var(--radius-sm, 4px)",
       cursor: disabled || loading ? "not-allowed" : "pointer",
       opacity: disabled || loading ? 0.6 : 1,
-      transition: "background-color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease",
+      transition: "all 0.15s ease",
       whiteSpace: "nowrap",
       userSelect: "none",
       ...style,
@@ -184,10 +190,10 @@ export const IconButton: React.FC<IconButtonProps> = ({
         width,
         height,
         padding: 0,
-        backgroundColor: bg,
+        background: bg,
         color,
         border,
-        borderRadius: "var(--radius-sm)",
+        borderRadius: "var(--radius-sm, 4px)",
         cursor: props.disabled ? "not-allowed" : "pointer",
         opacity: props.disabled ? 0.5 : 1,
         transition: "all 0.15s ease",
