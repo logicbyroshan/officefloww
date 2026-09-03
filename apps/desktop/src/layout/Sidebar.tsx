@@ -33,6 +33,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const primaryNav: NavItemDef[] = [
     { id: "dashboard", label: "Home", icon: "dashboard" },
     { id: "clients", label: "Clients", icon: "clients" },
+    { id: "orders", label: "Orders", icon: "orders" },
     { id: "stock", label: "Stock", icon: "stock" },
     { id: "billing", label: "Billing", icon: "billing" },
     { id: "staff", label: "Staff", icon: "staff" },

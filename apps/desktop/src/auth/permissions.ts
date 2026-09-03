@@ -2,6 +2,7 @@ import { UserRole } from "@officefloww/api-types";
 
 export type AppNavSection =
   | "dashboard"
+  | "orders"
   | "tasks"
   | "staff"
   | "labour"
@@ -173,6 +174,7 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
 const ROLE_NAV_SECTIONS: Record<UserRole, AppNavSection[]> = {
   [UserRole.OWNER]: [
     "dashboard",
+    "orders",
     "tasks",
     "staff",
     "labour",
@@ -183,6 +185,7 @@ const ROLE_NAV_SECTIONS: Record<UserRole, AppNavSection[]> = {
   ],
   [UserRole.ADMIN]: [
     "dashboard",
+    "orders",
     "tasks",
     "staff",
     "labour",
@@ -193,6 +196,7 @@ const ROLE_NAV_SECTIONS: Record<UserRole, AppNavSection[]> = {
   ],
   [UserRole.OPERATOR]: [
     "dashboard",
+    "orders",
     "tasks",
     "staff",
     "labour",
@@ -209,6 +213,7 @@ const ROLE_NAV_SECTIONS: Record<UserRole, AppNavSection[]> = {
   ],
   [UserRole.MANAGER]: [
     "dashboard",
+    "orders",
     "tasks",
     "staff",
     "labour",
@@ -219,6 +224,7 @@ const ROLE_NAV_SECTIONS: Record<UserRole, AppNavSection[]> = {
   ],
   [UserRole.SALES]: [
     "dashboard",
+    "orders",
     "tasks",
     "clients",
     "settings",
@@ -256,6 +262,7 @@ const ROLE_NAV_SECTIONS: Record<UserRole, AppNavSection[]> = {
   ],
   [UserRole.ACCOUNTS]: [
     "dashboard",
+    "orders",
     "tasks",
     "clients",
     "billing",

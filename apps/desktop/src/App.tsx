@@ -25,6 +25,7 @@ import { StockDashboardView } from "./views/stock/StockDashboardView";
 import { ClientsView } from "./views/clients/ClientsView";
 import { OrderDetailView } from "./views/orders/OrderDetailView";
 import { NewOrderModal } from "./views/orders/NewOrderModal";
+import { OrdersWorkspaceView } from "./views/orders/OrdersWorkspaceView";
 import { NewClientModal } from "./views/clients/NewClientModal";
 import { BillingView } from "./views/billing/BillingView";
 import { SettingsView } from "./views/settings/SettingsView";
@@ -142,6 +143,13 @@ const MainApp: React.FC = () => {
             onNewOrder={() => setIsNewOrderOpen(true)}
             onNewClient={() => setIsNewClientOpen(true)}
             onNavigateSection={(sec) => setActiveSection(sec)}
+          />
+        );
+
+      case "orders":
+        return (
+          <OrdersWorkspaceView
+            onSelectOrder={(id) => setSelectedOrderId(id)}
           />
         );
 
