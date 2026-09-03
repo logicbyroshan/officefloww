@@ -348,13 +348,15 @@ export const TasksView: React.FC<TasksViewProps> = ({
                 display: "flex",
                 alignItems: "center",
                 gap: "8px",
+                height: "36px",
+                boxSizing: "border-box",
                 backgroundColor: "rgba(0, 0, 0, 0.25)",
                 border: "1px solid rgba(255, 255, 255, 0.08)",
                 borderRadius: "4px",
-                padding: "4px 10px",
+                padding: "0 12px",
               }}
             >
-              <Icon name="search" size={13} color="var(--text-muted)" />
+              <Icon name="search" size={14} color="var(--text-muted)" />
               <input
                 type="text"
                 placeholder="Filter tasks..."
@@ -364,9 +366,9 @@ export const TasksView: React.FC<TasksViewProps> = ({
                   background: "none",
                   border: "none",
                   color: "#fff",
-                  fontSize: "12px",
+                  fontSize: "12.5px",
                   outline: "none",
-                  width: "140px",
+                  width: "160px",
                 }}
               />
             </div>

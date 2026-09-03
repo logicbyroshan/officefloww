@@ -21,6 +21,7 @@ interface StockRecord {
   item_price: number; // Renamed to Item Price
   active: boolean;
   defaultDestination: string;
+  imageUrl?: string;
   iconName: "layers" | "package" | "tool" | "file-text" | "sliders" | "cpu";
   iconColor: string;
   iconBg: string;
@@ -272,21 +273,40 @@ export const StockDashboardView: React.FC = () => {
   const [categoryFilter, setCategoryFilter] = useState<string>("ALL");
   const [showRecentLog, setShowRecentLog] = useState(false);
 
-  // Modals
-  const [isNewItemModalOpen, setIsNewItemModalOpen] = useState(false);
+  // Drawer and Modals
+  const [isNewItemDrawerOpen, setIsNewItemDrawerOpen] = useState(false);
   const [isQtyModalOpen, setIsQtyModalOpen] = useState(false);
   const [isUsageModalOpen, setIsUsageModalOpen] = useState(false);
 
   // Active item targeted for Qty or Usage adjustment
   const [targetItem, setTargetItem] = useState<StockRecord>(SEED_STOCK_ITEMS[0]);
 
-  // Form states: New Product Entry
+  // Form states: New Product Entry Drawer
+  const [newImage, setNewImage] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
   const [newCategory, setNewCategory] = useState<"RAW_MATERIAL" | "HARDWARE" | "CONSUMABLE">("RAW_MATERIAL");
   const [newUnit, setNewUnit] = useState("pieces");
   const [newQty, setNewQty] = useState("1000");
   const [newPrice, setNewPrice] = useState("10.00");
   const [newMinLevel, setNewMinLevel] = useState("200");
+  const [newDestination, setNewDestination] = useState("Thermal Card Press Floor");
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleImageSelect = (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toastError("Invalid file", "Please upload an image file (PNG, JPG, WEBP).");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toastError("File too large", "Image size must be under 5MB.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setNewImage(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
 
   // Form states: Update Quantity Modal
   const [qtyMode, setQtyMode] = useState<"ADD" | "SET" | "DEDUCT">("ADD");
@@ -363,7 +383,8 @@ export const StockDashboardView: React.FC = () => {
       min_stock_level: minLevel,
       item_price: price,
       active: true,
-      defaultDestination: "General Production Floor",
+      defaultDestination: newDestination || "General Production Floor",
+      imageUrl: newImage || undefined,
       iconName: newCategory === "HARDWARE" ? "tool" : newCategory === "CONSUMABLE" ? "sliders" : "layers",
       iconColor: newCategory === "HARDWARE" ? "#c084fc" : newCategory === "CONSUMABLE" ? "#f59e0b" : "#38bdf8",
       iconBg: newCategory === "HARDWARE" ? "rgba(168, 85, 247, 0.12)" : newCategory === "CONSUMABLE" ? "rgba(245, 158, 11, 0.14)" : "rgba(56, 189, 248, 0.12)",
@@ -371,8 +392,9 @@ export const StockDashboardView: React.FC = () => {
 
     setStockItems((prev) => [newItem, ...prev]);
     success("New Product Created", `"${newItem.name}" added to catalog with ${initialQty} ${newUnit}.`);
-    setIsNewItemModalOpen(false);
+    setIsNewItemDrawerOpen(false);
     setNewName("");
+    setNewImage(null);
   };
 
   // Action: Update Quantity of an existing product anytime
@@ -566,7 +588,7 @@ export const StockDashboardView: React.FC = () => {
           ))}
         </div>
 
-        {/* Right: Search Input + Sort + Category + New Product Button (NO Log Usage at top!) */}
+        {/* Right: Search Input + Sort + Category + New Product Button (All matched to 36px height) */}
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           {/* Search Input */}
           <div
@@ -574,13 +596,15 @@ export const StockDashboardView: React.FC = () => {
               display: "flex",
               alignItems: "center",
               gap: "8px",
+              height: "36px",
+              boxSizing: "border-box",
               backgroundColor: "rgba(0, 0, 0, 0.28)",
               border: "1px solid rgba(255, 255, 255, 0.08)",
               borderRadius: "4px",
-              padding: "5px 12px",
+              padding: "0 12px",
             }}
           >
-            <Icon name="search" size={13} color="var(--text-muted)" />
+            <Icon name="search" size={14} color="var(--text-muted)" />
             <input
               type="text"
               placeholder={activeTab === "inventory" ? "Search Product..." : "Search Material Usage..."}
@@ -590,9 +614,9 @@ export const StockDashboardView: React.FC = () => {
                 background: "none",
                 border: "none",
                 color: "#fff",
-                fontSize: "12px",
+                fontSize: "12.5px",
                 outline: "none",
-                width: "170px",
+                width: "180px",
               }}
             />
           </div>
@@ -602,12 +626,14 @@ export const StockDashboardView: React.FC = () => {
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as any)}
             style={{
+              height: "36px",
+              boxSizing: "border-box",
               backgroundColor: "rgba(255, 255, 255, 0.04)",
               border: "1px solid rgba(255, 255, 255, 0.08)",
               borderRadius: "4px",
               color: "var(--text-secondary)",
-              fontSize: "12px",
-              padding: "5px 10px",
+              fontSize: "12.5px",
+              padding: "0 12px",
               cursor: "pointer",
               outline: "none",
             }}
@@ -624,12 +650,14 @@ export const StockDashboardView: React.FC = () => {
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
             style={{
+              height: "36px",
+              boxSizing: "border-box",
               backgroundColor: "rgba(255, 255, 255, 0.04)",
               border: "1px solid rgba(255, 255, 255, 0.08)",
               borderRadius: "4px",
               color: "var(--text-secondary)",
-              fontSize: "12px",
-              padding: "5px 10px",
+              fontSize: "12.5px",
+              padding: "0 12px",
               cursor: "pointer",
               outline: "none",
             }}
@@ -640,12 +668,12 @@ export const StockDashboardView: React.FC = () => {
             <option value="CONSUMABLE" style={{ backgroundColor: "#0e121a" }}>Consumables</option>
           </select>
 
-          {/* + New Product */}
+          {/* + New Product Button (Opens Creation Drawer) */}
           <Button
             variant="primary"
-            size="sm"
+            size="md"
             icon="plus"
-            onClick={() => setIsNewItemModalOpen(true)}
+            onClick={() => setIsNewItemDrawerOpen(true)}
           >
             New Product
           </Button>
@@ -715,23 +743,38 @@ export const StockDashboardView: React.FC = () => {
                     e.currentTarget.style.transform = "none";
                   }}
                 >
-                  {/* Column 1: Visual + Title + Category (Store location removed) */}
+                  {/* Column 1: Visual + Title + Category */}
                   <div style={{ display: "flex", alignItems: "center", gap: "14px", width: "290px", flexShrink: 0 }}>
-                    <div
-                      style={{
-                        width: 44,
-                        height: 44,
-                        borderRadius: "4px",
-                        backgroundColor: item.iconBg,
-                        border: "1px solid rgba(255, 255, 255, 0.08)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        flexShrink: 0,
-                      }}
-                    >
-                      <Icon name={item.iconName} size={20} color={item.iconColor} />
-                    </div>
+                    {item.imageUrl ? (
+                      <img
+                        src={item.imageUrl}
+                        alt={item.name}
+                        style={{
+                          width: 44,
+                          height: 44,
+                          borderRadius: "4px",
+                          objectFit: "cover",
+                          border: "1px solid rgba(255, 255, 255, 0.12)",
+                          flexShrink: 0,
+                        }}
+                      />
+                    ) : (
+                      <div
+                        style={{
+                          width: 44,
+                          height: 44,
+                          borderRadius: "4px",
+                          backgroundColor: item.iconBg,
+                          border: "1px solid rgba(255, 255, 255, 0.08)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                        }}
+                      >
+                        <Icon name={item.iconName} size={20} color={item.iconColor} />
+                      </div>
+                    )}
 
                     <div style={{ display: "flex", flexDirection: "column", gap: "2px", overflow: "hidden" }}>
                       <span
@@ -1026,21 +1069,36 @@ export const StockDashboardView: React.FC = () => {
                 >
                   {/* Column 1: Material Visual & Title */}
                   <div style={{ display: "flex", alignItems: "center", gap: "14px", width: "290px", flexShrink: 0 }}>
-                    <div
-                      style={{
-                        width: 44,
-                        height: 44,
-                        borderRadius: "4px",
-                        backgroundColor: item.iconBg,
-                        border: "1px solid rgba(255, 255, 255, 0.08)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        flexShrink: 0,
-                      }}
-                    >
-                      <Icon name={item.iconName} size={20} color={item.iconColor} />
-                    </div>
+                    {item.imageUrl ? (
+                      <img
+                        src={item.imageUrl}
+                        alt={item.name}
+                        style={{
+                          width: 44,
+                          height: 44,
+                          borderRadius: "4px",
+                          objectFit: "cover",
+                          border: "1px solid rgba(255, 255, 255, 0.12)",
+                          flexShrink: 0,
+                        }}
+                      />
+                    ) : (
+                      <div
+                        style={{
+                          width: 44,
+                          height: 44,
+                          borderRadius: "4px",
+                          backgroundColor: item.iconBg,
+                          border: "1px solid rgba(255, 255, 255, 0.08)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                        }}
+                      >
+                        <Icon name={item.iconName} size={20} color={item.iconColor} />
+                      </div>
+                    )}
 
                     <div style={{ display: "flex", flexDirection: "column", gap: "2px", overflow: "hidden" }}>
                       <span
@@ -1254,87 +1312,348 @@ export const StockDashboardView: React.FC = () => {
         </button>
       </div>
 
-      {/* 1. Modal: New Product / Material Entry Form */}
-      {isNewItemModalOpen && (
-        <Modal
-          isOpen={isNewItemModalOpen}
-          onClose={() => setIsNewItemModalOpen(false)}
-          title="New Product Entry"
-        >
-          <form onSubmit={handleCreateNewItem} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-            <Input
-              label="Product / Material Name"
-              placeholder="e.g. 0.5mm Frosted PVC Sheet"
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              required
-            />
+      {/* 1. Full Slide-Over Drawer: Add New Product / Material with Image Upload */}
+      {isNewItemDrawerOpen && (
+        <>
+          {/* Backdrop */}
+          <div
+            onClick={() => setIsNewItemDrawerOpen(false)}
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(0, 0, 0, 0.7)",
+              backdropFilter: "blur(6px)",
+              zIndex: 999,
+            }}
+          />
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
-              <Select
-                label="Category"
-                value={newCategory}
-                onChange={(e) => setNewCategory(e.target.value as any)}
-                options={[
-                  { value: "RAW_MATERIAL", label: "Raw Material" },
-                  { value: "HARDWARE", label: "Hardware Fitting" },
-                  { value: "CONSUMABLE", label: "Consumable" },
-                ]}
-              />
-
-              <Select
-                label="Unit of Measurement"
-                value={newUnit}
-                onChange={(e) => setNewUnit(e.target.value)}
-                options={[
-                  { value: "sheets", label: "sheets" },
-                  { value: "meters", label: "meters" },
-                  { value: "pieces", label: "pieces" },
-                  { value: "rolls", label: "rolls" },
-                  { value: "liters", label: "liters" },
-                  { value: "kg", label: "kg" },
-                  { value: "boxes", label: "boxes" },
-                ]}
-              />
+          {/* Drawer Panel */}
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              right: 0,
+              bottom: 0,
+              width: "520px",
+              maxWidth: "96vw",
+              backgroundColor: "rgba(14, 18, 26, 0.98)",
+              backdropFilter: "blur(24px)",
+              borderLeft: "1px solid var(--accent-border)",
+              boxShadow: "-16px 0 48px rgba(0, 0, 0, 0.85)",
+              zIndex: 1000,
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            {/* Drawer Header */}
+            <div
+              style={{
+                padding: "20px 24px",
+                borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                flexShrink: 0,
+                backgroundColor: "rgba(255, 255, 255, 0.01)",
+              }}
+            >
+              <div>
+                <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#fff", margin: 0, letterSpacing: "-0.2px" }}>
+                  Add New Product / Material
+                </h2>
+                <span style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "3px", display: "block" }}>
+                  Upload product photo and register material into factory catalog
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsNewItemDrawerOpen(false)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "var(--text-muted)",
+                  cursor: "pointer",
+                  padding: "6px",
+                  display: "flex",
+                  alignItems: "center",
+                  borderRadius: "4px",
+                  transition: "all 0.15s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.08)";
+                  e.currentTarget.style.color = "#fff";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "transparent";
+                  e.currentTarget.style.color = "var(--text-muted)";
+                }}
+              >
+                <Icon name="x" size={18} />
+              </button>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px" }}>
+            {/* Drawer Scrollable Body */}
+            <form
+              onSubmit={handleCreateNewItem}
+              style={{
+                flex: 1,
+                overflowY: "auto",
+                padding: "24px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "18px",
+              }}
+            >
+              {/* 1. PRODUCT IMAGE UPLOAD SECTION (First as requested!) */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <label style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                    Product / Material Image
+                  </label>
+                  <span style={{ fontSize: "11px", color: "var(--accent-text)", fontWeight: 500 }}>
+                    Visual identification
+                  </span>
+                </div>
+
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  accept="image/*"
+                  style={{ display: "none" }}
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      handleImageSelect(e.target.files[0]);
+                    }
+                  }}
+                />
+
+                {newImage ? (
+                  <div
+                    style={{
+                      position: "relative",
+                      width: "100%",
+                      height: "170px",
+                      borderRadius: "6px",
+                      border: "1px solid var(--accent-border)",
+                      overflow: "hidden",
+                      backgroundColor: "rgba(0, 0, 0, 0.4)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <img
+                      src={newImage}
+                      alt="Uploaded Product"
+                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    />
+                    <div
+                      style={{
+                        position: "absolute",
+                        bottom: 10,
+                        right: 10,
+                        display: "flex",
+                        gap: "8px",
+                        backgroundColor: "rgba(14, 18, 26, 0.85)",
+                        backdropFilter: "blur(8px)",
+                        padding: "4px 6px",
+                        borderRadius: "4px",
+                        border: "1px solid rgba(255, 255, 255, 0.1)",
+                      }}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          color: "var(--accent-text)",
+                          fontSize: "11.5px",
+                          fontWeight: 600,
+                          cursor: "pointer",
+                          padding: "3px 6px",
+                        }}
+                      >
+                        Change Photo
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setNewImage(null)}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          color: "#ef4444",
+                          fontSize: "11.5px",
+                          fontWeight: 600,
+                          cursor: "pointer",
+                          padding: "3px 6px",
+                        }}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.currentTarget.style.borderColor = "var(--accent)";
+                    }}
+                    onDragLeave={(e) => {
+                      e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.14)";
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                        handleImageSelect(e.dataTransfer.files[0]);
+                      }
+                    }}
+                    style={{
+                      width: "100%",
+                      height: "140px",
+                      borderRadius: "6px",
+                      border: "2px dashed rgba(255, 255, 255, 0.14)",
+                      backgroundColor: "rgba(255, 255, 255, 0.02)",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "8px",
+                      cursor: "pointer",
+                      transition: "all 0.15s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = "var(--accent-border)";
+                      e.currentTarget.style.backgroundColor = "rgba(255, 138, 115, 0.04)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.14)";
+                      e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.02)";
+                    }}
+                  >
+                    <div style={{ width: 40, height: 40, borderRadius: "50%", backgroundColor: "rgba(255, 138, 115, 0.12)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--accent-text)" }}>
+                      <Icon name="upload" size={18} />
+                    </div>
+                    <div style={{ textAlign: "center" }}>
+                      <span style={{ fontSize: "12.5px", fontWeight: 600, color: "#fff" }}>
+                        Click to upload or drag & drop product photo
+                      </span>
+                      <span style={{ fontSize: "11px", color: "var(--text-muted)", display: "block", marginTop: "2px" }}>
+                        PNG, JPG, WEBP formats up to 5MB
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* 2. PRODUCT / MATERIAL NAME */}
               <Input
-                label="Initial Quantity"
-                type="number"
-                value={newQty}
-                onChange={(e) => setNewQty(e.target.value)}
+                label="Product / Material Name"
+                placeholder="e.g. 0.76mm Frosted Clear PVC Sheet"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
                 required
               />
 
+              {/* 3. CATEGORY & UNIT */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                <Select
+                  label="Category"
+                  value={newCategory}
+                  onChange={(e) => setNewCategory(e.target.value as any)}
+                  options={[
+                    { value: "RAW_MATERIAL", label: "Raw Material" },
+                    { value: "HARDWARE", label: "Hardware Fitting" },
+                    { value: "CONSUMABLE", label: "Consumable" },
+                  ]}
+                />
+
+                <Select
+                  label="Unit of Measurement"
+                  value={newUnit}
+                  onChange={(e) => setNewUnit(e.target.value)}
+                  options={[
+                    { value: "sheets", label: "sheets" },
+                    { value: "meters", label: "meters" },
+                    { value: "pieces", label: "pieces" },
+                    { value: "rolls", label: "rolls" },
+                    { value: "liters", label: "liters" },
+                    { value: "kg", label: "kg" },
+                    { value: "boxes", label: "boxes" },
+                  ]}
+                />
+              </div>
+
+              {/* 4. QUANTITY, PRICE, MIN LEVEL */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" }}>
+                <Input
+                  label="Initial Quantity"
+                  type="number"
+                  value={newQty}
+                  onChange={(e) => setNewQty(e.target.value)}
+                  required
+                />
+
+                <Input
+                  label="Item Price (₹)"
+                  type="number"
+                  step="0.01"
+                  value={newPrice}
+                  onChange={(e) => setNewPrice(e.target.value)}
+                  required
+                />
+
+                <Input
+                  label="Min Safety Level"
+                  type="number"
+                  value={newMinLevel}
+                  onChange={(e) => setNewMinLevel(e.target.value)}
+                  required
+                />
+              </div>
+
+              {/* 5. DESTINATION WORKSTATION */}
               <Input
-                label="Item Price (₹)"
-                type="number"
-                step="0.01"
-                value={newPrice}
-                onChange={(e) => setNewPrice(e.target.value)}
-                required
+                label="Default Factory Line / Destination"
+                placeholder="e.g. Thermal Card Press Floor, Line 1"
+                value={newDestination}
+                onChange={(e) => setNewDestination(e.target.value)}
               />
 
-              <Input
-                label="Min Safety Level"
-                type="number"
-                value={newMinLevel}
-                onChange={(e) => setNewMinLevel(e.target.value)}
-                required
-              />
-            </div>
-
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px", marginTop: "10px" }}>
-              <Button variant="secondary" size="sm" onClick={() => setIsNewItemModalOpen(false)}>
-                Cancel
-              </Button>
-              <Button variant="primary" size="sm" type="submit">
-                Create Product Entry
-              </Button>
-            </div>
-          </form>
-        </Modal>
+              {/* DRAWER FOOTER BUTTONS */}
+              <div
+                style={{
+                  borderTop: "1px solid rgba(255, 255, 255, 0.08)",
+                  paddingTop: "16px",
+                  marginTop: "auto",
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  gap: "10px",
+                }}
+              >
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="md"
+                  onClick={() => setIsNewItemDrawerOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="md"
+                >
+                  Create Product Entry
+                </Button>
+              </div>
+            </form>
+          </div>
+        </>
       )}
 
       {/* 2. Modal: Update Quantity Anytime */}

@@ -53,17 +53,17 @@ export const Button: React.FC<ButtonProps> = ({
       boxShadow = "none";
     }
 
-    let padding = "6px 14px";
-    let fontSize = "12px";
-    let height = "30px";
+    let padding = "0 16px";
+    let fontSize = "12.5px";
+    let height = "36px";
     if (size === "sm") {
-      padding = "5px 10px";
-      fontSize = "11.5px";
-      height = "26px";
+      padding = "0 12px";
+      fontSize = "12px";
+      height = "32px";
     } else if (size === "lg") {
-      padding = "9px 18px";
-      fontSize = "13px";
-      height = "36px";
+      padding = "0 20px";
+      fontSize = "13.5px";
+      height = "42px";
     }
 
     return {

@@ -376,13 +376,15 @@ export const StaffView: React.FC = () => {
               display: "flex",
               alignItems: "center",
               gap: "8px",
+              height: "36px",
+              boxSizing: "border-box",
               backgroundColor: "rgba(0, 0, 0, 0.25)",
               border: "1px solid rgba(255, 255, 255, 0.08)",
               borderRadius: "4px",
-              padding: "4px 10px",
+              padding: "0 12px",
             }}
           >
-            <Icon name="search" size={13} color="var(--text-muted)" />
+            <Icon name="search" size={14} color="var(--text-muted)" />
             <input
               type="text"
               placeholder="Search staff, tools, skills..."
@@ -392,9 +394,9 @@ export const StaffView: React.FC = () => {
                 background: "none",
                 border: "none",
                 color: "#fff",
-                fontSize: "12px",
+                fontSize: "12.5px",
                 outline: "none",
-                width: "160px",
+                width: "180px",
               }}
             />
           </div>

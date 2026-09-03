@@ -54,13 +54,14 @@ export const Input: React.FC<InputProps> = ({
           id={inputId}
           style={{
             width: "100%",
-            height: "32px",
-            padding: icon ? "4px 10px 4px 32px" : "4px 10px",
+            height: "36px",
+            boxSizing: "border-box",
+            padding: icon ? "0 12px 0 34px" : "0 12px",
             backgroundColor: "var(--bg-input)",
             color: "var(--text-primary)",
             border: `1px solid ${error ? "var(--status-error)" : "var(--border-medium)"}`,
             borderRadius: "var(--radius-sm)",
-            fontSize: "12px",
+            fontSize: "12.5px",
             transition: "border-color 0.15s ease",
             ...style,
           }}
@@ -113,13 +114,14 @@ export const SearchInput: React.FC<SearchInputProps> = ({
         placeholder={placeholder}
         style={{
           width: "100%",
-          height: "30px",
-          padding: "4px 28px 4px 30px",
+          height: "36px",
+          boxSizing: "border-box",
+          padding: "0 28px 0 32px",
           backgroundColor: "var(--bg-input)",
           color: "var(--text-primary)",
           border: "1px solid var(--border-medium)",
           borderRadius: "var(--radius-sm)",
-          fontSize: "12px",
+          fontSize: "12.5px",
           ...style,
         }}
         {...props}
@@ -188,13 +190,14 @@ export const Select: React.FC<SelectProps> = ({
         id={selectId}
         style={{
           width: "100%",
-          height: "32px",
-          padding: "4px 10px",
+          height: "36px",
+          boxSizing: "border-box",
+          padding: "0 12px",
           backgroundColor: "var(--bg-input)",
           color: "var(--text-primary)",
           border: `1px solid ${error ? "var(--status-error)" : "var(--border-medium)"}`,
           borderRadius: "var(--radius-sm)",
-          fontSize: "12px",
+          fontSize: "12.5px",
           cursor: "pointer",
           ...style,
         }}
