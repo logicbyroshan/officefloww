@@ -20,6 +20,7 @@ import { LoginView } from "./views/auth/LoginView";
 import { DashboardView } from "./views/dashboard/DashboardView";
 import { TasksView } from "./views/tasks/TasksView";
 import { StaffView } from "./views/staff/StaffView";
+import { LabourView } from "./views/labour/LabourView";
 import { StockDashboardView } from "./views/stock/StockDashboardView";
 import { ClientsView } from "./views/clients/ClientsView";
 import { OrderDetailView } from "./views/orders/OrderDetailView";
@@ -157,6 +158,9 @@ const MainApp: React.FC = () => {
 
       case "staff":
         return <StaffView />;
+
+      case "labour":
+        return <LabourView />;
 
       case "stock":
         return <StockDashboardView />;

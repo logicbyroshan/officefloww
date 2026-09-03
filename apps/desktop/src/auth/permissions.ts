@@ -4,6 +4,7 @@ export type AppNavSection =
   | "dashboard"
   | "tasks"
   | "staff"
+  | "labour"
   | "stock"
   | "clients"
   | "billing"
@@ -174,6 +175,7 @@ const ROLE_NAV_SECTIONS: Record<UserRole, AppNavSection[]> = {
     "dashboard",
     "tasks",
     "staff",
+    "labour",
     "stock",
     "clients",
     "billing",
@@ -183,6 +185,7 @@ const ROLE_NAV_SECTIONS: Record<UserRole, AppNavSection[]> = {
     "dashboard",
     "tasks",
     "staff",
+    "labour",
     "stock",
     "clients",
     "billing",
@@ -192,6 +195,7 @@ const ROLE_NAV_SECTIONS: Record<UserRole, AppNavSection[]> = {
     "dashboard",
     "tasks",
     "staff",
+    "labour",
     "stock",
     "clients",
     "billing",
@@ -207,6 +211,7 @@ const ROLE_NAV_SECTIONS: Record<UserRole, AppNavSection[]> = {
     "dashboard",
     "tasks",
     "staff",
+    "labour",
     "stock",
     "clients",
     "billing",
