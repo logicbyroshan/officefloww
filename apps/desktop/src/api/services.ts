@@ -55,6 +55,56 @@ const isOffline = () => localStorage.getItem("officefloww_offline_mode") === "tr
 
 const OFFLINE_CLIENTS: Client[] = [
   {
+    id: "c-0",
+    client_code: "CLT-0000",
+    organization_name: "Northwind Coffee",
+    tax_identifier: "23NWCFE9999N1Z0",
+    billing_address: "42 Roaster's Alley, Old Bhopal, MP 462001",
+    delivery_address: "Central Warehouse, 10 Bean Depot, MP 462002",
+    is_active: true,
+    created_at: "2024-03-11T09:00:00Z",
+    updated_at: "2026-09-03T09:00:00Z",
+    notes: "Retail & F&B • Owner Sophia Williams • Client since 2024-03-11 • $150/hr default rate",
+    contacts: [
+      {
+        id: "cnt-01",
+        client_id: "c-0",
+        name: "Sophia Williams",
+        phone: "+91 98260 11223",
+        email: "sophia@northwindcoffee.com",
+        designation: "Owner & Managing Director",
+        is_primary: true,
+        is_active: true,
+        created_at: "2024-03-11T09:00:00Z",
+        updated_at: "2026-09-03T09:00:00Z",
+      },
+      {
+        id: "cnt-02",
+        client_id: "c-0",
+        name: "David Vance",
+        phone: "+91 98260 44556",
+        email: "vance.d@northwindcoffee.com",
+        designation: "Head of Procurement & Brand Ops",
+        is_primary: false,
+        is_active: true,
+        created_at: "2024-05-18T10:00:00Z",
+        updated_at: "2026-09-03T09:00:00Z",
+      },
+      {
+        id: "cnt-03",
+        client_id: "c-0",
+        name: "Priya Patel",
+        phone: "+91 98260 77889",
+        email: "accounts@northwindcoffee.com",
+        designation: "Accounts & Billing Coordinator",
+        is_primary: false,
+        is_active: true,
+        created_at: "2024-08-01T11:00:00Z",
+        updated_at: "2026-09-03T09:00:00Z",
+      },
+    ],
+  },
+  {
     id: "c-1",
     client_code: "CLT-0001",
     organization_name: "St. Xavier's High School",
@@ -101,6 +151,19 @@ const OFFLINE_CLIENTS: Client[] = [
 ];
 
 const OFFLINE_ORDERS: Order[] = [
+  {
+    id: "o-0",
+    order_number: "ORD-2026-0000",
+    client_id: "c-0",
+    status: OrderStatus.IN_PRODUCTION,
+    priority: OrderPriority.HIGH,
+    promised_delivery_date: "2026-09-18T00:00:00Z",
+    total_amount: 1024000,
+    notes: "Custom NFC Loyalty Smartcards & Branded Velvet Lanyards for 12 Café Branches",
+    created_at: "2026-08-25T10:00:00Z",
+    updated_at: "2026-09-03T08:00:00Z",
+    items: [],
+  },
   {
     id: "o-1",
     order_number: "ORD-2026-0001",
