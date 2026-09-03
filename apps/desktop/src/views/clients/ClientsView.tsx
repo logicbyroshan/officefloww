@@ -205,10 +205,8 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
 }) => {
   const { success } = useToast();
 
-  // Selected client for details view (defaults to first client e.g. St. Xavier's or Northwind)
-  const [selectedClientId, setSelectedClientId] = useState<string | null>(
-    clients.length > 0 ? clients[0].id : null
-  );
+  // Selected client for details view (defaults to null so directory list is shown first)
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
 
   // Active Tab inside Client Management View
   const [clientTab, setClientTab] = useState<
@@ -1821,10 +1819,22 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
   }
 
   // ----------------------------------------------------
-  // RENDER: FULL CLIENTS DIRECTORY (When < All clients is clicked)
+  // RENDER: FULL CLIENTS DIRECTORY (When < All clients is clicked or on initial visit)
   // ----------------------------------------------------
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", width: "100%", boxSizing: "border-box", overflowY: "auto" }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        width: "100%",
+        boxSizing: "border-box",
+        overflowY: "auto",
+        backgroundColor: "#070a10",
+        backgroundImage: "radial-gradient(ellipse 80% 50% at 50% -20%, rgba(255, 138, 115, 0.04), transparent)",
+        color: "#e2e8f0",
+      }}
+    >
       <PageHeader
         title="Client Directory & Institutional Accounts"
         badge={
@@ -1849,109 +1859,302 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
         }}
       />
 
-      <div style={{ padding: "16px 28px", display: "flex", flexDirection: "column", gap: "14px", width: "100%", boxSizing: "border-box" }}>
-        {/* Search and Action Bar */}
+      <div style={{ padding: "20px 32px", display: "flex", flexDirection: "column", gap: "18px", width: "100%", boxSizing: "border-box" }}>
+        {/* KPI Summary Tiles for Directory */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(4, 1fr)",
+            gap: "16px",
+            width: "100%",
+            boxSizing: "border-box",
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: "rgba(18, 23, 35, 0.75)",
+              backdropFilter: "blur(16px)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              borderRadius: "8px",
+              padding: "16px 20px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "4px",
+            }}
+          >
+            <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+              Total Registered Clients
+            </span>
+            <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
+              <span style={{ fontFamily: "var(--font-mono)", fontSize: "24px", fontWeight: 800, color: "#fff" }}>
+                {clients.length}
+              </span>
+              <span style={{ fontSize: "12px", color: "#34d399", fontWeight: 600 }}>Active Institutions</span>
+            </div>
+          </div>
+
+          <div
+            style={{
+              backgroundColor: "rgba(18, 23, 35, 0.75)",
+              backdropFilter: "blur(16px)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              borderRadius: "8px",
+              padding: "16px 20px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "4px",
+            }}
+          >
+            <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+              Total Contract Book
+            </span>
+            <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
+              <span style={{ fontFamily: "var(--font-mono)", fontSize: "24px", fontWeight: 800, color: "#ffffff" }}>
+                ₹48.25 L
+              </span>
+              <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>Order Value</span>
+            </div>
+          </div>
+
+          <div
+            style={{
+              backgroundColor: "rgba(18, 23, 35, 0.75)",
+              backdropFilter: "blur(16px)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              borderRadius: "8px",
+              padding: "16px 20px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "4px",
+            }}
+          >
+            <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+              Active Floor Batches
+            </span>
+            <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
+              <span style={{ fontFamily: "var(--font-mono)", fontSize: "24px", fontWeight: 800, color: "#38bdf8" }}>
+                8 Runs
+              </span>
+              <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>In Manufacturing</span>
+            </div>
+          </div>
+
+          <div
+            style={{
+              backgroundColor: "rgba(18, 23, 35, 0.75)",
+              backdropFilter: "blur(16px)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              borderRadius: "8px",
+              padding: "16px 20px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "4px",
+            }}
+          >
+            <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+              Settlement Health
+            </span>
+            <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
+              <span style={{ fontFamily: "var(--font-mono)", fontSize: "24px", fontWeight: 800, color: "#34d399" }}>
+                98.4%
+              </span>
+              <span style={{ fontSize: "12px", color: "#10b981", fontWeight: 600 }}>Prime Recovery</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Search and Filter Controls */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", width: "100%" }}>
           <div
             style={{
               display: "flex",
               alignItems: "center",
               gap: "8px",
-              height: "36px",
+              height: "38px",
               boxSizing: "border-box",
-              backgroundColor: "rgba(0, 0, 0, 0.25)",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
-              borderRadius: "4px",
-              padding: "0 12px",
+              backgroundColor: "rgba(0, 0, 0, 0.3)",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
+              borderRadius: "5px",
+              padding: "0 14px",
+              width: "320px",
             }}
           >
             <Icon name="search" size={14} color="var(--text-muted)" />
             <input
               type="text"
-              placeholder="Search clients, code, city..."
+              placeholder="Search by client name, code, GSTIN..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               style={{
                 background: "none",
                 border: "none",
                 color: "#fff",
-                fontSize: "12.5px",
+                fontSize: "13px",
                 outline: "none",
-                width: "240px",
+                width: "100%",
               }}
             />
           </div>
+
+          <span style={{ fontSize: "12.5px", color: "var(--text-muted)" }}>
+            Showing {filteredClients.length} of {clients.length} institutions
+          </span>
         </div>
 
-        {/* Clients Directory Table (Full Width) */}
+        {/* Clients Directory Table (Full Width with Luxury Styling) */}
         <div
           style={{
-            backgroundColor: "rgba(19, 23, 34, 0.85)",
-            backdropFilter: "blur(14px)",
+            backgroundColor: "rgba(18, 23, 35, 0.75)",
+            backdropFilter: "blur(18px)",
             border: "1px solid rgba(255, 255, 255, 0.08)",
-            borderRadius: "6px",
+            borderRadius: "8px",
             overflow: "hidden",
             width: "100%",
+            boxSizing: "border-box",
           }}
         >
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", textAlign: "left" }}>
             <thead>
               <tr style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.08)", color: "var(--text-muted)", fontSize: "11px", textTransform: "uppercase" }}>
-                <th style={{ padding: "14px 18px" }}>Client Code</th>
-                <th style={{ padding: "14px 18px" }}>Organization Name</th>
-                <th style={{ padding: "14px 18px" }}>Primary Stakeholder</th>
-                <th style={{ padding: "14px 18px" }}>Tax ID / GSTIN</th>
-                <th style={{ padding: "14px 18px", textAlign: "right" }}>Action</th>
+                <th style={{ padding: "16px 22px" }}>Client Organization</th>
+                <th style={{ padding: "16px 22px" }}>Code</th>
+                <th style={{ padding: "16px 22px" }}>Key Stakeholder</th>
+                <th style={{ padding: "16px 22px" }}>Tax GSTIN</th>
+                <th style={{ padding: "16px 22px" }}>Status</th>
+                <th style={{ padding: "16px 22px", textAlign: "right" }}>Workspace Action</th>
               </tr>
             </thead>
             <tbody>
-              {filteredClients.map((c) => (
-                <tr
-                  key={c.id}
-                  onClick={() => {
-                    setSelectedClientId(c.id);
-                    onSelectClient?.(c.id);
-                  }}
-                  style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.05)", cursor: "pointer" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.03)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
-                >
-                  <td style={{ padding: "14px 18px", fontFamily: "var(--font-mono)", fontWeight: 700, color: "var(--accent-text)" }}>
-                    {c.client_code}
-                  </td>
-                  <td style={{ padding: "14px 18px", fontWeight: 700, color: "#fff" }}>
-                    {c.organization_name}
-                  </td>
-                  <td style={{ padding: "14px 18px", color: "var(--text-secondary)" }}>
-                    {c.contacts?.[0]?.name || "Authorized Representative"}
-                  </td>
-                  <td style={{ padding: "14px 18px", fontFamily: "var(--font-mono)", color: "var(--text-muted)" }}>
-                    {c.tax_identifier || "23AAAAA0000A1Z5"}
-                  </td>
-                  <td style={{ padding: "14px 18px", textAlign: "right" }}>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedClientId(c.id);
-                        onSelectClient?.(c.id);
-                      }}
-                      style={{
-                        padding: "5px 14px",
-                        borderRadius: "4px",
-                        backgroundColor: "rgba(255, 255, 255, 0.05)",
-                        border: "1px solid rgba(255, 255, 255, 0.1)",
-                        color: "var(--text-secondary)",
-                        fontSize: "12px",
-                        fontWeight: 600,
-                        cursor: "pointer",
-                      }}
-                    >
-                      Manage Dashboard →
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {filteredClients.map((c) => {
+                const isNw = c.organization_name.toLowerCase().includes("northwind");
+                const subtitle = isNw
+                  ? "Enterprise NFC & Smartcard Access Control"
+                  : c.notes || "Institutional RFID Badges & Security Systems";
+
+                return (
+                  <tr
+                    key={c.id}
+                    onClick={() => {
+                      setSelectedClientId(c.id);
+                      onSelectClient?.(c.id);
+                    }}
+                    style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.05)", cursor: "pointer", transition: "background-color 0.15s ease" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.03)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+                  >
+                    {/* Organization with Logo Avatar */}
+                    <td style={{ padding: "16px 22px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+                        <div
+                          style={{
+                            width: "42px",
+                            height: "42px",
+                            borderRadius: "10px",
+                            background: isNw
+                              ? "linear-gradient(135deg, #d97706 0%, #78350f 100%)"
+                              : "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: "18px",
+                            fontWeight: 800,
+                            color: "#fff",
+                            flexShrink: 0,
+                            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.35)",
+                          }}
+                        >
+                          {isNw ? "🏢" : c.organization_name.slice(0, 2).toUpperCase()}
+                        </div>
+                        <div>
+                          <div style={{ fontWeight: 700, color: "#fff", fontSize: "14px" }}>{c.organization_name}</div>
+                          <div style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "2px" }}>{subtitle}</div>
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Client Code */}
+                    <td style={{ padding: "16px 22px", fontFamily: "var(--font-mono)", fontWeight: 700, color: "var(--accent-text)" }}>
+                      {c.client_code}
+                    </td>
+
+                    {/* Primary Contact */}
+                    <td style={{ padding: "16px 22px" }}>
+                      <div style={{ fontWeight: 600, color: "#e2e8f0" }}>
+                        {c.contacts?.[0]?.name || "Authorized Director"}
+                      </div>
+                      <div style={{ fontSize: "11.5px", color: "var(--text-muted)" }}>
+                        {c.contacts?.[0]?.phone || "+91 98260 00000"}
+                      </div>
+                    </td>
+
+                    {/* Tax ID */}
+                    <td style={{ padding: "16px 22px", fontFamily: "var(--font-mono)", color: "var(--text-secondary)" }}>
+                      {c.tax_identifier || "23AAAAA0000A1Z5"}
+                    </td>
+
+                    {/* Status */}
+                    <td style={{ padding: "16px 22px" }}>
+                      <span
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "5px",
+                          padding: "2px 8px",
+                          borderRadius: "10px",
+                          backgroundColor: "rgba(16, 185, 129, 0.12)",
+                          border: "1px solid rgba(16, 185, 129, 0.3)",
+                          color: "#34d399",
+                          fontSize: "11px",
+                          fontWeight: 700,
+                        }}
+                      >
+                        <span style={{ width: "5px", height: "5px", borderRadius: "50%", backgroundColor: "#10b981" }} />
+                        Active Contract
+                      </span>
+                    </td>
+
+                    {/* Action Button */}
+                    <td style={{ padding: "16px 22px", textAlign: "right" }}>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedClientId(c.id);
+                          onSelectClient?.(c.id);
+                        }}
+                        style={{
+                          height: "34px",
+                          padding: "0 16px",
+                          borderRadius: "4px",
+                          backgroundColor: "rgba(59, 130, 246, 0.12)",
+                          border: "1px solid rgba(59, 130, 246, 0.3)",
+                          color: "#60a5fa",
+                          fontSize: "12.5px",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          transition: "all 0.15s ease",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = "#2563eb";
+                          e.currentTarget.style.color = "#ffffff";
+                          e.currentTarget.style.boxShadow = "0 3px 10px rgba(37, 99, 235, 0.4)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = "rgba(59, 130, 246, 0.12)";
+                          e.currentTarget.style.color = "#60a5fa";
+                          e.currentTarget.style.boxShadow = "none";
+                        }}
+                      >
+                        <span>Open Workspace</span>
+                        <span>→</span>
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

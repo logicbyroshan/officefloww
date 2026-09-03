@@ -855,62 +855,7 @@ export const StockDashboardView: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Column 6: Visibility Toggle Switch */}
-                  <div
-                    onClick={(e) => handleToggleActive(item.id, e)}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      width: "96px",
-                      flexShrink: 0,
-                      cursor: "pointer",
-                      userSelect: "none",
-                    }}
-                    title={item.active ? "Visible in production catalog (Click to hide)" : "Hidden from catalog (Click to show)"}
-                  >
-                    <span
-                      style={{
-                        fontSize: "11.5px",
-                        color: item.active ? "#34d399" : "var(--text-muted)",
-                        fontWeight: 600,
-                        transition: "color 0.2s ease",
-                      }}
-                    >
-                      {item.active ? "Visible" : "Hidden"}
-                    </span>
-                    <div
-                      role="switch"
-                      aria-checked={item.active}
-                      style={{
-                        width: 38,
-                        height: 22,
-                        borderRadius: "12px",
-                        backgroundColor: item.active ? "#10b981" : "rgba(255, 255, 255, 0.12)",
-                        border: item.active ? "1px solid rgba(52, 211, 153, 0.4)" : "1px solid rgba(255, 255, 255, 0.15)",
-                        boxShadow: item.active ? "0 0 10px rgba(16, 185, 129, 0.35)" : "none",
-                        padding: "2px",
-                        boxSizing: "border-box",
-                        display: "flex",
-                        alignItems: "center",
-                        transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
-                      }}
-                    >
-                      <div
-                        style={{
-                          width: 16,
-                          height: 16,
-                          borderRadius: "50%",
-                          backgroundColor: "#ffffff",
-                          boxShadow: "0 2px 4px rgba(0, 0, 0, 0.4)",
-                          transform: item.active ? "translateX(16px)" : "translateX(0px)",
-                          transition: "transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Column 7: Action Buttons (High-End Tactile Buttons) */}
+                  {/* Column 6: Action Buttons (High-End Tactile Buttons) */}
                   <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
                     {/* 1. Add Addition Report button */}
                     <button
