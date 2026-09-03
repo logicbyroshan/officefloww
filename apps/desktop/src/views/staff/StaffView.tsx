@@ -5,6 +5,7 @@ import { Table, Column } from "../../design-system/components/Table";
 import { Button } from "../../design-system/components/Button";
 import { Icon } from "../../design-system/components/Icon";
 import { useToast } from "../../design-system/components/Toast";
+import { StaffDetailProfileView } from "./StaffDetailProfileView";
 
 export interface StaffMember {
   id: string;
@@ -289,6 +290,15 @@ export const StaffView: React.FC = () => {
     },
   ];
 
+  if (selectedStaff) {
+    return (
+      <StaffDetailProfileView
+        staff={selectedStaff}
+        onBack={() => setSelectedStaff(null)}
+      />
+    );
+  }
+
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", overflowY: "auto" }}>
       <PageHeader
@@ -464,126 +474,6 @@ export const StaffView: React.FC = () => {
           </div>
         )}
       </div>
-
-      {/* Staff Detail Drawer */}
-      {selectedStaff && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            right: 0,
-            bottom: 0,
-            width: "440px",
-            backgroundColor: "rgba(14, 18, 26, 0.96)",
-            backdropFilter: "blur(20px)",
-            borderLeft: "1px solid var(--accent-border)",
-            boxShadow: "-8px 0 32px rgba(0, 0, 0, 0.6)",
-            zIndex: 100,
-            display: "flex",
-            flexDirection: "column",
-            animation: "slideLeft 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
-          }}
-        >
-          <div
-            style={{
-              padding: "16px 20px",
-              borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <div>
-              <h3 style={{ margin: 0, fontSize: "15px", fontWeight: 700, color: "#fff" }}>
-                {selectedStaff.name}
-              </h3>
-              <span style={{ fontSize: "11.5px", color: "var(--accent-text)", fontFamily: "var(--font-mono)" }}>
-                {selectedStaff.role} • {selectedStaff.type}
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setSelectedStaff(null)}
-              style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer" }}
-            >
-              <Icon name="x" size={16} />
-            </button>
-          </div>
-
-          <div style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "16px", overflowY: "auto" }}>
-            {/* Quick Metrics */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
-              <div style={{ padding: "10px", backgroundColor: "rgba(255, 255, 255, 0.02)", borderRadius: "4px", border: "1px solid rgba(255, 255, 255, 0.06)" }}>
-                <div style={{ fontSize: "10.5px", color: "var(--text-muted)" }}>CURRENT WORKLOAD</div>
-                <div style={{ fontSize: "18px", fontWeight: 800, color: "#fff", marginTop: "2px" }}>
-                  {selectedStaff.activeTasks} active tasks
-                </div>
-              </div>
-              <div style={{ padding: "10px", backgroundColor: "rgba(255, 255, 255, 0.02)", borderRadius: "4px", border: "1px solid rgba(255, 255, 255, 0.06)" }}>
-                <div style={{ fontSize: "10.5px", color: "var(--text-muted)" }}>QUALITY PASS RATE</div>
-                <div style={{ fontSize: "18px", fontWeight: 800, color: "#10b981", marginTop: "2px" }}>
-                  {selectedStaff.acceptanceRate}%
-                </div>
-              </div>
-            </div>
-
-            {/* If contractor, show ledger info */}
-            {selectedStaff.type === "LABOUR" && (
-              <div
-                style={{
-                  padding: "12px",
-                  backgroundColor: "rgba(255, 138, 115, 0.08)",
-                  border: "1px solid var(--accent-border)",
-                  borderRadius: "4px",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "6px",
-                }}
-              >
-                <div style={{ fontSize: "12px", fontWeight: 700, color: "var(--accent-text)" }}>
-                  Contractor Material & Ledger
-                </div>
-                <div style={{ fontSize: "11.5px", color: "var(--text-secondary)", display: "flex", justifyContent: "space-between" }}>
-                  <span>Raw Materials Held:</span>
-                  <strong>{selectedStaff.materialHeld || 0} units</strong>
-                </div>
-                <div style={{ fontSize: "11.5px", color: "var(--text-secondary)", display: "flex", justifyContent: "space-between" }}>
-                  <span>Outstanding Amount Due:</span>
-                  <strong style={{ color: "#34d399" }}>₹{(selectedStaff.amountDue || 0).toLocaleString()}</strong>
-                </div>
-              </div>
-            )}
-
-            {/* Issued Equipment */}
-            <div>
-              <div style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", marginBottom: "6px" }}>
-                Assigned Tools & Assets
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                {selectedStaff.assignedTools.map((tool, idx) => (
-                  <div
-                    key={idx}
-                    style={{
-                      padding: "8px 10px",
-                      backgroundColor: "rgba(255, 255, 255, 0.02)",
-                      border: "1px solid rgba(255, 255, 255, 0.06)",
-                      borderRadius: "4px",
-                      fontSize: "12px",
-                      color: "var(--text-primary)",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                    }}
-                  >
-                    <Icon name="tool" size={13} color="var(--accent-text)" />
-                    <span>{tool}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
