@@ -518,163 +518,142 @@ export const StockDashboardView: React.FC = () => {
   ];
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", overflowY: "auto" }}>
-      {/* Header renamed to Stocks Inventory */}
-      <PageHeader
-        title="Stocks Inventory"
-        badge={
-          <span
-            style={{
-              fontSize: "11px",
-              fontWeight: 600,
-              color: "var(--accent-text)",
-              backgroundColor: "rgba(255, 138, 115, 0.12)",
-              border: "1px solid var(--accent-border)",
-              borderRadius: "4px",
-              padding: "2px 8px",
-            }}
-          >
-            {stockItems.length} Materials Tracked
-          </span>
-        }
-        primaryAction={{
-          label: "New Product",
-          icon: "plus",
-          onClick: () => setIsNewItemModalOpen(true),
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
+      {/* 1. Single Unified Top Header (Fixed, not scrollable) */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "12px 24px",
+          backgroundColor: "rgba(14, 18, 26, 0.95)",
+          backdropFilter: "blur(16px)",
+          borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+          flexShrink: 0,
+          gap: "12px",
+          zIndex: 10,
         }}
-        secondaryActions={
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => {
-              setTargetItem(stockItems[0]);
-              setIsUsageModalOpen(true);
-            }}
-          >
-            + Log Usage
-          </Button>
-        }
-      />
-
-      <div style={{ padding: "16px 24px", display: "flex", flexDirection: "column", gap: "14px" }}>
-        {/* Navigation Tabs Bar (Just 2 clean tabs: Stocks Inventory & Material Usage) */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
-            paddingBottom: "10px",
-            gap: "12px",
-            flexWrap: "wrap",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            {[
-              { id: "inventory" as const, label: "Stocks Inventory", icon: "layers" as const },
-              { id: "usage" as const, label: "Material Usage", icon: "sliders" as const },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id)}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "7px",
-                  padding: "7px 14px",
-                  borderRadius: "4px",
-                  border: "none",
-                  backgroundColor:
-                    activeTab === tab.id ? "rgba(255, 138, 115, 0.16)" : "transparent",
-                  color: activeTab === tab.id ? "var(--accent-text)" : "var(--text-secondary)",
-                  fontSize: "13px",
-                  fontWeight: activeTab === tab.id ? 700 : 500,
-                  cursor: "pointer",
-                  transition: "all 0.15s ease",
-                }}
-              >
-                <Icon name={tab.icon} size={14} color={activeTab === tab.id ? "var(--accent-text)" : "var(--text-muted)"} />
-                <span>{tab.label}</span>
-              </button>
-            ))}
-          </div>
-
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            {/* Search Input */}
-            <div
+      >
+        {/* Left: Navigation Tabs */}
+        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          {[
+            { id: "inventory" as const, label: "Stocks Inventory", icon: "layers" as const },
+            { id: "usage" as const, label: "Material Usage", icon: "sliders" as const },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
               style={{
-                display: "flex",
+                display: "inline-flex",
                 alignItems: "center",
-                gap: "8px",
-                backgroundColor: "rgba(0, 0, 0, 0.28)",
-                border: "1px solid rgba(255, 255, 255, 0.08)",
+                gap: "7px",
+                padding: "6px 14px",
                 borderRadius: "4px",
-                padding: "5px 12px",
-              }}
-            >
-              <Icon name="search" size={13} color="var(--text-muted)" />
-              <input
-                type="text"
-                placeholder={activeTab === "inventory" ? "Search Product..." : "Search Material Usage..."}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: "#fff",
-                  fontSize: "12px",
-                  outline: "none",
-                  width: "170px",
-                }}
-              />
-            </div>
-
-            {/* Sort Selector */}
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
-              style={{
-                backgroundColor: "rgba(255, 255, 255, 0.04)",
-                border: "1px solid rgba(255, 255, 255, 0.08)",
-                borderRadius: "4px",
-                color: "var(--text-secondary)",
-                fontSize: "12px",
-                padding: "5px 10px",
+                border: "none",
+                backgroundColor:
+                  activeTab === tab.id ? "rgba(255, 138, 115, 0.16)" : "transparent",
+                color: activeTab === tab.id ? "var(--accent-text)" : "var(--text-secondary)",
+                fontSize: "13px",
+                fontWeight: activeTab === tab.id ? 700 : 500,
                 cursor: "pointer",
-                outline: "none",
+                transition: "all 0.15s ease",
               }}
             >
-              <option value="highest" style={{ backgroundColor: "#0e121a" }}>Sort By: Highest Stock</option>
-              <option value="lowest" style={{ backgroundColor: "#0e121a" }}>Sort By: Lowest Stock</option>
-              <option value="used" style={{ backgroundColor: "#0e121a" }}>Sort By: Most Used</option>
-              <option value="price" style={{ backgroundColor: "#0e121a" }}>Sort By: Item Price</option>
-              <option value="name" style={{ backgroundColor: "#0e121a" }}>Sort By: Name</option>
-            </select>
-
-            {/* Category Filter */}
-            <select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              style={{
-                backgroundColor: "rgba(255, 255, 255, 0.04)",
-                border: "1px solid rgba(255, 255, 255, 0.08)",
-                borderRadius: "4px",
-                color: "var(--text-secondary)",
-                fontSize: "12px",
-                padding: "5px 10px",
-                cursor: "pointer",
-                outline: "none",
-              }}
-            >
-              <option value="ALL" style={{ backgroundColor: "#0e121a" }}>Show All Product ({stockItems.length})</option>
-              <option value="RAW_MATERIAL" style={{ backgroundColor: "#0e121a" }}>Raw Materials</option>
-              <option value="HARDWARE" style={{ backgroundColor: "#0e121a" }}>Hardware Fittings</option>
-              <option value="CONSUMABLE" style={{ backgroundColor: "#0e121a" }}>Consumables</option>
-            </select>
-          </div>
+              <Icon name={tab.icon} size={14} color={activeTab === tab.id ? "var(--accent-text)" : "var(--text-muted)"} />
+              <span>{tab.label}</span>
+            </button>
+          ))}
         </div>
 
+        {/* Right: Search Input + Sort + Category + New Product Button (NO Log Usage at top!) */}
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          {/* Search Input */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              backgroundColor: "rgba(0, 0, 0, 0.28)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              borderRadius: "4px",
+              padding: "5px 12px",
+            }}
+          >
+            <Icon name="search" size={13} color="var(--text-muted)" />
+            <input
+              type="text"
+              placeholder={activeTab === "inventory" ? "Search Product..." : "Search Material Usage..."}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              style={{
+                background: "none",
+                border: "none",
+                color: "#fff",
+                fontSize: "12px",
+                outline: "none",
+                width: "170px",
+              }}
+            />
+          </div>
+
+          {/* Sort Selector */}
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as any)}
+            style={{
+              backgroundColor: "rgba(255, 255, 255, 0.04)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              borderRadius: "4px",
+              color: "var(--text-secondary)",
+              fontSize: "12px",
+              padding: "5px 10px",
+              cursor: "pointer",
+              outline: "none",
+            }}
+          >
+            <option value="highest" style={{ backgroundColor: "#0e121a" }}>Sort By: Highest Stock</option>
+            <option value="lowest" style={{ backgroundColor: "#0e121a" }}>Sort By: Lowest Stock</option>
+            <option value="used" style={{ backgroundColor: "#0e121a" }}>Sort By: Most Used</option>
+            <option value="price" style={{ backgroundColor: "#0e121a" }}>Sort By: Item Price</option>
+            <option value="name" style={{ backgroundColor: "#0e121a" }}>Sort By: Name</option>
+          </select>
+
+          {/* Category Filter */}
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            style={{
+              backgroundColor: "rgba(255, 255, 255, 0.04)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              borderRadius: "4px",
+              color: "var(--text-secondary)",
+              fontSize: "12px",
+              padding: "5px 10px",
+              cursor: "pointer",
+              outline: "none",
+            }}
+          >
+            <option value="ALL" style={{ backgroundColor: "#0e121a" }}>Show All Product ({stockItems.length})</option>
+            <option value="RAW_MATERIAL" style={{ backgroundColor: "#0e121a" }}>Raw Materials</option>
+            <option value="HARDWARE" style={{ backgroundColor: "#0e121a" }}>Hardware Fittings</option>
+            <option value="CONSUMABLE" style={{ backgroundColor: "#0e121a" }}>Consumables</option>
+          </select>
+
+          {/* + New Product */}
+          <Button
+            variant="primary"
+            size="sm"
+            icon="plus"
+            onClick={() => setIsNewItemModalOpen(true)}
+          >
+            New Product
+          </Button>
+        </div>
+      </div>
+
+      {/* 2. Middle Scrollable Content (Statistic Card + Items) */}
+      <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px", display: "flex", flexDirection: "column", gap: "12px" }}>
         {/* Product Statistic Card (Low stock alert removed as requested) */}
         <div
           style={{
@@ -1095,7 +1074,7 @@ export const StockDashboardView: React.FC = () => {
                     display: "inline-flex",
                     alignItems: "center",
                     gap: "5px",
-                    padding: "4px 10px",
+                    padding: "5px 12px",
                     borderRadius: "4px",
                     backgroundColor: showRecentLog ? "rgba(255, 138, 115, 0.15)" : "rgba(255, 255, 255, 0.04)",
                     border: "1px solid " + (showRecentLog ? "var(--accent-border)" : "rgba(255, 255, 255, 0.08)"),
@@ -1108,17 +1087,6 @@ export const StockDashboardView: React.FC = () => {
                   <Icon name="file-text" size={12} />
                   <span>{showRecentLog ? "Hide History Table" : "Show Recent Logs (" + movements.length + ")"}</span>
                 </button>
-
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() => {
-                    setTargetItem(stockItems[0]);
-                    setIsUsageModalOpen(true);
-                  }}
-                >
-                  + Log Material Usage
-                </Button>
               </div>
             </div>
 
@@ -1360,61 +1328,65 @@ export const StockDashboardView: React.FC = () => {
           </div>
         )}
 
-        {/* Bottom Pagination Bar */}
-        <div
+      </div>
+
+      {/* 3. Fixed Bottom Footer / Pagination Bar (Fixed, not scrollable) */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "10px 24px",
+          backgroundColor: "rgba(14, 18, 26, 0.95)",
+          backdropFilter: "blur(16px)",
+          borderTop: "1px solid rgba(255, 255, 255, 0.08)",
+          flexShrink: 0,
+          zIndex: 10,
+        }}
+      >
+        <button
+          type="button"
           style={{
-            display: "flex",
+            display: "inline-flex",
             alignItems: "center",
-            justifyContent: "space-between",
-            padding: "14px 6px 6px 6px",
-            borderTop: "1px solid rgba(255, 255, 255, 0.06)",
-            marginTop: "6px",
+            gap: "6px",
+            padding: "5px 14px",
+            borderRadius: "4px",
+            backgroundColor: "rgba(255, 255, 255, 0.04)",
+            border: "1px solid rgba(255, 255, 255, 0.08)",
+            color: "var(--text-muted)",
+            fontSize: "12px",
+            cursor: "not-allowed",
+            fontWeight: 500,
           }}
+          disabled
         >
-          <button
-            type="button"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              padding: "6px 14px",
-              borderRadius: "4px",
-              backgroundColor: "rgba(255, 255, 255, 0.04)",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
-              color: "var(--text-muted)",
-              fontSize: "12px",
-              cursor: "not-allowed",
-              fontWeight: 500,
-            }}
-            disabled
-          >
-            Previous
-          </button>
+          Previous
+        </button>
 
-          <span style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 500 }}>
-            Page 1 of 1 • ({filteredItems.length} Products)
-          </span>
+        <span style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 500 }}>
+          Page 1 of 1 • ({filteredItems.length} Products Tracked)
+        </span>
 
-          <button
-            type="button"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              padding: "6px 14px",
-              borderRadius: "4px",
-              backgroundColor: "rgba(255, 255, 255, 0.04)",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
-              color: "var(--text-muted)",
-              fontSize: "12px",
-              cursor: "not-allowed",
-              fontWeight: 500,
-            }}
-            disabled
-          >
-            Next
-          </button>
-        </div>
+        <button
+          type="button"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "6px",
+            padding: "5px 14px",
+            borderRadius: "4px",
+            backgroundColor: "rgba(255, 255, 255, 0.04)",
+            border: "1px solid rgba(255, 255, 255, 0.08)",
+            color: "var(--text-muted)",
+            fontSize: "12px",
+            cursor: "not-allowed",
+            fontWeight: 500,
+          }}
+          disabled
+        >
+          Next
+        </button>
       </div>
 
       {/* 1. Modal: New Product / Material Entry Form */}
