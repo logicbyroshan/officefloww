@@ -31,7 +31,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const { canNav } = useAuth();
 
   const primaryNav: NavItemDef[] = [
-    { id: "dashboard", label: "Dashboard", icon: "dashboard" },
+    { id: "dashboard", label: "Home", icon: "dashboard" },
+    { id: "clients", label: "Clients", icon: "clients" },
+    { id: "stock", label: "Stock", icon: "stock" },
+    { id: "billing", label: "Billing", icon: "billing" },
+    { id: "staff", label: "Staff", icon: "staff" },
     {
       id: "tasks",
       label: "Tasks",
@@ -39,10 +43,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
       badge: urgentTasksCount,
       badgeVariant: "urgent",
     },
-    { id: "staff", label: "Staff", icon: "staff" },
-    { id: "stock", label: "Stock", icon: "stock" },
-    { id: "clients", label: "Clients", icon: "clients" },
-    { id: "billing", label: "Billing", icon: "billing" },
   ];
 
   const visiblePrimary = primaryNav.filter((item) => canNav(item.id));
@@ -308,39 +308,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {!isCollapsed && <span>Settings</span>}
           </button>
         )}
-
-        {/* Sidebar Collapse Toggle */}
-        <button
-          type="button"
-          onClick={onToggleCollapse}
-          title={isCollapsed ? "Expand Sidebar (Ctrl+\\)" : "Collapse Sidebar (Ctrl+\\)"}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: isCollapsed ? "center" : "flex-start",
-            gap: "8px",
-            padding: isCollapsed ? "8px 0" : "7px 12px",
-            borderRadius: "4px",
-            border: "1px solid transparent",
-            backgroundColor: "transparent",
-            color: "var(--text-muted)",
-            fontSize: "11.5px",
-            cursor: "pointer",
-            width: "100%",
-            transition: "all 0.15s ease",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.04)";
-            e.currentTarget.style.color = "var(--text-primary)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = "transparent";
-            e.currentTarget.style.color = "var(--text-muted)";
-          }}
-        >
-          <Icon name={isCollapsed ? "chevron-right" : "chevron-left"} size={14} />
-          {!isCollapsed && <span>Collapse Sidebar</span>}
-        </button>
       </div>
     </aside>
   );

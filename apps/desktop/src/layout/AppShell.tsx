@@ -25,25 +25,10 @@ export const AppShell: React.FC<AppShellProps> = ({
 }) => {
   const { connected, checkConnection } = useConnection();
   const [isVoiceActive, setIsVoiceActive] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
-    return localStorage.getItem("printflow_sidebar_collapsed") === "true";
-  });
 
-  const handleToggleCollapse = () => {
-    setIsCollapsed((prev) => {
-      const next = !prev;
-      localStorage.setItem("printflow_sidebar_collapsed", String(next));
-      return next;
-    });
-  };
-
-  // Keyboard shortcut Ctrl+\ to toggle sidebar, and Ctrl+Shift+V for voice
+  // Keyboard shortcut Ctrl+Shift+V for voice
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.key === "\\") {
-        e.preventDefault();
-        handleToggleCollapse();
-      }
       if (e.ctrlKey && e.shiftKey && (e.key === "V" || e.key === "v")) {
         e.preventDefault();
         setIsVoiceActive((v) => !v);
@@ -117,8 +102,8 @@ export const AppShell: React.FC<AppShellProps> = ({
             onSelectSection={onSelectSection}
             pendingApprovalsCount={pendingApprovalsCount}
             urgentTasksCount={urgentTasksCount}
-            isCollapsed={isCollapsed}
-            onToggleCollapse={handleToggleCollapse}
+            isCollapsed={false}
+            onToggleCollapse={() => {}}
           />
           <main
             style={{
