@@ -43,7 +43,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => window.removeEventListener("officefloww:auth-expired", handleAuthExpired);
   }, [checkCurrentUser]);
 
-  const login = async (email: string, password = "OfficeFloww@2026") => {
+  const login = async (email: string, password = "") => {
     setLoading(true);
     try {
       const res = await AuthService.login(email, password);

@@ -63,7 +63,7 @@ function localLogin(email: string, password: string): User | null {
 }
 
 export const AuthService = {
-  login: async (email: string, password = "Admin@2026"): Promise<TokenResponse> => {
+  login: async (email: string, password = ""): Promise<TokenResponse> => {
     // 1. Try the real backend first
     try {
       const res = await apiClient.auth.login({ email, password });

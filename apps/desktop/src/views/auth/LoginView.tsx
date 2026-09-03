@@ -55,7 +55,7 @@ const FACILITY_SLIDES: FacilitySlide[] = [
 export const LoginView: React.FC = () => {
   const { login } = useAuth();
   const [email, setEmail] = useState("admin@adharshbhopal.in");
-  const [password, setPassword] = useState("Admin@2026");
+  const [password, setPassword] = useState("");
   const [keepLoggedIn, setKeepLoggedIn] = useState(true);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
