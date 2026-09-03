@@ -22,13 +22,14 @@ export const Card: React.FC<CardProps> = ({
   return (
     <div
       style={{
-        backgroundColor: "var(--bg-card)",
-        border: "1px solid var(--border-medium)",
-        borderRadius: sharp ? 0 : "var(--radius-md)",
+        backgroundColor: "rgba(19, 23, 34, 0.78)",
+        backdropFilter: "blur(14px)",
+        border: "1px solid rgba(255, 255, 255, 0.08)",
+        borderRadius: sharp ? 0 : "6px",
         overflow: "hidden",
         display: "flex",
         flexDirection: "column",
-        boxShadow: "var(--shadow-sm)",
+        boxShadow: "0 8px 28px rgba(0, 0, 0, 0.35)",
         ...style,
       }}
       {...props}
@@ -40,20 +41,20 @@ export const Card: React.FC<CardProps> = ({
             alignItems: "center",
             justifyContent: "space-between",
             padding: "14px 18px",
-            borderBottom: "1px solid var(--border-medium)",
-            backgroundColor: "var(--bg-surface)",
+            borderBottom: "1px solid rgba(255, 255, 255, 0.06)",
+            backgroundColor: "rgba(255, 255, 255, 0.02)",
           }}
         >
           <div>
             {typeof title === "string" ? (
-              <h3 style={{ fontSize: "15px", fontWeight: 700, color: "var(--text-primary)", letterSpacing: "-0.2px" }}>
+              <h3 style={{ fontSize: "14.5px", fontWeight: 700, color: "var(--text-primary)", letterSpacing: "-0.2px", margin: 0 }}>
                 {title}
               </h3>
             ) : (
               title
             )}
             {subtitle && (
-              <p style={{ fontSize: "12.5px", color: "var(--text-secondary)", marginTop: "3px", lineHeight: "1.4" }}>
+              <p style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "3px", marginBottom: 0, lineHeight: "1.4" }}>
                 {subtitle}
               </p>
             )}
@@ -87,39 +88,50 @@ export const StatBox: React.FC<StatBoxProps> = ({
 }) => {
   let borderLeft = "3px solid transparent";
   let valueColor = "var(--text-primary)";
+  let badgeBg = "rgba(255, 255, 255, 0.03)";
 
   if (status === "urgent") {
     borderLeft = "3px solid var(--status-error)";
     valueColor = "var(--status-error)";
+    badgeBg = "var(--status-error-soft)";
   } else if (status === "warning") {
     borderLeft = "3px solid var(--status-warning)";
     valueColor = "var(--status-warning)";
+    badgeBg = "var(--status-warning-soft)";
   } else if (status === "success") {
     borderLeft = "3px solid var(--status-success)";
     valueColor = "var(--status-success)";
+    badgeBg = "var(--status-success-soft)";
   }
 
   return (
     <div
       onClick={onClick}
       style={{
-        backgroundColor: "var(--bg-card)",
-        border: "1px solid var(--border-medium)",
+        backgroundColor: "rgba(19, 23, 34, 0.78)",
+        backdropFilter: "blur(14px)",
+        border: "1px solid rgba(255, 255, 255, 0.08)",
         borderLeft,
-        borderRadius: "var(--radius-sm)",
+        borderRadius: "4px",
         padding: "14px 16px",
         display: "flex",
         flexDirection: "column",
         gap: "6px",
         cursor: onClick ? "pointer" : "default",
-        boxShadow: "var(--shadow-sm)",
-        transition: "border-color 0.15s ease, background-color 0.15s ease",
+        boxShadow: "0 6px 20px rgba(0, 0, 0, 0.25)",
+        transition: "border-color 0.15s ease, background-color 0.15s ease, transform 0.15s ease",
       }}
       onMouseEnter={(e) => {
-        if (onClick) e.currentTarget.style.backgroundColor = "var(--bg-card-hover)";
+        if (onClick) {
+          e.currentTarget.style.backgroundColor = "rgba(25, 32, 47, 0.9)";
+          e.currentTarget.style.borderColor = "var(--accent-border)";
+        }
       }}
       onMouseLeave={(e) => {
-        if (onClick) e.currentTarget.style.backgroundColor = "var(--bg-card)";
+        if (onClick) {
+          e.currentTarget.style.backgroundColor = "rgba(19, 23, 34, 0.78)";
+          e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.08)";
+        }
       }}
     >
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>

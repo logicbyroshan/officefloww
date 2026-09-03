@@ -6,25 +6,26 @@
 
 :root {
   /* ----------------------------------------------------
-     Single Accent Color Variable Family (Default: Sapphire)
+     Single Accent Color Variable Family (Default: Adharsh Coral)
      ---------------------------------------------------- */
-  --accent: #2563eb;
-  --accent-hover: #1d4ed8;
-  --accent-active: #1e40af;
-  --accent-soft: rgba(37, 99, 235, 0.14);
-  --accent-border: rgba(37, 99, 235, 0.38);
-  --accent-text: #60a5fa;
-  --accent-contrast: #ffffff;
+  --accent: #ff8a73;
+  --accent-hover: #ff7457;
+  --accent-active: #f05e40;
+  --accent-soft: rgba(255, 138, 115, 0.14);
+  --accent-border: rgba(255, 138, 115, 0.38);
+  --accent-text: #ff9980;
+  --accent-contrast: #111827;
+  --accent-gradient: linear-gradient(135deg, #ff9980 0%, #ff6b8b 100%);
 
   /* ----------------------------------------------------
-     Industrial Neutral Palette (Dark Theme Base)
+     Industrial Neutral Palette (Deep Obsidian Dark Base)
      ---------------------------------------------------- */
-  --bg-app: #0b0f17;          /* Deep slate canvas */
-  --bg-surface: #111722;      /* TopBar, Sidebar, Page headers */
-  --bg-card: #161f2e;         /* Cards, Containers, Tables, Modals */
-  --bg-card-hover: #1c273a;   /* Interactive item hover */
-  --bg-input: #0e141f;        /* Text inputs, selects, code blocks */
-  --bg-muted: #1e293b;        /* Subtle chips, table headers, dividers */
+  --bg-app: #090c13;          /* Deep obsidian canvas */
+  --bg-surface: #0e121a;      /* TopBar, Sidebar, Page headers */
+  --bg-card: #131722;         /* Cards, Containers, Tables, Modals */
+  --bg-card-hover: #19202f;   /* Interactive item hover */
+  --bg-input: #0a0d14;        /* Text inputs, selects, code blocks */
+  --bg-muted: #1c2332;        /* Subtle chips, table headers, dividers */
 
   /* Text & Content Hierarchy */
   --text-primary: #f8fafc;    /* Crisp White - Headlines, essential data */
@@ -33,9 +34,9 @@
   --text-disabled: #64748b;   /* Inactive controls */
 
   /* Borders & Dividers */
-  --border-subtle: #1e293b;   /* Subtle row dividers, container outlines */
-  --border-medium: #334155;   /* Input borders, card outlines */
-  --border-strong: #475569;   /* Active boundaries, modal borders */
+  --border-subtle: #1c2332;   /* Subtle row dividers, container outlines */
+  --border-medium: #2a3346;   /* Input borders, card outlines */
+  --border-strong: #3b4760;   /* Active boundaries, modal borders */
 
   /* ----------------------------------------------------
      Semantic Status Colors (Strictly for Semantic Badges)

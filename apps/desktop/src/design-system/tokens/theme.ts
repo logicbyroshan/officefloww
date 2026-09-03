@@ -11,6 +11,16 @@ export interface AccentTheme {
 
 export const ACCENT_THEMES: AccentTheme[] = [
   {
+    id: "coral",
+    name: "Adharsh Coral (Default)",
+    accent: "#ff8a73",
+    accentHover: "#ff7457",
+    accentActive: "#f05e40",
+    accentSoft: "rgba(255, 138, 115, 0.14)",
+    accentBorder: "rgba(255, 138, 115, 0.38)",
+    accentText: "#ff9980",
+  },
+  {
     id: "sapphire",
     name: "Industrial Sapphire",
     accent: "#2563eb",
@@ -71,10 +81,21 @@ export function applyAccentTheme(themeId: string) {
   root.style.setProperty("--accent-soft", selected.accentSoft);
   root.style.setProperty("--accent-border", selected.accentBorder);
   root.style.setProperty("--accent-text", selected.accentText);
+  if (selected.id === "coral") {
+    root.style.setProperty("--accent-contrast", "#111827");
+    root.style.setProperty("--accent-gradient", "linear-gradient(135deg, #ff9980 0%, #ff6b8b 100%)");
+  } else {
+    root.style.setProperty("--accent-contrast", "#ffffff");
+    root.style.setProperty("--accent-gradient", selected.accent);
+  }
   localStorage.setItem("officefloww_accent_theme", selected.id);
 }
 
 export function initAccentTheme() {
-  const saved = localStorage.getItem("officefloww_accent_theme") || "sapphire";
+  let saved = localStorage.getItem("officefloww_accent_theme");
+  if (!saved || saved === "sapphire") {
+    saved = "coral";
+    localStorage.setItem("officefloww_accent_theme", "coral");
+  }
   applyAccentTheme(saved);
 }

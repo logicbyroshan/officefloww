@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useAuth } from "../auth/AuthContext";
 import { SEED_ACCOUNTS } from "../api/auth.service";
+import { AppNavSection } from "../auth/permissions";
 import { Icon } from "../design-system/components/Icon";
 import { UserAvatar } from "../design-system/components/UserAvatar";
 import { StatusDot, RoleBadge } from "../design-system/components/Badge";
@@ -8,57 +9,103 @@ import { StatusDot, RoleBadge } from "../design-system/components/Badge";
 export interface TopBarProps {
   onOpenSearch: () => void;
   connected: boolean;
+  onToggleVoice: () => void;
+  isVoiceActive: boolean;
+  onNavigate?: (section: AppNavSection) => void;
 }
 
-export const TopBar: React.FC<TopBarProps> = ({ onOpenSearch, connected }) => {
+export const TopBar: React.FC<TopBarProps> = ({
+  onOpenSearch,
+  connected,
+  onToggleVoice,
+  isVoiceActive,
+  onNavigate,
+}) => {
   const { user, logout, switchUser } = useAuth();
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  const notifications = [
+    {
+      id: "notif-1",
+      title: "Order #ORD-2026-0001 requires attention",
+      desc: "High priority • Sublimation press setup",
+      target: "tasks" as AppNavSection,
+      urgent: true,
+    },
+    {
+      id: "notif-2",
+      title: "Proof approval requested",
+      desc: "St. Xavier's High School lanyard repeat setup",
+      target: "tasks" as AppNavSection,
+      urgent: false,
+    },
+    {
+      id: "notif-3",
+      title: "Low stock alert",
+      desc: "PVC Sheet stock below safety threshold",
+      target: "stock" as AppNavSection,
+      urgent: true,
+    },
+  ];
 
   return (
     <header
       style={{
         height: "var(--topbar-height)",
-        backgroundColor: "var(--bg-surface)",
-        borderBottom: "1px solid var(--border-medium)",
+        backgroundColor: "rgba(14, 18, 26, 0.85)",
+        backdropFilter: "blur(16px)",
+        borderBottom: "1px solid rgba(255, 255, 255, 0.07)",
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
         padding: "0 20px",
+        gap: "20px",
         flexShrink: 0,
         zIndex: 50,
       }}
     >
-      {/* Left Context / Global Search Shortcut */}
-      <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+      {/* Left Context / Global Search Shortcut - Expanded Full Width */}
+      <div style={{ display: "flex", alignItems: "center", gap: "14px", flex: 1, maxWidth: "680px" }}>
         <button
           type="button"
           onClick={onOpenSearch}
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "10px",
-            backgroundColor: "var(--bg-card)",
-            border: "1px solid var(--border-medium)",
-            borderRadius: "var(--radius-sm)",
-            padding: "6px 14px",
+            gap: "11px",
+            backgroundColor: "rgba(19, 23, 34, 0.85)",
+            backdropFilter: "blur(12px)",
+            border: "1px solid rgba(255, 255, 255, 0.08)",
+            borderRadius: "4px",
+            padding: "8px 16px",
             color: "var(--text-muted)",
             fontSize: "13px",
             cursor: "pointer",
-            width: "300px",
+            width: "100%",
             textAlign: "left",
-            transition: "all 0.15s ease",
+            transition: "all 0.18s ease",
+            boxShadow: "inset 0 1px 2px rgba(0, 0, 0, 0.25)",
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--accent-border)")}
-          onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border-medium)")}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = "var(--accent-border)";
+            e.currentTarget.style.boxShadow = "0 0 12px var(--accent-soft)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.08)";
+            e.currentTarget.style.boxShadow = "inset 0 1px 2px rgba(0, 0, 0, 0.25)";
+          }}
         >
-          <Icon name="search" size={15} color="var(--text-muted)" />
-          <span style={{ flex: 1, color: "var(--text-secondary)" }}>Search orders, clients, tasks...</span>
+          <Icon name="search" size={15} color="var(--accent-text)" />
+          <span style={{ flex: 1, color: "var(--text-secondary)" }}>
+            Search clients, orders, tasks, staff, stock, invoices...
+          </span>
           <kbd
             style={{
-              backgroundColor: "var(--bg-muted)",
-              border: "1px solid var(--border-subtle)",
-              borderRadius: "var(--radius-xs)",
-              padding: "2px 6px",
+              backgroundColor: "rgba(255, 255, 255, 0.06)",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
+              borderRadius: "3px",
+              padding: "2px 7px",
               fontSize: "11px",
               fontFamily: "var(--font-mono)",
               color: "var(--text-muted)",
@@ -70,7 +117,160 @@ export const TopBar: React.FC<TopBarProps> = ({ onOpenSearch, connected }) => {
       </div>
 
       {/* Right Controls */}
-      <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+        {/* Voice Mode Button */}
+        <button
+          type="button"
+          onClick={onToggleVoice}
+          title="Voice Assistant Mode"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "7px",
+            padding: "6px 12px",
+            borderRadius: "4px",
+            border: isVoiceActive
+              ? "1px solid var(--accent)"
+              : "1px solid rgba(255, 255, 255, 0.08)",
+            backgroundColor: isVoiceActive
+              ? "rgba(255, 138, 115, 0.18)"
+              : "rgba(255, 255, 255, 0.03)",
+            color: isVoiceActive ? "var(--accent-text)" : "var(--text-secondary)",
+            fontSize: "12.5px",
+            fontWeight: 600,
+            cursor: "pointer",
+            transition: "all 0.15s ease",
+            boxShadow: isVoiceActive ? "0 0 12px var(--accent-soft)" : "none",
+          }}
+          onMouseEnter={(e) => {
+            if (!isVoiceActive) e.currentTarget.style.borderColor = "var(--accent-border)";
+          }}
+          onMouseLeave={(e) => {
+            if (!isVoiceActive) e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.08)";
+          }}
+        >
+          <Icon name="mic" size={14} color={isVoiceActive ? "var(--accent-text)" : "var(--text-muted)"} />
+          <span>{isVoiceActive ? "Listening..." : "Voice"}</span>
+        </button>
+
+        {/* Notifications Popover */}
+        <div style={{ position: "relative" }}>
+          <button
+            type="button"
+            onClick={() => setShowNotifications(!showNotifications)}
+            title="Notifications"
+            style={{
+              position: "relative",
+              width: "34px",
+              height: "34px",
+              borderRadius: "4px",
+              backgroundColor: "rgba(255, 255, 255, 0.03)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              color: "var(--text-secondary)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              transition: "border-color 0.15s ease",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--accent-border)")}
+            onMouseLeave={(e) => (e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.08)")}
+          >
+            <Icon name="bell" size={15} />
+            <span
+              style={{
+                position: "absolute",
+                top: "4px",
+                right: "4px",
+                width: "7px",
+                height: "7px",
+                borderRadius: "50%",
+                backgroundColor: "var(--status-error)",
+              }}
+            />
+          </button>
+
+          {showNotifications && (
+            <div
+              style={{
+                position: "absolute",
+                top: "100%",
+                right: 0,
+                marginTop: "6px",
+                width: "320px",
+                backgroundColor: "rgba(14, 18, 26, 0.96)",
+                backdropFilter: "blur(20px)",
+                border: "1px solid rgba(255, 255, 255, 0.12)",
+                borderRadius: "6px",
+                boxShadow: "0 16px 40px rgba(0, 0, 0, 0.6)",
+                padding: "10px",
+                zIndex: 100,
+              }}
+            >
+              <div
+                style={{
+                  padding: "6px 8px 10px 8px",
+                  borderBottom: "1px solid rgba(255, 255, 255, 0.06)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <span style={{ fontSize: "12px", fontWeight: 700, color: "var(--text-primary)" }}>
+                  Operational Alerts
+                </span>
+                <span
+                  style={{
+                    fontSize: "10px",
+                    fontWeight: 700,
+                    backgroundColor: "rgba(239, 68, 68, 0.15)",
+                    color: "var(--status-error)",
+                    padding: "2px 6px",
+                    borderRadius: "3px",
+                  }}
+                >
+                  3 Action Items
+                </span>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginTop: "8px" }}>
+                {notifications.map((n) => (
+                  <div
+                    key={n.id}
+                    onClick={() => {
+                      if (onNavigate) onNavigate(n.target);
+                      setShowNotifications(false);
+                    }}
+                    style={{
+                      padding: "8px 10px",
+                      borderRadius: "4px",
+                      backgroundColor: "rgba(255, 255, 255, 0.02)",
+                      border: "1px solid rgba(255, 255, 255, 0.04)",
+                      cursor: "pointer",
+                      transition: "all 0.12s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.06)";
+                      e.currentTarget.style.borderColor = "var(--accent-border)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.02)";
+                      e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.04)";
+                    }}
+                  >
+                    <div style={{ fontSize: "12px", fontWeight: 600, color: "var(--text-primary)" }}>
+                      {n.title}
+                    </div>
+                    <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "2px" }}>
+                      {n.desc}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Connection Status Indicator */}
         <div
           style={{
@@ -81,13 +281,13 @@ export const TopBar: React.FC<TopBarProps> = ({ onOpenSearch, connected }) => {
             fontWeight: 500,
             color: connected ? "var(--text-secondary)" : "var(--status-error)",
             padding: "5px 10px",
-            backgroundColor: connected ? "var(--bg-muted)" : "var(--status-error-soft)",
-            borderRadius: "var(--radius-xs)",
-            border: "1px solid var(--border-subtle)",
+            backgroundColor: connected ? "rgba(255, 255, 255, 0.03)" : "var(--status-error-soft)",
+            borderRadius: "4px",
+            border: "1px solid rgba(255, 255, 255, 0.08)",
           }}
         >
           <StatusDot status={connected ? "online" : "offline"} size={7} />
-          <span>{connected ? "FastAPI Core Connected" : "Core Server Disconnected"}</span>
+          <span>{connected ? "FastAPI Connected" : "Disconnected"}</span>
         </div>
 
         {/* User Account / Role Switcher Popover */}
@@ -98,28 +298,28 @@ export const TopBar: React.FC<TopBarProps> = ({ onOpenSearch, connected }) => {
             style={{
               display: "flex",
               alignItems: "center",
-              gap: "10px",
-              background: "var(--bg-card)",
-              border: "1px solid var(--border-medium)",
-              padding: "5px 12px",
-              borderRadius: "var(--radius-sm)",
+              gap: "9px",
+              background: "rgba(19, 23, 34, 0.85)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              padding: "5px 10px",
+              borderRadius: "4px",
               cursor: "pointer",
               color: "var(--text-primary)",
               transition: "border-color 0.12s ease",
             }}
             onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--accent-border)")}
-            onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border-medium)")}
+            onMouseLeave={(e) => (e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.08)")}
           >
-            <UserAvatar name={user?.full_name || "User"} role={user?.role} size={26} />
+            <UserAvatar name={user?.full_name || "User"} role={user?.role} size={24} />
             <div style={{ textAlign: "left", display: "flex", flexDirection: "column" }}>
-              <span style={{ fontSize: "13px", fontWeight: 600, lineHeight: 1.2 }}>
+              <span style={{ fontSize: "12.5px", fontWeight: 600, lineHeight: 1.2 }}>
                 {user?.full_name || "Guest"}
               </span>
-              <span style={{ fontSize: "10.5px", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
+              <span style={{ fontSize: "10px", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
                 {user?.role}
               </span>
             </div>
-            <Icon name="chevron-down" size={13} color="var(--text-muted)" />
+            <Icon name="chevron-down" size={12} color="var(--text-muted)" />
           </button>
 
           {showUserMenu && (
@@ -129,37 +329,54 @@ export const TopBar: React.FC<TopBarProps> = ({ onOpenSearch, connected }) => {
                 top: "100%",
                 right: 0,
                 marginTop: "6px",
-                width: "300px",
-                backgroundColor: "var(--bg-card)",
-                border: "1px solid var(--border-strong)",
-                borderRadius: "var(--radius-md)",
-                boxShadow: "var(--shadow-lg)",
+                width: "280px",
+                backgroundColor: "rgba(14, 18, 26, 0.96)",
+                backdropFilter: "blur(20px)",
+                border: "1px solid rgba(255, 255, 255, 0.12)",
+                borderRadius: "6px",
+                boxShadow: "0 16px 40px rgba(0, 0, 0, 0.6)",
                 padding: "10px",
                 zIndex: 100,
               }}
             >
               <div
                 style={{
-                  padding: "10px 12px",
-                  borderBottom: "1px solid var(--border-subtle)",
+                  padding: "8px 10px",
+                  borderBottom: "1px solid rgba(255, 255, 255, 0.06)",
                   marginBottom: "8px",
                 }}
               >
                 <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-primary)" }}>
                   {user?.full_name}
                 </div>
-                <div style={{ fontSize: "11.5px", color: "var(--text-muted)" }}>{user?.email}</div>
+                <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>{user?.email}</div>
                 <div style={{ marginTop: "6px" }}>
                   <RoleBadge role={user?.role || "USER"} />
                 </div>
               </div>
 
               {/* Quick Switch Role for Testing */}
-              <div style={{ padding: "4px 10px", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)" }}>
-                Switch Operational Role:
+              <div
+                style={{
+                  padding: "4px 8px",
+                  fontSize: "10.5px",
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                  color: "var(--text-muted)",
+                }}
+              >
+                Switch Role Account:
               </div>
 
-              <div style={{ maxHeight: "220px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "3px" }}>
+              <div
+                style={{
+                  maxHeight: "180px",
+                  overflowY: "auto",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "2px",
+                }}
+              >
                 {SEED_ACCOUNTS.map((acc) => (
                   <button
                     key={acc.email}
@@ -172,19 +389,35 @@ export const TopBar: React.FC<TopBarProps> = ({ onOpenSearch, connected }) => {
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "space-between",
-                      padding: "7px 10px",
-                      backgroundColor: user?.email === acc.email ? "var(--accent-soft)" : "transparent",
+                      padding: "6px 8px",
+                      borderRadius: "3px",
                       border: "none",
-                      borderRadius: "var(--radius-xs)",
-                      color: user?.email === acc.email ? "var(--accent-text)" : "var(--text-secondary)",
+                      backgroundColor:
+                        user?.email === acc.email
+                          ? "rgba(255, 138, 115, 0.12)"
+                          : "transparent",
+                      color:
+                        user?.email === acc.email
+                          ? "var(--accent-text)"
+                          : "var(--text-secondary)",
                       fontSize: "12px",
-                      textAlign: "left",
                       cursor: "pointer",
+                      textAlign: "left",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (user?.email !== acc.email) {
+                        e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.04)";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (user?.email !== acc.email) {
+                        e.currentTarget.style.backgroundColor = "transparent";
+                      }
                     }}
                   >
                     <div>
-                      <div style={{ fontWeight: 600 }}>{acc.name}</div>
-                      <div style={{ fontSize: "10px", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
+                      <div style={{ fontWeight: 500 }}>{acc.name}</div>
+                      <div style={{ fontSize: "10px", color: "var(--text-muted)" }}>
                         {acc.role}
                       </div>
                     </div>
@@ -193,7 +426,13 @@ export const TopBar: React.FC<TopBarProps> = ({ onOpenSearch, connected }) => {
                 ))}
               </div>
 
-              <div style={{ borderTop: "1px solid var(--border-subtle)", marginTop: "8px", paddingTop: "8px" }}>
+              <div
+                style={{
+                  borderTop: "1px solid rgba(255, 255, 255, 0.06)",
+                  marginTop: "8px",
+                  paddingTop: "6px",
+                }}
+              >
                 <button
                   type="button"
                   onClick={() => {
@@ -205,19 +444,22 @@ export const TopBar: React.FC<TopBarProps> = ({ onOpenSearch, connected }) => {
                     alignItems: "center",
                     gap: "8px",
                     width: "100%",
-                    padding: "8px 10px",
-                    backgroundColor: "transparent",
+                    padding: "7px 8px",
+                    borderRadius: "3px",
                     border: "none",
-                    borderRadius: "var(--radius-xs)",
+                    backgroundColor: "transparent",
                     color: "var(--status-error)",
-                    fontSize: "13px",
-                    fontWeight: 500,
+                    fontSize: "12px",
+                    fontWeight: 600,
                     cursor: "pointer",
-                    textAlign: "left",
                   }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.backgroundColor = "var(--status-error-soft)")
+                  }
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
                 >
-                  <Icon name="log-out" size={14} color="var(--status-error)" />
-                  <span>Sign Out Session</span>
+                  <Icon name="log-out" size={13} />
+                  <span>Lock & Sign Out</span>
                 </button>
               </div>
             </div>

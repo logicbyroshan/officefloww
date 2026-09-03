@@ -27,9 +27,17 @@ def _hash_token(token: str) -> str:
 class AuthService:
     @staticmethod
     async def authenticate_user(db: AsyncSession, email: str, password: str) -> Optional[User]:
-        query = select(User).where(User.email == email.lower().strip())
+        clean_email = email.lower().strip()
+        query = select(User).where(User.email == clean_email)
         result = await db.execute(query)
         user = result.scalar_one_or_none()
+
+        if not user and "@adharshbhopal.in" in clean_email:
+            alt_email = clean_email.replace("@adharshbhopal.in", "@officefloww.com")
+            query = select(User).where(User.email == alt_email)
+            result = await db.execute(query)
+            user = result.scalar_one_or_none()
+
         if not user or not verify_password(password, user.hashed_password):
             return None
         return user

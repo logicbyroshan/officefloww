@@ -21,9 +21,9 @@ export const Button: React.FC<ButtonProps> = ({
   ...props
 }) => {
   const getStyles = (): React.CSSProperties => {
-    let bg = "var(--accent)";
-    let color = "var(--accent-contrast)";
-    let border = "1px solid var(--accent)";
+    let bg = "var(--accent-gradient, var(--accent))";
+    let color = "var(--accent-contrast, #111827)";
+    let border = "none";
     let hoverBg = "var(--accent-hover)";
 
     if (variant === "secondary") {

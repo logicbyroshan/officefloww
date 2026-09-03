@@ -9,16 +9,16 @@ export interface SeedAccount {
 }
 
 export const SEED_ACCOUNTS: SeedAccount[] = [
-  { email: "owner@officefloww.com", name: "Vikram Malhotra", role: UserRole.OWNER, description: "Full enterprise ownership & financials" },
-  { email: "admin@officefloww.com", name: "Rohan Sharma", role: UserRole.ADMIN, description: "System administrator & security" },
-  { email: "manager@officefloww.com", name: "Priya Nair", role: UserRole.MANAGER, description: "Production scheduling & proof approvals" },
-  { email: "sales@officefloww.com", name: "Arjun Kapoor", role: UserRole.SALES, description: "Client onboarding & orders intake" },
-  { email: "designer@officefloww.com", name: "Sneha Roy", role: UserRole.DESIGNER, description: "Artwork proofing & file submissions" },
-  { email: "dataop@officefloww.com", name: "Amit Verma", role: UserRole.DATA_OPERATOR, description: "Data roster entry & verification" },
-  { email: "prodmgr@officefloww.com", name: "Rajesh Gupta", role: UserRole.PRODUCTION_MANAGER, description: "Machine dispatch & batch allocations" },
-  { email: "machineop@officefloww.com", name: "Dinesh Kumar", role: UserRole.MACHINE_OPERATOR, description: "Press floor & defect logging" },
-  { email: "packingop@officefloww.com", name: "Sunil Yadav", role: UserRole.PACKING_OPERATOR, description: "Box verification & QC weighing" },
-  { email: "accounts@officefloww.com", name: "Ananya Deshmukh", role: UserRole.ACCOUNTS, description: "GST billing & financial ledgers" },
+  { email: "owner@adharshbhopal.in", name: "Vikram Malhotra", role: UserRole.OWNER, description: "Full enterprise ownership & financials" },
+  { email: "admin@adharshbhopal.in", name: "Rohan Sharma", role: UserRole.ADMIN, description: "System administrator & security" },
+  { email: "manager@adharshbhopal.in", name: "Priya Nair", role: UserRole.MANAGER, description: "Production scheduling & proof approvals" },
+  { email: "sales@adharshbhopal.in", name: "Arjun Kapoor", role: UserRole.SALES, description: "Client onboarding & orders intake" },
+  { email: "designer@adharshbhopal.in", name: "Sneha Roy", role: UserRole.DESIGNER, description: "Artwork proofing & file submissions" },
+  { email: "dataop@adharshbhopal.in", name: "Amit Verma", role: UserRole.DATA_OPERATOR, description: "Data roster entry & verification" },
+  { email: "prodmgr@adharshbhopal.in", name: "Rajesh Gupta", role: UserRole.PRODUCTION_MANAGER, description: "Machine dispatch & batch allocations" },
+  { email: "machineop@adharshbhopal.in", name: "Dinesh Kumar", role: UserRole.MACHINE_OPERATOR, description: "Press floor & defect logging" },
+  { email: "packingop@adharshbhopal.in", name: "Sunil Yadav", role: UserRole.PACKING_OPERATOR, description: "Box verification & QC weighing" },
+  { email: "accounts@adharshbhopal.in", name: "Ananya Deshmukh", role: UserRole.ACCOUNTS, description: "GST billing & financial ledgers" },
 ];
 
 export const AuthService = {

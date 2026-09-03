@@ -1,11 +1,9 @@
 import React, { useState } from "react";
 import { Invoice, InvoiceStatus } from "@officefloww/api-types";
 import { PageHeader } from "../../design-system/layouts/PageHeader";
-import { Tabs } from "../../design-system/components/Tabs";
-import { Card, StatBox } from "../../design-system/components/Card";
 import { Table, Column } from "../../design-system/components/Table";
-import { Badge } from "../../design-system/components/Badge";
 import { Button } from "../../design-system/components/Button";
+import { Icon } from "../../design-system/components/Icon";
 import { Modal } from "../../design-system/components/Modal";
 import { Input, Select } from "../../design-system/components/Input";
 import { useToast } from "../../design-system/components/Toast";
@@ -84,11 +82,43 @@ const SEED_LEDGER: LedgerEntry[] = [
   },
 ];
 
+interface ExpenseRecord {
+  id: string;
+  date: string;
+  category: string;
+  description: string;
+  amount: number;
+  paid_to: string;
+  payment_mode: string;
+}
+
+const SEED_EXPENSES: ExpenseRecord[] = [
+  {
+    id: "exp-01",
+    date: "01 Sep 2026",
+    category: "RAW_MATERIALS",
+    description: "Advance for PVC sheets shipment",
+    amount: 25000.0,
+    paid_to: "Apex Polymers Ltd.",
+    payment_mode: "RTGS",
+  },
+  {
+    id: "exp-02",
+    date: "02 Sep 2026",
+    category: "LABOUR_PAYOUT",
+    description: "Lanyard clip stitching batch payout",
+    amount: 3000.0,
+    paid_to: "Ramesh Labour Unit",
+    payment_mode: "UPI",
+  },
+];
+
 export const BillingView: React.FC = () => {
   const { success, error: toastError } = useToast();
-  const [activeTab, setActiveTab] = useState<"invoices" | "ledger" | "invariant">("invoices");
+  const [activeTab, setActiveTab] = useState<"invoices" | "payments" | "ledger" | "expenses" | "reports">("invoices");
   const [invoices, setInvoices] = useState<InvoiceRecord[]>(SEED_INVOICES);
   const [ledger, setLedger] = useState<LedgerEntry[]>(SEED_LEDGER);
+  const [search, setSearch] = useState("");
 
   // Record Payment Modal
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
@@ -126,7 +156,7 @@ export const BillingView: React.FC = () => {
         particulars: `Payment Received via ${paymentMode.replace(/_/g, " ")} (${txnRef || "NEFT"})`,
         debit: 0,
         credit: amount,
-        balance: Math.max(0, (selectedInvoice.total - selectedInvoice.paid_amount) - amount),
+        balance: Math.max(0, selectedInvoice.total - selectedInvoice.paid_amount - amount),
       };
 
       setLedger((prev) => [...prev, newLedgerEntry]);
@@ -143,142 +173,136 @@ export const BillingView: React.FC = () => {
   const invoiceColumns: Column<InvoiceRecord>[] = [
     {
       key: "invoice_number",
-      header: "Tax Invoice #",
-      width: "150px",
-      render: (i) => (
-        <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: "var(--accent-text)" }}>
-          {i.invoice_number}
+      header: "Invoice #",
+      width: "140px",
+      render: (inv) => (
+        <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: "var(--accent-text)", fontSize: "12.5px" }}>
+          {inv.invoice_number}
         </span>
       ),
     },
     {
       key: "client_name",
-      header: "Billed Client & Order",
-      render: (i) => (
-        <div>
-          <div style={{ fontWeight: 600, color: "var(--text-primary)" }}>{i.client_name}</div>
-          <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>Order: {i.order_number}</div>
+      header: "Client Account",
+      render: (inv) => (
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          <span style={{ fontWeight: 600, color: "var(--text-primary)", fontSize: "13px" }}>{inv.client_name}</span>
+          <span style={{ fontSize: "11px", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
+            Order {inv.order_number}
+          </span>
         </div>
       ),
     },
     {
-      key: "subtotal",
-      header: "Taxable Subtotal",
-      align: "right",
-      width: "130px",
-      render: (i) => (
-        <span style={{ fontFamily: "var(--font-mono)", color: "var(--text-secondary)" }}>
-          ₹{i.subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-        </span>
-      ),
-    },
-    {
-      key: "tax",
-      header: "GST (18%)",
-      align: "right",
-      width: "120px",
-      render: (i) => (
-        <span style={{ fontFamily: "var(--font-mono)", color: "var(--text-muted)" }}>
-          ₹{(i.cgst + i.sgst).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-        </span>
-      ),
+      key: "due_date",
+      header: "Due Date",
+      render: (inv) => <span style={{ fontSize: "12px", color: "var(--text-secondary)" }}>{inv.due_date}</span>,
     },
     {
       key: "total",
-      header: "Gross Total",
+      header: "Invoice Total",
       align: "right",
-      width: "140px",
-      render: (i) => (
-        <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: "var(--text-primary)" }}>
-          ₹{i.total.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+      render: (inv) => (
+        <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: "#fff", fontSize: "13px" }}>
+          ₹{inv.total.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
         </span>
       ),
     },
     {
-      key: "status",
-      header: "Status",
-      width: "140px",
-      render: (i) => {
-        let variant: "default" | "accent" | "success" | "warning" | "error" = "default";
-        if (i.status === InvoiceStatus.PAID) variant = "success";
-        if (i.status === InvoiceStatus.PARTIALLY_PAID) variant = "warning";
-        return <Badge variant={variant} dot>{i.status}</Badge>;
-      },
-    },
-    {
-      key: "actions",
-      header: "Action",
+      key: "paid_amount",
+      header: "Paid Amount",
       align: "right",
-      width: "140px",
-      render: (i) => (
-        <div style={{ display: "flex", justifyContent: "flex-end" }}>
-          {i.status !== InvoiceStatus.PAID && (
-            <Button
-              size="sm"
-              variant="outline"
-              icon="credit-card"
-              onClick={() => {
-                setSelectedInvoice(i);
-                setPaymentAmount(i.total - i.paid_amount);
-                setIsPaymentModalOpen(true);
-              }}
-            >
-              Record Payment
-            </Button>
-          )}
-        </div>
-      ),
-    },
-  ];
-
-  const ledgerColumns: Column<LedgerEntry>[] = [
-    {
-      key: "timestamp",
-      header: "Date",
-      width: "110px",
-      render: (l) => <span style={{ fontSize: "11px", color: "var(--text-secondary)" }}>{l.timestamp}</span>,
-    },
-    {
-      key: "client_name",
-      header: "Account / Particulars",
-      render: (l) => (
-        <div>
-          <div style={{ fontWeight: 600, color: "var(--text-primary)" }}>{l.client_name}</div>
-          <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>{l.particulars}</div>
-        </div>
-      ),
-    },
-    {
-      key: "debit",
-      header: "Debit (+)",
-      align: "right",
-      width: "120px",
-      render: (l) => (
-        <span style={{ fontFamily: "var(--font-mono)", color: l.debit > 0 ? "var(--status-error)" : "var(--text-muted)" }}>
-          {l.debit > 0 ? `₹${l.debit.toLocaleString()}` : "—"}
-        </span>
-      ),
-    },
-    {
-      key: "credit",
-      header: "Credit (−)",
-      align: "right",
-      width: "120px",
-      render: (l) => (
-        <span style={{ fontFamily: "var(--font-mono)", color: l.credit > 0 ? "var(--status-success)" : "var(--text-muted)", fontWeight: 600 }}>
-          {l.credit > 0 ? `₹${l.credit.toLocaleString()}` : "—"}
+      render: (inv) => (
+        <span style={{ fontFamily: "var(--font-mono)", color: "#10b981", fontWeight: 600, fontSize: "12.5px" }}>
+          ₹{inv.paid_amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
         </span>
       ),
     },
     {
       key: "balance",
-      header: "Net Balance",
+      header: "Balance Due",
       align: "right",
-      width: "130px",
-      render: (l) => (
-        <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: "var(--accent-text)" }}>
-          ₹{l.balance.toLocaleString()}
-        </span>
+      render: (inv) => {
+        const bal = inv.total - inv.paid_amount;
+        return (
+          <span
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontWeight: 700,
+              color: bal > 0 ? "var(--accent-text)" : "var(--text-muted)",
+              fontSize: "13px",
+            }}
+          >
+            ₹{bal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+          </span>
+        );
+      },
+    },
+    {
+      key: "status",
+      header: "Status",
+      render: (inv) => {
+        const isPaid = inv.status === InvoiceStatus.PAID;
+        return (
+          <span
+            style={{
+              fontSize: "10.5px",
+              fontWeight: 700,
+              padding: "2px 6px",
+              borderRadius: "3px",
+              backgroundColor: isPaid ? "rgba(16, 185, 129, 0.15)" : "rgba(255, 138, 115, 0.15)",
+              color: isPaid ? "#10b981" : "var(--accent-text)",
+            }}
+          >
+            {inv.status}
+          </span>
+        );
+      },
+    },
+    {
+      key: "actions",
+      header: "",
+      width: "120px",
+      render: (inv) => (
+        <div style={{ display: "flex", gap: "6px" }}>
+          {inv.total > inv.paid_amount && (
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedInvoice(inv);
+                setPaymentAmount(inv.total - inv.paid_amount);
+                setIsPaymentModalOpen(true);
+              }}
+              style={{
+                padding: "3px 8px",
+                borderRadius: "3px",
+                backgroundColor: "rgba(255, 138, 115, 0.15)",
+                border: "1px solid var(--accent-border)",
+                color: "var(--accent-text)",
+                fontSize: "11px",
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              Collect
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => success("PDF Generated", `Invoice ${inv.invoice_number} downloaded.`)}
+            style={{
+              padding: "3px 6px",
+              borderRadius: "3px",
+              backgroundColor: "rgba(255, 255, 255, 0.04)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              color: "var(--text-secondary)",
+              fontSize: "11px",
+              cursor: "pointer",
+            }}
+          >
+            PDF
+          </button>
+        </div>
       ),
     },
   ];
@@ -286,123 +310,272 @@ export const BillingView: React.FC = () => {
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", overflowY: "auto" }}>
       <PageHeader
-        title="Billing, GST Tax Invoices & Client Ledger"
-        subtitle="GST-compliant invoicing and cryptographic enforcement of the Tripartite Order Completion Invariant."
+        title="Billing & Financial Ledger"
+        badge={
+          <span
+            style={{
+              fontSize: "11px",
+              fontWeight: 600,
+              color: "var(--accent-text)",
+              backgroundColor: "rgba(255, 138, 115, 0.12)",
+              border: "1px solid var(--accent-border)",
+              borderRadius: "4px",
+              padding: "2px 8px",
+            }}
+          >
+            GST Compliance Engine
+          </span>
+        }
+        primaryAction={{
+          label: "Create Invoice",
+          icon: "plus",
+          onClick: () => success("Drafting Invoice", "Creating new tax invoice."),
+        }}
       />
 
-      <div style={{ padding: "16px 24px 0 24px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px", marginBottom: "16px" }}>
-          <StatBox label="Total Outstanding Receivables" value={`₹${totalReceivables.toLocaleString(undefined, { minimumFractionDigits: 2 })}`} subValue="Pending Collections" icon="billing" status="warning" />
-          <StatBox label="Collected This Month" value={`₹${totalCollections.toLocaleString(undefined, { minimumFractionDigits: 2 })}`} subValue="Settled Bank Deposits" icon="credit-card" status="success" />
-          <StatBox label="Completion Invariant" value="ACTIVE" subValue="Strict Verification Enforced" icon="shield" status="success" />
-        </div>
-      </div>
-
-      <Tabs
-        tabs={[
-          { id: "invoices", label: "Tax Invoices", icon: "billing", badge: invoices.length },
-          { id: "ledger", label: "Client Account Ledger", icon: "credit-card", badge: ledger.length },
-          { id: "invariant", label: "Order Completion Invariant", icon: "shield" },
-        ]}
-        activeTab={activeTab}
-        onChange={(tab) => setActiveTab(tab as any)}
-      />
-
-      <div style={{ padding: "16px 24px", display: "flex", flexDirection: "column", gap: "12px", flex: 1 }}>
-        {activeTab === "invoices" && (
-          <Table
-            columns={invoiceColumns}
-            data={invoices}
-            keyExtractor={(i) => i.id}
-            emptyText="No invoices generated."
-          />
-        )}
-
-        {activeTab === "ledger" && (
-          <Table
-            columns={ledgerColumns}
-            data={ledger}
-            keyExtractor={(l) => l.id}
-            emptyText="No ledger transactions recorded."
-          />
-        )}
-
-        {activeTab === "invariant" && (
-          <Card title="Tripartite Order Completion Invariant Engine" subtitle="Rules preventing premature order closure">
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-              <div style={{ padding: "12px 16px", backgroundColor: "var(--bg-surface)", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-xs)", fontSize: "12px", lineHeight: 1.6 }}>
-                <strong>🔒 Invariant Rule:</strong> An order can only transition to <code>COMPLETED</code> when all 3 assertions pass:
-                <ul style={{ marginTop: "6px", marginLeft: "18px" }}>
-                  <li>✓ <strong>Workflows Complete:</strong> All DAG step instances across items are marked <code>COMPLETED</code> or <code>SKIPPED</code>.</li>
-                  <li>✓ <strong>Dual Verification Packing:</strong> All finished goods are barcode scanned into sealed cartons.</li>
-                  <li>✓ <strong>Net Quantity Reconciliation:</strong> Packed units equal or exceed ordered job quantities without unallocated balance.</li>
-                </ul>
-              </div>
-
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-                <div style={{ padding: "12px", backgroundColor: "var(--status-success-soft)", border: "1px solid var(--status-success-border)", borderRadius: "var(--radius-xs)" }}>
-                  <div style={{ fontWeight: 600, color: "var(--status-success)" }}>Order #ORD-2026-0001 Check</div>
-                  <div style={{ fontSize: "11px", color: "var(--text-secondary)", marginTop: "4px" }}>
-                    ✓ Workflows Complete: YES (Press & Lanyard Fitting finished)<br />
-                    ✓ Quantities Reconciled: YES (5,000 / 5,000 units good)<br />
-                    ✓ Packing Sealed: YES (8 cartons sealed)
-                  </div>
-                </div>
-              </div>
+      <div style={{ padding: "16px 24px", display: "flex", flexDirection: "column", gap: "14px" }}>
+        {/* KPI Balance Tiles */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" }}>
+          <div
+            style={{
+              padding: "12px 16px",
+              backgroundColor: "rgba(19, 23, 34, 0.8)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              borderRadius: "4px",
+            }}
+          >
+            <div style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)" }}>
+              Total Outstanding Receivables
             </div>
-          </Card>
+            <div style={{ fontSize: "22px", fontWeight: 800, fontFamily: "var(--font-mono)", color: "var(--accent-text)", marginTop: "4px" }}>
+              ₹{totalReceivables.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+            </div>
+          </div>
+
+          <div
+            style={{
+              padding: "12px 16px",
+              backgroundColor: "rgba(19, 23, 34, 0.8)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              borderRadius: "4px",
+            }}
+          >
+            <div style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)" }}>
+              Total Collected (Month to Date)
+            </div>
+            <div style={{ fontSize: "22px", fontWeight: 800, fontFamily: "var(--font-mono)", color: "#10b981", marginTop: "4px" }}>
+              ₹{totalCollections.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+            </div>
+          </div>
+
+          <div
+            style={{
+              padding: "12px 16px",
+              backgroundColor: "rgba(19, 23, 34, 0.8)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              borderRadius: "4px",
+            }}
+          >
+            <div style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)" }}>
+              Invoices Awaiting Payment
+            </div>
+            <div style={{ fontSize: "22px", fontWeight: 800, fontFamily: "var(--font-mono)", color: "#fff", marginTop: "4px" }}>
+              {invoices.filter((i) => i.status !== InvoiceStatus.PAID).length} Active
+            </div>
+          </div>
+        </div>
+
+        {/* Navigation Tabs Bar */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+            paddingBottom: "10px",
+            gap: "12px",
+            flexWrap: "wrap",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+            {[
+              { id: "invoices" as const, label: "Tax Invoices" },
+              { id: "payments" as const, label: "Payments Received" },
+              { id: "ledger" as const, label: "Client Ledger" },
+              { id: "expenses" as const, label: "Expenses & Disbursements" },
+              { id: "reports" as const, label: "Tax & Financial Reports" },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  padding: "6px 12px",
+                  borderRadius: "4px",
+                  border: "none",
+                  backgroundColor:
+                    activeTab === tab.id ? "rgba(255, 138, 115, 0.14)" : "transparent",
+                  color: activeTab === tab.id ? "var(--accent-text)" : "var(--text-secondary)",
+                  fontSize: "12.5px",
+                  fontWeight: activeTab === tab.id ? 600 : 500,
+                  cursor: "pointer",
+                }}
+              >
+                <span>{tab.label}</span>
+              </button>
+            ))}
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              backgroundColor: "rgba(0, 0, 0, 0.25)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              borderRadius: "4px",
+              padding: "4px 10px",
+            }}
+          >
+            <Icon name="search" size={13} color="var(--text-muted)" />
+            <input
+              type="text"
+              placeholder="Search invoices, clients..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              style={{
+                background: "none",
+                border: "none",
+                color: "#fff",
+                fontSize: "12px",
+                outline: "none",
+                width: "160px",
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Tab View Contents */}
+        {activeTab === "ledger" ? (
+          <div
+            style={{
+              backgroundColor: "rgba(19, 23, 34, 0.75)",
+              backdropFilter: "blur(14px)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              borderRadius: "4px",
+              overflow: "hidden",
+            }}
+          >
+            <Table
+              columns={[
+                { key: "timestamp", header: "Date", width: "120px", render: (l) => <span style={{ fontSize: "11.5px", fontFamily: "var(--font-mono)" }}>{l.timestamp}</span> },
+                { key: "client_name", header: "Client Account", render: (l) => <span style={{ fontWeight: 600, color: "#fff" }}>{l.client_name}</span> },
+                { key: "particulars", header: "Transaction Particulars", render: (l) => <span style={{ fontSize: "12px", color: "var(--text-secondary)" }}>{l.particulars}</span> },
+                { key: "debit", header: "Debit (Charge)", align: "right", render: (l) => <span style={{ fontFamily: "var(--font-mono)", color: l.debit > 0 ? "var(--status-error)" : "var(--text-muted)" }}>{l.debit > 0 ? `₹${l.debit.toLocaleString()}` : "—"}</span> },
+                { key: "credit", header: "Credit (Payment)", align: "right", render: (l) => <span style={{ fontFamily: "var(--font-mono)", color: l.credit > 0 ? "#10b981" : "var(--text-muted)" }}>{l.credit > 0 ? `₹${l.credit.toLocaleString()}` : "—"}</span> },
+                { key: "balance", header: "Running Balance", align: "right", render: (l) => <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: "#fff" }}>₹{l.balance.toLocaleString()}</span> },
+              ]}
+              data={ledger}
+              emptyText="No ledger entries."
+            />
+          </div>
+        ) : activeTab === "expenses" ? (
+          <div
+            style={{
+              backgroundColor: "rgba(19, 23, 34, 0.75)",
+              backdropFilter: "blur(14px)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              borderRadius: "4px",
+              overflow: "hidden",
+            }}
+          >
+            <Table
+              columns={[
+                { key: "date", header: "Date", width: "120px", render: (e) => <span style={{ fontSize: "11.5px", fontFamily: "var(--font-mono)" }}>{e.date}</span> },
+                { key: "category", header: "Category", render: (e) => <span style={{ fontSize: "11px", fontWeight: 700, padding: "2px 6px", borderRadius: "3px", backgroundColor: "rgba(255, 255, 255, 0.04)", color: "var(--text-secondary)" }}>{e.category}</span> },
+                { key: "description", header: "Description / Purpose", render: (e) => <span style={{ fontSize: "12.5px", color: "#fff" }}>{e.description}</span> },
+                { key: "paid_to", header: "Paid To", render: (e) => <span style={{ fontSize: "12px", color: "var(--text-secondary)" }}>{e.paid_to}</span> },
+                { key: "amount", header: "Amount", align: "right", render: (e) => <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: "#fff" }}>₹{e.amount.toLocaleString()}</span> },
+              ]}
+              data={SEED_EXPENSES}
+              emptyText="No expenses logged."
+            />
+          </div>
+        ) : (
+          /* Main Invoices Table */
+          <div
+            style={{
+              backgroundColor: "rgba(19, 23, 34, 0.75)",
+              backdropFilter: "blur(14px)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              borderRadius: "4px",
+              overflow: "hidden",
+            }}
+          >
+            <Table
+              columns={invoiceColumns}
+              data={invoices}
+              emptyText="No invoices found."
+            />
+          </div>
         )}
       </div>
 
       {/* Record Payment Modal */}
-      <Modal
-        isOpen={isPaymentModalOpen}
-        onClose={() => setIsPaymentModalOpen(false)}
-        title="Record Client Payment"
-        subtitle={`Record receipt for ${selectedInvoice?.invoice_number} (${selectedInvoice?.client_name})`}
-        width={480}
-        footer={
-          <>
-            <Button variant="secondary" onClick={() => setIsPaymentModalOpen(false)} disabled={loading}>
-              Cancel
-            </Button>
-            <Button variant="primary" icon="check" onClick={handleRecordPayment} loading={loading}>
-              Record Receipt (₹{paymentAmount.toLocaleString()})
-            </Button>
-          </>
-        }
-      >
-        <form onSubmit={handleRecordPayment} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-          <Input
-            label="Payment Amount (₹)"
-            type="number"
-            value={paymentAmount}
-            onChange={(e) => setPaymentAmount(Number(e.target.value))}
-            min={1}
-            max={selectedInvoice ? selectedInvoice.total - selectedInvoice.paid_amount : undefined}
-            required
-          />
+      {isPaymentModalOpen && selectedInvoice && (
+        <Modal
+          isOpen={isPaymentModalOpen}
+          onClose={() => setIsPaymentModalOpen(false)}
+          title={`Record Payment for ${selectedInvoice.invoice_number}`}
+        >
+          <form onSubmit={handleRecordPayment} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            <div style={{ padding: "10px", backgroundColor: "rgba(255, 255, 255, 0.03)", borderRadius: "4px" }}>
+              <div style={{ fontSize: "11.5px", color: "var(--text-muted)" }}>Client: {selectedInvoice.client_name}</div>
+              <div style={{ fontSize: "13px", fontWeight: 700, color: "#fff", marginTop: "2px" }}>
+                Balance Due: ₹{(selectedInvoice.total - selectedInvoice.paid_amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+              </div>
+            </div>
 
-          <Select
-            label="Payment Mode"
-            options={[
-              { label: "NEFT / RTGS Bank Transfer", value: "NEFT_BANK_TRANSFER" },
-              { label: "UPI / QR Code", value: "UPI" },
-              { label: "Cheque Deposit", value: "CHEQUE" },
-              { label: "Cash on Delivery (COD)", value: "CASH" },
-            ]}
-            value={paymentMode}
-            onChange={(e) => setPaymentMode(e.target.value)}
-          />
+            <Input
+              label="Amount Received (₹)"
+              type="number"
+              value={paymentAmount}
+              onChange={(e) => setPaymentAmount(Number(e.target.value))}
+              required
+            />
 
-          <Input
-            label="Transaction Reference / Cheque #"
-            placeholder="e.g. UTR-994810294"
-            value={txnRef}
-            onChange={(e) => setTxnRef(e.target.value)}
-          />
-        </form>
-      </Modal>
+            <Select
+              label="Payment Mode"
+              value={paymentMode}
+              onChange={(e) => setPaymentMode(e.target.value)}
+              options={[
+                { value: "NEFT_BANK_TRANSFER", label: "NEFT / RTGS Bank Transfer" },
+                { value: "UPI_SCANNER", label: "UPI Corporate QR" },
+                { value: "CHEQUE", label: "Account Payee Cheque" },
+                { value: "CASH", label: "Cash Receipt" },
+              ]}
+            />
+
+            <Input
+              label="Bank Reference / Txn UTR #"
+              placeholder="e.g. UTR994827104"
+              value={txnRef}
+              onChange={(e) => setTxnRef(e.target.value)}
+            />
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px", marginTop: "8px" }}>
+              <Button variant="secondary" size="sm" onClick={() => setIsPaymentModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button variant="primary" size="sm" type="submit" loading={loading}>
+                Confirm & Credit Ledger
+              </Button>
+            </div>
+          </form>
+        </Modal>
+      )}
     </div>
   );
 };

@@ -10,6 +10,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   switchUser: (email: string) => Promise<void>;
   can: (permission: Permission) => boolean;
+  hasPerm: (permission: Permission) => boolean;
   canNav: (section: AppNavSection) => boolean;
   role: UserRole | null;
 }
@@ -85,6 +86,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         logout,
         switchUser,
         can,
+        hasPerm: can,
         canNav,
         role: user?.role || null,
       }}

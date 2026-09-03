@@ -1,83 +1,67 @@
-# 01 - Desktop UI Architecture
+# 01 — UI & Desktop Architecture
 
-## Overview
-OfficeFloww Desktop UI is an industrial-grade Electron + React/TypeScript operating system tailored specifically for high-volume commercial printing, lanyard production, and institutional card manufacturing.
+## 1. Architectural Stack
 
-## High-Level Architecture Diagram
-```
-┌─────────────────────────────────────────────────────────────┐
-│                 Electron Main Process (Node.js)             │
-│   • BrowserWindow (1280x860, min 1024x700)                 │
-│   • Security Sandbox: contextIsolation: true, nodeInt: false│
-│   • Preload Bridge: contextBridge.exposeInMainWorld        │
-└──────────────────────────────┬──────────────────────────────┘
-                               │ IPC / ContextBridge
-┌──────────────────────────────▼──────────────────────────────┐
-│                Electron Renderer Process (DOM)               │
-│                                                             │
-│   ┌─────────────────────────────────────────────────────┐   │
-│   │ App Root (<AuthProvider> -> <ToastProvider>)         │   │
-│   └──────────────────────────┬──────────────────────────┘   │
-│                              │                              │
-│   ┌──────────────────────────▼──────────────────────────┐   │
-│   │ AppShell Layout                                     │   │
-│   │  ├─ TopBar (Global Search Ctrl+K, Live Ping, Role)  │   │
-│   │  ├─ Sidebar (Role-Gated Navigation + Urgent Badges) │   │
-│   │  └─ Main Content Viewport                           │   │
-│   └──────────────────────────┬──────────────────────────┘   │
-│                              │                              │
-│   ┌──────────────────────────▼──────────────────────────┐   │
-│   │ Single-Accent Design System Tokens & Components     │   │
-│   │  • Base CSS Tokens (dark neutral, 2px-6px radii)    │   │
-│   │  • 5 Configurable Accent Themes                     │   │
-│   │  • Tables, Modals, Drawers, Quantity Breakdown     │   │
-│   └──────────────────────────┬──────────────────────────┘   │
-│                              │                              │
-│   ┌──────────────────────────▼──────────────────────────┐   │
-│   │ API Client Wrapper (@officefloww/api-client)        │   │
-│   │  • Automatic Bearer JWT Injection                   │   │
-│   │  • Heartbeat Polling & 401 Session Interceptor      │   │
-│   └──────────────────────────┬──────────────────────────┘   │
-└──────────────────────────────┼──────────────────────────────┘
-                               │ HTTP / JSON REST
-┌──────────────────────────────▼──────────────────────────────┐
-│           FastAPI Monolith Backend (127.0.0.1:8000)         │
-│   • JWT Auth & RBAC Permissions Matrix                      │
-│   • SQLite / PostgreSQL WAL Database                        │
-│   • DAG Workflow Execution & Double-Entry Ledger Engine     │
-└─────────────────────────────────────────────────────────────┘
-```
+PrintFlow is an enterprise-grade desktop operational suite built with:
+- **Electron 28+**: Cross-platform desktop host with isolated context and secure IPC bridges.
+- **React 18.2**: Component-driven desktop UI leveraging functional hooks, fast reconciliation, and memoized tables.
+- **TypeScript 5.x**: End-to-end type safety shared between the desktop frontend and the FastAPI backend.
+- **esbuild**: Sub-100ms ultra-fast incremental bundler configured for browser platform compilation.
+- **Vanilla CSS + Token Variables**: Zero runtime overhead, strict variable enforcement via CSS custom properties.
 
-## Directory Structure
+---
+
+## 2. Directory Layout
+
 ```
 apps/desktop/
-├── main.js                      # Electron main entry point
-├── preload.js                   # Secure contextBridge isolation
-├── index.html                   # Shell container + Inter/JetBrains fonts
-├── package.json                 # Desktop dependencies and build scripts
-└── src/
-    ├── api/                     # Singleton API client & typed domain services
-    │   ├── client.ts
-    │   ├── auth.service.ts
-    │   └── services.ts
-    ├── auth/                    # RBAC matrix, auth context & permission gates
-    │   ├── permissions.ts
-    │   ├── AuthContext.tsx
-    │   └── RoleGate.tsx
-    ├── design-system/           # Tokens, layouts & atomic component library
-    │   ├── tokens/
-    │   │   ├── index.css
-    │   │   └── theme.ts
-    │   ├── components/          # Icon, Button, Table, Modal, Drawer, Toast, etc.
-    │   └── layouts/             # PageHeader, SplitPane, SectionHeader
-    ├── hooks/                   # useAsync, useConnection
-    ├── layout/                  # AppShell, TopBar, Sidebar
-    ├── views/                   # Operational screens (Orders, Tasks, Clients, etc.)
-    ├── App.tsx                  # App root orchestration & modal manager
-    └── index.tsx                # React DOM 18 bootstrap
+├── assets/
+│   ├── logo.png               # Official PrintFlow logo asset
+│   └── favicon.png            # Desktop runtime window icon
+├── dist/
+│   ├── bundle.js              # Bundled JavaScript output
+│   └── bundle.js.map          # Source map for fast debugging
+├── src/
+│   ├── api/                   # HTTP client & API service abstractions
+│   ├── auth/                  # RBAC state & role navigation rules
+│   ├── design-system/         # Reusable atomic UI components & tokens
+│   │   ├── components/        # Button, Card, Table, Drawer, Modal, Icon
+│   │   ├── layouts/           # PageHeader, ShellLayout
+│   │   └── tokens/            # index.css, theme.ts
+│   ├── hooks/                 # useAsync, useConnection, useToast
+│   ├── layout/                # AppShell, TopBar, Sidebar
+│   └── views/                 # 7 primary workspaces
+│       ├── auth/              # LoginView
+│       ├── dashboard/         # DashboardView (Shortcut & Action Center)
+│       ├── tasks/             # TasksView (Work Manager, Kanban, Drawers)
+│       ├── staff/             # StaffView (Employees, Labour, Workload)
+│       ├── stock/             # StockDashboardView (Spreadsheet register, POs)
+│       ├── clients/           # ClientsView (Clients, Orders, Quotations)
+│       ├── billing/           # BillingView (Invoices, Payments, Ledger)
+│       ├── settings/          # SettingsView (2-column system config)
+│       └── voice/             # VoiceAssistantBar (Context AI query)
+├── index.html                 # Main Electron HTML entrypoint
+└── main.js                    # Electron main process & window controller
 ```
 
-## Production Integrity Enforcements
-1. **Zero Mock Business Logic**: The UI consumes the live FastAPI backend for order creation, DAG step execution, blocker logging, and quantity auditing.
-2. **Double-Entry Accounting Invariance**: Quantities strictly mirror `Ordered = Produced + InProgress - Waste - Defective`.
-3. **Session Resiliency**: JWT tokens and active workstation role are securely cached in local storage with automatic token attachment.
+---
+
+## 3. Communication Model
+
+```mermaid
+graph TD
+    subgraph Electron Desktop
+        MainProcess[main.js Electron Host]
+        Renderer[React 18 Desktop UI]
+    end
+    subgraph Backend Modular Monolith
+        FastAPIServer[FastAPI Server :8000]
+        SQLiteDB[(SQLite / PostgreSQL DB)]
+    end
+
+    Renderer -->|REST JSON / Bearer JWT| FastAPIServer
+    Renderer -->|POST /api/v1/ai/query| FastAPIServer
+    FastAPIServer --> SQLiteDB
+```
+
+All interactions use standard HTTP/HTTPS REST queries with JSON payloads and Bearer tokens stored in session memory or encrypted local configuration.

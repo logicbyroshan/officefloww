@@ -8,6 +8,8 @@ export interface SidebarProps {
   onSelectSection: (section: AppNavSection) => void;
   pendingApprovalsCount?: number;
   urgentTasksCount?: number;
+  isCollapsed: boolean;
+  onToggleCollapse: () => void;
 }
 
 interface NavItemDef {
@@ -23,216 +25,321 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onSelectSection,
   pendingApprovalsCount = 0,
   urgentTasksCount = 0,
+  isCollapsed,
+  onToggleCollapse,
 }) => {
   const { canNav } = useAuth();
 
-  const coreNav: NavItemDef[] = [
+  const primaryNav: NavItemDef[] = [
     { id: "dashboard", label: "Dashboard", icon: "dashboard" },
-    { id: "quotations", label: "Quotations & Costing", icon: "quotations" },
-    { id: "orders", label: "Production Orders", icon: "orders" },
-    { id: "tasks", label: "Task Queue", icon: "tasks", badge: urgentTasksCount, badgeVariant: "urgent" },
-    { id: "approvals", label: "Proof Approvals", icon: "approvals", badge: pendingApprovalsCount, badgeVariant: "normal" },
-    { id: "clients", label: "Clients Directory", icon: "clients" },
-    { id: "products", label: "Products & BOM", icon: "products" },
+    {
+      id: "tasks",
+      label: "Tasks",
+      icon: "tasks",
+      badge: urgentTasksCount,
+      badgeVariant: "urgent",
+    },
+    { id: "staff", label: "Staff", icon: "staff" },
+    { id: "stock", label: "Stock", icon: "stock" },
+    { id: "clients", label: "Clients", icon: "clients" },
+    { id: "billing", label: "Billing", icon: "billing" },
   ];
 
-  const factoryNav: NavItemDef[] = [
-    { id: "production", label: "Machines & Batches", icon: "production" },
-    { id: "stock", label: "Stock & Inventory", icon: "stock" },
-    { id: "purchasing", label: "Purchasing & POs", icon: "purchasing" },
-    { id: "labour", label: "Labour & Contractors", icon: "labour" },
-    { id: "packing", label: "Packing Operations", icon: "packing" },
-    { id: "dispatch", label: "Dispatch & Logistics", icon: "dispatch" },
-  ];
-
-  const financeNav: NavItemDef[] = [
-    { id: "billing", label: "Billing & Invoices", icon: "billing" },
-    { id: "reports", label: "Analytics & Reports", icon: "reports" },
-    { id: "audit", label: "Audit & Activity Trail", icon: "audit" },
-    { id: "automation", label: "Automation Rules", icon: "automation" },
-  ];
-
-  const renderNavGroup = (title: string, items: NavItemDef[]) => {
-    const visibleItems = items.filter((item) => canNav(item.id));
-    if (visibleItems.length === 0) return null;
-
-    return (
-      <div style={{ marginBottom: "16px" }}>
-        <div
-          style={{
-            fontSize: "11px",
-            fontWeight: 700,
-            textTransform: "uppercase",
-            letterSpacing: "0.8px",
-            color: "var(--text-muted)",
-            padding: "0 14px 8px 14px",
-          }}
-        >
-          {title}
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
-          {visibleItems.map((item) => {
-            const isActive = activeSection === item.id;
-
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => onSelectSection(item.id)}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: "8px 14px",
-                  borderRadius: "var(--radius-sm)",
-                  border: "none",
-                  borderLeft: isActive ? "3px solid var(--accent)" : "3px solid transparent",
-                  backgroundColor: isActive ? "var(--accent-soft)" : "transparent",
-                  color: isActive ? "var(--accent-text)" : "var(--text-secondary)",
-                  fontSize: "13.5px",
-                  fontWeight: isActive ? 600 : 500,
-                  cursor: "pointer",
-                  textAlign: "left",
-                  transition: "all 0.12s ease",
-                  width: "100%",
-                }}
-                onMouseEnter={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.backgroundColor = "var(--bg-card-hover)";
-                    e.currentTarget.style.color = "var(--text-primary)";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.backgroundColor = "transparent";
-                    e.currentTarget.style.color = "var(--text-secondary)";
-                  }
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: "11px" }}>
-                  <Icon
-                    name={item.icon}
-                    size={16}
-                    color={isActive ? "var(--accent-text)" : "var(--text-muted)"}
-                  />
-                  <span>{item.label}</span>
-                </div>
-
-                {item.badge !== undefined && item.badge > 0 && (
-                  <span
-                    style={{
-                      fontSize: "11px",
-                      fontFamily: "var(--font-mono)",
-                      fontWeight: 700,
-                      padding: "2px 7px",
-                      borderRadius: "var(--radius-xs)",
-                      backgroundColor:
-                        item.badgeVariant === "urgent" ? "var(--status-error)" : "var(--accent)",
-                      color: "#fff",
-                    }}
-                  >
-                    {item.badge}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    );
-  };
+  const visiblePrimary = primaryNav.filter((item) => canNav(item.id));
+  const canAccessSettings = canNav("settings");
 
   return (
     <aside
       style={{
-        width: "var(--sidebar-width)",
-        backgroundColor: "var(--bg-surface)",
-        borderRight: "1px solid var(--border-medium)",
+        width: isCollapsed ? "68px" : "240px",
+        backgroundColor: "rgba(14, 18, 26, 0.88)",
+        backdropFilter: "blur(18px)",
+        borderRight: "1px solid rgba(255, 255, 255, 0.07)",
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
-        padding: "16px 10px 14px 10px",
+        padding: isCollapsed ? "16px 8px 14px 8px" : "16px 12px 14px 12px",
         flexShrink: 0,
         height: "100%",
         overflowY: "auto",
+        overflowX: "hidden",
+        zIndex: 10,
+        transition: "width 0.2s cubic-bezier(0.4, 0, 0.2, 1), padding 0.2s ease",
       }}
     >
       <div>
         {/* Brand Header */}
-        <div style={{ padding: "0 12px 16px 12px", borderBottom: "1px solid var(--border-subtle)", marginBottom: "14px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <div
+        <div
+          style={{
+            padding: isCollapsed ? "2px 0 16px 0" : "2px 8px 16px 8px",
+            borderBottom: "1px solid rgba(255, 255, 255, 0.07)",
+            marginBottom: "18px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: isCollapsed ? "center" : "flex-start",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "11px" }}>
+            <img
+              src="./assets/logo.png"
+              alt="PrintFlow"
+              title="PrintFlow — Adharsh Bhopal OS"
               style={{
-                width: 30,
-                height: 30,
-                backgroundColor: "var(--accent)",
-                borderRadius: "var(--radius-xs)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "#fff",
-                fontWeight: 800,
-                fontSize: "14px",
-                fontFamily: "var(--font-mono)",
-                boxShadow: "0 2px 6px var(--accent-soft)",
+                width: 36,
+                height: 36,
+                borderRadius: "6px",
+                objectFit: "contain",
+                filter: "drop-shadow(0 2px 8px rgba(124, 58, 237, 0.45))",
+                flexShrink: 0,
               }}
-            >
-              OF
-            </div>
-            <div>
-              <div style={{ fontSize: "14.5px", fontWeight: 700, color: "var(--text-primary)", letterSpacing: "-0.2px" }}>
-                OfficeFloww
+            />
+            {!isCollapsed && (
+              <div>
+                <div
+                  style={{
+                    fontSize: "15px",
+                    fontWeight: 700,
+                    color: "var(--text-primary)",
+                    letterSpacing: "-0.2px",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  PrintFlow
+                </div>
+                <div
+                  style={{
+                    fontSize: "10px",
+                    color: "var(--accent-text)",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.6px",
+                    fontWeight: 700,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  Adharsh Bhopal OS
+                </div>
               </div>
-              <div style={{ fontSize: "10.5px", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.6px", fontWeight: 600 }}>
-                Production OS
-              </div>
-            </div>
+            )}
           </div>
         </div>
 
-        {/* Navigation Sections */}
-        {renderNavGroup("Core Operations", coreNav)}
-        {renderNavGroup("Factory & Logistics", factoryNav)}
-        {renderNavGroup("Finance & Intelligence", financeNav)}
+        {/* Primary Navigation Section */}
+        <div style={{ marginBottom: "20px" }}>
+          {!isCollapsed && (
+            <div
+              style={{
+                fontSize: "10.5px",
+                fontWeight: 700,
+                textTransform: "uppercase",
+                letterSpacing: "1px",
+                color: "rgba(148, 163, 184, 0.65)",
+                padding: "0 10px 10px 10px",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+              }}
+            >
+              <span>Workspaces</span>
+              <div
+                style={{
+                  flex: 1,
+                  height: "1px",
+                  backgroundColor: "rgba(255, 255, 255, 0.05)",
+                }}
+              />
+            </div>
+          )}
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            {visiblePrimary.map((item) => {
+              const isActive = activeSection === item.id;
+
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => onSelectSection(item.id)}
+                  title={isCollapsed ? item.label : undefined}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: isCollapsed ? "center" : "space-between",
+                    padding: isCollapsed ? "10px 0" : "10px 14px",
+                    borderRadius: "4px",
+                    border: "1px solid " + (isActive ? "var(--accent-border)" : "transparent"),
+                    borderLeft: !isCollapsed
+                      ? isActive
+                        ? "3px solid var(--accent)"
+                        : "3px solid transparent"
+                      : undefined,
+                    backgroundColor: isActive
+                      ? "rgba(255, 138, 115, 0.12)"
+                      : "transparent",
+                    color: isActive ? "var(--accent-text)" : "var(--text-secondary)",
+                    fontSize: "13.5px",
+                    fontWeight: isActive ? 600 : 500,
+                    cursor: "pointer",
+                    textAlign: "left",
+                    transition: "all 0.15s ease",
+                    width: "100%",
+                    boxShadow: isActive
+                      ? "0 2px 10px rgba(255, 138, 115, 0.15)"
+                      : "none",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActive) {
+                      e.currentTarget.style.backgroundColor =
+                        "rgba(255, 255, 255, 0.04)";
+                      e.currentTarget.style.color = "var(--text-primary)";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) {
+                      e.currentTarget.style.backgroundColor = "transparent";
+                      e.currentTarget.style.color = "var(--text-secondary)";
+                    }
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: isCollapsed ? "0" : "11px",
+                    }}
+                  >
+                    <Icon
+                      name={item.icon}
+                      size={17}
+                      color={isActive ? "var(--accent-text)" : "var(--text-muted)"}
+                    />
+                    {!isCollapsed && <span>{item.label}</span>}
+                  </div>
+
+                  {!isCollapsed && item.badge !== undefined && item.badge > 0 && (
+                    <span
+                      style={{
+                        fontSize: "11px",
+                        fontFamily: "var(--font-mono)",
+                        fontWeight: 700,
+                        padding: "2px 7px",
+                        borderRadius: "3px",
+                        backgroundColor:
+                          item.badgeVariant === "urgent"
+                            ? "var(--status-error)"
+                            : "var(--accent)",
+                        color:
+                          item.badgeVariant === "urgent"
+                            ? "#fff"
+                            : "var(--accent-contrast, #111827)",
+                      }}
+                    >
+                      {item.badge}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
-      {/* Footer / Settings Link */}
-      <div style={{ borderTop: "1px solid var(--border-subtle)", paddingTop: "10px" }}>
+      {/* Footer: Settings & Collapse Toggle */}
+      <div
+        style={{
+          borderTop: "1px solid rgba(255, 255, 255, 0.07)",
+          paddingTop: "12px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "6px",
+        }}
+      >
+        {canAccessSettings && (
+          <button
+            type="button"
+            onClick={() => onSelectSection("settings")}
+            title={isCollapsed ? "Settings" : undefined}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: isCollapsed ? "center" : "flex-start",
+              gap: isCollapsed ? "0" : "10px",
+              padding: isCollapsed ? "10px 0" : "9px 12px",
+              borderRadius: "4px",
+              border:
+                "1px solid " +
+                (activeSection === "settings"
+                  ? "var(--accent-border)"
+                  : "transparent"),
+              borderLeft: !isCollapsed
+                ? activeSection === "settings"
+                  ? "3px solid var(--accent)"
+                  : "3px solid transparent"
+                : undefined,
+              backgroundColor:
+                activeSection === "settings"
+                  ? "rgba(255, 138, 115, 0.12)"
+                  : "transparent",
+              color:
+                activeSection === "settings"
+                  ? "var(--accent-text)"
+                  : "var(--text-secondary)",
+              fontSize: "13px",
+              fontWeight: activeSection === "settings" ? 600 : 500,
+              cursor: "pointer",
+              width: "100%",
+              textAlign: "left",
+              transition: "all 0.15s ease",
+            }}
+            onMouseEnter={(e) => {
+              if (activeSection !== "settings") {
+                e.currentTarget.style.backgroundColor =
+                  "rgba(255, 255, 255, 0.04)";
+                e.currentTarget.style.color = "var(--text-primary)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (activeSection !== "settings") {
+                e.currentTarget.style.backgroundColor = "transparent";
+                e.currentTarget.style.color = "var(--text-secondary)";
+              }
+            }}
+          >
+            <Icon name="settings" size={16} />
+            {!isCollapsed && <span>Settings</span>}
+          </button>
+        )}
+
+        {/* Sidebar Collapse Toggle */}
         <button
           type="button"
-          onClick={() => onSelectSection("settings")}
+          onClick={onToggleCollapse}
+          title={isCollapsed ? "Expand Sidebar (Ctrl+\\)" : "Collapse Sidebar (Ctrl+\\)"}
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "10px",
-            padding: "9px 14px",
-            borderRadius: "var(--radius-sm)",
-            border: "none",
-            borderLeft: activeSection === "settings" ? "3px solid var(--accent)" : "3px solid transparent",
-            backgroundColor: activeSection === "settings" ? "var(--accent-soft)" : "transparent",
-            color: activeSection === "settings" ? "var(--accent-text)" : "var(--text-secondary)",
-            fontSize: "13.5px",
-            fontWeight: activeSection === "settings" ? 600 : 500,
+            justifyContent: isCollapsed ? "center" : "flex-start",
+            gap: "8px",
+            padding: isCollapsed ? "8px 0" : "7px 12px",
+            borderRadius: "4px",
+            border: "1px solid transparent",
+            backgroundColor: "transparent",
+            color: "var(--text-muted)",
+            fontSize: "11.5px",
             cursor: "pointer",
             width: "100%",
-            textAlign: "left",
-            transition: "all 0.12s ease",
+            transition: "all 0.15s ease",
           }}
           onMouseEnter={(e) => {
-            if (activeSection !== "settings") {
-              e.currentTarget.style.backgroundColor = "var(--bg-card-hover)";
-              e.currentTarget.style.color = "var(--text-primary)";
-            }
+            e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.04)";
+            e.currentTarget.style.color = "var(--text-primary)";
           }}
           onMouseLeave={(e) => {
-            if (activeSection !== "settings") {
-              e.currentTarget.style.backgroundColor = "transparent";
-              e.currentTarget.style.color = "var(--text-secondary)";
-            }
+            e.currentTarget.style.backgroundColor = "transparent";
+            e.currentTarget.style.color = "var(--text-muted)";
           }}
         >
-          <Icon name="settings" size={16} />
-          <span>System Settings</span>
+          <Icon name={isCollapsed ? "chevron-right" : "chevron-left"} size={14} />
+          {!isCollapsed && <span>Collapse Sidebar</span>}
         </button>
       </div>
     </aside>

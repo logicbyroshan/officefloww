@@ -2,22 +2,11 @@ import { UserRole } from "@officefloww/api-types";
 
 export type AppNavSection =
   | "dashboard"
-  | "clients"
-  | "quotations"
-  | "orders"
   | "tasks"
-  | "approvals"
-  | "products"
-  | "production"
+  | "staff"
   | "stock"
-  | "purchasing"
-  | "labour"
-  | "packing"
-  | "dispatch"
+  | "clients"
   | "billing"
-  | "reports"
-  | "audit"
-  | "automation"
   | "settings";
 
 export type Permission =
@@ -90,7 +79,6 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "clients:create",
     "clients:edit",
     "quotations:create",
-    "products:create",
     "approvals:approve",
     "approvals:reject",
     "tasks:advance",
@@ -98,18 +86,19 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "stock:reserve",
     "purchasing:manage",
     "labour:allocate",
-    "billing:invoice",
     "reports:view",
+    "settings:manage",
   ],
   [UserRole.SALES]: [
     "orders:create",
+    "orders:edit",
     "clients:create",
     "clients:edit",
     "quotations:create",
-    "approvals:approve",
     "reports:view",
   ],
   [UserRole.DESIGNER]: [
+    "approvals:approve",
     "tasks:advance",
     "tasks:block",
   ],
@@ -134,137 +123,124 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "tasks:block",
   ],
   [UserRole.ACCOUNTS]: [
-    "clients:create",
     "billing:invoice",
     "reports:view",
   ],
-  [UserRole.LABOUR]: [],
-  [UserRole.DELIVERY_PARTNER]: [],
-  [UserRole.DISPATCH_OPERATOR]: ["tasks:advance"],
-  [UserRole.PURCHASE_MANAGER]: ["stock:reserve", "purchasing:manage"],
-  [UserRole.STOCK_MANAGER]: ["stock:reserve"],
+  [UserRole.LABOUR]: [
+    "tasks:advance",
+  ],
+  [UserRole.DELIVERY_PARTNER]: [
+    "tasks:advance",
+  ],
+  [UserRole.DISPATCH_OPERATOR]: [
+    "tasks:advance",
+  ],
+  [UserRole.PURCHASE_MANAGER]: [
+    "purchasing:manage",
+    "stock:reserve",
+  ],
+  [UserRole.STOCK_MANAGER]: [
+    "stock:reserve",
+    "purchasing:manage",
+  ],
 };
 
 const ROLE_NAV_SECTIONS: Record<UserRole, AppNavSection[]> = {
   [UserRole.OWNER]: [
     "dashboard",
-    "quotations",
-    "orders",
     "tasks",
-    "approvals",
-    "clients",
-    "products",
-    "production",
+    "staff",
     "stock",
-    "purchasing",
-    "labour",
-    "packing",
-    "dispatch",
+    "clients",
     "billing",
-    "reports",
-    "audit",
-    "automation",
     "settings",
   ],
   [UserRole.ADMIN]: [
     "dashboard",
-    "quotations",
-    "orders",
     "tasks",
-    "approvals",
-    "clients",
-    "products",
-    "production",
+    "staff",
     "stock",
-    "purchasing",
-    "labour",
-    "packing",
-    "dispatch",
+    "clients",
     "billing",
-    "reports",
-    "audit",
-    "automation",
     "settings",
   ],
   [UserRole.MANAGER]: [
     "dashboard",
-    "quotations",
-    "orders",
     "tasks",
-    "approvals",
-    "clients",
-    "products",
-    "production",
+    "staff",
     "stock",
-    "purchasing",
-    "labour",
-    "packing",
-    "dispatch",
+    "clients",
     "billing",
-    "reports",
     "settings",
   ],
   [UserRole.SALES]: [
     "dashboard",
-    "quotations",
-    "orders",
+    "tasks",
     "clients",
-    "products",
-    "approvals",
-    "reports",
     "settings",
   ],
   [UserRole.DESIGNER]: [
     "dashboard",
     "tasks",
-    "orders",
-    "approvals",
+    "clients",
     "settings",
   ],
   [UserRole.DATA_OPERATOR]: [
     "dashboard",
     "tasks",
-    "orders",
+    "clients",
     "settings",
   ],
   [UserRole.PRODUCTION_MANAGER]: [
     "dashboard",
-    "orders",
     "tasks",
-    "production",
+    "staff",
     "stock",
-    "labour",
-    "packing",
-    "reports",
+    "clients",
     "settings",
   ],
   [UserRole.MACHINE_OPERATOR]: [
     "dashboard",
     "tasks",
-    "production",
     "stock",
     "settings",
   ],
   [UserRole.PACKING_OPERATOR]: [
     "dashboard",
     "tasks",
-    "packing",
-    "dispatch",
     "settings",
   ],
   [UserRole.ACCOUNTS]: [
     "dashboard",
-    "billing",
+    "tasks",
     "clients",
-    "orders",
-    "reports",
+    "billing",
     "settings",
   ],
-  [UserRole.LABOUR]: ["dashboard", "tasks"],
-  [UserRole.DELIVERY_PARTNER]: ["dashboard", "dispatch"],
-  [UserRole.DISPATCH_OPERATOR]: ["dashboard", "packing", "dispatch", "tasks"],
-  [UserRole.PURCHASE_MANAGER]: ["dashboard", "stock", "purchasing", "orders"],
-  [UserRole.STOCK_MANAGER]: ["dashboard", "stock", "purchasing", "orders"],
+  [UserRole.LABOUR]: [
+    "dashboard",
+    "tasks",
+  ],
+  [UserRole.DELIVERY_PARTNER]: [
+    "dashboard",
+    "tasks",
+  ],
+  [UserRole.DISPATCH_OPERATOR]: [
+    "dashboard",
+    "tasks",
+  ],
+  [UserRole.PURCHASE_MANAGER]: [
+    "dashboard",
+    "tasks",
+    "stock",
+    "settings",
+  ],
+  [UserRole.STOCK_MANAGER]: [
+    "dashboard",
+    "tasks",
+    "stock",
+    "settings",
+  ],
 };
 
 export function canAccessNav(role: UserRole, section: AppNavSection): boolean {

@@ -13,7 +13,7 @@ export interface Column<T> {
 export interface TableProps<T> {
   columns: Column<T>[];
   data: T[];
-  keyExtractor: (row: T, index: number) => string;
+  keyExtractor?: (row: T, index: number) => string;
   onRowClick?: (row: T, index: number) => void;
   selectedId?: string;
   emptyText?: string;
@@ -114,7 +114,9 @@ export function Table<T>({
             </tr>
           ) : (
             data.map((row, idx) => {
-              const rowKey = keyExtractor(row, idx);
+              const rowKey = keyExtractor
+                ? keyExtractor(row, idx)
+                : (row as any)?.id || (row as any)?.code || (row as any)?.key || String(idx);
               const isSelected = selectedId === rowKey;
 
               return (

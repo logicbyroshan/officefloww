@@ -18,27 +18,15 @@ import { useAsync } from "./hooks/useAsync";
 // Views
 import { LoginView } from "./views/auth/LoginView";
 import { DashboardView } from "./views/dashboard/DashboardView";
-import { ManagementDashboardView } from "./views/dashboard/ManagementDashboardView";
-import { QuotationsView } from "./views/quotations/QuotationsView";
-import { OrdersView } from "./views/orders/OrdersView";
-import { OrderDetailView } from "./views/orders/OrderDetailView";
-import { NewOrderModal } from "./views/orders/NewOrderModal";
 import { TasksView } from "./views/tasks/TasksView";
-import { ApprovalsView } from "./views/approvals/ApprovalsView";
+import { StaffView } from "./views/staff/StaffView";
+import { StockDashboardView } from "./views/stock/StockDashboardView";
 import { ClientsView } from "./views/clients/ClientsView";
 import { ClientDetailView } from "./views/clients/ClientDetailView";
+import { OrderDetailView } from "./views/orders/OrderDetailView";
+import { NewOrderModal } from "./views/orders/NewOrderModal";
 import { NewClientModal } from "./views/clients/NewClientModal";
-import { ProductsView } from "./views/products/ProductsView";
-import { ProductDetailView } from "./views/products/ProductDetailView";
-import { StockDashboardView } from "./views/stock/StockDashboardView";
-import { PurchasingView } from "./views/purchasing/PurchasingView";
-import { ProductionView } from "./views/production/ProductionView";
-import { LabourView } from "./views/labour/LabourView";
-import { PackingDispatchView } from "./views/packing/PackingDispatchView";
 import { BillingView } from "./views/billing/BillingView";
-import { ReportsView } from "./views/reports/ReportsView";
-import { AuditView } from "./views/audit/AuditView";
-import { AutomationView } from "./views/automation/AutomationView";
 import { SettingsView } from "./views/settings/SettingsView";
 import { GlobalSearchModal } from "./views/search/GlobalSearchModal";
 import { LoadingState } from "./design-system/components/FeedbackStates";
@@ -46,17 +34,15 @@ import { LoadingState } from "./design-system/components/FeedbackStates";
 const MainApp: React.FC = () => {
   const { user, loading: authLoading } = useAuth();
   const [activeSection, setActiveSection] = useState<AppNavSection>("dashboard");
-  const [isManagementDashboard, setIsManagementDashboard] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
-  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
 
   // Modals
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isNewOrderOpen, setIsNewOrderOpen] = useState(false);
   const [isNewClientOpen, setIsNewClientOpen] = useState(false);
 
-  // Listen for search shortcut
+  // Initialize theme and global search shortcut
   useEffect(() => {
     initAccentTheme();
     const handleOpenSearch = () => setIsSearchOpen(true);
@@ -109,7 +95,7 @@ const MainApp: React.FC = () => {
   };
 
   if (authLoading) {
-    return <LoadingState message="Restoring workstation session..." />;
+    return <LoadingState message="Initializing PrintFlow workstation..." />;
   }
 
   if (!user) {
@@ -123,95 +109,53 @@ const MainApp: React.FC = () => {
   const products = productsData || [];
 
   const pendingApprovalsCount = approvals.filter((a) => a.status === "PENDING").length;
-  const urgentTasksCount = tasks.filter((t) => t.status === "BLOCKED" || t.status === "IN_PROGRESS").length;
+  const urgentTasksCount = tasks.filter((t) => t.status === "BLOCKED").length;
 
-  // View Routing
+  // View routing for the 7 primary workspaces
   const renderCurrentView = () => {
+    // 1. Order Detail View (accessible from Clients or Dashboard)
     if (selectedOrderId) {
       return (
         <OrderDetailView
           orderId={selectedOrderId}
-          clients={clients}
           onBack={() => setSelectedOrderId(null)}
-          onSelectTask={(taskId) => {
-            setActiveSection("tasks");
-          }}
+          onOrderUpdated={refreshOrders}
         />
       );
     }
 
+    // 2. Client Detail View (accessible from Clients)
     if (selectedClientId) {
       return (
         <ClientDetailView
           clientId={selectedClientId}
           onBack={() => setSelectedClientId(null)}
-          onSelectOrder={(orderId) => setSelectedOrderId(orderId)}
+          onClientUpdated={refreshClients}
         />
       );
     }
 
-    if (selectedProductId) {
-      return (
-        <ProductDetailView
-          productId={selectedProductId}
-          onBack={() => setSelectedProductId(null)}
-        />
-      );
-    }
-
+    // 3. Primary Workspaces
     switch (activeSection) {
       case "dashboard":
-        if (isManagementDashboard || user.role === "OWNER" || user.role === "MANAGER") {
-          return (
-            <ManagementDashboardView
-              orders={orders}
-              tasks={tasks}
-              approvals={approvals}
-              clients={clients}
-              onSelectOrder={(id) => setSelectedOrderId(id)}
-              onSelectTask={(id) => setActiveSection("tasks")}
-              onSwitchToFloorView={() => setIsManagementDashboard(false)}
-            />
-          );
-        }
         return (
           <DashboardView
             orders={orders}
             tasks={tasks}
             approvals={approvals}
             clients={clients}
-            loading={ordersLoading || tasksLoading}
-            error={ordersError || tasksError}
-            onRefresh={refreshAll}
-            onSelectOrder={(id) => setSelectedOrderId(id)}
-            onSelectTask={(id) => setActiveSection("tasks")}
-            onNewOrder={() => setIsNewOrderOpen(true)}
-            onNewClient={() => setIsNewClientOpen(true)}
-          />
-        );
-      case "quotations":
-        return (
-          <QuotationsView
-            clients={clients}
-            products={products}
-            onOrderConverted={(orderId) => {
-              refreshOrders();
-              setActiveSection("orders");
-            }}
-          />
-        );
-      case "orders":
-        return (
-          <OrdersView
-            orders={orders}
-            clients={clients}
             loading={ordersLoading}
             error={ordersError}
-            onRefresh={refreshOrders}
+            onRefresh={refreshAll}
             onSelectOrder={(id) => setSelectedOrderId(id)}
+            onSelectTask={() => setActiveSection("tasks")}
+            onSelectStock={() => setActiveSection("stock")}
             onNewOrder={() => setIsNewOrderOpen(true)}
+            onNewClient={() => setIsNewClientOpen(true)}
+            onNavigateSection={(sec) => setActiveSection(sec)}
           />
         );
+
       case "tasks":
         return (
           <TasksView
@@ -222,56 +166,33 @@ const MainApp: React.FC = () => {
             onGoToOrder={(id) => setSelectedOrderId(id)}
           />
         );
-      case "approvals":
-        return (
-          <ApprovalsView
-            approvals={approvals}
-            loading={approvalsLoading}
-            error={approvalsError}
-            onRefresh={refreshApprovals}
-          />
-        );
+
+      case "staff":
+        return <StaffView />;
+
+      case "stock":
+        return <StockDashboardView />;
+
       case "clients":
         return (
           <ClientsView
             clients={clients}
+            orders={orders}
             loading={clientsLoading}
             error={clientsError}
             onRefresh={refreshClients}
             onSelectClient={(id) => setSelectedClientId(id)}
+            onSelectOrder={(id) => setSelectedOrderId(id)}
+            onNewOrder={() => setIsNewOrderOpen(true)}
           />
         );
-      case "products":
-        return (
-          <ProductsView
-            products={products}
-            loading={productsLoading}
-            error={productsError}
-            onRefresh={refreshProducts}
-            onSelectProduct={(id) => setSelectedProductId(id)}
-          />
-        );
-      case "production":
-        return <ProductionView />;
-      case "stock":
-        return <StockDashboardView />;
-      case "purchasing":
-        return <PurchasingView />;
-      case "labour":
-        return <LabourView />;
-      case "packing":
-      case "dispatch":
-        return <PackingDispatchView />;
+
       case "billing":
         return <BillingView />;
-      case "reports":
-        return <ReportsView />;
-      case "audit":
-        return <AuditView />;
-      case "automation":
-        return <AutomationView />;
+
       case "settings":
         return <SettingsView />;
+
       default:
         return (
           <DashboardView
@@ -283,9 +204,11 @@ const MainApp: React.FC = () => {
             error={ordersError}
             onRefresh={refreshAll}
             onSelectOrder={(id) => setSelectedOrderId(id)}
-            onSelectTask={(id) => setActiveSection("tasks")}
+            onSelectTask={() => setActiveSection("tasks")}
+            onSelectStock={() => setActiveSection("stock")}
             onNewOrder={() => setIsNewOrderOpen(true)}
             onNewClient={() => setIsNewClientOpen(true)}
+            onNavigateSection={(sec) => setActiveSection(sec)}
           />
         );
     }
@@ -297,7 +220,6 @@ const MainApp: React.FC = () => {
       onSelectSection={(sec) => {
         setSelectedOrderId(null);
         setSelectedClientId(null);
-        setSelectedProductId(null);
         setActiveSection(sec);
       }}
       onOpenSearch={() => setIsSearchOpen(true)}
@@ -306,7 +228,7 @@ const MainApp: React.FC = () => {
     >
       {renderCurrentView()}
 
-      {/* Global Modals */}
+      {/* Global Search across 6 entities */}
       <GlobalSearchModal
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
@@ -318,16 +240,17 @@ const MainApp: React.FC = () => {
           setSelectedClientId(id);
           setIsSearchOpen(false);
         }}
-        onSelectProduct={(id) => {
-          setSelectedProductId(id);
+        onSelectTask={() => {
+          setActiveSection("tasks");
           setIsSearchOpen(false);
         }}
-        onSelectTask={(id) => {
-          setActiveSection("tasks");
+        onNavigate={(sec) => {
+          setActiveSection(sec);
           setIsSearchOpen(false);
         }}
       />
 
+      {/* New Order Modal */}
       <NewOrderModal
         isOpen={isNewOrderOpen}
         onClose={() => setIsNewOrderOpen(false)}
@@ -336,6 +259,7 @@ const MainApp: React.FC = () => {
         onOrderCreated={refreshOrders}
       />
 
+      {/* New Client Modal */}
       <NewClientModal
         isOpen={isNewClientOpen}
         onClose={() => setIsNewClientOpen(false)}

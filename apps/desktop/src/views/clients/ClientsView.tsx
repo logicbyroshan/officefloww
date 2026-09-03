@@ -1,86 +1,192 @@
 import React, { useState, useMemo } from "react";
-import { Client } from "@officefloww/api-types";
+import { Client, Order, OrderPriority } from "@officefloww/api-types";
 import { PageHeader } from "../../design-system/layouts/PageHeader";
 import { Table, Column } from "../../design-system/components/Table";
-import { SearchInput } from "../../design-system/components/Input";
 import { Button } from "../../design-system/components/Button";
+import { Icon } from "../../design-system/components/Icon";
+import { PriorityBadge, OrderStatusBadge } from "../../design-system/components/Badge";
 import { LoadingState, ErrorState } from "../../design-system/components/FeedbackStates";
 import { NewClientModal } from "./NewClientModal";
 
 export interface ClientsViewProps {
   clients: Client[];
+  orders?: Order[];
   loading: boolean;
   error: Error | null;
   onRefresh: () => void;
   onSelectClient: (clientId: string) => void;
+  onSelectOrder?: (orderId: string) => void;
+  onNewOrder?: () => void;
 }
 
 export const ClientsView: React.FC<ClientsViewProps> = ({
   clients,
+  orders = [],
   loading,
   error,
   onRefresh,
   onSelectClient,
+  onSelectOrder,
+  onNewOrder,
 }) => {
+  const [activeTab, setActiveTab] = useState<"clients" | "orders" | "quotations" | "approvals">("clients");
   const [search, setSearch] = useState("");
   const [showNewModal, setShowNewModal] = useState(false);
 
   const filteredClients = useMemo(() => {
-    return clients.filter(
-      (c) =>
-        search === "" ||
-        c.organization_name.toLowerCase().includes(search.toLowerCase()) ||
-        c.client_code.toLowerCase().includes(search.toLowerCase())
-    );
+    return clients.filter((c) => {
+      const q = search.toLowerCase();
+      return (
+        !q ||
+        c.organization_name.toLowerCase().includes(q) ||
+        c.client_code.toLowerCase().includes(q)
+      );
+    });
   }, [clients, search]);
 
-  const columns: Column<Client>[] = [
+  const clientColumns: Column<Client>[] = [
     {
       key: "client_code",
       header: "Client Code",
-      width: "140px",
+      width: "130px",
       render: (c) => (
-        <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: "var(--accent-text)" }}>
+        <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: "var(--accent-text)", fontSize: "12px" }}>
           {c.client_code}
         </span>
       ),
     },
     {
       key: "organization_name",
-      header: "Organization Name",
+      header: "Organization / Institution",
       render: (c) => (
-        <div>
-          <div style={{ fontWeight: 600, color: "var(--text-primary)" }}>{c.organization_name}</div>
-          <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>
-            {c.contacts?.length || 0} registered contact(s)
-          </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+          <span style={{ fontWeight: 600, color: "var(--text-primary)", fontSize: "13px" }}>
+            {c.organization_name}
+          </span>
+          <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>
+            {c.contacts?.[0]?.email || c.billing_address?.city || "Active Client"}
+          </span>
         </div>
       ),
     },
     {
-      key: "tax_identifier",
-      header: "GSTIN Identifier",
-      width: "160px",
+      key: "contacts",
+      header: "Primary Contact",
+      render: (c) => {
+        const contact = c.contacts?.[0];
+        if (!contact) return <span style={{ color: "var(--text-muted)" }}>None registered</span>;
+        return (
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <span style={{ fontSize: "12.5px", color: "var(--text-primary)" }}>{contact.name}</span>
+            <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>{contact.phone || contact.email}</span>
+          </div>
+        );
+      },
+    },
+    {
+      key: "active_orders",
+      header: "Active Orders",
+      align: "right",
+      width: "120px",
+      render: (c) => {
+        const count = orders.filter((o) => o.client_id === c.id && o.status !== "COMPLETED").length;
+        return (
+          <span style={{ fontFamily: "var(--font-mono)", fontSize: "12.5px", fontWeight: 600, color: count > 0 ? "#fff" : "var(--text-muted)" }}>
+            {count} active
+          </span>
+        );
+      },
+    },
+    {
+      key: "credit_limit",
+      header: "Credit / Ledger",
+      align: "right",
+      width: "130px",
       render: (c) => (
-        <span style={{ fontFamily: "var(--font-mono)", fontSize: "11px", color: c.tax_identifier ? "var(--text-secondary)" : "var(--text-muted)" }}>
-          {c.tax_identifier || "Unregistered"}
+        <span style={{ fontFamily: "var(--font-mono)", fontSize: "12px", color: "#34d399", fontWeight: 600 }}>
+          ₹{(c.credit_limit || 0).toLocaleString("en-IN")}
         </span>
       ),
     },
     {
-      key: "created_at",
-      header: "Onboarded",
-      width: "130px",
+      key: "actions",
+      header: "",
+      width: "80px",
       render: (c) => (
-        <span style={{ fontSize: "11px", color: "var(--text-secondary)" }}>
-          {new Date(c.created_at).toLocaleDateString()}
-        </span>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onSelectClient(c.id);
+          }}
+          style={{
+            padding: "4px 8px",
+            borderRadius: "3px",
+            backgroundColor: "rgba(255, 255, 255, 0.04)",
+            border: "1px solid rgba(255, 255, 255, 0.08)",
+            color: "var(--text-secondary)",
+            fontSize: "11.5px",
+            cursor: "pointer",
+          }}
+        >
+          View →
+        </button>
       ),
     },
   ];
 
+  const orderColumns: Column<Order>[] = [
+    {
+      key: "order_number",
+      header: "Order Code",
+      width: "140px",
+      render: (o) => (
+        <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: "var(--accent-text)", fontSize: "12.5px" }}>
+          {o.order_number}
+        </span>
+      ),
+    },
+    {
+      key: "client_id",
+      header: "Client Institution",
+      render: (o) => {
+        const client = clients.find((c) => c.id === o.client_id);
+        return <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>{client?.organization_name || "Client Order"}</span>;
+      },
+    },
+    {
+      key: "promised_delivery_date",
+      header: "Delivery Promised",
+      render: (o) => (
+        <span style={{ fontSize: "11.5px", color: "var(--text-secondary)" }}>
+          {o.promised_delivery_date ? new Date(o.promised_delivery_date).toLocaleDateString("en-IN") : "Flexible"}
+        </span>
+      ),
+    },
+    {
+      key: "total_amount",
+      header: "Total Value",
+      align: "right",
+      render: (o) => (
+        <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: "#34d399" }}>
+          ₹{Number(o.total_amount || 0).toLocaleString("en-IN")}
+        </span>
+      ),
+    },
+    {
+      key: "priority",
+      header: "Priority",
+      render: (o) => <PriorityBadge priority={o.priority || OrderPriority.NORMAL} />,
+    },
+    {
+      key: "status",
+      header: "Status",
+      render: (o) => <OrderStatusBadge status={o.status} />,
+    },
+  ];
+
   if (loading && clients.length === 0) {
-    return <LoadingState message="Loading client directories..." />;
+    return <LoadingState message="Loading client accounts and institutional dossiers..." />;
   }
 
   if (error && clients.length === 0) {
@@ -90,43 +196,211 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", overflowY: "auto" }}>
       <PageHeader
-        title="Commercial Clients Directory"
-        subtitle="Manage institutional accounts, GSTIN tax identifiers, delivery addresses, and contact persons."
+        title="Clients & Orders Hub"
+        badge={
+          <span
+            style={{
+              fontSize: "11px",
+              fontWeight: 600,
+              color: "var(--accent-text)",
+              backgroundColor: "rgba(255, 138, 115, 0.12)",
+              border: "1px solid var(--accent-border)",
+              borderRadius: "4px",
+              padding: "2px 8px",
+            }}
+          >
+            {clients.length} Client Organizations
+          </span>
+        }
         primaryAction={{
-          label: "Onboard Client",
+          label: "New Client",
           icon: "plus",
           onClick: () => setShowNewModal(true),
         }}
         secondaryActions={
-          <Button variant="secondary" icon="refresh" onClick={onRefresh}>
-            Refresh
-          </Button>
+          onNewOrder ? (
+            <Button variant="secondary" size="sm" icon="plus" onClick={onNewOrder}>
+              New Order
+            </Button>
+          ) : undefined
         }
       />
 
-      <div style={{ padding: "16px 24px", display: "flex", flexDirection: "column", gap: "12px", flex: 1 }}>
-        <div style={{ width: "320px" }}>
-          <SearchInput
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onClear={() => setSearch("")}
-            placeholder="Search by client name or code..."
-          />
+      <div style={{ padding: "16px 24px", display: "flex", flexDirection: "column", gap: "14px" }}>
+        {/* Navigation Tabs Bar */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+            paddingBottom: "10px",
+            gap: "12px",
+            flexWrap: "wrap",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+            {[
+              { id: "clients" as const, label: "Client Directory" },
+              { id: "orders" as const, label: "All Orders" },
+              { id: "quotations" as const, label: "Quotations & Costing" },
+              { id: "approvals" as const, label: "Proof Approvals" },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  padding: "6px 12px",
+                  borderRadius: "4px",
+                  border: "none",
+                  backgroundColor:
+                    activeTab === tab.id ? "rgba(255, 138, 115, 0.14)" : "transparent",
+                  color: activeTab === tab.id ? "var(--accent-text)" : "var(--text-secondary)",
+                  fontSize: "12.5px",
+                  fontWeight: activeTab === tab.id ? 600 : 500,
+                  cursor: "pointer",
+                }}
+              >
+                <span>{tab.label}</span>
+              </button>
+            ))}
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              backgroundColor: "rgba(0, 0, 0, 0.25)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              borderRadius: "4px",
+              padding: "4px 10px",
+            }}
+          >
+            <Icon name="search" size={13} color="var(--text-muted)" />
+            <input
+              type="text"
+              placeholder="Search clients, code, city..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              style={{
+                background: "none",
+                border: "none",
+                color: "#fff",
+                fontSize: "12px",
+                outline: "none",
+                width: "160px",
+              }}
+            />
+          </div>
         </div>
 
-        <Table
-          columns={columns}
-          data={filteredClients}
-          keyExtractor={(c) => c.id}
-          onRowClick={(c) => onSelectClient(c.id)}
-          emptyText="No client accounts found matching the query."
-        />
+        {/* Tab View Contents */}
+        {activeTab === "orders" ? (
+          <div
+            style={{
+              backgroundColor: "rgba(19, 23, 34, 0.75)",
+              backdropFilter: "blur(14px)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              borderRadius: "4px",
+              overflow: "hidden",
+            }}
+          >
+            <Table
+              columns={orderColumns}
+              data={orders}
+              onRowClick={(o) => onSelectOrder?.(o.id)}
+              emptyText="No production orders found."
+            />
+          </div>
+        ) : activeTab === "quotations" ? (
+          <div
+            style={{
+              backgroundColor: "rgba(19, 23, 34, 0.75)",
+              backdropFilter: "blur(14px)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              borderRadius: "4px",
+              overflow: "hidden",
+              padding: "20px",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+              <div>
+                <h4 style={{ margin: 0, fontSize: "14px", color: "#fff" }}>Formal Commercial Proposals</h4>
+                <p style={{ margin: "2px 0 0 0", fontSize: "11.5px", color: "var(--text-muted)" }}>
+                  Cost calculation, margins, and lead time estimators.
+                </p>
+              </div>
+              <Button variant="primary" size="sm">
+                + Create Quotation
+              </Button>
+            </div>
+
+            <Table
+              columns={[
+                { key: "code", header: "Quote #", render: () => <span style={{ fontFamily: "var(--font-mono)", color: "var(--accent-text)", fontWeight: 700 }}>QTN-2026-0042</span> },
+                { key: "client", header: "Client", render: () => <span style={{ fontWeight: 600, color: "#fff" }}>St. Xavier's High School</span> },
+                { key: "items", header: "Items & SKU", render: () => <span>500 Multicolor Lanyards + ID Badges</span> },
+                { key: "amount", header: "Quoted Total", align: "right", render: () => <span style={{ fontFamily: "var(--font-mono)", color: "#34d399", fontWeight: 700 }}>₹1,82,500</span> },
+                { key: "status", header: "Status", render: () => <span style={{ fontSize: "10.5px", padding: "2px 6px", borderRadius: "3px", backgroundColor: "rgba(16, 185, 129, 0.15)", color: "#10b981", fontWeight: 700 }}>CONVERTED</span> },
+              ]}
+              data={[{ id: "1" }]}
+            />
+          </div>
+        ) : activeTab === "approvals" ? (
+          <div
+            style={{
+              backgroundColor: "rgba(19, 23, 34, 0.75)",
+              backdropFilter: "blur(14px)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              borderRadius: "4px",
+              overflow: "hidden",
+              padding: "16px",
+            }}
+          >
+            <div style={{ fontSize: "13px", fontWeight: 700, color: "#fff", marginBottom: "12px" }}>
+              Client Artwork Signoff Queue
+            </div>
+            <Table
+              columns={[
+                { key: "code", header: "Proof ID", render: () => <span style={{ fontFamily: "var(--font-mono)", color: "var(--accent-text)", fontWeight: 700 }}>PRF-LANYARD-01</span> },
+                { key: "order", header: "Order", render: () => <span>#ORD-2026-0001 (St. Xavier's)</span> },
+                { key: "status", header: "Approval Status", render: () => <span style={{ fontSize: "10.5px", padding: "2px 6px", borderRadius: "3px", backgroundColor: "rgba(255, 138, 115, 0.15)", color: "var(--accent-text)", fontWeight: 700 }}>WAITING CLIENT SIGNOFF</span> },
+              ]}
+              data={[{ id: "1" }]}
+            />
+          </div>
+        ) : (
+          /* Main Client Directory Table */
+          <div
+            style={{
+              backgroundColor: "rgba(19, 23, 34, 0.75)",
+              backdropFilter: "blur(14px)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              borderRadius: "4px",
+              overflow: "hidden",
+            }}
+          >
+            <Table
+              columns={clientColumns}
+              data={filteredClients}
+              onRowClick={(c) => onSelectClient(c.id)}
+              emptyText="No client organizations found matching search."
+            />
+          </div>
+        )}
       </div>
 
       <NewClientModal
         isOpen={showNewModal}
         onClose={() => setShowNewModal(false)}
-        onClientCreated={onRefresh}
+        onClientCreated={() => {
+          onRefresh();
+          setShowNewModal(false);
+        }}
       />
     </div>
   );

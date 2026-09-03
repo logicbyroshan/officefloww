@@ -1,16 +1,11 @@
-import React, { useState } from "react";
-import { StockBalance, StockLocation, StockMovement, StockItem } from "@officefloww/api-types";
-import { StockService } from "../../api/services";
+import React, { useState, useMemo } from "react";
 import { PageHeader } from "../../design-system/layouts/PageHeader";
-import { Tabs } from "../../design-system/components/Tabs";
-import { Card, StatBox } from "../../design-system/components/Card";
 import { Table, Column } from "../../design-system/components/Table";
-import { Badge } from "../../design-system/components/Badge";
 import { Button } from "../../design-system/components/Button";
+import { Icon } from "../../design-system/components/Icon";
 import { Modal } from "../../design-system/components/Modal";
 import { Input, Select, Textarea } from "../../design-system/components/Input";
 import { useToast } from "../../design-system/components/Toast";
-import { Icon } from "../../design-system/components/Icon";
 
 interface StockRecord {
   id: string;
@@ -26,11 +21,43 @@ interface StockRecord {
   location: string;
 }
 
+interface MovementRecord {
+  id: string;
+  timestamp: string;
+  item_code: string;
+  type: string;
+  quantity: number;
+  source: string;
+  destination: string;
+  user_name: string;
+  reason: string;
+}
+
+interface SupplierRecord {
+  id: string;
+  code: string;
+  name: string;
+  contact_person: string;
+  phone: string;
+  materials: string;
+  rating: string;
+}
+
+interface PurchaseOrderRecord {
+  id: string;
+  po_number: string;
+  supplier_name: string;
+  order_date: string;
+  items_summary: string;
+  total_amount: number;
+  status: "ORDERED" | "RECEIVED" | "INSPECTED";
+}
+
 const SEED_STOCK_ITEMS: StockRecord[] = [
   {
     id: "stk-01",
     code: "RAW-PVC-076",
-    name: "0.76mm Gloss White PVC Core Sheet (Fused)",
+    name: "0.76mm Gloss White PVC Core Sheet",
     category: "RAW_MATERIAL",
     unit: "sheets",
     physical_stock: 50000,
@@ -59,439 +86,695 @@ const SEED_STOCK_ITEMS: StockRecord[] = [
     name: "20mm Nickel-Plated Metal Dog-Hook Fitting",
     category: "HARDWARE",
     unit: "pieces",
-    physical_stock: 35000,
-    reserved_stock: 2500,
-    available_stock: 32500,
-    min_stock_level: 5000,
-    cost_price: 2.10,
-    location: "Hardware Bin C3",
+    physical_stock: 8500,
+    reserved_stock: 2000,
+    available_stock: 6500,
+    min_stock_level: 8000,
+    cost_price: 0.95,
+    location: "Hardware Bin #04",
   },
   {
     id: "stk-04",
-    code: "HDW-SAFETY-BREAK",
-    name: "Plastic Quick-Release Safety Breakaway Buckle",
-    category: "HARDWARE",
-    unit: "pieces",
-    physical_stock: 800,
-    reserved_stock: 600,
-    available_stock: 200,
-    min_stock_level: 1500,
-    cost_price: 1.50,
-    location: "Hardware Bin C4",
+    code: "RAW-OVERLAY-008",
+    name: "0.08mm Magnetic Stripe Overlay Film",
+    category: "RAW_MATERIAL",
+    unit: "rolls",
+    physical_stock: 45,
+    reserved_stock: 5,
+    available_stock: 40,
+    min_stock_level: 15,
+    cost_price: 420.0,
+    location: "Cleanroom Film Cabinet",
   },
   {
     id: "stk-05",
     code: "INK-SUBLIM-CYAN",
-    name: "Sublimation Cyan Transfer Ink (1L)",
+    name: "Industrial Sublimation Ink 1L (Cyan)",
     category: "CONSUMABLE",
-    unit: "bottles",
-    physical_stock: 14,
+    unit: "liters",
+    physical_stock: 8,
     reserved_stock: 2,
-    available_stock: 12,
+    available_stock: 6,
     min_stock_level: 5,
-    cost_price: 650.0,
-    location: "Ink Cabinet D1",
+    cost_price: 1850.0,
+    location: "Ink Vault - Bay 1",
   },
 ];
-
-interface MovementRecord {
-  id: string;
-  timestamp: string;
-  item_code: string;
-  movement_type: "ISSUE" | "RETURN" | "WASTE" | "TRANSFER" | "ADJUSTMENT" | "RECEIPT";
-  quantity: number;
-  from_location: string;
-  to_location: string;
-  reason: string;
-}
 
 const SEED_MOVEMENTS: MovementRecord[] = [
   {
     id: "mov-01",
-    timestamp: "2026-09-02T10:30:00Z",
-    item_code: "RAW-PVC-076",
-    movement_type: "ISSUE",
-    quantity: 2500,
-    from_location: "Main Store - Rack A1",
-    to_location: "Digital Press Floor",
-    reason: "Order #ORD-2026-0001 Production Run",
+    timestamp: "2026-09-03T11:42:00Z",
+    item_code: "HDW-DOGHOOK-20MM",
+    type: "ISSUE",
+    quantity: 500,
+    source: "Main Store",
+    destination: "Labour Workshop (Ramesh)",
+    user_name: "Priya Nair",
+    reason: "Lanyard assembly order #ORD-2026-0001",
   },
   {
     id: "mov-02",
-    timestamp: "2026-09-02T11:15:00Z",
+    timestamp: "2026-09-03T10:15:00Z",
     item_code: "RAW-SATIN-20MM-WHT",
-    movement_type: "ISSUE",
+    type: "RESERVE",
     quantity: 2500,
-    from_location: "Main Store - Rack B2",
-    to_location: "Sublimation Machine 01",
-    reason: "Lanyard Sublimation Print Run",
+    source: "Main Store",
+    destination: "Press Floor Line 1",
+    user_name: "Rohan Sharma",
+    reason: "Scheduled sublimation press job",
+  },
+];
+
+const SEED_SUPPLIERS: SupplierRecord[] = [
+  {
+    id: "sup-01",
+    code: "SUP-POLY-01",
+    name: "Apex Polymers & PVC Sheets Ltd.",
+    contact_person: "Vikas Aggarwal",
+    phone: "+91 98110 55441",
+    materials: "PVC Core Sheets, Polycarbonate Overlays",
+    rating: "PREMIUM (99% on-time)",
+  },
+  {
+    id: "sup-02",
+    code: "SUP-TEXTILE-02",
+    name: "Surat Satin Ribbons & Webbing Mill",
+    contact_person: "Ketan Patel",
+    phone: "+91 98250 88772",
+    materials: "Polyester Satin Ribbon, Cotton Lanyard Tape",
+    rating: "EXCELLENT",
+  },
+  {
+    id: "sup-03",
+    code: "SUP-HARDWARE-03",
+    name: "Global Metal Fittings & Dog-Hooks Co.",
+    contact_person: "Sunil Jain",
+    phone: "+91 98200 33221",
+    materials: "Dog Hooks, Alligator Clips, Breakaway Buckles",
+    rating: "EXCELLENT",
+  },
+];
+
+const SEED_PURCHASE_ORDERS: PurchaseOrderRecord[] = [
+  {
+    id: "po-01",
+    po_number: "PO-2026-0012",
+    supplier_name: "Global Metal Fittings & Dog-Hooks Co.",
+    order_date: "02 Sep 2026",
+    items_summary: "5,000 pcs 20mm Dog Hooks",
+    total_amount: 4750.0,
+    status: "ORDERED",
+  },
+  {
+    id: "po-02",
+    po_number: "PO-2026-0011",
+    supplier_name: "Apex Polymers & PVC Sheets Ltd.",
+    order_date: "28 Aug 2026",
+    items_summary: "20,000 sheets 0.76mm Gloss PVC Core",
+    total_amount: 84000.0,
+    status: "RECEIVED",
   },
 ];
 
 export const StockDashboardView: React.FC = () => {
-  const { success, error: toastError } = useToast();
-  const [activeTab, setActiveTab] = useState<"balances" | "movements" | "locations" | "low_stock">("balances");
-  const [items, setItems] = useState<StockRecord[]>(SEED_STOCK_ITEMS);
-  const [movements, setMovements] = useState<MovementRecord[]>(SEED_MOVEMENTS);
+  const { success } = useToast();
 
-  // Movement Modal
-  const [isMovementModalOpen, setIsMovementModalOpen] = useState(false);
-  const [selectedItemId, setSelectedItemId] = useState(SEED_STOCK_ITEMS[0].id);
-  const [movementType, setMovementType] = useState<MovementRecord["movement_type"]>("ISSUE");
-  const [movementQty, setMovementQty] = useState(100);
-  const [movementReason, setMovementReason] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<
+    "inventory" | "transactions" | "reservations" | "low" | "purchasing" | "suppliers"
+  >("inventory");
 
-  const totalPhysical = items.reduce((sum, itm) => sum + itm.physical_stock, 0);
-  const totalReserved = items.reduce((sum, itm) => sum + itm.reserved_stock, 0);
-  const totalAvailable = items.reduce((sum, itm) => sum + itm.available_stock, 0);
-  const lowStockItems = items.filter((itm) => itm.available_stock <= itm.min_stock_level);
+  const [search, setSearch] = useState("");
+  const [stockItems, setStockItems] = useState<StockRecord[]>(SEED_STOCK_ITEMS);
+  const [selectedItem, setSelectedItem] = useState<StockRecord | null>(null);
+  const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
 
-  const handleRecordMovement = async (e: React.FormEvent) => {
+  // New stock receipt form
+  const [receiptItem, setReceiptItem] = useState(SEED_STOCK_ITEMS[0].id);
+  const [receiptQty, setReceiptQty] = useState("1000");
+  const [receiptNotes, setReceiptNotes] = useState("GRN Batch arrival inspection passed");
+
+  const filteredItems = useMemo(() => {
+    return stockItems.filter((item) => {
+      const q = search.toLowerCase();
+      const matchSearch =
+        !q ||
+        item.name.toLowerCase().includes(q) ||
+        item.code.toLowerCase().includes(q) ||
+        item.location.toLowerCase().includes(q);
+
+      if (!matchSearch) return false;
+      if (activeTab === "low") {
+        return item.available_stock <= item.min_stock_level;
+      }
+      return true;
+    });
+  }, [stockItems, search, activeTab]);
+
+  const handleRecordReceipt = (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    try {
-      const targetItem = items.find((itm) => itm.id === selectedItemId);
-      if (!targetItem) return;
-
-      const newMovement: MovementRecord = {
-        id: `mov-0${movements.length + 1}`,
-        timestamp: new Date().toISOString(),
-        item_code: targetItem.code,
-        movement_type: movementType,
-        quantity: Number(movementQty),
-        from_location: targetItem.location,
-        to_location: movementType === "ISSUE" ? "Production Floor" : targetItem.location,
-        reason: movementReason || `${movementType} logged from desktop workstation`,
-      };
-
-      // Update physical and available according to movement
-      setItems((prev) =>
-        prev.map((itm) => {
-          if (itm.id !== selectedItemId) return itm;
-          let newPhysical = itm.physical_stock;
-          let newReserved = itm.reserved_stock;
-
-          if (movementType === "ISSUE" || movementType === "WASTE") {
-            newPhysical = Math.max(0, itm.physical_stock - Number(movementQty));
-          } else if (movementType === "RECEIPT" || movementType === "RETURN") {
-            newPhysical = itm.physical_stock + Number(movementQty);
-          }
-          return {
-            ...itm,
-            physical_stock: newPhysical,
-            available_stock: newPhysical - newReserved,
-          };
-        })
-      );
-
-      setMovements((prev) => [newMovement, ...prev]);
-      success("Stock Movement Logged", `Recorded ${movementType} of ${movementQty} ${targetItem.unit} for ${targetItem.code}`);
-      setIsMovementModalOpen(false);
-      setMovementReason("");
-    } catch (err: any) {
-      toastError("Failed to Record Movement", err.message);
-    } finally {
-      setLoading(false);
-    }
+    const qty = parseInt(receiptQty, 10) || 0;
+    setStockItems((prev) =>
+      prev.map((i) =>
+        i.id === receiptItem
+          ? {
+              ...i,
+              physical_stock: i.physical_stock + qty,
+              available_stock: i.available_stock + qty,
+            }
+          : i
+      )
+    );
+    success("Stock Receipt Recorded", `Added ${qty.toLocaleString()} units to inventory ledger.`);
+    setIsReceiptModalOpen(false);
   };
 
-  const balanceColumns: Column<StockRecord>[] = [
+  const inventoryColumns: Column<StockRecord>[] = [
     {
       key: "code",
-      header: "Stock SKU / Code",
-      width: "150px",
+      header: "Material SKU",
+      width: "140px",
       render: (s) => (
-        <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: "var(--accent-text)" }}>
+        <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: "var(--accent-text)", fontSize: "12px" }}>
           {s.code}
         </span>
       ),
     },
     {
       key: "name",
-      header: "Raw Material / Component Description",
+      header: "Material / Component Description",
       render: (s) => (
-        <div>
-          <div style={{ fontWeight: 600, color: "var(--text-primary)" }}>{s.name}</div>
-          <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>
-            Location: {s.location} • Cat: {s.category}
-          </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+          <span style={{ fontWeight: 600, color: "var(--text-primary)", fontSize: "13px" }}>{s.name}</span>
+          <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>
+            {s.location} • {s.category}
+          </span>
         </div>
       ),
     },
     {
       key: "physical_stock",
-      header: "Physical Stock",
+      header: "Physical",
       align: "right",
-      width: "130px",
+      width: "110px",
       render: (s) => (
-        <span style={{ fontFamily: "var(--font-mono)", fontWeight: 600, color: "var(--text-primary)" }}>
-          {s.physical_stock.toLocaleString()} {s.unit}
+        <span style={{ fontFamily: "var(--font-mono)", fontSize: "12.5px", fontWeight: 600, color: "#fff" }}>
+          {s.physical_stock.toLocaleString()}
         </span>
       ),
     },
     {
       key: "reserved_stock",
-      header: "BOM Reserved",
+      header: "Reserved",
       align: "right",
-      width: "130px",
+      width: "110px",
       render: (s) => (
-        <span style={{ fontFamily: "var(--font-mono)", color: "var(--status-warning)" }}>
-          {s.reserved_stock.toLocaleString()} {s.unit}
+        <span style={{ fontFamily: "var(--font-mono)", fontSize: "12.5px", color: "var(--status-warning)" }}>
+          {s.reserved_stock.toLocaleString()}
         </span>
       ),
     },
     {
       key: "available_stock",
-      header: "Net Available",
+      header: "Available",
       align: "right",
-      width: "140px",
+      width: "120px",
+      render: (s) => {
+        const isLow = s.available_stock <= s.min_stock_level;
+        return (
+          <span
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: "13px",
+              fontWeight: 700,
+              color: isLow ? "var(--status-error)" : "#10b981",
+            }}
+          >
+            {s.available_stock.toLocaleString()}
+          </span>
+        );
+      },
+    },
+    {
+      key: "min_stock_level",
+      header: "Minimum",
+      align: "right",
+      width: "100px",
       render: (s) => (
-        <span
+        <span style={{ fontFamily: "var(--font-mono)", fontSize: "12px", color: "var(--text-muted)" }}>
+          {s.min_stock_level.toLocaleString()}
+        </span>
+      ),
+    },
+    {
+      key: "unit",
+      header: "Unit",
+      width: "80px",
+      render: (s) => <span style={{ fontSize: "11.5px", color: "var(--text-secondary)" }}>{s.unit}</span>,
+    },
+    {
+      key: "actions",
+      header: "",
+      width: "80px",
+      render: (s) => (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setSelectedItem(s);
+          }}
           style={{
-            fontFamily: "var(--font-mono)",
-            fontWeight: 700,
-            color: s.available_stock <= s.min_stock_level ? "var(--status-error)" : "var(--status-success)",
+            padding: "4px 8px",
+            borderRadius: "3px",
+            backgroundColor: "rgba(255, 255, 255, 0.04)",
+            border: "1px solid rgba(255, 255, 255, 0.08)",
+            color: "var(--text-secondary)",
+            fontSize: "11.5px",
+            cursor: "pointer",
           }}
         >
-          {s.available_stock.toLocaleString()} {s.unit}
-        </span>
+          Ledger →
+        </button>
       ),
     },
   ];
 
-  const movementColumns: Column<MovementRecord>[] = [
+  const transactionColumns: Column<MovementRecord>[] = [
     {
       key: "timestamp",
-      header: "Timestamp",
-      width: "140px",
+      header: "Date / Time",
+      width: "130px",
       render: (m) => (
-        <span style={{ fontSize: "11px", color: "var(--text-secondary)" }}>
-          {new Date(m.timestamp).toLocaleTimeString()}
+        <span style={{ fontSize: "11px", color: "var(--text-secondary)", fontFamily: "var(--font-mono)" }}>
+          {new Date(m.timestamp).toLocaleDateString()} {new Date(m.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
         </span>
       ),
     },
     {
       key: "item_code",
-      header: "Item SKU",
-      width: "160px",
+      header: "Material SKU",
+      width: "150px",
       render: (m) => (
-        <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: "var(--accent-text)" }}>
+        <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: "var(--accent-text)", fontSize: "12px" }}>
           {m.item_code}
         </span>
       ),
     },
     {
-      key: "movement_type",
-      header: "Action Type",
-      width: "130px",
-      render: (m) => {
-        let variant: "default" | "accent" | "success" | "warning" | "error" = "default";
-        if (m.movement_type === "ISSUE") variant = "accent";
-        if (m.movement_type === "RECEIPT") variant = "success";
-        if (m.movement_type === "WASTE") variant = "error";
-        if (m.movement_type === "RETURN") variant = "warning";
-        return <Badge variant={variant}>{m.movement_type}</Badge>;
-      },
+      key: "type",
+      header: "Type",
+      width: "90px",
+      render: (m) => (
+        <span
+          style={{
+            fontSize: "10.5px",
+            fontWeight: 700,
+            padding: "2px 6px",
+            borderRadius: "3px",
+            backgroundColor: m.type === "ISSUE" ? "rgba(239, 68, 68, 0.15)" : "rgba(16, 185, 129, 0.15)",
+            color: m.type === "ISSUE" ? "var(--status-error)" : "#10b981",
+          }}
+        >
+          {m.type}
+        </span>
+      ),
     },
     {
       key: "quantity",
-      header: "Quantity",
+      header: "Qty",
       align: "right",
-      width: "110px",
+      width: "100px",
       render: (m) => (
-        <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700 }}>
+        <span style={{ fontFamily: "var(--font-mono)", fontSize: "12.5px", fontWeight: 700, color: "#fff" }}>
           {m.quantity.toLocaleString()}
         </span>
       ),
     },
     {
-      key: "reason",
-      header: "Movement Reason & Destination",
+      key: "destination",
+      header: "From → To / Order",
       render: (m) => (
-        <div style={{ fontSize: "12px", color: "var(--text-secondary)" }}>
-          {m.reason} <span style={{ color: "var(--text-muted)", fontSize: "10px" }}>({m.to_location})</span>
-        </div>
+        <span style={{ fontSize: "12px", color: "var(--text-primary)" }}>
+          {m.source} → {m.destination}
+        </span>
       ),
+    },
+    {
+      key: "user_name",
+      header: "Operator",
+      width: "120px",
+      render: (m) => <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>{m.user_name}</span>,
     },
   ];
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", overflowY: "auto" }}>
+      {/* Header */}
       <PageHeader
-        title="Stock Balances & Inventory Engine"
-        subtitle="Physical vs Reserved vs Available inventory engine with double-entry stock ledger auditing."
+        title="Stock & Material Register"
+        badge={
+          <span
+            style={{
+              fontSize: "11px",
+              fontWeight: 600,
+              color: "var(--accent-text)",
+              backgroundColor: "rgba(255, 138, 115, 0.12)",
+              border: "1px solid var(--accent-border)",
+              borderRadius: "4px",
+              padding: "2px 8px",
+            }}
+          >
+            {stockItems.length} Materials Tracked
+          </span>
+        }
         primaryAction={{
-          label: "Log Stock Movement",
+          label: "Stock Entry",
           icon: "plus",
-          onClick: () => setIsMovementModalOpen(true),
+          onClick: () => setIsReceiptModalOpen(true),
         }}
       />
 
-      <div style={{ padding: "16px 24px 0 24px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "12px", marginBottom: "16px" }}>
-          <StatBox label="Total Physical Stock" value={totalPhysical.toLocaleString()} subValue="Across Warehouse Bins" icon="stock" />
-          <StatBox label="Active BOM Reserved" value={totalReserved.toLocaleString()} subValue="Production Holds" icon="lock" status="warning" />
-          <StatBox label="Net Available Stock" value={totalAvailable.toLocaleString()} subValue="Available to Promise (ATP)" icon="check-circle" status="success" />
-          <StatBox
-            label="Low Stock Warnings"
-            value={lowStockItems.length}
-            subValue="Below Reorder Point"
-            icon="alert-triangle"
-            status={lowStockItems.length > 0 ? "urgent" : "normal"}
-          />
-        </div>
-      </div>
-
-      <Tabs
-        tabs={[
-          { id: "balances", label: "Stock Items & Balances", icon: "stock", badge: items.length },
-          { id: "movements", label: "Movements Ledger", icon: "activity", badge: movements.length },
-          { id: "low_stock", label: "Low Stock & Reorders", icon: "alert-triangle", badge: lowStockItems.length },
-        ]}
-        activeTab={activeTab}
-        onChange={(tab) => setActiveTab(tab as any)}
-      />
-
-      <div style={{ padding: "16px 24px", display: "flex", flexDirection: "column", gap: "12px", flex: 1 }}>
-        {/* Core Equation Box */}
+      <div style={{ padding: "16px 24px", display: "flex", flexDirection: "column", gap: "14px" }}>
+        {/* Navigation Tabs Bar */}
         <div
           style={{
-            padding: "10px 14px",
-            backgroundColor: "var(--bg-surface)",
-            border: "1px solid var(--border-subtle)",
-            borderRadius: "var(--radius-xs)",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            fontSize: "12px",
+            borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+            paddingBottom: "10px",
+            gap: "12px",
+            flexWrap: "wrap",
           }}
         >
-          <span style={{ color: "var(--text-secondary)" }}>
-            <strong>Stock Invariant:</strong> Available Stock = Physical Stock − Active BOM Reserved Holds
-          </span>
-          <span style={{ fontFamily: "var(--font-mono)", fontSize: "11px", color: "var(--accent-text)" }}>
-            5 Locations Monitored
-          </span>
+          <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+            {[
+              { id: "inventory" as const, label: "Inventory Register" },
+              { id: "transactions" as const, label: "Ledger Movements" },
+              { id: "low" as const, label: "Low Stock Alerts" },
+              { id: "purchasing" as const, label: "Purchase Orders" },
+              { id: "suppliers" as const, label: "Suppliers Directory" },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  padding: "6px 12px",
+                  borderRadius: "4px",
+                  border: "none",
+                  backgroundColor:
+                    activeTab === tab.id ? "rgba(255, 138, 115, 0.14)" : "transparent",
+                  color: activeTab === tab.id ? "var(--accent-text)" : "var(--text-secondary)",
+                  fontSize: "12.5px",
+                  fontWeight: activeTab === tab.id ? 600 : 500,
+                  cursor: "pointer",
+                }}
+              >
+                <span>{tab.label}</span>
+              </button>
+            ))}
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              backgroundColor: "rgba(0, 0, 0, 0.25)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              borderRadius: "4px",
+              padding: "4px 10px",
+            }}
+          >
+            <Icon name="search" size={13} color="var(--text-muted)" />
+            <input
+              type="text"
+              placeholder="Search SKU, name, rack..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              style={{
+                background: "none",
+                border: "none",
+                color: "#fff",
+                fontSize: "12px",
+                outline: "none",
+                width: "160px",
+              }}
+            />
+          </div>
         </div>
 
-        {activeTab === "balances" && (
-          <Table
-            columns={balanceColumns}
-            data={items}
-            keyExtractor={(s) => s.id}
-            emptyText="No stock items configured."
-          />
-        )}
-
-        {activeTab === "movements" && (
-          <Table
-            columns={movementColumns}
-            data={movements}
-            keyExtractor={(m) => m.id}
-            emptyText="No stock movements recorded yet."
-          />
-        )}
-
-        {activeTab === "low_stock" && (
-          <Card
-            title="Purchase Reorder Recommendations"
-            subtitle="Materials where net available stock has fallen below the safety reorder threshold"
+        {/* Tab View Contents */}
+        {activeTab === "transactions" ? (
+          <div
+            style={{
+              backgroundColor: "rgba(19, 23, 34, 0.75)",
+              backdropFilter: "blur(14px)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              borderRadius: "4px",
+              overflow: "hidden",
+            }}
           >
-            {lowStockItems.length === 0 ? (
-              <div style={{ padding: "20px", textAlign: "center", color: "var(--status-success)" }}>
-                <Icon name="check-circle" size={24} />
-                <p style={{ marginTop: "6px", fontSize: "12px" }}>All inventory levels are above safety thresholds.</p>
-              </div>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                {lowStockItems.map((itm) => (
-                  <div
-                    key={itm.id}
-                    style={{
-                      padding: "10px 12px",
-                      backgroundColor: "var(--status-error-soft)",
-                      border: "1px solid var(--status-error-border)",
-                      borderRadius: "var(--radius-xs)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                    }}
-                  >
-                    <div>
-                      <div style={{ fontWeight: 600, color: "var(--status-error)" }}>{itm.name} ({itm.code})</div>
-                      <div style={{ fontSize: "11px", color: "var(--text-secondary)", marginTop: "2px" }}>
-                        Available: <strong>{itm.available_stock} {itm.unit}</strong> • Minimum Safety Point: {itm.min_stock_level} {itm.unit}
-                      </div>
-                    </div>
-                    <Button size="sm" variant="danger" icon="purchasing">
-                      Create PO (+{(itm.min_stock_level * 2 - itm.available_stock)} {itm.unit})
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </Card>
+            <Table
+              columns={transactionColumns}
+              data={SEED_MOVEMENTS}
+              emptyText="No material movements recorded today."
+            />
+          </div>
+        ) : activeTab === "purchasing" ? (
+          <div
+            style={{
+              backgroundColor: "rgba(19, 23, 34, 0.75)",
+              backdropFilter: "blur(14px)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              borderRadius: "4px",
+              overflow: "hidden",
+            }}
+          >
+            <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255, 255, 255, 0.06)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: "13px", fontWeight: 700, color: "#fff" }}>Purchase Orders & Requisitions</span>
+              <Button variant="primary" size="sm" onClick={() => success("New PO", "Purchase Order drafting initiated.")}>
+                + New Purchase Order
+              </Button>
+            </div>
+            <Table
+              columns={[
+                { key: "po_number", header: "PO Number", render: (p) => <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: "var(--accent-text)" }}>{p.po_number}</span> },
+                { key: "supplier_name", header: "Supplier Vendor", render: (p) => <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>{p.supplier_name}</span> },
+                { key: "order_date", header: "Date", render: (p) => <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>{p.order_date}</span> },
+                { key: "items_summary", header: "Ordered Items", render: (p) => <span style={{ fontSize: "12px", color: "var(--text-secondary)" }}>{p.items_summary}</span> },
+                { key: "total_amount", header: "PO Total", align: "right", render: (p) => <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: "#34d399" }}>₹{p.total_amount.toLocaleString()}</span> },
+                { key: "status", header: "Status", render: (p) => <span style={{ fontSize: "10.5px", fontWeight: 700, padding: "2px 6px", borderRadius: "3px", backgroundColor: p.status === "RECEIVED" ? "rgba(16, 185, 129, 0.15)" : "rgba(255, 138, 115, 0.15)", color: p.status === "RECEIVED" ? "#10b981" : "var(--accent-text)" }}>{p.status}</span> },
+              ]}
+              data={SEED_PURCHASE_ORDERS}
+              emptyText="No active purchase orders."
+            />
+          </div>
+        ) : activeTab === "suppliers" ? (
+          <div
+            style={{
+              backgroundColor: "rgba(19, 23, 34, 0.75)",
+              backdropFilter: "blur(14px)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              borderRadius: "4px",
+              overflow: "hidden",
+            }}
+          >
+            <Table
+              columns={[
+                { key: "code", header: "Supplier Code", render: (s) => <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: "var(--accent-text)" }}>{s.code}</span> },
+                { key: "name", header: "Vendor Name", render: (s) => <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>{s.name}</span> },
+                { key: "contact_person", header: "Contact", render: (s) => <span style={{ fontSize: "12px", color: "var(--text-secondary)" }}>{s.contact_person} ({s.phone})</span> },
+                { key: "materials", header: "Materials Supplied", render: (s) => <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>{s.materials}</span> },
+                { key: "rating", header: "Vendor Reliability", render: (s) => <span style={{ fontSize: "11px", color: "#10b981", fontWeight: 600 }}>{s.rating}</span> },
+              ]}
+              data={SEED_SUPPLIERS}
+              emptyText="No suppliers registered."
+            />
+          </div>
+        ) : (
+          /* Main Spreadsheet-Style Table */
+          <div
+            style={{
+              backgroundColor: "rgba(19, 23, 34, 0.75)",
+              backdropFilter: "blur(14px)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              borderRadius: "4px",
+              overflow: "hidden",
+            }}
+          >
+            <Table
+              columns={inventoryColumns}
+              data={filteredItems}
+              onRowClick={(s) => setSelectedItem(s)}
+              emptyText="No stock records match the query."
+            />
+          </div>
         )}
       </div>
 
-      {/* Movement Modal */}
-      <Modal
-        isOpen={isMovementModalOpen}
-        onClose={() => setIsMovementModalOpen(false)}
-        title="Record Stock Movement"
-        subtitle="Issue materials to press machines, log waste, or register supplier receipts"
-        width={500}
-        footer={
-          <>
-            <Button variant="secondary" onClick={() => setIsMovementModalOpen(false)} disabled={loading}>
-              Cancel
-            </Button>
-            <Button variant="primary" onClick={handleRecordMovement} loading={loading}>
-              Record Movement
-            </Button>
-          </>
-        }
-      >
-        <form onSubmit={handleRecordMovement} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-          <Select
-            label="Stock Item"
-            options={items.map((i) => ({ label: `${i.code} — ${i.name}`, value: i.id }))}
-            value={selectedItemId}
-            onChange={(e) => setSelectedItemId(e.target.value)}
-          />
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
-            <Select
-              label="Movement Type"
-              options={[
-                { label: "Issue to Floor (ISSUE)", value: "ISSUE" },
-                { label: "Supplier Receipt (RECEIPT)", value: "RECEIPT" },
-                { label: "Floor Scrap / Waste (WASTE)", value: "WASTE" },
-                { label: "Floor Return (RETURN)", value: "RETURN" },
-                { label: "Inventory Adjustment (ADJUSTMENT)", value: "ADJUSTMENT" },
-              ]}
-              value={movementType}
-              onChange={(e) => setMovementType(e.target.value as any)}
-            />
-            <Input
-              label="Quantity"
-              type="number"
-              value={movementQty}
-              onChange={(e) => setMovementQty(Number(e.target.value))}
-              min={1}
-            />
+      {/* Stock Item Detail Drawer */}
+      {selectedItem && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            right: 0,
+            bottom: 0,
+            width: "440px",
+            backgroundColor: "rgba(14, 18, 26, 0.96)",
+            backdropFilter: "blur(20px)",
+            borderLeft: "1px solid var(--accent-border)",
+            boxShadow: "-8px 0 32px rgba(0, 0, 0, 0.6)",
+            zIndex: 100,
+            display: "flex",
+            flexDirection: "column",
+            animation: "slideLeft 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
+          }}
+        >
+          <div
+            style={{
+              padding: "16px 20px",
+              borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <div>
+              <h3 style={{ margin: 0, fontSize: "15px", fontWeight: 700, color: "#fff" }}>
+                {selectedItem.code}
+              </h3>
+              <span style={{ fontSize: "11.5px", color: "var(--accent-text)" }}>
+                {selectedItem.name}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSelectedItem(null)}
+              style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer" }}
+            >
+              <Icon name="x" size={16} />
+            </button>
           </div>
 
-          <Textarea
-            label="Reason / Job Reference"
-            placeholder="e.g. Sublimation heat press ribbon tear, batch replenishment..."
-            value={movementReason}
-            onChange={(e) => setMovementReason(e.target.value)}
-            rows={2}
-          />
-        </form>
-      </Modal>
+          <div style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "16px", overflowY: "auto" }}>
+            {/* Live Inventory Breakdown */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px" }}>
+              <div style={{ padding: "10px", backgroundColor: "rgba(255, 255, 255, 0.02)", borderRadius: "4px", border: "1px solid rgba(255, 255, 255, 0.06)", textAlign: "center" }}>
+                <div style={{ fontSize: "10px", color: "var(--text-muted)" }}>PHYSICAL</div>
+                <div style={{ fontSize: "16px", fontWeight: 800, color: "#fff", marginTop: "2px" }}>
+                  {selectedItem.physical_stock.toLocaleString()}
+                </div>
+              </div>
+              <div style={{ padding: "10px", backgroundColor: "rgba(255, 255, 255, 0.02)", borderRadius: "4px", border: "1px solid rgba(255, 255, 255, 0.06)", textAlign: "center" }}>
+                <div style={{ fontSize: "10px", color: "var(--status-warning)" }}>RESERVED</div>
+                <div style={{ fontSize: "16px", fontWeight: 800, color: "var(--status-warning)", marginTop: "2px" }}>
+                  {selectedItem.reserved_stock.toLocaleString()}
+                </div>
+              </div>
+              <div style={{ padding: "10px", backgroundColor: "rgba(255, 255, 255, 0.02)", borderRadius: "4px", border: "1px solid rgba(255, 255, 255, 0.06)", textAlign: "center" }}>
+                <div style={{ fontSize: "10px", color: "#10b981" }}>AVAILABLE</div>
+                <div style={{ fontSize: "16px", fontWeight: 800, color: "#10b981", marginTop: "2px" }}>
+                  {selectedItem.available_stock.toLocaleString()}
+                </div>
+              </div>
+            </div>
+
+            {/* Location & Specs */}
+            <div
+              style={{
+                padding: "12px",
+                backgroundColor: "rgba(255, 255, 255, 0.02)",
+                borderRadius: "4px",
+                border: "1px solid rgba(255, 255, 255, 0.06)",
+                display: "flex",
+                flexDirection: "column",
+                gap: "8px",
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px" }}>
+                <span style={{ color: "var(--text-muted)" }}>Location:</span>
+                <strong style={{ color: "#fff" }}>{selectedItem.location}</strong>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px" }}>
+                <span style={{ color: "var(--text-muted)" }}>Safety Threshold:</span>
+                <strong style={{ color: "#fff" }}>{selectedItem.min_stock_level.toLocaleString()} {selectedItem.unit}</strong>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px" }}>
+                <span style={{ color: "var(--text-muted)" }}>Standard Cost:</span>
+                <strong style={{ color: "#34d399" }}>₹{selectedItem.cost_price.toFixed(2)} / {selectedItem.unit}</strong>
+              </div>
+            </div>
+
+            {/* Quick Material Actions */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  success("Material Issued", `Issued 100 units of ${selectedItem.code} to floor.`);
+                }}
+              >
+                Issue to Floor
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => {
+                  success("Requisition", `Created purchase requisition for ${selectedItem.code}.`);
+                }}
+              >
+                + Reorder PO
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Quick Stock Receipt Modal */}
+      {isReceiptModalOpen && (
+        <Modal
+          isOpen={isReceiptModalOpen}
+          onClose={() => setIsReceiptModalOpen(false)}
+          title="Record Material Goods Receipt (GRN)"
+        >
+          <form onSubmit={handleRecordReceipt} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            <Select
+              label="Select Material / Raw Stock"
+              value={receiptItem}
+              onChange={(e) => setReceiptItem(e.target.value)}
+              options={stockItems.map((s) => ({ value: s.id, label: `${s.code} — ${s.name}` }))}
+            />
+
+            <Input
+              label="Quantity Received"
+              type="number"
+              value={receiptQty}
+              onChange={(e) => setReceiptQty(e.target.value)}
+              required
+            />
+
+            <Textarea
+              label="Inspection Notes / Lot Reference"
+              value={receiptNotes}
+              onChange={(e) => setReceiptNotes(e.target.value)}
+            />
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px", marginTop: "8px" }}>
+              <Button variant="secondary" size="sm" onClick={() => setIsReceiptModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button variant="primary" size="sm" type="submit">
+                Confirm Stock Receipt
+              </Button>
+            </div>
+          </form>
+        </Modal>
+      )}
     </div>
   );
 };
