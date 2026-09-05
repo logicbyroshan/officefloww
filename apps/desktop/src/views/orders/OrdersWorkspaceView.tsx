@@ -209,6 +209,45 @@ export const INHOUSE_EMPLOYEES: EmployeeMember[] = [
 ];
 
 // External Piece-Rate Labour Contractors for Lanyard Production
+export interface PrintContractorItem {
+  id: string;
+  name: string;
+  specialty: string;
+  rate: string;
+  icon: string;
+}
+
+export const PRINT_CONTRACTORS: PrintContractorItem[] = [
+  {
+    id: "lb-2",
+    name: "Kailash Heat Sublimation Lab",
+    specialty: "Heat Transfer & Sublimation",
+    rate: "₹2.80/pc",
+    icon: "🔥",
+  },
+  {
+    id: "lb-3",
+    name: "Shyam Screen Print Workshop",
+    specialty: "Screen Printing & Stamping",
+    rate: "₹2.10/pc",
+    icon: "🎨",
+  },
+  {
+    id: "lb-1",
+    name: "Ramesh Lanyard Stitching Unit",
+    specialty: "Stitching & Rotary Print Unit",
+    rate: "₹2.50/pc",
+    icon: "🖨️",
+  },
+  {
+    id: "lb-4",
+    name: "Pooja Manual Pack & Clip Crew",
+    specialty: "Manual Assembly & Pad Print",
+    rate: "₹1.50/pc",
+    icon: "📦",
+  },
+];
+
 export const LABOUR_CONTRACTORS: LabourContractor[] = [
   {
     id: "lb-1",
@@ -683,6 +722,12 @@ export interface AssignedWorker {
   allocatedQty?: number;
 }
 
+export interface ContractorAllocation {
+  contractorId: string;
+  contractorName: string;
+  qty: number;
+}
+
 export interface OrderRecord {
   internalId: string;
   client: string;
@@ -695,16 +740,32 @@ export interface OrderRecord {
   deliveryDate: string;
   notes?: string;
   status?: string;
+  // Labour Lanyard specific tracking:
+  mplName?: string;
+  size?: string; // "12mm" | "15mm" | "16mm" | "20mm"
+  goneForPrint?: boolean;
+  printAllocations?: ContractorAllocation[];
+  isPrinted?: boolean;
+  goneForFitting?: boolean;
 }
 
 export const INITIAL_ORDERS: OrderRecord[] = [
   {
     internalId: "ord-1",
     client: "St. Xavier's High School",
+    mplName: "St. Xavier's High School",
+    size: "15mm",
     product: "Multicolor Lanyards (15mm) — Satin ribbon with Dog Hook & Clips",
     itemOrdered: "Lanyard",
     itemsOrdered: ["Lanyard"],
     qty: 2000,
+    goneForPrint: true,
+    printAllocations: [
+      { contractorId: "lb-2", contractorName: "Kailash Heat Sublimation Lab", qty: 1000 },
+      { contractorId: "lb-3", contractorName: "Shyam Screen Print Workshop", qty: 1000 },
+    ],
+    isPrinted: true,
+    goneForFitting: true,
     assignedTo: [
       { name: "Ramesh Lanyard Stitching Unit", role: "Lanyard Stitching Labour", type: "LABOUR", contractorId: "lb-1" },
     ],
@@ -714,10 +775,18 @@ export const INITIAL_ORDERS: OrderRecord[] = [
   {
     internalId: "ord-2",
     client: "BHEL Township Admin",
+    mplName: "BHEL Township Admin",
+    size: "12mm",
     product: "Single Color Lanyards (10mm) — Navy blue polyester with Plastic Holder-V, Clips & Jointer",
     itemOrdered: "Lanyard",
     itemsOrdered: ["Lanyard"],
     qty: 500,
+    goneForPrint: true,
+    printAllocations: [
+      { contractorId: "lb-3", contractorName: "Shyam Screen Print Workshop", qty: 500 },
+    ],
+    isPrinted: true,
+    goneForFitting: false,
     assignedTo: [
       { name: "Ramesh Lanyard Stitching Unit", role: "Lanyard Stitching Labour", type: "LABOUR", contractorId: "lb-1" },
     ],
@@ -727,10 +796,18 @@ export const INITIAL_ORDERS: OrderRecord[] = [
   {
     internalId: "ord-3",
     client: "Northwind Coffee",
+    mplName: "Northwind Coffee",
+    size: "16mm",
     product: "Custom Printed Premium Lanyards — Red/white satin print, Dog Hook & Safety Jointer",
     itemOrdered: "Lanyard",
     itemsOrdered: ["Lanyard"],
     qty: 1500,
+    goneForPrint: true,
+    printAllocations: [
+      { contractorId: "lb-2", contractorName: "Kailash Heat Sublimation Lab", qty: 1500 },
+    ],
+    isPrinted: false,
+    goneForFitting: false,
     assignedTo: [
       { name: "Ramesh Lanyard Stitching Unit", role: "Lanyard Stitching Labour", type: "LABOUR", contractorId: "lb-1" },
     ],
@@ -740,6 +817,8 @@ export const INITIAL_ORDERS: OrderRecord[] = [
   {
     internalId: "ord-4",
     client: "AIIMS Bhopal",
+    mplName: "AIIMS Bhopal",
+    size: "58mm",
     product: "Medical Staff ID Cards — PVC laminated with Plastic Holder-V & Clips",
     itemOrdered: "Card",
     itemsOrdered: ["Card"],
@@ -753,6 +832,8 @@ export const INITIAL_ORDERS: OrderRecord[] = [
   {
     internalId: "ord-5",
     client: "Govt Engineering College Bhopal",
+    mplName: "Govt Engineering College Bhopal",
+    size: "58mm",
     product: "PVC Identity Cards (58mm) — Plastic Holder-H & Clips",
     itemOrdered: "Card",
     itemsOrdered: ["Card"],
@@ -766,6 +847,8 @@ export const INITIAL_ORDERS: OrderRecord[] = [
   {
     internalId: "ord-6",
     client: "Reliance Retail - Bhopal",
+    mplName: "Reliance Retail - Bhopal",
+    size: "58mm",
     product: "Staff Access Cards — Barcode & magnetic stripe encoded with DST-V Holder",
     itemOrdered: "Card",
     itemsOrdered: ["Card"],
@@ -779,10 +862,16 @@ export const INITIAL_ORDERS: OrderRecord[] = [
   {
     internalId: "ord-7",
     client: "NIT Bhopal",
+    mplName: "NIT Bhopal",
+    size: "20mm",
     product: "Faculty + Student Lanyards — 20mm full color heat sublimation with Plastic Hook & Jointer",
     itemOrdered: "Lanyard",
     itemsOrdered: ["Lanyard"],
     qty: 1200,
+    goneForPrint: false,
+    printAllocations: [],
+    isPrinted: false,
+    goneForFitting: false,
     assignedTo: [
       { name: "Kailash Heat Sublimation Lab", role: "Heat Transfer Contractor", type: "LABOUR", contractorId: "lb-2" },
     ],
@@ -792,10 +881,16 @@ export const INITIAL_ORDERS: OrderRecord[] = [
   {
     internalId: "ord-8",
     client: "Maulana Azad Hospital",
+    mplName: "Maulana Azad Hospital",
+    size: "12mm",
     product: "Staff ID Lanyards — Screen printed navy with England Hook & Clips",
     itemOrdered: "Lanyard",
     itemsOrdered: ["Lanyard"],
     qty: 600,
+    goneForPrint: false,
+    printAllocations: [],
+    isPrinted: false,
+    goneForFitting: false,
     assignedTo: [
       { name: "Shyam Screen Print Workshop", role: "Screen Printing & Stamping", type: "LABOUR", contractorId: "lb-3" },
     ],
@@ -805,6 +900,8 @@ export const INITIAL_ORDERS: OrderRecord[] = [
   {
     internalId: "ord-9",
     client: "Smart City Council",
+    mplName: "Smart City Council",
+    size: "58mm",
     product: "Event Delegate Smart Cards — Magnetic clip back with Crystal Holder",
     itemOrdered: "Card",
     itemsOrdered: ["Card"],
@@ -818,10 +915,16 @@ export const INITIAL_ORDERS: OrderRecord[] = [
   {
     internalId: "ord-10",
     client: "Indraprastha School",
+    mplName: "Indraprastha School",
+    size: "16mm",
     product: "Heavy Duty School ID Lanyards — Transparent Plastic Holder-V with Dog Hook & Clips",
     itemOrdered: "Lanyard",
     itemsOrdered: ["Lanyard"],
     qty: 1000,
+    goneForPrint: false,
+    printAllocations: [],
+    isPrinted: false,
+    goneForFitting: false,
     assignedTo: [
       { name: "Ramesh Lanyard Stitching Unit", role: "Lanyard Stitching Labour", type: "LABOUR", contractorId: "lb-1" },
     ],
@@ -831,6 +934,8 @@ export const INITIAL_ORDERS: OrderRecord[] = [
   {
     internalId: "ord-11",
     client: "MP Secretariat",
+    mplName: "MP Secretariat",
+    size: "58mm",
     product: "Embossed Security ID Cards — Hologram foil & micro-text overlay with Clips",
     itemOrdered: "Card",
     itemsOrdered: ["Card"],
@@ -844,10 +949,16 @@ export const INITIAL_ORDERS: OrderRecord[] = [
   {
     internalId: "ord-12",
     client: "Bansal Group Schools",
+    mplName: "Bansal Group Schools",
+    size: "12mm",
     product: "Lanyards (12mm Blue/White) — Double-sided print with Dog Hook, Clips & Safety Jointer",
     itemOrdered: "Lanyard",
     itemsOrdered: ["Lanyard"],
     qty: 3000,
+    goneForPrint: false,
+    printAllocations: [],
+    isPrinted: false,
+    goneForFitting: false,
     assignedTo: [
       { name: "Ramesh Lanyard Stitching Unit", role: "Lanyard Stitching Labour", type: "LABOUR", contractorId: "lb-1" },
     ],
@@ -960,6 +1071,107 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
   const [newItemOrdered, setNewItemOrdered] = useState<string>("Lanyard");
   const [customItemText, setCustomItemText] = useState("");
   const [newQty, setNewQty] = useState("");
+
+  // Labour Lanyard Specific Entry & Print Allocation States
+  const [newLanyardMplName, setNewLanyardMplName] = useState("");
+  const [newLanyardSize, setNewLanyardSize] = useState("16mm");
+
+  const [printModalOrder, setPrintModalOrder] = useState<OrderRecord | null>(null);
+  const [selectedPrintContractorIds, setSelectedPrintContractorIds] = useState<string[]>([]);
+  const [printQtys, setPrintQtys] = useState<Record<string, number>>({});
+
+  const openPrintModal = (order: OrderRecord) => {
+    setPrintModalOrder(order);
+    if (order.printAllocations && order.printAllocations.length > 0) {
+      setSelectedPrintContractorIds(order.printAllocations.map((a) => a.contractorId));
+      const qtys: Record<string, number> = {};
+      order.printAllocations.forEach((a) => {
+        qtys[a.contractorId] = a.qty;
+      });
+      setPrintQtys(qtys);
+    } else {
+      const defaultId = PRINT_CONTRACTORS[0].id;
+      setSelectedPrintContractorIds([defaultId]);
+      setPrintQtys({ [defaultId]: order.qty });
+    }
+  };
+
+  const handleTogglePrintContractor = (contractorId: string) => {
+    if (!printModalOrder) return;
+    const isSelected = selectedPrintContractorIds.includes(contractorId);
+    if (isSelected) {
+      const nextSelected = selectedPrintContractorIds.filter((id) => id !== contractorId);
+      setSelectedPrintContractorIds(nextSelected);
+      const nextQtys = { ...printQtys };
+      delete nextQtys[contractorId];
+      if (nextSelected.length === 1) {
+        nextQtys[nextSelected[0]] = printModalOrder.qty;
+      }
+      setPrintQtys(nextQtys);
+    } else {
+      const nextSelected = [...selectedPrintContractorIds, contractorId];
+      setSelectedPrintContractorIds(nextSelected);
+      const count = nextSelected.length;
+      const baseQty = Math.floor(printModalOrder.qty / count);
+      const remainder = printModalOrder.qty - baseQty * count;
+      const nextQtys: Record<string, number> = {};
+      nextSelected.forEach((id, idx) => {
+        nextQtys[id] = baseQty + (idx === 0 ? remainder : 0);
+      });
+      setPrintQtys(nextQtys);
+    }
+  };
+
+  const handleDivideEqually = () => {
+    if (!printModalOrder || selectedPrintContractorIds.length === 0) return;
+    const count = selectedPrintContractorIds.length;
+    const baseQty = Math.floor(printModalOrder.qty / count);
+    const remainder = printModalOrder.qty - baseQty * count;
+    const nextQtys: Record<string, number> = {};
+    selectedPrintContractorIds.forEach((id, idx) => {
+      nextQtys[id] = baseQty + (idx === 0 ? remainder : 0);
+    });
+    setPrintQtys(nextQtys);
+  };
+
+  const totalAllocatedPrint = useMemo(() => {
+    return selectedPrintContractorIds.reduce((sum, id) => sum + (Number(printQtys[id]) || 0), 0);
+  }, [selectedPrintContractorIds, printQtys]);
+
+  const isAllocationBalanced = useMemo(() => {
+    if (!printModalOrder) return false;
+    return totalAllocatedPrint === printModalOrder.qty;
+  }, [printModalOrder, totalAllocatedPrint]);
+
+  const handleConfirmPrintAllocation = () => {
+    if (!printModalOrder) return;
+    if (selectedPrintContractorIds.length === 0) return;
+    if (selectedPrintContractorIds.length > 1 && !isAllocationBalanced) return;
+
+    const allocations: ContractorAllocation[] = selectedPrintContractorIds.map((id) => {
+      const c = PRINT_CONTRACTORS.find((p) => p.id === id);
+      return {
+        contractorId: id,
+        contractorName: c ? c.name : id,
+        qty: selectedPrintContractorIds.length === 1 ? printModalOrder.qty : (Number(printQtys[id]) || 0),
+      };
+    });
+
+    setOrders((prev) =>
+      prev.map((o) => {
+        if (o.internalId !== printModalOrder.internalId) return o;
+        return {
+          ...o,
+          goneForPrint: true,
+          printAllocations: allocations,
+        };
+      })
+    );
+
+    const summary = allocations.map((a) => `${a.contractorName} (${a.qty.toLocaleString()} units)`).join(" + ");
+    success("Order Sent to Print", `Allocated to: ${summary}`);
+    setPrintModalOrder(null);
+  };
 
   // Keep newClient synced if filterClientName prop changes
   useEffect(() => {
@@ -1231,8 +1443,10 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
       const q = search.toLowerCase();
       const matchSearch =
         !q ||
+        (o.mplName && o.mplName.toLowerCase().includes(q)) ||
         o.client.toLowerCase().includes(q) ||
         o.product.toLowerCase().includes(q) ||
+        (o.size && o.size.toLowerCase().includes(q)) ||
         currentItem.toLowerCase().includes(q) ||
         (o.assignedTo || []).some((a) => a.name.toLowerCase().includes(q) || a.role.toLowerCase().includes(q));
 
@@ -1261,21 +1475,52 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
   // ─── Add Order From Separate Quick Entry Panel ─────────────────────────────
   const handleAddFromQuickEntry = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    const effectiveClient = (filterClientName || newClient).trim() || (mode === "LABOUR_LANYARD" ? "Labour Production" : "");
-    if (!effectiveClient && mode !== "LABOUR_LANYARD") {
-      clientInputRef.current?.focus();
-      return;
-    }
-
-    const finalItem = newItemOrdered === "Card" ? "Card" : "Lanyard";
-
-    const finalDescription = newDescription.trim() || `${finalItem} Custom Production Run`;
 
     const now = new Date();
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     const orderDateStr = `${String(now.getDate()).padStart(2, "0")} ${months[now.getMonth()]} ${now.getFullYear()}`;
     const plus7 = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
     const deliveryDateStr = `${String(plus7.getDate()).padStart(2, "0")} ${months[plus7.getMonth()]} ${plus7.getFullYear()}`;
+
+    // Special quick entry handling for LABOUR_LANYARD: MPL Name, Size, Qty
+    if (mode === "LABOUR_LANYARD") {
+      const mplName = newLanyardMplName.trim() || "Custom Lanyard Job";
+      const size = newLanyardSize || "16mm";
+      const qty = parseInt(newQty, 10) || 500;
+
+      const createdOrder: OrderRecord = {
+        internalId: `ord-${Date.now()}`,
+        client: mplName,
+        mplName: mplName,
+        size: size,
+        product: `${mplName} (${size})`,
+        itemOrdered: "Lanyard",
+        itemsOrdered: ["Lanyard"],
+        qty: qty,
+        goneForPrint: false,
+        printAllocations: [],
+        isPrinted: false,
+        goneForFitting: false,
+        assignedTo: [],
+        orderDate: orderDateStr,
+        deliveryDate: deliveryDateStr,
+      };
+
+      setOrders([createdOrder, ...orders]);
+      setNewLanyardMplName("");
+      setNewQty("");
+      success("Labour Order Created", `Added order for ${mplName} (${size}, ${qty.toLocaleString()} units). Ready to send for print.`);
+      return;
+    }
+
+    const effectiveClient = (filterClientName || newClient).trim();
+    if (!effectiveClient) {
+      clientInputRef.current?.focus();
+      return;
+    }
+
+    const finalItem = newItemOrdered === "Card" ? "Card" : "Lanyard";
+    const finalDescription = newDescription.trim() || `${finalItem} Custom Production Run`;
 
     const createdOrder: OrderRecord = {
       internalId: `ord-${Date.now()}`,
@@ -1297,11 +1542,7 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
     setNewQty("");
     setNewItemOrdered("Lanyard");
     setIsClientDropdownOpen(false);
-    if (mode === "LABOUR_LANYARD") {
-      success("Labour Order Created", `Added order (${createdOrder.qty.toLocaleString()} units). Click 'Assign' to delegate.`);
-    } else {
-      success("Order Created", `Added order for ${createdOrder.client}. Click 'Assign' to delegate.`);
-    }
+    success("Order Created", `Added order for ${createdOrder.client}. Click 'Assign' to delegate.`);
   };
 
   // ─── Save Inline Edit ──────────────────────────────────────────────────────
@@ -1314,6 +1555,9 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
         if (o.internalId !== id) return o;
         if (field === "qty") {
           return { ...o, qty: parseInt(editValue, 10) || 0 };
+        }
+        if (field === "mplName") {
+          return { ...o, mplName: editValue, client: editValue, product: `${editValue} (${o.size || "16mm"})` };
         }
         if (field === "itemOrdered") {
           const finalItem = editItem === "Card" ? "Card" : "Lanyard";
@@ -1338,7 +1582,11 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
   const handleStartEdit = (order: OrderRecord, field: keyof OrderRecord, e: React.MouseEvent) => {
     e.stopPropagation();
     setEditingCell({ id: order.internalId, field });
-    setEditValue(String(order[field] ?? ""));
+    if (field === "mplName") {
+      setEditValue(order.mplName || order.client || order.product);
+    } else {
+      setEditValue(String(order[field] ?? ""));
+    }
 
     if (field === "client" && !filterClientName) {
       setIsEditClientDropdownOpen(true);
@@ -1634,16 +1882,131 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
             )}
           </div>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: mode === "LABOUR_LANYARD" ? "1fr 120px auto" : "1.4fr 1.1fr 2.6fr 110px auto",
-              gap: "12px",
-              alignItems: "start",
-            }}
-          >
-            {/* 1. Client Field (only if not LABOUR_LANYARD) */}
-            {mode !== "LABOUR_LANYARD" && (
+          {mode === "LABOUR_LANYARD" ? (
+            /* LABOUR_LANYARD: MPL Name, Size, Qty, + Add Order */
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "2.5fr 130px 110px auto",
+                gap: "12px",
+                alignItems: "start",
+              }}
+            >
+              {/* 1. MPL Name */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                <label style={{ fontSize: "10px", fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)", letterSpacing: "0.5px" }}>
+                  MPL Name
+                </label>
+                <input
+                  type="text"
+                  placeholder="MPL / Job Name (e.g. Tata Motors, Bhopal Academy, School Lanyard)..."
+                  value={newLanyardMplName}
+                  onChange={(e) => setNewLanyardMplName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleAddFromQuickEntry();
+                  }}
+                  style={{
+                    width: "100%",
+                    height: "36px",
+                    padding: "0 12px",
+                    backgroundColor: "rgba(9, 12, 19, 0.85)",
+                    border: "1px solid rgba(249, 115, 22, 0.4)",
+                    borderRadius: "var(--radius-sm, 4px)",
+                    color: "#fff",
+                    fontSize: "13px",
+                    fontWeight: 600,
+                    outline: "none",
+                    boxSizing: "border-box",
+                  }}
+                />
+              </div>
+
+              {/* 2. Size */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                <label style={{ fontSize: "10px", fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)", letterSpacing: "0.5px" }}>
+                  Size
+                </label>
+                <select
+                  value={newLanyardSize}
+                  onChange={(e) => setNewLanyardSize(e.target.value)}
+                  style={{
+                    width: "100%",
+                    height: "36px",
+                    padding: "0 10px",
+                    backgroundColor: "rgba(9, 12, 19, 0.85)",
+                    border: "1px solid rgba(255, 255, 255, 0.16)",
+                    borderRadius: "var(--radius-sm, 4px)",
+                    color: "#fbbf24",
+                    fontSize: "13px",
+                    fontWeight: 700,
+                    outline: "none",
+                    cursor: "pointer",
+                    boxSizing: "border-box",
+                  }}
+                >
+                  <option value="12mm" style={{ backgroundColor: "#0e131f", color: "#38bdf8" }}>12mm</option>
+                  <option value="15mm" style={{ backgroundColor: "#0e131f", color: "#c084fc" }}>15mm</option>
+                  <option value="16mm" style={{ backgroundColor: "#0e131f", color: "#fbbf24" }}>16mm</option>
+                  <option value="20mm" style={{ backgroundColor: "#0e131f", color: "#34d399" }}>20mm</option>
+                </select>
+              </div>
+
+              {/* 3. Qty */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                <label style={{ fontSize: "10px", fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)", letterSpacing: "0.5px" }}>
+                  Qty
+                </label>
+                <input
+                  type="number"
+                  placeholder="500"
+                  value={newQty}
+                  onChange={(e) => setNewQty(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleAddFromQuickEntry();
+                  }}
+                  style={{
+                    width: "100%",
+                    height: "36px",
+                    padding: "0 8px",
+                    backgroundColor: "rgba(9, 12, 19, 0.85)",
+                    border: "1px solid rgba(255, 255, 255, 0.12)",
+                    borderRadius: "var(--radius-sm, 4px)",
+                    color: "#fff",
+                    fontSize: "13px",
+                    fontFamily: "var(--font-mono)",
+                    textAlign: "center",
+                    fontWeight: 700,
+                    outline: "none",
+                    boxSizing: "border-box",
+                  }}
+                />
+              </div>
+
+              {/* 4. Action Button */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                <label style={{ fontSize: "10px", fontWeight: 700, textTransform: "uppercase", color: "transparent", letterSpacing: "0.5px" }}>
+                  Add
+                </label>
+                <Button
+                  variant="primary"
+                  size="md"
+                  onClick={() => handleAddFromQuickEntry()}
+                  style={{ height: "36px", whiteSpace: "nowrap", backgroundColor: "#f97316", borderColor: "#ea580c", color: "#fff" }}
+                >
+                  + Add Order
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1.4fr 1.1fr 2.6fr 110px auto",
+                gap: "12px",
+                alignItems: "start",
+              }}
+            >
+              {/* 1. Client Field */}
               <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
                 <label style={{ fontSize: "10px", fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)", letterSpacing: "0.5px" }}>
                   Client
@@ -1779,10 +2142,8 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
                   </div>
                 )}
               </div>
-            )}
 
-            {/* 2. Order (only if not LABOUR_LANYARD) */}
-            {mode !== "LABOUR_LANYARD" && (
+              {/* 2. Order */}
               <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
                 <label style={{ fontSize: "10px", fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)", letterSpacing: "0.5px" }}>
                   Order
@@ -1814,88 +2175,86 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
                   )}
                 </select>
               </div>
-            )}
 
-            {/* 3. Description (Single unified text field) */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-              <label style={{ fontSize: "10px", fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)", letterSpacing: "0.5px" }}>
-                Description
-              </label>
-              <input
-                type="text"
-                placeholder={
-                  mode === "CARD_ORDERS"
-                    ? "Description (e.g. 58mm PVC, Plastic Holder-V, Clips)..."
-                    : mode === "LABOUR_LANYARD"
-                    ? "Description (e.g. 16mm Dori with Dog Hook, Safety Jointer for stitching)..."
-                    : "Description (e.g. 16mm Dori, Dog Hook, Plastic Holder-V)..."
-                }
-                value={newDescription}
-                onChange={(e) => setNewDescription(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleAddFromQuickEntry();
-                }}
-                style={{
-                  width: "100%",
-                  height: "36px",
-                  padding: "0 12px",
-                  backgroundColor: "rgba(9, 12, 19, 0.85)",
-                  border: "1px solid rgba(255, 255, 255, 0.12)",
-                  borderRadius: "var(--radius-sm, 4px)",
-                  color: "#fff",
-                  fontSize: "12.5px",
-                  outline: "none",
-                  boxSizing: "border-box",
-                }}
-              />
-            </div>
+              {/* 3. Description (Single unified text field) */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                <label style={{ fontSize: "10px", fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)", letterSpacing: "0.5px" }}>
+                  Description
+                </label>
+                <input
+                  type="text"
+                  placeholder={
+                    mode === "CARD_ORDERS"
+                      ? "Description (e.g. 58mm PVC, Plastic Holder-V, Clips)..."
+                      : "Description (e.g. 16mm Dori, Dog Hook, Plastic Holder-V)..."
+                  }
+                  value={newDescription}
+                  onChange={(e) => setNewDescription(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleAddFromQuickEntry();
+                  }}
+                  style={{
+                    width: "100%",
+                    height: "36px",
+                    padding: "0 12px",
+                    backgroundColor: "rgba(9, 12, 19, 0.85)",
+                    border: "1px solid rgba(255, 255, 255, 0.12)",
+                    borderRadius: "var(--radius-sm, 4px)",
+                    color: "#fff",
+                    fontSize: "12.5px",
+                    outline: "none",
+                    boxSizing: "border-box",
+                  }}
+                />
+              </div>
 
-            {/* 4. Quantity */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-              <label style={{ fontSize: "10px", fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)", letterSpacing: "0.5px" }}>
-                Qty
-              </label>
-              <input
-                type="number"
-                placeholder="500"
-                value={newQty}
-                onChange={(e) => setNewQty(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleAddFromQuickEntry();
-                }}
-                style={{
-                  width: "100%",
-                  height: "36px",
-                  padding: "0 8px",
-                  backgroundColor: "rgba(9, 12, 19, 0.85)",
-                  border: "1px solid rgba(255, 255, 255, 0.12)",
-                  borderRadius: "var(--radius-sm, 4px)",
-                  color: "#fff",
-                  fontSize: "13px",
-                  fontFamily: "var(--font-mono)",
-                  textAlign: "center",
-                  fontWeight: 700,
-                  outline: "none",
-                  boxSizing: "border-box",
-                }}
-              />
-            </div>
+              {/* 4. Quantity */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                <label style={{ fontSize: "10px", fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)", letterSpacing: "0.5px" }}>
+                  Qty
+                </label>
+                <input
+                  type="number"
+                  placeholder="500"
+                  value={newQty}
+                  onChange={(e) => setNewQty(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleAddFromQuickEntry();
+                  }}
+                  style={{
+                    width: "100%",
+                    height: "36px",
+                    padding: "0 8px",
+                    backgroundColor: "rgba(9, 12, 19, 0.85)",
+                    border: "1px solid rgba(255, 255, 255, 0.12)",
+                    borderRadius: "var(--radius-sm, 4px)",
+                    color: "#fff",
+                    fontSize: "13px",
+                    fontFamily: "var(--font-mono)",
+                    textAlign: "center",
+                    fontWeight: 700,
+                    outline: "none",
+                    boxSizing: "border-box",
+                  }}
+                />
+              </div>
 
-            {/* 5. Action Button */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-              <label style={{ fontSize: "10px", fontWeight: 700, textTransform: "uppercase", color: "transparent", letterSpacing: "0.5px" }}>
-                Add
-              </label>
-              <Button
-                variant="primary"
-                size="md"
-                onClick={() => handleAddFromQuickEntry()}
-                style={{ height: "36px", whiteSpace: "nowrap" }}
-              >
-                + Add Order
-              </Button>
+              {/* 5. Action Button */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                <label style={{ fontSize: "10px", fontWeight: 700, textTransform: "uppercase", color: "transparent", letterSpacing: "0.5px" }}>
+                  Add
+                </label>
+                <Button
+                  variant="primary"
+                  size="md"
+                  onClick={() => handleAddFromQuickEntry()}
+                  style={{ height: "36px", whiteSpace: "nowrap" }}
+                >
+                  + Add Order
+                </Button>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Live Auto-Registered Stock Requirements Preview */}
           {liveDetectedStock.length > 0 && (
@@ -2068,19 +2427,125 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
           >
           <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, fontSize: "13px" }}>
             <thead>
-              <tr
-                style={{
-                  background: "linear-gradient(180deg, #161c2c 0%, #0d121c 100%)",
-                  color: "#94a3b8",
-                  fontSize: "11px",
-                  textTransform: "uppercase",
-                  fontWeight: 800,
-                  letterSpacing: "0.8px",
-                  userSelect: "none",
-                }}
-              >
-                {/* 1. CLIENT */}
-                {mode !== "LABOUR_LANYARD" && (
+              {mode === "LABOUR_LANYARD" ? (
+                <tr
+                  style={{
+                    background: "linear-gradient(180deg, #161c2c 0%, #0d121c 100%)",
+                    color: "#94a3b8",
+                    fontSize: "11px",
+                    textTransform: "uppercase",
+                    fontWeight: 800,
+                    letterSpacing: "0.8px",
+                    userSelect: "none",
+                  }}
+                >
+                  {/* 1. MPL Name */}
+                  <th
+                    style={{
+                      padding: "16px 18px",
+                      textAlign: "left",
+                      cursor: "pointer",
+                      width: "220px",
+                      borderBottom: "2px solid rgba(249, 115, 22, 0.5)",
+                      borderRight: "1px solid rgba(255, 255, 255, 0.05)",
+                    }}
+                    onClick={() => toggleSort("client")}
+                  >
+                    MPL Name {sortField === "client" ? (sortDir === "asc" ? "▲" : "▼") : ""}
+                  </th>
+
+                  {/* 2. Size */}
+                  <th
+                    style={{
+                      padding: "16px 14px",
+                      textAlign: "center",
+                      width: "90px",
+                      borderBottom: "2px solid rgba(249, 115, 22, 0.5)",
+                      borderRight: "1px solid rgba(255, 255, 255, 0.05)",
+                    }}
+                  >
+                    Size
+                  </th>
+
+                  {/* 3. Qty */}
+                  <th
+                    style={{
+                      padding: "16px 16px",
+                      textAlign: "center",
+                      width: "110px",
+                      cursor: "pointer",
+                      borderBottom: "2px solid rgba(249, 115, 22, 0.5)",
+                      borderRight: "1px solid rgba(255, 255, 255, 0.05)",
+                    }}
+                    onClick={() => toggleSort("qty")}
+                  >
+                    Qty {sortField === "qty" ? (sortDir === "asc" ? "▲" : "▼") : ""}
+                  </th>
+
+                  {/* 4. Gone for Print */}
+                  <th
+                    style={{
+                      padding: "16px 18px",
+                      textAlign: "center",
+                      width: "250px",
+                      borderBottom: "2px solid rgba(249, 115, 22, 0.5)",
+                      borderRight: "1px solid rgba(255, 255, 255, 0.05)",
+                    }}
+                  >
+                    Gone for Print
+                  </th>
+
+                  {/* 5. Is Printed */}
+                  <th
+                    style={{
+                      padding: "16px 16px",
+                      textAlign: "center",
+                      width: "140px",
+                      borderBottom: "2px solid rgba(249, 115, 22, 0.5)",
+                      borderRight: "1px solid rgba(255, 255, 255, 0.05)",
+                    }}
+                  >
+                    Is Printed
+                  </th>
+
+                  {/* 6. Gone for Fitting */}
+                  <th
+                    style={{
+                      padding: "16px 16px",
+                      textAlign: "center",
+                      width: "150px",
+                      borderBottom: "2px solid rgba(249, 115, 22, 0.5)",
+                      borderRight: "1px solid rgba(255, 255, 255, 0.05)",
+                    }}
+                  >
+                    Gone for Fitting
+                  </th>
+
+                  {/* 7. Action */}
+                  <th
+                    style={{
+                      padding: "16px 14px",
+                      textAlign: "center",
+                      width: "70px",
+                      borderBottom: "2px solid rgba(249, 115, 22, 0.5)",
+                    }}
+                  >
+                    Action
+                  </th>
+                </tr>
+              ) : (
+                <tr
+                  style={{
+                    background: "linear-gradient(180deg, #161c2c 0%, #0d121c 100%)",
+                    color: "#94a3b8",
+                    fontSize: "11px",
+                    textTransform: "uppercase",
+                    fontWeight: 800,
+                    letterSpacing: "0.8px",
+                    userSelect: "none",
+                  }}
+                >
+                  {/* 1. CLIENT */}
                   <th
                     style={{
                       padding: "16px 18px",
@@ -2094,10 +2559,8 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
                   >
                     Client {sortField === "client" ? (sortDir === "asc" ? "▲" : "▼") : ""}
                   </th>
-                )}
 
-                {/* 2. ORDER */}
-                {mode !== "LABOUR_LANYARD" && (
+                  {/* 2. ORDER */}
                   <th
                     style={{
                       padding: "16px 16px",
@@ -2109,50 +2572,48 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
                   >
                     Order
                   </th>
-                )}
 
-                {/* 3. DESCRIPTION */}
-                <th
-                  style={{
-                    padding: "16px 18px",
-                    textAlign: "left",
-                    borderBottom: "2px solid rgba(255, 138, 115, 0.4)",
-                    borderRight: "1px solid rgba(255, 255, 255, 0.05)",
-                  }}
-                >
-                  Description
-                </th>
+                  {/* 3. DESCRIPTION */}
+                  <th
+                    style={{
+                      padding: "16px 18px",
+                      textAlign: "left",
+                      borderBottom: "2px solid rgba(255, 138, 115, 0.4)",
+                      borderRight: "1px solid rgba(255, 255, 255, 0.05)",
+                    }}
+                  >
+                    Description
+                  </th>
 
-                {/* 4. QUANTITY */}
-                <th
-                  style={{
-                    padding: "16px 16px",
-                    textAlign: "center",
-                    width: mode === "LABOUR_LANYARD" ? "120px" : "95px",
-                    cursor: "pointer",
-                    borderBottom: "2px solid rgba(255, 138, 115, 0.4)",
-                    borderRight: "1px solid rgba(255, 255, 255, 0.05)",
-                  }}
-                  onClick={() => toggleSort("qty")}
-                >
-                  Quantity {sortField === "qty" ? (sortDir === "asc" ? "▲" : "▼") : ""}
-                </th>
+                  {/* 4. QUANTITY */}
+                  <th
+                    style={{
+                      padding: "16px 16px",
+                      textAlign: "center",
+                      width: "95px",
+                      cursor: "pointer",
+                      borderBottom: "2px solid rgba(255, 138, 115, 0.4)",
+                      borderRight: "1px solid rgba(255, 255, 255, 0.05)",
+                    }}
+                    onClick={() => toggleSort("qty")}
+                  >
+                    Quantity {sortField === "qty" ? (sortDir === "asc" ? "▲" : "▼") : ""}
+                  </th>
 
-                {/* 5. ASSIGNED */}
-                <th
-                  style={{
-                    padding: "16px 18px",
-                    textAlign: "left",
-                    width: mode === "LABOUR_LANYARD" ? "280px" : "220px",
-                    borderBottom: "2px solid rgba(255, 138, 115, 0.4)",
-                    borderRight: "1px solid rgba(255, 255, 255, 0.05)",
-                  }}
-                >
-                  {mode === "LABOUR_LANYARD" ? "Labour Contractor" : "Assigned"}
-                </th>
+                  {/* 5. ASSIGNED */}
+                  <th
+                    style={{
+                      padding: "16px 18px",
+                      textAlign: "left",
+                      width: "220px",
+                      borderBottom: "2px solid rgba(255, 138, 115, 0.4)",
+                      borderRight: "1px solid rgba(255, 255, 255, 0.05)",
+                    }}
+                  >
+                    Assigned
+                  </th>
 
-                {/* 6. ORDER DATE */}
-                {mode !== "LABOUR_LANYARD" && (
+                  {/* 6. ORDER DATE */}
                   <th
                     style={{
                       padding: "16px 14px",
@@ -2166,10 +2627,8 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
                   >
                     Order Date {sortField === "orderDate" ? (sortDir === "asc" ? "▲" : "▼") : ""}
                   </th>
-                )}
 
-                {/* 7. DELIVERY DUE */}
-                {mode !== "LABOUR_LANYARD" && (
+                  {/* 7. DELIVERY DUE */}
                   <th
                     style={{
                       padding: "16px 14px",
@@ -2183,27 +2642,27 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
                   >
                     Delivery Due {sortField === "deliveryDate" ? (sortDir === "asc" ? "▲" : "▼") : ""}
                   </th>
-                )}
 
-                {/* 8. ACTION */}
-                <th
-                  style={{
-                    padding: "16px 16px",
-                    textAlign: "center",
-                    width: "110px",
-                    borderBottom: "2px solid rgba(255, 138, 115, 0.4)",
-                  }}
-                >
-                  Action
-                </th>
-              </tr>
+                  {/* 8. ACTION */}
+                  <th
+                    style={{
+                      padding: "16px 16px",
+                      textAlign: "center",
+                      width: "110px",
+                      borderBottom: "2px solid rgba(255, 138, 115, 0.4)",
+                    }}
+                  >
+                    Action
+                  </th>
+                </tr>
+              )}
             </thead>
             <tbody>
 
               {/* ─── ORDERS ROWS (Spacious 68px Row Height, Double-Click Editable) ─ */}
               {filteredOrders.length === 0 ? (
                 <tr>
-                  <td colSpan={mode === "LABOUR_LANYARD" ? 4 : 8} style={{ padding: "50px 0", textAlign: "center", color: "var(--text-muted)" }}>
+                  <td colSpan={mode === "LABOUR_LANYARD" ? 7 : 8} style={{ padding: "50px 0", textAlign: "center", color: "var(--text-muted)" }}>
                     {filterClientName
                       ? `No orders found for ${filterClientName}. Use the Direct Order Entry panel above to create one.`
                       : "No orders match your search criteria. Use the Direct Order Entry panel above to create one."}
@@ -2213,6 +2672,387 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
                 filteredOrders.map((order, idx) => {
                   const isEditing = (field: keyof OrderRecord) =>
                     editingCell?.id === order.internalId && editingCell?.field === field;
+
+                  if (mode === "LABOUR_LANYARD") {
+                    const sizeStr = order.size || "16mm";
+                    const sizeColor =
+                      sizeStr === "12mm"
+                        ? { bg: "rgba(56, 189, 248, 0.15)", text: "#38bdf8", border: "rgba(56, 189, 248, 0.35)" }
+                        : sizeStr === "15mm"
+                        ? { bg: "rgba(192, 132, 252, 0.15)", text: "#c084fc", border: "rgba(192, 132, 252, 0.35)" }
+                        : sizeStr === "16mm"
+                        ? { bg: "rgba(251, 191, 36, 0.15)", text: "#fbbf24", border: "rgba(251, 191, 36, 0.35)" }
+                        : { bg: "rgba(52, 211, 153, 0.15)", text: "#34d399", border: "rgba(52, 211, 153, 0.35)" };
+
+                    return (
+                      <tr
+                        key={order.internalId}
+                        style={{
+                          height: "68px",
+                          borderBottom: "1px solid rgba(255, 255, 255, 0.06)",
+                          backgroundColor: idx % 2 === 0 ? "transparent" : "rgba(255, 255, 255, 0.015)",
+                          transition: "background 0.15s ease",
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.04)")}
+                        onMouseLeave={(e) =>
+                          (e.currentTarget.style.backgroundColor = idx % 2 === 0 ? "transparent" : "rgba(255, 255, 255, 0.015)")
+                        }
+                      >
+                        {/* 1. MPL Name */}
+                        <td
+                          style={{
+                            padding: "16px 18px",
+                            cursor: "text",
+                            position: "relative",
+                            borderRight: "1px solid rgba(255, 255, 255, 0.06)",
+                          }}
+                          onDoubleClick={(e) => handleStartEdit(order, "mplName", e)}
+                          title="Double-click to edit MPL Name"
+                        >
+                          {isEditing("mplName") ? (
+                            <input
+                              ref={editInputRef}
+                              value={editValue}
+                              onChange={(e) => setEditValue(e.target.value)}
+                              onBlur={handleSaveEdit}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") handleSaveEdit();
+                                if (e.key === "Escape") setEditingCell(null);
+                              }}
+                              style={{
+                                width: "100%",
+                                height: "36px",
+                                padding: "0 10px",
+                                backgroundColor: "rgba(0,0,0,0.85)",
+                                border: "1px solid var(--accent-border)",
+                                borderRadius: "3px",
+                                color: "#fff",
+                                fontSize: "13px",
+                                fontWeight: 700,
+                                outline: "none",
+                              }}
+                            />
+                          ) : (
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                              <span style={{ fontSize: "14px" }}>🏷️</span>
+                              <span style={{ color: "#fff", fontSize: "13px", fontWeight: 700 }}>
+                                {order.mplName || order.client || order.product}
+                              </span>
+                            </div>
+                          )}
+                        </td>
+
+                        {/* 2. Size */}
+                        <td
+                          style={{
+                            padding: "16px 14px",
+                            textAlign: "center",
+                            borderRight: "1px solid rgba(255, 255, 255, 0.06)",
+                          }}
+                        >
+                          <span
+                            style={{
+                              display: "inline-block",
+                              padding: "4px 10px",
+                              borderRadius: "4px",
+                              backgroundColor: sizeColor.bg,
+                              border: `1px solid ${sizeColor.border}`,
+                              color: sizeColor.text,
+                              fontSize: "12px",
+                              fontWeight: 700,
+                              fontFamily: "var(--font-mono)",
+                              letterSpacing: "0.5px",
+                            }}
+                          >
+                            {sizeStr}
+                          </span>
+                        </td>
+
+                        {/* 3. Qty */}
+                        <td
+                          style={{
+                            padding: "16px 16px",
+                            textAlign: "center",
+                            borderRight: "1px solid rgba(255, 255, 255, 0.06)",
+                            cursor: "text",
+                          }}
+                          onDoubleClick={(e) => handleStartEdit(order, "qty", e)}
+                          title="Double-click to edit quantity"
+                        >
+                          {isEditing("qty") ? (
+                            <input
+                              ref={editInputRef}
+                              type="number"
+                              value={editValue}
+                              onChange={(e) => setEditValue(e.target.value)}
+                              onBlur={handleSaveEdit}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") handleSaveEdit();
+                                if (e.key === "Escape") setEditingCell(null);
+                              }}
+                              style={{
+                                width: "90px",
+                                height: "34px",
+                                padding: "0 6px",
+                                backgroundColor: "rgba(0,0,0,0.85)",
+                                border: "1px solid var(--accent-border)",
+                                borderRadius: "3px",
+                                color: "#fff",
+                                fontSize: "13px",
+                                fontFamily: "var(--font-mono)",
+                                textAlign: "center",
+                                fontWeight: 700,
+                                outline: "none",
+                              }}
+                            />
+                          ) : (
+                            <span style={{ fontSize: "14px", fontWeight: 800, fontFamily: "var(--font-mono)", color: "#fff" }}>
+                              {order.qty.toLocaleString()}
+                            </span>
+                          )}
+                        </td>
+
+                        {/* 4. Gone for Print */}
+                        <td
+                          style={{
+                            padding: "14px 16px",
+                            textAlign: "center",
+                            borderRight: "1px solid rgba(255, 255, 255, 0.06)",
+                          }}
+                        >
+                          {!order.goneForPrint ? (
+                            <button
+                              type="button"
+                              onClick={() => openPrintModal(order)}
+                              style={{
+                                height: "32px",
+                                padding: "0 14px",
+                                borderRadius: "5px",
+                                backgroundColor: "rgba(249, 115, 22, 0.15)",
+                                border: "1px solid rgba(249, 115, 22, 0.4)",
+                                color: "#fb923c",
+                                fontSize: "12px",
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "6px",
+                                transition: "all 0.15s ease",
+                                whiteSpace: "nowrap",
+                              }}
+                              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(249, 115, 22, 0.28)")}
+                              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "rgba(249, 115, 22, 0.15)")}
+                              title="Select print contractor(s) and divide quantity"
+                            >
+                              <span>🖨️</span>
+                              <span>Send to Print ▼</span>
+                            </button>
+                          ) : (
+                            <div style={{ display: "inline-flex", flexDirection: "column", alignItems: "center", gap: "4px" }}>
+                              <div
+                                onClick={() => openPrintModal(order)}
+                                style={{
+                                  cursor: "pointer",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "6px",
+                                  padding: "4px 10px",
+                                  borderRadius: "5px",
+                                  backgroundColor: "rgba(34, 197, 94, 0.14)",
+                                  border: "1px solid rgba(34, 197, 94, 0.35)",
+                                  color: "#4ade80",
+                                  fontSize: "11.5px",
+                                  fontWeight: 700,
+                                }}
+                                title="Click to view/change print contractor allocation"
+                              >
+                                <span>✓</span>
+                                <span>Gone for Print</span>
+                                <span style={{ fontSize: "10px", opacity: 0.7 }}>✎</span>
+                              </div>
+                              {order.printAllocations && order.printAllocations.length > 0 && (
+                                <div
+                                  style={{
+                                    fontSize: "11px",
+                                    color: "var(--text-muted)",
+                                    display: "flex",
+                                    flexWrap: "wrap",
+                                    gap: "4px",
+                                    justifyContent: "center",
+                                  }}
+                                >
+                                  {order.printAllocations.map((a) => (
+                                    <span
+                                      key={a.contractorId}
+                                      style={{
+                                        backgroundColor: "rgba(255, 255, 255, 0.06)",
+                                        padding: "1px 6px",
+                                        borderRadius: "3px",
+                                        color: "#e2e8f0",
+                                      }}
+                                    >
+                                      {a.contractorName.replace(" Workshop", "").replace(" Unit", "").replace(" Lab", "")} ({a.qty})
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </td>
+
+                        {/* 5. Is Printed */}
+                        <td
+                          style={{
+                            padding: "14px 14px",
+                            textAlign: "center",
+                            borderRight: "1px solid rgba(255, 255, 255, 0.06)",
+                          }}
+                        >
+                          {!order.goneForPrint ? (
+                            <div
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "6px",
+                                opacity: 0.35,
+                                cursor: "not-allowed",
+                              }}
+                              title="Mark 'Gone for Print' first"
+                            >
+                              <input type="checkbox" disabled checked={false} style={{ cursor: "not-allowed" }} />
+                              <span style={{ fontSize: "11.5px", color: "var(--text-muted)" }}>Printed</span>
+                            </div>
+                          ) : (
+                            <label
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "6px",
+                                cursor: "pointer",
+                                padding: "5px 10px",
+                                borderRadius: "5px",
+                                backgroundColor: order.isPrinted ? "rgba(34, 197, 94, 0.15)" : "rgba(255, 255, 255, 0.05)",
+                                border: order.isPrinted ? "1px solid rgba(34, 197, 94, 0.4)" : "1px solid rgba(255, 255, 255, 0.12)",
+                                transition: "all 0.15s ease",
+                              }}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={Boolean(order.isPrinted)}
+                                onChange={(e) => {
+                                  const checked = e.target.checked;
+                                  setOrders((prev) =>
+                                    prev.map((o) => (o.internalId === order.internalId ? { ...o, isPrinted: checked } : o))
+                                  );
+                                  if (checked) {
+                                    success("Marked as Printed", `${order.mplName || order.client} is printed. Gone for Fitting is now unlocked!`);
+                                  }
+                                }}
+                                style={{ cursor: "pointer", accentColor: "#22c55e" }}
+                              />
+                              <span
+                                style={{
+                                  fontSize: "12px",
+                                  fontWeight: 700,
+                                  color: order.isPrinted ? "#4ade80" : "#94a3b8",
+                                  userSelect: "none",
+                                }}
+                              >
+                                {order.isPrinted ? "Printed ✓" : "Mark Printed"}
+                              </span>
+                            </label>
+                          )}
+                        </td>
+
+                        {/* 6. Gone for Fitting */}
+                        <td
+                          style={{
+                            padding: "14px 14px",
+                            textAlign: "center",
+                            borderRight: "1px solid rgba(255, 255, 255, 0.06)",
+                          }}
+                        >
+                          {!order.isPrinted ? (
+                            <span style={{ fontSize: "11px", color: "rgba(255, 255, 255, 0.2)", fontStyle: "italic", userSelect: "none" }}>
+                              — Pending Print —
+                            </span>
+                          ) : (
+                            <label
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "6px",
+                                cursor: "pointer",
+                                padding: "5px 10px",
+                                borderRadius: "5px",
+                                backgroundColor: order.goneForFitting ? "rgba(168, 85, 247, 0.18)" : "rgba(255, 255, 255, 0.05)",
+                                border: order.goneForFitting ? "1px solid rgba(168, 85, 247, 0.4)" : "1px solid rgba(255, 255, 255, 0.15)",
+                                transition: "all 0.15s ease",
+                              }}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={Boolean(order.goneForFitting)}
+                                onChange={(e) => {
+                                  const checked = e.target.checked;
+                                  setOrders((prev) =>
+                                    prev.map((o) => (o.internalId === order.internalId ? { ...o, goneForFitting: checked } : o))
+                                  );
+                                  if (checked) {
+                                    success("Gone for Fitting", `${order.mplName || order.client} sent for assembly & fitting.`);
+                                  }
+                                }}
+                                style={{ cursor: "pointer", accentColor: "#a855f7" }}
+                              />
+                              <span
+                                style={{
+                                  fontSize: "12px",
+                                  fontWeight: 700,
+                                  color: order.goneForFitting ? "#c084fc" : "#cbd5e1",
+                                  userSelect: "none",
+                                }}
+                              >
+                                {order.goneForFitting ? "In Fitting ✓" : "Send for Fitting"}
+                              </span>
+                            </label>
+                          )}
+                        </td>
+
+                        {/* 7. Action: Delete Button only (NO profile button!) */}
+                        <td style={{ padding: "14px 12px", textAlign: "center" }}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (window.confirm(`Delete order "${order.mplName || order.client}"?`)) {
+                                setOrders((prev) => prev.filter((o) => o.internalId !== order.internalId));
+                                success("Order Deleted", `Removed ${order.mplName || order.client}`);
+                              }
+                            }}
+                            style={{
+                              width: "28px",
+                              height: "28px",
+                              borderRadius: "4px",
+                              backgroundColor: "rgba(239, 68, 68, 0.12)",
+                              border: "1px solid rgba(239, 68, 68, 0.25)",
+                              color: "#f87171",
+                              fontSize: "14px",
+                              fontWeight: 700,
+                              cursor: "pointer",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              transition: "all 0.15s ease",
+                            }}
+                            title="Delete Order"
+                            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(239, 68, 68, 0.25)")}
+                            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "rgba(239, 68, 68, 0.12)")}
+                          >
+                            ✕
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  }
 
                   return (
                     <tr
@@ -2809,31 +3649,7 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
                                 <span>{isCard ? "Assign Staff" : "Assign Labour"}</span>
                               </button>
 
-                              {mode === "LABOUR_LANYARD" && order.assignedTo && order.assignedTo.length > 0 && (
-                                <button
-                                  type="button"
-                                  onClick={() => handleOpenContractorProfile(order.assignedTo![0].name)}
-                                  style={{
-                                    height: "32px",
-                                    padding: "0 10px",
-                                    borderRadius: "5px",
-                                    backgroundColor: "rgba(255, 255, 255, 0.08)",
-                                    border: "1px solid rgba(255, 255, 255, 0.16)",
-                                    color: "#e2e8f0",
-                                    fontSize: "11px",
-                                    fontWeight: 700,
-                                    cursor: "pointer",
-                                    display: "inline-flex",
-                                    alignItems: "center",
-                                    gap: "4px",
-                                    whiteSpace: "nowrap",
-                                  }}
-                                  title="Open Labour Profile, Stock Buffer & Handover"
-                                >
-                                  <span>👤</span>
-                                  <span>Profile</span>
-                                </button>
-                              )}
+
                             </div>
                           );
                         })()}
@@ -3470,6 +4286,284 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
           </div>
         )}
       </Drawer>
+      {/* ─── PRINT CONTRACTOR ALLOCATION & QUANTITY DIVISION MODAL ─── */}
+      {printModalOrder && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.78)",
+            backdropFilter: "blur(6px)",
+            zIndex: 9999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "20px",
+          }}
+          onClick={() => setPrintModalOrder(null)}
+        >
+          <div
+            style={{
+              backgroundColor: "#0d1322",
+              border: "1px solid rgba(249, 115, 22, 0.4)",
+              borderRadius: "10px",
+              width: "100%",
+              maxWidth: "530px",
+              boxShadow: "0 24px 60px rgba(0, 0, 0, 0.85), 0 0 35px rgba(249, 115, 22, 0.18)",
+              overflow: "hidden",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div
+              style={{
+                padding: "18px 24px",
+                background: "linear-gradient(90deg, rgba(249, 115, 22, 0.18) 0%, rgba(13, 19, 34, 0) 100%)",
+                borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <div>
+                <div style={{ fontSize: "11px", fontWeight: 800, color: "#fb923c", textTransform: "uppercase", letterSpacing: "0.8px" }}>
+                  Print Contractor Allocation
+                </div>
+                <div style={{ fontSize: "16px", fontWeight: 700, color: "#fff", marginTop: "3px" }}>
+                  {printModalOrder.mplName || printModalOrder.client}
+                </div>
+                <div style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "3px" }}>
+                  Size: <strong style={{ color: "#fbbf24" }}>{printModalOrder.size || "16mm"}</strong> &bull; Total Volume:{" "}
+                  <strong style={{ color: "#fff", fontFamily: "var(--font-mono)" }}>
+                    {printModalOrder.qty.toLocaleString()} units
+                  </strong>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPrintModalOrder(null)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "var(--text-muted)",
+                  fontSize: "20px",
+                  cursor: "pointer",
+                  padding: "4px 8px",
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div style={{ padding: "20px 24px" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+                <span style={{ fontSize: "12px", fontWeight: 700, color: "#94a3b8" }}>
+                  Select Print Contractor(s):
+                </span>
+                {selectedPrintContractorIds.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={handleDivideEqually}
+                    style={{
+                      fontSize: "11px",
+                      fontWeight: 700,
+                      color: "#38bdf8",
+                      background: "rgba(56, 189, 248, 0.12)",
+                      border: "1px solid rgba(56, 189, 248, 0.35)",
+                      padding: "4px 10px",
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px",
+                    }}
+                    title="Divide total quantity equally among selected contractors"
+                  >
+                    ⚡ Divide Equally
+                  </button>
+                )}
+              </div>
+
+              {/* Contractor List */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                {PRINT_CONTRACTORS.map((contractor) => {
+                  const isSelected = selectedPrintContractorIds.includes(contractor.id);
+                  const currentQty = printQtys[contractor.id] ?? 0;
+
+                  return (
+                    <div
+                      key={contractor.id}
+                      style={{
+                        padding: "12px 14px",
+                        borderRadius: "8px",
+                        backgroundColor: isSelected ? "rgba(249, 115, 22, 0.08)" : "rgba(255, 255, 255, 0.02)",
+                        border: isSelected ? "1px solid rgba(249, 115, 22, 0.45)" : "1px solid rgba(255, 255, 255, 0.06)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: "12px",
+                        transition: "all 0.15s ease",
+                      }}
+                    >
+                      {/* Left: Checkbox & Name */}
+                      <label
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "10px",
+                          cursor: "pointer",
+                          flex: 1,
+                          userSelect: "none",
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => handleTogglePrintContractor(contractor.id)}
+                          style={{
+                            width: "16px",
+                            height: "16px",
+                            cursor: "pointer",
+                            accentColor: "#f97316",
+                          }}
+                        />
+                        <div>
+                          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                            <span style={{ fontSize: "14px" }}>{contractor.icon}</span>
+                            <span style={{ fontSize: "13px", fontWeight: 700, color: isSelected ? "#fff" : "#cbd5e1" }}>
+                              {contractor.name}
+                            </span>
+                          </div>
+                          <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "2px" }}>
+                            {contractor.specialty} &bull; {contractor.rate}
+                          </div>
+                        </div>
+                      </label>
+
+                      {/* Right: Quantity Division Input */}
+                      {isSelected && (
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          {selectedPrintContractorIds.length > 1 ? (
+                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                              <span style={{ fontSize: "11px", color: "#94a3b8" }}>Giving:</span>
+                              <input
+                                type="number"
+                                value={currentQty === 0 ? "" : currentQty}
+                                placeholder="0"
+                                onChange={(e) => {
+                                  const val = parseInt(e.target.value, 10) || 0;
+                                  setPrintQtys((prev) => ({ ...prev, [contractor.id]: val }));
+                                }}
+                                style={{
+                                  width: "85px",
+                                  height: "32px",
+                                  padding: "0 8px",
+                                  backgroundColor: "rgba(0, 0, 0, 0.6)",
+                                  border: "1px solid rgba(249, 115, 22, 0.5)",
+                                  borderRadius: "4px",
+                                  color: "#fff",
+                                  fontSize: "13px",
+                                  fontWeight: 700,
+                                  fontFamily: "var(--font-mono)",
+                                  textAlign: "center",
+                                  outline: "none",
+                                }}
+                              />
+                              <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>units</span>
+                            </div>
+                          ) : (
+                            <div
+                              style={{
+                                padding: "4px 10px",
+                                borderRadius: "4px",
+                                backgroundColor: "rgba(249, 115, 22, 0.15)",
+                                border: "1px solid rgba(249, 115, 22, 0.3)",
+                                color: "#fb923c",
+                                fontSize: "12px",
+                                fontWeight: 700,
+                                fontFamily: "var(--font-mono)",
+                              }}
+                            >
+                              100% ({printModalOrder.qty.toLocaleString()} units)
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Quantity Summary & Balance Bar (when multi-selected) */}
+              {selectedPrintContractorIds.length > 1 && (
+                <div
+                  style={{
+                    marginTop: "16px",
+                    padding: "12px 14px",
+                    borderRadius: "6px",
+                    backgroundColor: isAllocationBalanced ? "rgba(34, 197, 94, 0.1)" : "rgba(239, 68, 68, 0.1)",
+                    border: isAllocationBalanced ? "1px solid rgba(34, 197, 94, 0.3)" : "1px solid rgba(239, 68, 68, 0.3)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <div>
+                    <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>
+                      Total Required: {printModalOrder.qty.toLocaleString()} units
+                    </div>
+                    <div style={{ fontSize: "12.5px", fontWeight: 700, color: isAllocationBalanced ? "#4ade80" : "#f87171", marginTop: "2px" }}>
+                      {isAllocationBalanced
+                        ? `✓ Balanced: All ${printModalOrder.qty.toLocaleString()} units divided`
+                        : totalAllocatedPrint < printModalOrder.qty
+                        ? `⚠ Remaining: ${(printModalOrder.qty - totalAllocatedPrint).toLocaleString()} units unassigned`
+                        : `⚠ Over-allocated by ${(totalAllocatedPrint - printModalOrder.qty).toLocaleString()} units`}
+                    </div>
+                  </div>
+                  <div style={{ fontSize: "15px", fontWeight: 800, fontFamily: "var(--font-mono)", color: isAllocationBalanced ? "#4ade80" : "#f87171" }}>
+                    {totalAllocatedPrint.toLocaleString()} / {printModalOrder.qty.toLocaleString()}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div
+              style={{
+                padding: "16px 24px",
+                borderTop: "1px solid rgba(255, 255, 255, 0.08)",
+                backgroundColor: "rgba(0, 0, 0, 0.2)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "flex-end",
+                gap: "10px",
+              }}
+            >
+              <Button variant="ghost" size="sm" onClick={() => setPrintModalOrder(null)}>
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                disabled={selectedPrintContractorIds.length === 0 || (selectedPrintContractorIds.length > 1 && !isAllocationBalanced)}
+                onClick={handleConfirmPrintAllocation}
+                style={{
+                  backgroundColor: "#f97316",
+                  borderColor: "#ea580c",
+                  color: "#fff",
+                  fontWeight: 700,
+                }}
+              >
+                Confirm & Mark Gone for Print
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
