@@ -145,94 +145,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         }
       />
 
-      <div style={{ padding: "18px 24px", display: "flex", flexDirection: "column", gap: "18px" }}>
-        {/* Compact Quick Actions Bar */}
-        <div
-          style={{
-            backgroundColor: "rgba(19, 23, 34, 0.8)",
-            backdropFilter: "blur(14px)",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
-            borderRadius: "4px",
-            padding: "10px 14px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            flexWrap: "wrap",
-            gap: "10px",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-            <span
-              style={{
-                fontSize: "11px",
-                fontWeight: 700,
-                textTransform: "uppercase",
-                letterSpacing: "0.8px",
-                color: "var(--text-muted)",
-                marginRight: "4px",
-              }}
-            >
-              Quick Actions
-            </span>
-
-            {hasPerm("orders:create") && (
-              <Button
-                variant="primary"
-                size="sm"
-                icon="plus"
-                onClick={onNewOrder}
-              >
-                + New Order
-              </Button>
-            )}
-
-            <Button
-              variant="secondary"
-              size="sm"
-              icon="stock"
-              onClick={() => setIsAddStockModalOpen(true)}
-            >
-              + Stock Entry
-            </Button>
-
-            {hasPerm("clients:create") && (
-              <Button
-                variant="secondary"
-                size="sm"
-                icon="clients"
-                onClick={onNewClient}
-              >
-                + New Client
-              </Button>
-            )}
-
-            <Button
-              variant="secondary"
-              size="sm"
-              icon="quotations"
-              onClick={onNewQuotation ? onNewQuotation : () => onNavigateSection?.("clients")}
-            >
-              + New Quotation
-            </Button>
-
-            <Button
-              variant="secondary"
-              size="sm"
-              icon="tasks"
-              onClick={onNewTask ? onNewTask : () => onNavigateSection?.("orders")}
-            >
-              + New Task
-            </Button>
-          </div>
-        </div>
-
+      <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: "20px" }}>
         {/* ─── 4 CORE STATS CARDS (Active Orders, Low Stock Alert, Total Clients, Total Tasks) ─── */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "14px" }}>
           {/* 1. Active Orders */}
           <div
             onClick={() => onNavigateSection?.("orders")}
             style={{
-              backgroundColor: "rgba(19, 23, 34, 0.85)",
+              backgroundColor: "rgba(16, 21, 32, 0.85)",
               backdropFilter: "blur(14px)",
               border: "1px solid rgba(255, 255, 255, 0.08)",
               borderLeft: "3px solid var(--accent)",
@@ -240,7 +160,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               padding: "16px 18px",
               display: "flex",
               flexDirection: "column",
-              gap: "6px",
+              gap: "8px",
               cursor: "pointer",
               transition: "all 0.15s ease",
             }}
@@ -252,24 +172,21 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.08)";
               e.currentTarget.style.transform = "translateY(0)";
             }}
-            title="Click to view all active production orders"
+            title="Click to view active orders"
           >
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <span style={{ fontSize: "11px", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.8px", color: "var(--text-muted)" }}>
+              <span style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.8px", color: "var(--text-muted)" }}>
                 Active Orders
               </span>
-              <Icon name="orders" size={15} color="var(--accent-text)" />
+              <Icon name="orders" size={16} color="var(--accent-text)" />
             </div>
-            <div style={{ display: "flex", alignItems: "baseline", gap: "8px", marginTop: "4px" }}>
+            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
               <span style={{ fontSize: "28px", fontWeight: 800, fontFamily: "var(--font-mono)", color: "#fff", lineHeight: 1 }}>
                 {liveOrders.length}
               </span>
-              <span style={{ fontSize: "12px", color: "var(--accent-text)", fontWeight: 600 }}>
-                in production
+              <span style={{ fontSize: "11.5px", color: "var(--accent-text)", fontWeight: 600 }}>
+                In Production →
               </span>
-            </div>
-            <div style={{ fontSize: "11px", color: "var(--text-secondary)", marginTop: "2px" }}>
-              Active manufacturing queue →
             </div>
           </div>
 
@@ -277,7 +194,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           <div
             onClick={() => onNavigateSection?.("stock")}
             style={{
-              backgroundColor: "rgba(19, 23, 34, 0.85)",
+              backgroundColor: "rgba(16, 21, 32, 0.85)",
               backdropFilter: "blur(14px)",
               border: "1px solid rgba(255, 255, 255, 0.08)",
               borderLeft: lowStockItems.length > 0 ? "3px solid #f87171" : "3px solid #10b981",
@@ -285,7 +202,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               padding: "16px 18px",
               display: "flex",
               flexDirection: "column",
-              gap: "6px",
+              gap: "8px",
               cursor: "pointer",
               transition: "all 0.15s ease",
             }}
@@ -297,24 +214,21 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.08)";
               e.currentTarget.style.transform = "translateY(0)";
             }}
-            title="Click to view and replenish stock items below minimum limit"
+            title="Click to view and replenish low stock items"
           >
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <span style={{ fontSize: "11px", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.8px", color: "var(--text-muted)" }}>
+              <span style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.8px", color: "var(--text-muted)" }}>
                 Low Stock Alert
               </span>
-              <Icon name="tool" size={15} color={lowStockItems.length > 0 ? "#f87171" : "#10b981"} />
+              <Icon name="tool" size={16} color={lowStockItems.length > 0 ? "#f87171" : "#10b981"} />
             </div>
-            <div style={{ display: "flex", alignItems: "baseline", gap: "8px", marginTop: "4px" }}>
+            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
               <span style={{ fontSize: "28px", fontWeight: 800, fontFamily: "var(--font-mono)", color: lowStockItems.length > 0 ? "#f87171" : "#10b981", lineHeight: 1 }}>
                 {lowStockItems.length}
               </span>
-              <span style={{ fontSize: "12px", color: lowStockItems.length > 0 ? "#f87171" : "#10b981", fontWeight: 600 }}>
-                below min limit
+              <span style={{ fontSize: "11.5px", color: lowStockItems.length > 0 ? "#f87171" : "#10b981", fontWeight: 600 }}>
+                {lowStockItems.length > 0 ? "Ending Soon →" : "All Stock OK →"}
               </span>
-            </div>
-            <div style={{ fontSize: "11px", color: lowStockItems.length > 0 ? "#f87171" : "var(--text-secondary)", marginTop: "2px" }}>
-              {lowStockItems.length > 0 ? "Ending soon · Critical replenishment →" : "All floor items above threshold →"}
             </div>
           </div>
 
@@ -322,7 +236,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           <div
             onClick={() => onNavigateSection?.("clients")}
             style={{
-              backgroundColor: "rgba(19, 23, 34, 0.85)",
+              backgroundColor: "rgba(16, 21, 32, 0.85)",
               backdropFilter: "blur(14px)",
               border: "1px solid rgba(255, 255, 255, 0.08)",
               borderLeft: "3px solid #38bdf8",
@@ -330,7 +244,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               padding: "16px 18px",
               display: "flex",
               flexDirection: "column",
-              gap: "6px",
+              gap: "8px",
               cursor: "pointer",
               transition: "all 0.15s ease",
             }}
@@ -342,24 +256,21 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.08)";
               e.currentTarget.style.transform = "translateY(0)";
             }}
-            title="Click to view all registered clients"
+            title="Click to view registered clients"
           >
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <span style={{ fontSize: "11px", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.8px", color: "var(--text-muted)" }}>
+              <span style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.8px", color: "var(--text-muted)" }}>
                 Total Clients
               </span>
-              <Icon name="clients" size={15} color="#38bdf8" />
+              <Icon name="clients" size={16} color="#38bdf8" />
             </div>
-            <div style={{ display: "flex", alignItems: "baseline", gap: "8px", marginTop: "4px" }}>
+            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
               <span style={{ fontSize: "28px", fontWeight: 800, fontFamily: "var(--font-mono)", color: "#fff", lineHeight: 1 }}>
                 {clients.length || 8}
               </span>
-              <span style={{ fontSize: "12px", color: "#38bdf8", fontWeight: 600 }}>
-                accounts
+              <span style={{ fontSize: "11.5px", color: "#38bdf8", fontWeight: 600 }}>
+                Accounts →
               </span>
-            </div>
-            <div style={{ fontSize: "11px", color: "var(--text-secondary)", marginTop: "2px" }}>
-              Commercial & institutional clients →
             </div>
           </div>
 
@@ -367,7 +278,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           <div
             onClick={() => onNavigateSection?.("orders")}
             style={{
-              backgroundColor: "rgba(19, 23, 34, 0.85)",
+              backgroundColor: "rgba(16, 21, 32, 0.85)",
               backdropFilter: "blur(14px)",
               border: "1px solid rgba(255, 255, 255, 0.08)",
               borderLeft: "3px solid #a855f7",
@@ -375,7 +286,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               padding: "16px 18px",
               display: "flex",
               flexDirection: "column",
-              gap: "6px",
+              gap: "8px",
               cursor: "pointer",
               transition: "all 0.15s ease",
             }}
@@ -387,32 +298,29 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.08)";
               e.currentTarget.style.transform = "translateY(0)";
             }}
-            title="Click to view all tasks"
+            title="Click to view tasks"
           >
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <span style={{ fontSize: "11px", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.8px", color: "var(--text-muted)" }}>
+              <span style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.8px", color: "var(--text-muted)" }}>
                 Total Tasks
               </span>
-              <Icon name="tasks" size={15} color="#a855f7" />
+              <Icon name="tasks" size={16} color="#a855f7" />
             </div>
-            <div style={{ display: "flex", alignItems: "baseline", gap: "8px", marginTop: "4px" }}>
+            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
               <span style={{ fontSize: "28px", fontWeight: 800, fontFamily: "var(--font-mono)", color: "#fff", lineHeight: 1 }}>
                 {tasks.length || 6}
               </span>
-              <span style={{ fontSize: "12px", color: "#a855f7", fontWeight: 600 }}>
-                floor operations
+              <span style={{ fontSize: "11.5px", color: "#a855f7", fontWeight: 600 }}>
+                Operations →
               </span>
-            </div>
-            <div style={{ fontSize: "11px", color: "var(--text-secondary)", marginTop: "2px" }}>
-              {activeTasks.length || 4} active in production →
             </div>
           </div>
         </div>
 
-        {/* ─── 2-COLUMN LIVE OPERATIONS SPLIT VIEW (Live Orders | Live Stock Info) ─── */}
+        {/* ─── 2-COLUMN LIVE OPERATIONS SPLIT VIEW (Live Orders | Live Stock) ─── */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "18px", alignItems: "start" }}>
 
-          {/* ─── SIDE 1: LIVE ORDERS WITH DIRECT DASHBOARD ACCESS ─────────────── */}
+          {/* ─── SIDE 1: LIVE ORDERS ─────────────── */}
           <div
             style={{
               backgroundColor: "rgba(16, 21, 32, 0.85)",
@@ -428,23 +336,22 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             {/* Panel Header */}
             <div
               style={{
-                padding: "16px 20px",
+                padding: "14px 18px",
                 background: "linear-gradient(180deg, #161c2c 0%, #0d121c 100%)",
-                borderBottom: "2px solid rgba(255, 138, 115, 0.4)",
+                borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
                 gap: "12px",
-                flexWrap: "wrap",
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 <div
                   style={{
-                    width: "32px",
-                    height: "32px",
+                    width: "28px",
+                    height: "28px",
                     borderRadius: "4px",
-                    backgroundColor: "rgba(255, 138, 115, 0.15)",
+                    backgroundColor: "rgba(255, 138, 115, 0.12)",
                     border: "1px solid var(--accent-border)",
                     display: "flex",
                     alignItems: "center",
@@ -452,32 +359,25 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     color: "var(--accent-text)",
                   }}
                 >
-                  <Icon name="orders" size={16} />
+                  <Icon name="orders" size={14} />
                 </div>
-                <div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <h3 style={{ fontSize: "14px", fontWeight: 800, margin: 0, color: "#fff", textTransform: "uppercase", letterSpacing: "0.6px" }}>
-                      Live Orders
-                    </h3>
-                    <span
-                      style={{
-                        fontSize: "11px",
-                        fontWeight: 700,
-                        backgroundColor: "rgba(255, 138, 115, 0.14)",
-                        color: "var(--accent-text)",
-                        border: "1px solid var(--accent-border)",
-                        padding: "2px 7px",
-                        borderRadius: "12px",
-                        fontFamily: "var(--font-mono)",
-                      }}
-                    >
-                      {liveOrders.length} Active
-                    </span>
-                  </div>
-                  <p style={{ fontSize: "11.5px", color: "var(--text-muted)", margin: "2px 0 0 0" }}>
-                    Real-time factory queue & direct client order access
-                  </p>
-                </div>
+                <h3 style={{ fontSize: "13.5px", fontWeight: 800, margin: 0, color: "#fff", textTransform: "uppercase", letterSpacing: "0.6px" }}>
+                  Live Orders
+                </h3>
+                <span
+                  style={{
+                    fontSize: "11px",
+                    fontWeight: 700,
+                    backgroundColor: "rgba(255, 138, 115, 0.14)",
+                    color: "var(--accent-text)",
+                    border: "1px solid var(--accent-border)",
+                    padding: "1px 7px",
+                    borderRadius: "10px",
+                    fontFamily: "var(--font-mono)",
+                  }}
+                >
+                  {liveOrders.length}
+                </span>
               </div>
 
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -485,7 +385,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   variant="primary"
                   size="sm"
                   onClick={onNewOrder}
-                  style={{ height: "32px" }}
+                  style={{ height: "30px", fontSize: "11.5px", padding: "0 10px" }}
                 >
                   + New Order
                 </Button>
@@ -493,9 +393,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   variant="secondary"
                   size="sm"
                   onClick={() => onNavigateSection?.("orders")}
-                  style={{ height: "32px" }}
+                  style={{ height: "30px", fontSize: "11.5px", padding: "0 10px" }}
                 >
-                  Go to Orders →
+                  View All →
                 </Button>
               </div>
             </div>
@@ -504,12 +404,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <div style={{ display: "flex", flexDirection: "column" }}>
               {liveOrders.slice(0, 5).map((order, idx) => {
                 const itemOrdered = order.itemOrdered || order.itemsOrdered?.[0] || "Custom Product";
+                const assignedPerson = order.assignedTo?.[0]?.name;
+
                 return (
                   <div
                     key={order.internalId}
                     style={{
-                      padding: "14px 18px",
-                      borderBottom: "1px solid rgba(255, 255, 255, 0.06)",
+                      padding: "12px 18px",
+                      borderBottom: "1px solid rgba(255, 255, 255, 0.05)",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "space-between",
@@ -523,36 +425,53 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     }
                   >
                     <div style={{ display: "flex", flexDirection: "column", gap: "4px", flex: 1, minWidth: 0 }}>
+                      {/* Line 1: Client Name + Item Badge + Assigned Person */}
                       <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-                        <span style={{ fontSize: "13.5px", fontWeight: 700, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        <span style={{ fontSize: "13px", fontWeight: 700, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                           {order.client}
                         </span>
                         <span
                           style={{
-                            fontSize: "10.5px",
+                            fontSize: "10px",
                             fontWeight: 700,
-                            padding: "2px 7px",
+                            padding: "1px 6px",
                             borderRadius: "3px",
-                            backgroundColor: "rgba(255, 138, 115, 0.15)",
+                            backgroundColor: "rgba(255, 138, 115, 0.12)",
                             color: "var(--accent-text)",
-                            border: "1px solid rgba(255, 138, 115, 0.3)",
+                            border: "1px solid rgba(255, 138, 115, 0.25)",
                             textTransform: "uppercase",
                           }}
                         >
                           {itemOrdered}
                         </span>
-                      </div>
-                      <div style={{ fontSize: "12px", color: "var(--text-secondary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                        {order.product}
-                      </div>
-                      <div style={{ fontSize: "11px", color: "var(--text-muted)", display: "flex", alignItems: "center", gap: "10px" }}>
-                        <span>Due: <strong style={{ color: "#f59e0b" }}>{order.deliveryDate || "15 Sep 2026"}</strong></span>
-                        {order.assignedTo?.[0] && (
-                          <span>Assigned: <strong style={{ color: "#38bdf8" }}>{order.assignedTo[0].name}</strong></span>
+                        {assignedPerson && (
+                          <span
+                            style={{
+                              fontSize: "10.5px",
+                              color: "#38bdf8",
+                              fontWeight: 600,
+                              backgroundColor: "rgba(56, 189, 248, 0.1)",
+                              padding: "1px 6px",
+                              borderRadius: "3px",
+                            }}
+                          >
+                            👤 {assignedPerson}
+                          </span>
                         )}
+                      </div>
+
+                      {/* Line 2: Product Name + Due Date */}
+                      <div style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "11.5px" }}>
+                        <span style={{ color: "var(--text-secondary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                          {order.product}
+                        </span>
+                        <span style={{ color: "#f59e0b", fontSize: "11px", fontWeight: 600, flexShrink: 0 }}>
+                          Due {order.deliveryDate || "15 Sep 2026"}
+                        </span>
                       </div>
                     </div>
 
+                    {/* Right: Quantity + Action */}
                     <div style={{ display: "flex", alignItems: "center", gap: "14px", flexShrink: 0 }}>
                       <div style={{ textAlign: "right" }}>
                         <div style={{ fontSize: "15px", fontWeight: 800, fontFamily: "var(--font-mono)", color: "#fff" }}>
@@ -565,13 +484,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         type="button"
                         onClick={() => onNavigateSection?.("orders")}
                         style={{
-                          height: "32px",
-                          padding: "0 12px",
+                          height: "30px",
+                          padding: "0 10px",
                           backgroundColor: "rgba(255, 255, 255, 0.05)",
                           border: "1px solid rgba(255, 255, 255, 0.12)",
                           borderRadius: "4px",
                           color: "#fff",
-                          fontSize: "11.5px",
+                          fontSize: "11px",
                           fontWeight: 700,
                           cursor: "pointer",
                           display: "inline-flex",
@@ -602,13 +521,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             {/* Orders Footer */}
             <div
               style={{
-                padding: "12px 18px",
+                padding: "10px 18px",
                 backgroundColor: "rgba(0, 0, 0, 0.2)",
                 borderTop: "1px solid rgba(255, 255, 255, 0.06)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
-                fontSize: "11.5px",
+                fontSize: "11px",
                 color: "var(--text-muted)",
               }}
             >
@@ -622,7 +541,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   color: "var(--accent-text)",
                   fontWeight: 700,
                   cursor: "pointer",
-                  fontSize: "11.5px",
+                  fontSize: "11px",
                 }}
               >
                 View Full Orders Workspace →
@@ -630,7 +549,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
           </div>
 
-          {/* ─── SIDE 2: LIVE STOCK INFO WITH DIRECT DASHBOARD ACCESS ─────────── */}
+          {/* ─── SIDE 2: LIVE STOCK ─────────── */}
           <div
             style={{
               backgroundColor: "rgba(16, 21, 32, 0.85)",
@@ -646,55 +565,47 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             {/* Panel Header */}
             <div
               style={{
-                padding: "16px 20px",
+                padding: "14px 18px",
                 background: "linear-gradient(180deg, #161c2c 0%, #0d121c 100%)",
-                borderBottom: "2px solid rgba(255, 138, 115, 0.4)",
+                borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
                 gap: "12px",
-                flexWrap: "wrap",
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 <div
                   style={{
-                    width: "32px",
-                    height: "32px",
+                    width: "28px",
+                    height: "28px",
                     borderRadius: "4px",
-                    backgroundColor: lowStockItems.length > 0 ? "rgba(248, 113, 113, 0.15)" : "rgba(16, 185, 129, 0.15)",
-                    border: lowStockItems.length > 0 ? "1px solid rgba(248, 113, 113, 0.4)" : "1px solid rgba(16, 185, 129, 0.4)",
+                    backgroundColor: lowStockItems.length > 0 ? "rgba(248, 113, 113, 0.12)" : "rgba(16, 185, 129, 0.12)",
+                    border: lowStockItems.length > 0 ? "1px solid rgba(248, 113, 113, 0.35)" : "1px solid rgba(16, 185, 129, 0.35)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     color: lowStockItems.length > 0 ? "#f87171" : "#10b981",
                   }}
                 >
-                  <Icon name="tool" size={16} />
+                  <Icon name="tool" size={14} />
                 </div>
-                <div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <h3 style={{ fontSize: "14px", fontWeight: 800, margin: 0, color: "#fff", textTransform: "uppercase", letterSpacing: "0.6px" }}>
-                      Live Stock Info
-                    </h3>
-                    <span
-                      style={{
-                        fontSize: "11px",
-                        fontWeight: 700,
-                        backgroundColor: lowStockItems.length > 0 ? "rgba(248, 113, 113, 0.15)" : "rgba(16, 185, 129, 0.15)",
-                        color: lowStockItems.length > 0 ? "#f87171" : "#10b981",
-                        border: lowStockItems.length > 0 ? "1px solid rgba(248, 113, 113, 0.4)" : "1px solid rgba(16, 185, 129, 0.4)",
-                        padding: "2px 7px",
-                        borderRadius: "12px",
-                      }}
-                    >
-                      {lowStockItems.length > 0 ? `${lowStockItems.length} Low Alert` : "Healthy"}
-                    </span>
-                  </div>
-                  <p style={{ fontSize: "11.5px", color: "var(--text-muted)", margin: "2px 0 0 0" }}>
-                    Floor availability, critical alerts & direct stock management
-                  </p>
-                </div>
+                <h3 style={{ fontSize: "13.5px", fontWeight: 800, margin: 0, color: "#fff", textTransform: "uppercase", letterSpacing: "0.6px" }}>
+                  Live Stock
+                </h3>
+                <span
+                  style={{
+                    fontSize: "11px",
+                    fontWeight: 700,
+                    backgroundColor: lowStockItems.length > 0 ? "rgba(248, 113, 113, 0.15)" : "rgba(16, 185, 129, 0.15)",
+                    color: lowStockItems.length > 0 ? "#f87171" : "#10b981",
+                    border: lowStockItems.length > 0 ? "1px solid rgba(248, 113, 113, 0.35)" : "1px solid rgba(16, 185, 129, 0.35)",
+                    padding: "1px 7px",
+                    borderRadius: "10px",
+                  }}
+                >
+                  {lowStockItems.length > 0 ? `${lowStockItems.length} Low Stock` : "All Healthy"}
+                </span>
               </div>
 
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -702,7 +613,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   variant="primary"
                   size="sm"
                   onClick={() => setIsAddStockModalOpen(true)}
-                  style={{ height: "32px" }}
+                  style={{ height: "30px", fontSize: "11.5px", padding: "0 10px" }}
                 >
                   + Add Stock
                 </Button>
@@ -710,35 +621,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   variant="secondary"
                   size="sm"
                   onClick={() => onNavigateSection?.("stock")}
-                  style={{ height: "32px" }}
+                  style={{ height: "30px", fontSize: "11.5px", padding: "0 10px" }}
                 >
-                  Manage Stock →
+                  View All →
                 </Button>
               </div>
             </div>
 
-            {/* Pinned Low Stock Section (Ending Soon) */}
-            {lowStockItems.length > 0 && (
-              <div
-                style={{
-                  padding: "10px 18px",
-                  backgroundColor: "rgba(248, 113, 113, 0.08)",
-                  borderBottom: "1px solid rgba(248, 113, 113, 0.25)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}
-              >
-                <span style={{ fontSize: "11px", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.8px", color: "#f87171", display: "flex", alignItems: "center", gap: "6px" }}>
-                  <span>⚠️</span> Ending Soon — Below Safety Limit
-                </span>
-                <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>Immediate Restock Required</span>
-              </div>
-            )}
-
             {/* Stock Items List */}
             <div style={{ display: "flex", flexDirection: "column" }}>
-              {/* Prioritize low stock items at the top */}
               {[
                 ...lowStockItems,
                 ...stockItems.filter((i) => i.availableStock > i.minThreshold).slice(0, 5 - lowStockItems.length),
@@ -749,14 +640,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   <div
                     key={item.id}
                     style={{
-                      padding: "14px 18px",
-                      borderBottom: "1px solid rgba(255, 255, 255, 0.06)",
+                      padding: "12px 18px",
+                      borderBottom: "1px solid rgba(255, 255, 255, 0.05)",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "space-between",
                       gap: "12px",
                       backgroundColor: isLow
-                        ? "rgba(248, 113, 113, 0.03)"
+                        ? "rgba(248, 113, 113, 0.025)"
                         : idx % 2 === 0
                         ? "transparent"
                         : "rgba(255, 255, 255, 0.015)",
@@ -765,17 +656,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.04)")}
                     onMouseLeave={(e) =>
                       (e.currentTarget.style.backgroundColor = isLow
-                        ? "rgba(248, 113, 113, 0.03)"
+                        ? "rgba(248, 113, 113, 0.025)"
                         : idx % 2 === 0
                         ? "transparent"
                         : "rgba(255, 255, 255, 0.015)")
                     }
                   >
-                    <div style={{ display: "flex", alignItems: "center", gap: "12px", flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1, minWidth: 0 }}>
                       <div
                         style={{
-                          width: "34px",
-                          height: "34px",
+                          width: "30px",
+                          height: "30px",
                           borderRadius: "4px",
                           backgroundColor: "rgba(255, 255, 255, 0.04)",
                           border: "1px solid rgba(255, 255, 255, 0.08)",
@@ -786,12 +677,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                           flexShrink: 0,
                         }}
                       >
-                        <Icon name={item.iconName} size={16} color={item.iconColor} />
+                        <Icon name={item.iconName} size={15} color={item.iconColor} />
                       </div>
 
-                      <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                          <span style={{ fontSize: "13.5px", fontWeight: 700, color: "#fff" }}>
+                          <span style={{ fontSize: "13px", fontWeight: 700, color: "#fff" }}>
                             {item.name}
                           </span>
                           {isLow && (
@@ -807,12 +698,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                 letterSpacing: "0.5px",
                               }}
                             >
-                              LOW
+                              LOW STOCK
                             </span>
                           )}
                         </div>
                         <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>
-                          Min Alert Threshold: <strong style={{ color: "#94a3b8" }}>{item.minThreshold.toLocaleString()} {item.unit}</strong>
+                          Safety Min: <strong style={{ color: "#94a3b8" }}>{item.minThreshold.toLocaleString()} {item.unit}</strong>
                         </span>
                       </div>
                     </div>
@@ -821,7 +712,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       <div style={{ textAlign: "right" }}>
                         <div
                           style={{
-                            fontSize: "15.5px",
+                            fontSize: "15px",
                             fontWeight: 800,
                             fontFamily: "var(--font-mono)",
                             color: isLow ? "#f87171" : "#ffffff",
@@ -838,13 +729,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         type="button"
                         onClick={() => handleOpenRestockModal(item)}
                         style={{
-                          height: "32px",
-                          padding: "0 12px",
+                          height: "30px",
+                          padding: "0 10px",
                           backgroundColor: isLow ? "rgba(248, 113, 113, 0.15)" : "rgba(16, 185, 129, 0.15)",
                           border: isLow ? "1px solid rgba(248, 113, 113, 0.35)" : "1px solid rgba(16, 185, 129, 0.3)",
                           borderRadius: "4px",
                           color: isLow ? "#f87171" : "#34d399",
-                          fontSize: "11.5px",
+                          fontSize: "11px",
                           fontWeight: 700,
                           cursor: "pointer",
                           display: "inline-flex",
@@ -871,13 +762,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             {/* Stock Footer */}
             <div
               style={{
-                padding: "12px 18px",
+                padding: "10px 18px",
                 backgroundColor: "rgba(0, 0, 0, 0.2)",
                 borderTop: "1px solid rgba(255, 255, 255, 0.06)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
-                fontSize: "11.5px",
+                fontSize: "11px",
                 color: "var(--text-muted)",
               }}
             >
@@ -891,7 +782,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   color: "var(--accent-text)",
                   fontWeight: 700,
                   cursor: "pointer",
-                  fontSize: "11.5px",
+                  fontSize: "11px",
                 }}
               >
                 View Full Stock Table →
