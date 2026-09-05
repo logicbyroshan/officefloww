@@ -91,6 +91,20 @@ export const INHOUSE_EMPLOYEES: EmployeeMember[] = [
         sourceOrder: "Stock Lot #STK-49",
         details: "Metal crocodile badge clips on workbench",
       },
+      {
+        item: "Dog Hook",
+        qtyOnHand: 150,
+        unit: "pieces",
+        sourceOrder: "Batch #LN-390",
+        details: "Nickel dog hooks at internal assembly desk",
+      },
+      {
+        item: "16mm Lanyard Rolls",
+        qtyOnHand: 2,
+        unit: "rolls",
+        sourceOrder: "Buffer Stock",
+        details: "Satin rolls held at internal desk",
+      },
     ],
   },
   {
@@ -200,6 +214,20 @@ export const LABOUR_CONTRACTORS: LabourContractor[] = [
         sourceOrder: "Batch #LN-401",
         details: "Satin ribbon rolls held in contractor storage",
       },
+      {
+        item: "Plastic Holder-V",
+        qtyOnHand: 200,
+        unit: "pieces",
+        sourceOrder: "Batch #LN-401",
+        details: "Vertical pouch holders held in contractor buffer",
+      },
+      {
+        item: "Safety Jointer Buckles",
+        qtyOnHand: 150,
+        unit: "pieces",
+        sourceOrder: "Buffer Lot #STK-92",
+        details: "Safety breakaway buckles on workbench",
+      },
     ],
     activeJobsCount: 2,
     phone: "+91 98260 11420",
@@ -268,11 +296,246 @@ export const LABOUR_CONTRACTORS: LabourContractor[] = [
         sourceOrder: "Previous Order #ORD-944",
         details: "Dog Hooks in assembly bin",
       },
+      {
+        item: "Clips",
+        qtyOnHand: 250,
+        unit: "pieces",
+        sourceOrder: "Stock Lot #STK-49",
+        details: "Crocodile badge clips in assembly bin",
+      },
+      {
+        item: "Safety Jointer Buckles",
+        qtyOnHand: 180,
+        unit: "pieces",
+        sourceOrder: "Batch #LN-380",
+        details: "Breakaway jointer buckles on hand",
+      },
     ],
     activeJobsCount: 1,
     phone: "+91 98200 44554",
   },
 ];
+
+// ─── Supporting Accessories Detection from Order Description ───────────────────
+export interface RequiredMaterialItem {
+  name: string;
+  category: "HOOKS" | "LANYARDS" | "HOLDERS" | "OTHERS";
+  unit: string;
+  requiredQty: number;
+  detectedReason: string;
+}
+
+export function parseSupportingItemsFromDescription(
+  description: string,
+  itemOrdered: string,
+  orderQty: number
+): RequiredMaterialItem[] {
+  const desc = (description || "").toLowerCase();
+  const items: RequiredMaterialItem[] = [];
+  const isCard = itemOrdered === "Card";
+
+  if (isCard) {
+    // 1. Holder
+    if (desc.includes("plastic holder-h") || desc.includes("horizontal holder") || desc.includes("horizontal pouch")) {
+      items.push({
+        name: "Plastic Holder-H",
+        category: "HOLDERS",
+        unit: "pieces",
+        requiredQty: orderQty,
+        detectedReason: "Matched horizontal holder/pouch in description",
+      });
+    } else if (desc.includes("crystal")) {
+      items.push({
+        name: "Crystal Holder",
+        category: "HOLDERS",
+        unit: "pieces",
+        requiredQty: orderQty,
+        detectedReason: "Matched 'crystal' VIP holder in description",
+      });
+    } else if (desc.includes("dst-h")) {
+      items.push({
+        name: "DST-H",
+        category: "HOLDERS",
+        unit: "pieces",
+        requiredQty: orderQty,
+        detectedReason: "Matched 'DST-H' holder in description",
+      });
+    } else if (desc.includes("dst-v") || desc.includes("dst")) {
+      items.push({
+        name: "DST-V",
+        category: "HOLDERS",
+        unit: "pieces",
+        requiredQty: orderQty,
+        detectedReason: "Matched 'DST' dual-slot holder in description",
+      });
+    } else {
+      items.push({
+        name: "Plastic Holder-V",
+        category: "HOLDERS",
+        unit: "pieces",
+        requiredQty: orderQty,
+        detectedReason:
+          desc.includes("holder") || desc.includes("pouch") || desc.includes("sleeve") || desc.includes("case")
+            ? "Matched holder/pouch in description"
+            : "Standard vertical PVC ID card holder required",
+      });
+    }
+
+    // 2. Clips
+    items.push({
+      name: "Clips",
+      category: "OTHERS",
+      unit: "pieces",
+      requiredQty: orderQty,
+      detectedReason: desc.includes("clip") ? "Matched 'clip' in description" : "Standard badge clip fitting",
+    });
+
+    // 3. Optional Jointer/Breakaway if mentioned in description
+    if (desc.includes("jointer") || desc.includes("jointers") || desc.includes("breakaway") || desc.includes("buckle")) {
+      items.push({
+        name: "Safety Jointer Buckles",
+        category: "OTHERS",
+        unit: "pieces",
+        requiredQty: orderQty,
+        detectedReason: "Matched 'jointer / breakaway buckle' in description",
+      });
+    }
+
+    // 4. Optional Ring if mentioned
+    if (desc.includes("ring")) {
+      items.push({
+        name: "Split Key Rings",
+        category: "OTHERS",
+        unit: "pieces",
+        requiredQty: orderQty,
+        detectedReason: "Matched 'ring' accessory in description",
+      });
+    }
+  } else {
+    // Lanyard Orders
+    // 1. Ribbon Rolls
+    const rollsNeeded = Math.max(1, Math.ceil(orderQty / 200));
+    if (desc.includes("12mm") || desc.includes("10mm")) {
+      items.push({
+        name: "12mm Lanyard Rolls",
+        category: "LANYARDS",
+        unit: "rolls",
+        requiredQty: rollsNeeded,
+        detectedReason: "Detected 10/12mm ribbon rolls from description",
+      });
+    } else if (desc.includes("20mm")) {
+      items.push({
+        name: "20mm Lanyard Rolls",
+        category: "LANYARDS",
+        unit: "rolls",
+        requiredQty: rollsNeeded,
+        detectedReason: "Detected 20mm satin rolls from description",
+      });
+    } else {
+      items.push({
+        name: "16mm Lanyard Rolls",
+        category: "LANYARDS",
+        unit: "rolls",
+        requiredQty: rollsNeeded,
+        detectedReason: desc.includes("15mm") || desc.includes("16mm") ? "Detected 15/16mm ribbon from description" : "Standard 16mm ribbon rolls",
+      });
+    }
+
+    // 2. Hooks
+    if (desc.includes("england hook")) {
+      items.push({
+        name: "England Hook",
+        category: "HOOKS",
+        unit: "pieces",
+        requiredQty: orderQty,
+        detectedReason: "Detected 'England Hook' from description",
+      });
+    } else if (desc.includes("plastic hook") || desc.includes("snap hook")) {
+      items.push({
+        name: "Plastic Hook",
+        category: "HOOKS",
+        unit: "pieces",
+        requiredQty: orderQty,
+        detectedReason: "Detected 'Plastic Hook' from description",
+      });
+    } else {
+      items.push({
+        name: "Dog Hook",
+        category: "HOOKS",
+        unit: "pieces",
+        requiredQty: orderQty,
+        detectedReason: desc.includes("dog hook") || desc.includes("dog clip") ? "Detected 'Dog Hook' from description" : "Standard lanyard dog hook",
+      });
+    }
+
+    // 3. Supporting items: Holders / Pouch (written in description by user)
+    if (
+      desc.includes("holder") ||
+      desc.includes("pouch") ||
+      desc.includes("sleeve") ||
+      desc.includes("case") ||
+      desc.includes("dst") ||
+      desc.includes("crystal")
+    ) {
+      let holderType = "Plastic Holder-V";
+      if (desc.includes("plastic holder-h") || desc.includes("horizontal")) holderType = "Plastic Holder-H";
+      else if (desc.includes("crystal")) holderType = "Crystal Holder";
+      else if (desc.includes("dst-h")) holderType = "DST-H";
+      else if (desc.includes("dst-v") || desc.includes("dst")) holderType = "DST-V";
+
+      items.push({
+        name: holderType,
+        category: "HOLDERS",
+        unit: "pieces",
+        requiredQty: orderQty,
+        detectedReason: `Detected accessory '${holderType}' from description`,
+      });
+    }
+
+    // 4. Supporting items: Clips (clips, crocodile)
+    if (desc.includes("clip") && !desc.includes("dog clip")) {
+      items.push({
+        name: "Clips",
+        category: "OTHERS",
+        unit: "pieces",
+        requiredQty: orderQty,
+        detectedReason: "Detected accessory 'clips' from description",
+      });
+    } else if (desc.includes("clips") || desc.includes("crocodile")) {
+      items.push({
+        name: "Clips",
+        category: "OTHERS",
+        unit: "pieces",
+        requiredQty: orderQty,
+        detectedReason: "Detected accessory 'clips' from description",
+      });
+    }
+
+    // 5. Supporting items: Jointer / Breakaway buckle
+    if (desc.includes("jointer") || desc.includes("jointers") || desc.includes("breakaway") || desc.includes("buckle") || desc.includes("release")) {
+      items.push({
+        name: "Safety Jointer Buckles",
+        category: "OTHERS",
+        unit: "pieces",
+        requiredQty: orderQty,
+        detectedReason: "Detected accessory 'jointer / breakaway buckle' from description",
+      });
+    }
+
+    // 6. Supporting items: Rings / Keyrings
+    if (desc.includes("ring") || desc.includes("rings") || desc.includes("keyring") || desc.includes("split ring")) {
+      items.push({
+        name: "Split Key Rings",
+        category: "OTHERS",
+        unit: "pieces",
+        requiredQty: orderQty,
+        detectedReason: "Detected accessory 'ring' from description",
+      });
+    }
+  }
+
+  return items;
+}
 
 export interface AssignedWorker {
   name: string;
@@ -565,8 +828,9 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
     return clientNames.filter((c) => c.toLowerCase().includes(q));
   }, [clientNames, newClient]);
 
-  // ─── Worker Assignment Drawer States (Employee for Card, Labour for Lanyard) ───
+  // ─── Worker Assignment Drawer States (Staff or Labour for Lanyard, Staff for Card) ───
   const [assigningOrder, setAssigningOrder] = useState<OrderRecord | null>(null);
+  const [assigneeType, setAssigneeType] = useState<"STAFF" | "LABOUR">("LABOUR");
   const [selectedWorkerId, setSelectedWorkerId] = useState<string | null>(null);
   const [workerSearch, setWorkerSearch] = useState("");
 
@@ -579,14 +843,23 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
     if (assigningOrder) {
       setWorkerSearch("");
       const isCard = (assigningOrder.itemOrdered || assigningOrder.itemsOrdered?.[0] || "Lanyard") === "Card";
-      const currentName = assigningOrder.assignedTo?.[0]?.name;
+      const currentWorker = assigningOrder.assignedTo?.[0];
 
       if (isCard) {
-        const matched = INHOUSE_EMPLOYEES.find((e) => e.name === currentName);
+        setAssigneeType("STAFF");
+        const matched = INHOUSE_EMPLOYEES.find((e) => e.name === currentWorker?.name);
         setSelectedWorkerId(matched ? matched.id : INHOUSE_EMPLOYEES[0].id);
       } else {
-        const matched = LABOUR_CONTRACTORS.find((c) => c.name === currentName);
-        setSelectedWorkerId(matched ? matched.id : LABOUR_CONTRACTORS[0].id);
+        // For Lanyards: can be assigned to either LABOUR or STAFF
+        const targetType: "STAFF" | "LABOUR" = currentWorker?.type === "STAFF" ? "STAFF" : "LABOUR";
+        setAssigneeType(targetType);
+        if (targetType === "STAFF") {
+          const matched = INHOUSE_EMPLOYEES.find((e) => e.name === currentWorker?.name);
+          setSelectedWorkerId(matched ? matched.id : INHOUSE_EMPLOYEES[0].id);
+        } else {
+          const matched = LABOUR_CONTRACTORS.find((c) => c.name === currentWorker?.name);
+          setSelectedWorkerId(matched ? matched.id : LABOUR_CONTRACTORS[0].id);
+        }
       }
     } else {
       setSelectedWorkerId(null);
@@ -594,7 +867,18 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
     }
   }, [assigningOrder]);
 
-  // Filtered In-house Employees (For Card Orders)
+  // Handler to switch between Labour Contractor and In-House Employee for Lanyard
+  const handleToggleAssigneeType = (newType: "STAFF" | "LABOUR") => {
+    setAssigneeType(newType);
+    setWorkerSearch("");
+    if (newType === "STAFF") {
+      setSelectedWorkerId(INHOUSE_EMPLOYEES[0].id);
+    } else {
+      setSelectedWorkerId(LABOUR_CONTRACTORS[0].id);
+    }
+  };
+
+  // Filtered In-house Employees (For Card Orders or Lanyards assigned to Staff)
   const filteredEmployees = useMemo(() => {
     if (!workerSearch.trim()) return INHOUSE_EMPLOYEES;
     const q = workerSearch.toLowerCase().trim();
@@ -608,7 +892,7 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
     );
   }, [workerSearch]);
 
-  // Filtered Labour Contractors (For Lanyard Orders)
+  // Filtered Labour Contractors (For Lanyard Orders assigned to Labour)
   const filteredLabourContractors = useMemo(() => {
     if (!workerSearch.trim()) return LABOUR_CONTRACTORS;
     const q = workerSearch.toLowerCase().trim();
@@ -629,98 +913,66 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
     return LABOUR_CONTRACTORS.find((c) => c.id === selectedWorkerId) || LABOUR_CONTRACTORS[0];
   }, [selectedWorkerId]);
 
-  // Material reconciliation calculation (shows what is required, what worker holds, and net to give)
+  // Active buffer holdings currently on hand with the selected worker (Staff or Labour)
+  const activeHoldings = useMemo(() => {
+    if (assigneeType === "STAFF") {
+      return selectedEmployee?.materialHoldings || [];
+    } else {
+      return selectedLabourContractor?.materialHoldings || [];
+    }
+  }, [assigneeType, selectedEmployee, selectedLabourContractor]);
+
+  // Detected required items from order and description (including hooks, rolls, holders, clips, jointers, rings)
+  const orderRequiredItems = useMemo(() => {
+    if (!assigningOrder) return [];
+    const itemOrdered = assigningOrder.itemOrdered || assigningOrder.itemsOrdered?.[0] || "Lanyard";
+    return parseSupportingItemsFromDescription(assigningOrder.product, itemOrdered, assigningOrder.qty);
+  }, [assigningOrder]);
+
+  // Material reconciliation calculation (shows what is required, what worker holds, and net to physically give)
   const materialReconciliation = useMemo(() => {
     if (!assigningOrder) return [];
-    const isCard = (assigningOrder.itemOrdered || assigningOrder.itemsOrdered?.[0] || "Lanyard") === "Card";
-    const qty = assigningOrder.qty;
 
-    if (isCard) {
-      // ID Card requires: Card Holders and Clips
-      const holdings = selectedEmployee?.materialHoldings || [];
-      const holderHolding = holdings.find((h) => h.item.toLowerCase().includes("holder")) || holdings[0];
-      const clipHolding = holdings.find((h) => h.item.toLowerCase().includes("clip"));
+    return orderRequiredItems.map((req) => {
+      const norm = req.name.toLowerCase().trim();
+      const matchedHolding = activeHoldings.find((h) => {
+        const hNorm = h.item.toLowerCase().trim();
+        if (hNorm === norm) return true;
+        if (hNorm.includes(norm) || norm.includes(hNorm)) return true;
+        if (req.category === "HOOKS" && hNorm.includes("hook")) return true;
+        if (req.category === "LANYARDS" && hNorm.includes("roll")) return true;
+        if (req.category === "HOLDERS" && (hNorm.includes("holder") || hNorm.includes("pouch") || hNorm.includes("dst") || hNorm.includes("crystal"))) return true;
+        if (req.category === "OTHERS" && req.name === "Clips" && hNorm.includes("clip")) return true;
+        if (req.category === "OTHERS" && req.name.includes("Jointer") && (hNorm.includes("jointer") || hNorm.includes("buckle"))) return true;
+        if (req.category === "OTHERS" && req.name.includes("Ring") && hNorm.includes("ring")) return true;
+        return false;
+      });
 
-      const holderName = holderHolding ? holderHolding.item : "Plastic Holder-V";
-      const holderHeld = holderHolding ? holderHolding.qtyOnHand : 0;
-      const holderNet = Math.max(0, qty - holderHeld);
+      const heldQty = matchedHolding ? matchedHolding.qtyOnHand : 0;
+      const netToIssue = Math.max(0, req.requiredQty - heldQty);
+      const sourceNote = matchedHolding?.sourceOrder
+        ? `${matchedHolding.details || matchedHolding.item} (${matchedHolding.sourceOrder})`
+        : matchedHolding?.details || null;
 
-      const clipName = clipHolding ? clipHolding.item : "Clips";
-      const clipHeld = clipHolding ? clipHolding.qtyOnHand : 0;
-      const clipNet = Math.max(0, qty - clipHeld);
-
-      return [
-        {
-          name: holderName,
-          category: "HOLDERS" as const,
-          unit: "pieces",
-          requiredQty: qty,
-          heldQty: holderHeld,
-          netToIssue: holderNet,
-          sourceNote: holderHolding?.sourceOrder
-            ? `${holderHolding.details} (${holderHolding.sourceOrder})`
-            : "Vertical PVC Card Holders held at employee workstation",
-        },
-        {
-          name: clipName,
-          category: "OTHERS" as const,
-          unit: "pieces",
-          requiredQty: qty,
-          heldQty: clipHeld,
-          netToIssue: clipNet,
-          sourceNote: clipHolding?.sourceOrder
-            ? `${clipHolding.details} (${clipHolding.sourceOrder})`
-            : "Metal crocodile badge clips on employee bench",
-        },
-      ];
-    } else {
-      // Lanyard requires: Hooks and Lanyard Ribbon Rolls
-      const holdings = selectedLabourContractor?.materialHoldings || [];
-      const hookHolding = holdings.find((h) => h.item.toLowerCase().includes("hook")) || holdings[0];
-      const rollHolding = holdings.find((h) => h.item.toLowerCase().includes("roll"));
-
-      const hookName = hookHolding ? hookHolding.item : "Dog Hook";
-      const hookHeld = hookHolding ? hookHolding.qtyOnHand : 0;
-      const hookNet = Math.max(0, qty - hookHeld);
-
-      const rollsNeeded = Math.max(1, Math.ceil(qty / 200));
-      const rollName = rollHolding ? rollHolding.item : "16mm Lanyard Rolls";
-      const rollHeld = rollHolding ? rollHolding.qtyOnHand : 0;
-      const rollNet = Math.max(0, rollsNeeded - rollHeld);
-
-      return [
-        {
-          name: hookName,
-          category: "HOOKS" as const,
-          unit: "pieces",
-          requiredQty: qty,
-          heldQty: hookHeld,
-          netToIssue: hookNet,
-          sourceNote: hookHolding?.sourceOrder
-            ? `${hookHolding.details} (${hookHolding.sourceOrder})`
-            : "Standard nickel dog hooks held in contractor buffer",
-        },
-        {
-          name: rollName,
-          category: "LANYARDS" as const,
-          unit: "rolls",
-          requiredQty: rollsNeeded,
-          heldQty: rollHeld,
-          netToIssue: rollNet,
-          sourceNote: rollHolding?.sourceOrder
-            ? `${rollHolding.details} (${rollHolding.sourceOrder})`
-            : "200m satin ribbon rolls held in contractor storage",
-        },
-      ];
-    }
-  }, [assigningOrder, selectedEmployee, selectedLabourContractor]);
+      return {
+        name: req.name,
+        category: req.category,
+        unit: req.unit,
+        requiredQty: req.requiredQty,
+        heldQty,
+        netToIssue,
+        sourceNote,
+        detectedReason: req.detectedReason,
+      };
+    });
+  }, [assigningOrder, orderRequiredItems, activeHoldings]);
 
   const handleConfirmAssignment = () => {
     if (!assigningOrder) return;
     const targetId = assigningOrder.internalId;
-    const isCard = (assigningOrder.itemOrdered || assigningOrder.itemsOrdered?.[0] || "Lanyard") === "Card";
+    const isStaff = assigneeType === "STAFF";
 
-    const assignedWorker: AssignedWorker = isCard
+    const assignedWorker: AssignedWorker = isStaff
       ? {
           name: selectedEmployee.name,
           role: selectedEmployee.role,
@@ -745,16 +997,20 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
       })
     );
 
-    const netItems = materialReconciliation.map((m) => `${m.netToIssue.toLocaleString()} ${m.unit} ${m.name}`).join(", ");
-    if (isCard) {
+    const netSummary = materialReconciliation
+      .filter((m) => m.netToIssue > 0)
+      .map((m) => `${m.netToIssue.toLocaleString()} ${m.unit} ${m.name}`)
+      .join(", ");
+
+    if (isStaff) {
       success(
-        "Employee Assigned",
-        `Assigned order to ${selectedEmployee.name} (${selectedEmployee.role}). Net stock to issue: ${netItems}.`
+        "Staff Employee Assigned",
+        `Assigned to ${selectedEmployee.name} (${selectedEmployee.role}). ${netSummary ? `Stock to issue: ${netSummary}.` : "All materials covered by buffer."}`
       );
     } else {
       success(
         "Labour Contractor Assigned",
-        `Assigned order to ${selectedLabourContractor.name}. Net stock to issue: ${netItems}.`
+        `Assigned to ${selectedLabourContractor.name}. ${netSummary ? `Stock to issue: ${netSummary}.` : "All materials covered by buffer."}`
       );
     }
     setAssigningOrder(null);
@@ -2082,14 +2338,20 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
         </div>
       </div>
 
-      {/* ─── WORKER ASSIGNMENT DRAWER (Employee for Card, Labour for Lanyard) ─── */}
+      {/* ─── WORKER ASSIGNMENT DRAWER (Staff or Labour for Lanyard, Staff for Card) ─── */}
       <Drawer
         isOpen={Boolean(assigningOrder)}
         onClose={() => setAssigningOrder(null)}
         title={
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <span style={{ fontSize: "18px" }}>{isAssigningCard ? "👤" : "🤝"}</span>
-            <span>{isAssigningCard ? "Assign In-House Employee" : "Assign Labour Contractor"}</span>
+            <span style={{ fontSize: "18px" }}>
+              {isAssigningCard ? "👤" : assigneeType === "STAFF" ? "👤" : "🤝"}
+            </span>
+            <span>
+              {isAssigningCard
+                ? "Assign In-House Employee"
+                : `Assign Lanyard Worker (${assigneeType === "STAFF" ? "In-House Staff" : "Labour Contractor"})`}
+            </span>
           </div>
         }
         subtitle={
@@ -2097,11 +2359,11 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
             ? `${assigningOrder.client} · ${assigningOrder.qty.toLocaleString()} ${isAssigningCard ? "ID Cards" : "Lanyards"}`
             : undefined
         }
-        width={560}
+        width={580}
         footer={
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
             <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>
-              {isAssigningCard ? (
+              {assigneeType === "STAFF" ? (
                 <span>
                   Assignee: <strong style={{ color: "#38bdf8" }}>{selectedEmployee.name}</strong> (Staff)
                 </span>
@@ -2120,7 +2382,7 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
                 size="sm"
                 onClick={handleConfirmAssignment}
               >
-                {isAssigningCard ? "Confirm & Assign Employee" : "Confirm & Assign Labour"}
+                {assigneeType === "STAFF" ? "Confirm & Assign Employee" : "Confirm & Assign Labour"}
               </Button>
             </div>
           </div>
@@ -2129,32 +2391,94 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
         {assigningOrder && (
           <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
 
-            {/* Workflow Banner: In-house Employee vs Labour Contractor */}
-            <div
-              style={{
-                padding: "10px 14px",
-                borderRadius: "5px",
-                backgroundColor: isAssigningCard ? "rgba(56, 189, 248, 0.1)" : "rgba(249, 115, 22, 0.1)",
-                border: `1px solid ${isAssigningCard ? "rgba(56, 189, 248, 0.35)" : "rgba(249, 115, 22, 0.35)"}`,
-                display: "flex",
-                alignItems: "flex-start",
-                gap: "10px",
-              }}
-            >
-              <span style={{ fontSize: "18px", lineHeight: 1 }}>{isAssigningCard ? "👤" : "🤝"}</span>
-              <div style={{ fontSize: "12px", lineHeight: 1.45 }}>
-                <div style={{ fontWeight: 800, color: isAssigningCard ? "#38bdf8" : "#fb923c", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                  {isAssigningCard ? "In-House Employee Assignment Required" : "External Labour Contractor Assignment"}
-                </div>
-                <div style={{ color: "#e2e8f0", marginTop: "2px" }}>
-                  {isAssigningCard
-                    ? "Orders of ID Card type must be assigned to internal staff operators (designers, digital printers, card encoders). Outside labour is not used for card printing."
-                    : "Orders of Lanyard type are delegated to certified piece-rate labour contractors for stitching, sublimation, and hook assembly."}
+            {/* Workflow Banner & Assignee Type Switcher */}
+            {isAssigningCard ? (
+              /* ID Card: Strictly In-House Employee */
+              <div
+                style={{
+                  padding: "10px 14px",
+                  borderRadius: "5px",
+                  backgroundColor: "rgba(56, 189, 248, 0.1)",
+                  border: "1px solid rgba(56, 189, 248, 0.35)",
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: "10px",
+                }}
+              >
+                <span style={{ fontSize: "18px", lineHeight: 1 }}>👤</span>
+                <div style={{ fontSize: "12px", lineHeight: 1.45 }}>
+                  <div style={{ fontWeight: 800, color: "#38bdf8", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                    In-House Employee Assignment Required
+                  </div>
+                  <div style={{ color: "#e2e8f0", marginTop: "2px" }}>
+                    ID Card printing, lamination, and RFID encoding are performed internally by trained staff operators. Outside piece-rate labour is not used for card production.
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              /* Lanyard: Dual Choice (Labour Contractor OR In-House Employee) */
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                <div style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)", letterSpacing: "0.5px" }}>
+                  Worker Assignment Type (Lanyard can be assigned to Labour or Staff)
+                </div>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "6px",
+                    padding: "4px",
+                    backgroundColor: "rgba(0, 0, 0, 0.4)",
+                    borderRadius: "6px",
+                    border: "1px solid rgba(255, 255, 255, 0.08)",
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => handleToggleAssigneeType("LABOUR")}
+                    style={{
+                      padding: "8px 12px",
+                      borderRadius: "5px",
+                      border: assigneeType === "LABOUR" ? "1px solid #f97316" : "1px solid transparent",
+                      backgroundColor: assigneeType === "LABOUR" ? "rgba(249, 115, 22, 0.22)" : "transparent",
+                      color: assigneeType === "LABOUR" ? "#fb923c" : "var(--text-muted)",
+                      fontWeight: 700,
+                      fontSize: "12px",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "6px",
+                      transition: "all 0.15s ease",
+                    }}
+                  >
+                    <span>🤝</span> External Labour Contractor
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleToggleAssigneeType("STAFF")}
+                    style={{
+                      padding: "8px 12px",
+                      borderRadius: "5px",
+                      border: assigneeType === "STAFF" ? "1px solid #38bdf8" : "1px solid transparent",
+                      backgroundColor: assigneeType === "STAFF" ? "rgba(56, 189, 248, 0.22)" : "transparent",
+                      color: assigneeType === "STAFF" ? "#38bdf8" : "var(--text-muted)",
+                      fontWeight: 700,
+                      fontSize: "12px",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "6px",
+                      transition: "all 0.15s ease",
+                    }}
+                  >
+                    <span>👤</span> In-House Staff Employee
+                  </button>
+                </div>
+              </div>
+            )}
 
-            {/* Card 1 (Top): Order Details */}
+            {/* Order Details Card with Detected Supporting Accessories */}
             <div
               style={{
                 backgroundColor: "rgba(255, 255, 255, 0.03)",
@@ -2179,6 +2503,32 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
               <div style={{ gridColumn: "span 2" }}>
                 <div style={{ fontSize: "10px", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700 }}>Description</div>
                 <div style={{ fontSize: "12.5px", color: "#e2e8f0", marginTop: "2px" }}>{assigningOrder.product}</div>
+
+                {/* Detected Supporting Accessories Badges */}
+                {orderRequiredItems.length > 0 && (
+                  <div style={{ marginTop: "8px", display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                    <span style={{ fontSize: "10px", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700 }}>
+                      Detected Items:
+                    </span>
+                    {orderRequiredItems.map((item, idx) => (
+                      <span
+                        key={idx}
+                        style={{
+                          fontSize: "10.5px",
+                          fontWeight: 700,
+                          padding: "2px 7px",
+                          borderRadius: "4px",
+                          backgroundColor: "rgba(56, 189, 248, 0.15)",
+                          color: "#38bdf8",
+                          border: "1px solid rgba(56, 189, 248, 0.3)",
+                        }}
+                      >
+                        {item.category === "HOOKS" ? "🪝 " : item.category === "HOLDERS" ? "🏷️ " : item.category === "LANYARDS" ? "🎗️ " : "🔗 "}
+                        {item.name}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
               <div>
                 <div style={{ fontSize: "10px", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700 }}>Order Volume</div>
@@ -2192,67 +2542,59 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
               </div>
             </div>
 
-            {/* Card 2: Stock Holding & Net Issue Reconciliation */}
+            {/* ─── TWO DIRECT SECTIONS: THINGS TO GIVE VS THINGS ALREADY HELD ─── */}
+
+            {/* SECTION 1: 🟢 Things We Need To Give Them (Warehouse Stock Handover) */}
             <div
               style={{
-                backgroundColor: isAssigningCard ? "rgba(56, 189, 248, 0.06)" : "rgba(249, 115, 22, 0.08)",
-                border: `1px solid ${isAssigningCard ? "rgba(56, 189, 248, 0.35)" : "rgba(249, 115, 22, 0.35)"}`,
-                borderRadius: "6px",
+                backgroundColor: "rgba(16, 185, 129, 0.06)",
+                border: "1px solid rgba(16, 185, 129, 0.35)",
+                borderRadius: "8px",
                 padding: "14px 16px",
                 display: "flex",
                 flexDirection: "column",
-                gap: "12px",
+                gap: "10px",
               }}
             >
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <span
-                  style={{
-                    fontSize: "11px",
-                    fontWeight: 800,
-                    textTransform: "uppercase",
-                    color: isAssigningCard ? "#38bdf8" : "#fb923c",
-                    letterSpacing: "0.6px",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "6px",
-                  }}
-                >
-                  <span>📦</span> Material Holding & Stock to Give
-                </span>
-                <span style={{ fontSize: "10.5px", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
-                  {isAssigningCard
-                    ? `Station: ${selectedEmployee.workstation}`
-                    : `Rate: ₹${selectedLabourContractor.ratePerPiece.toFixed(2)} / pc`}
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <span style={{ fontSize: "16px" }}>🟢</span>
+                  <span style={{ fontSize: "11.5px", fontWeight: 800, color: "#34d399", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                    Things We Need To Give Them (Take From Factory)
+                  </span>
+                </div>
+                <span style={{ fontSize: "10px", fontWeight: 700, color: "#a7f3d0", backgroundColor: "rgba(16, 185, 129, 0.18)", padding: "2px 8px", borderRadius: "10px" }}>
+                  {materialReconciliation.filter((m) => m.netToIssue > 0).length} items to issue
                 </span>
               </div>
 
-              {/* Itemized Materials Table */}
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                {materialReconciliation.map((mat, mIdx) => {
+                {materialReconciliation.map((mat, idx) => {
                   const isFullyCovered = mat.netToIssue === 0;
                   return (
                     <div
-                      key={mIdx}
+                      key={idx}
                       style={{
-                        backgroundColor: "rgba(10, 14, 23, 0.85)",
-                        border: "1px solid rgba(255, 255, 255, 0.08)",
-                        borderRadius: "5px",
-                        padding: "10px 12px",
+                        backgroundColor: "rgba(10, 14, 23, 0.9)",
+                        border: isFullyCovered ? "1px solid rgba(52, 211, 153, 0.25)" : "1px solid rgba(16, 185, 129, 0.45)",
+                        borderRadius: "6px",
+                        padding: "10px 14px",
                         display: "flex",
-                        flexDirection: "column",
-                        gap: "6px",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: "12px",
                       }}
                     >
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "2px", minWidth: 0, flex: 1 }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                           <span style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff" }}>
                             {mat.name}
                           </span>
                           <span
                             style={{
-                              fontSize: "9.5px",
+                              fontSize: "9px",
                               fontWeight: 700,
-                              padding: "1px 6px",
+                              padding: "1px 5px",
                               borderRadius: "2px",
                               backgroundColor: "rgba(255, 255, 255, 0.08)",
                               color: "var(--text-muted)",
@@ -2262,97 +2604,154 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
                             {mat.category}
                           </span>
                         </div>
-
-                        {isFullyCovered ? (
-                          <span style={{ fontSize: "11px", fontWeight: 700, color: "#34d399", display: "flex", alignItems: "center", gap: "4px" }}>
-                            <span>✅</span> Covered by buffer
-                          </span>
-                        ) : (
-                          <span style={{ fontSize: "11px", fontWeight: 700, color: "#4ade80", display: "flex", alignItems: "center", gap: "4px" }}>
-                            <span>⚠️</span> Issue {mat.netToIssue.toLocaleString()} {mat.unit}
-                          </span>
+                        <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>
+                          {isFullyCovered ? (
+                            <span style={{ color: "#34d399", fontWeight: 600 }}>
+                              Worker already holds {mat.heldQty.toLocaleString()} {mat.unit} in buffer. 0 issue needed.
+                            </span>
+                          ) : mat.heldQty > 0 ? (
+                            <span>
+                              Needs {mat.requiredQty.toLocaleString()} {mat.unit} — Holds {mat.heldQty.toLocaleString()} in buffer = Issue remaining <strong style={{ color: "#34d399" }}>{mat.netToIssue.toLocaleString()} {mat.unit}</strong>
+                            </span>
+                          ) : (
+                            <span>
+                              Needs full batch of {mat.requiredQty.toLocaleString()} {mat.unit} (fresh stock issue)
+                            </span>
+                          )}
+                        </div>
+                        {mat.detectedReason && (
+                          <div style={{ fontSize: "10px", color: "#64748b", fontStyle: "italic" }}>
+                            {mat.detectedReason}
+                          </div>
                         )}
                       </div>
 
-                      {/* 3-Column Metrics Comparison */}
                       <div
                         style={{
-                          display: "grid",
-                          gridTemplateColumns: "1fr 1fr 1fr",
-                          gap: "6px",
-                          backgroundColor: "rgba(0, 0, 0, 0.4)",
-                          borderRadius: "4px",
-                          padding: "8px 10px",
-                          textAlign: "center",
-                          marginTop: "2px",
+                          padding: "6px 14px",
+                          borderRadius: "6px",
+                          backgroundColor: isFullyCovered ? "rgba(52, 211, 153, 0.12)" : "rgba(16, 185, 129, 0.2)",
+                          border: isFullyCovered ? "1px solid rgba(52, 211, 153, 0.3)" : "1px solid rgba(52, 211, 153, 0.6)",
+                          textAlign: "right",
+                          flexShrink: 0,
                         }}
                       >
-                        <div>
-                          <div style={{ fontSize: "9.5px", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700 }}>
-                            Order Needs
-                          </div>
-                          <div style={{ fontSize: "13.5px", fontWeight: 800, color: "#fff", fontFamily: "var(--font-mono)", marginTop: "2px" }}>
-                            {mat.requiredQty.toLocaleString()} <span style={{ fontSize: "10px", fontWeight: 500, color: "var(--text-muted)" }}>{mat.unit}</span>
-                          </div>
+                        <div style={{ fontSize: "8.5px", fontWeight: 800, textTransform: "uppercase", color: isFullyCovered ? "#34d399" : "#86efac" }}>
+                          {isFullyCovered ? "BUFFER COVERS" : "GIVE WORKER"}
                         </div>
-
-                        <div style={{ borderLeft: "1px solid rgba(255,255,255,0.06)", borderRight: "1px solid rgba(255,255,255,0.06)" }}>
-                          <div style={{ fontSize: "9.5px", color: "#fb923c", textTransform: "uppercase", fontWeight: 700 }}>
-                            Already With Worker
-                          </div>
-                          <div style={{ fontSize: "13.5px", fontWeight: 800, color: mat.heldQty > 0 ? "#fb923c" : "var(--text-muted)", fontFamily: "var(--font-mono)", marginTop: "2px" }}>
-                            {mat.heldQty.toLocaleString()} <span style={{ fontSize: "10px", fontWeight: 500, color: "var(--text-muted)" }}>{mat.unit}</span>
-                          </div>
-                        </div>
-
-                        <div>
-                          <div style={{ fontSize: "9.5px", color: "#4ade80", textTransform: "uppercase", fontWeight: 700 }}>
-                            Net To Give
-                          </div>
-                          <div style={{ fontSize: "13.5px", fontWeight: 800, color: mat.netToIssue > 0 ? "#4ade80" : "#38bdf8", fontFamily: "var(--font-mono)", marginTop: "2px" }}>
-                            {mat.netToIssue.toLocaleString()} <span style={{ fontSize: "10px", fontWeight: 500, color: "var(--text-muted)" }}>{mat.unit}</span>
-                          </div>
+                        <div style={{ fontSize: "15px", fontWeight: 900, fontFamily: "var(--font-mono)", color: isFullyCovered ? "#34d399" : "#4ade80" }}>
+                          {mat.netToIssue.toLocaleString()} <span style={{ fontSize: "10.5px", fontWeight: 600 }}>{mat.unit}</span>
                         </div>
                       </div>
-
-                      {/* Source note */}
-                      {mat.sourceNote && (
-                        <div style={{ fontSize: "10.5px", color: "var(--text-muted)", marginTop: "2px", lineHeight: 1.35 }}>
-                          <span style={{ color: isAssigningCard ? "#38bdf8" : "#fb923c", fontWeight: 600 }}>Stock Source:</span> {mat.sourceNote}
-                        </div>
-                      )}
                     </div>
                   );
                 })}
               </div>
+            </div>
 
-              {/* Worker Financial / Station Note */}
-              {!isAssigningCard && (
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "11px", color: "var(--text-muted)", borderTop: "1px dashed rgba(255,255,255,0.08)", paddingTop: "8px" }}>
-                  <span>Estimated Labour Payable:</span>
-                  <strong style={{ color: "#fff", fontFamily: "var(--font-mono)" }}>
-                    ₹{(assigningOrder.qty * selectedLabourContractor.ratePerPiece).toFixed(2)} (strictly on accepted units Q_accepted)
-                  </strong>
+            {/* SECTION 2: 🟠 Things They Already Have (Current Worker Stock Buffer) */}
+            <div
+              style={{
+                backgroundColor: "rgba(249, 115, 22, 0.05)",
+                border: "1px solid rgba(249, 115, 22, 0.28)",
+                borderRadius: "8px",
+                padding: "14px 16px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "10px",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <span style={{ fontSize: "16px" }}>🟠</span>
+                  <span style={{ fontSize: "11.5px", fontWeight: 800, color: "#fb923c", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                    Things They Already Have (Current Worker Buffer)
+                  </span>
                 </div>
-              )}
-              {isAssigningCard && (
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "11px", color: "var(--text-muted)", borderTop: "1px dashed rgba(255,255,255,0.08)", paddingTop: "8px" }}>
-                  <span>Employee Department:</span>
-                  <strong style={{ color: "#38bdf8" }}>
-                    {selectedEmployee.department}
-                  </strong>
+                <span style={{ fontSize: "10.5px", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
+                  {assigneeType === "STAFF" ? `Staff: ${selectedEmployee.name}` : `Contractor: ${selectedLabourContractor.name}`}
+                </span>
+              </div>
+
+              {activeHoldings.length === 0 ? (
+                <div style={{ padding: "12px", backgroundColor: "rgba(0,0,0,0.3)", borderRadius: "5px", color: "var(--text-muted)", fontSize: "11.5px", textAlign: "center" }}>
+                  Worker currently has <strong>0 materials</strong> on hand in buffer. Everything required will be freshly issued from stockroom.
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                  {activeHoldings.map((h, hIdx) => {
+                    const isUsedInOrder = materialReconciliation.some(
+                      (m) => m.name.toLowerCase().includes(h.item.toLowerCase()) || h.item.toLowerCase().includes(m.name.toLowerCase())
+                    );
+                    return (
+                      <div
+                        key={hIdx}
+                        style={{
+                          backgroundColor: "rgba(10, 14, 23, 0.8)",
+                          border: "1px solid rgba(255, 255, 255, 0.06)",
+                          borderRadius: "5px",
+                          padding: "8px 12px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        <div>
+                          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                            <span style={{ fontSize: "12.5px", fontWeight: 700, color: "#f1f5f9" }}>{h.item}</span>
+                            {isUsedInOrder && (
+                              <span style={{ fontSize: "9px", fontWeight: 700, padding: "1px 5px", borderRadius: "2px", backgroundColor: "rgba(16, 185, 129, 0.2)", color: "#34d399" }}>
+                                USED IN THIS ORDER
+                              </span>
+                            )}
+                          </div>
+                          <div style={{ fontSize: "10.5px", color: "var(--text-muted)", marginTop: "2px" }}>
+                            {h.sourceOrder ? `${h.details || ""} (${h.sourceOrder})` : h.details || "Buffer held on workbench"}
+                          </div>
+                        </div>
+
+                        <div style={{ textAlign: "right" }}>
+                          <div style={{ fontSize: "14px", fontWeight: 800, color: "#fb923c", fontFamily: "var(--font-mono)" }}>
+                            {h.qtyOnHand.toLocaleString()} <span style={{ fontSize: "10px", color: "var(--text-muted)" }}>{h.unit}</span>
+                          </div>
+                          <div style={{ fontSize: "8.5px", color: "var(--text-muted)", textTransform: "uppercase" }}>
+                            ON HAND
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
+
+            {/* Worker Rate / Department Info Note */}
+            {assigneeType === "LABOUR" ? (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "11px", color: "var(--text-muted)", borderTop: "1px dashed rgba(255,255,255,0.08)", paddingTop: "8px" }}>
+                <span>Estimated Labour Payable:</span>
+                <strong style={{ color: "#fff", fontFamily: "var(--font-mono)" }}>
+                  ₹{(assigningOrder.qty * selectedLabourContractor.ratePerPiece).toFixed(2)} (strictly on accepted units Q_accepted @ ₹{selectedLabourContractor.ratePerPiece.toFixed(2)}/pc)
+                </strong>
+              </div>
+            ) : (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "11px", color: "var(--text-muted)", borderTop: "1px dashed rgba(255,255,255,0.08)", paddingTop: "8px" }}>
+                <span>Employee Station:</span>
+                <strong style={{ color: "#38bdf8" }}>
+                  {selectedEmployee.workstation} · {selectedEmployee.department}
+                </strong>
+              </div>
+            )}
 
             {/* Worker Search Bar */}
             <div>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
                 <span style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)", letterSpacing: "0.6px" }}>
-                  {isAssigningCard ? "Select In-House Employee" : "Select Labour Contractor"}
+                  {assigneeType === "STAFF" ? "Select In-House Employee" : "Select Labour Contractor"}
                 </span>
                 <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>
-                  {isAssigningCard ? `${filteredEmployees.length} staff available` : `${filteredLabourContractors.length} units available`}
+                  {assigneeType === "STAFF"
+                    ? `${filteredEmployees.length} staff available`
+                    : `${filteredLabourContractors.length} units available`}
                 </span>
               </div>
               <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
@@ -2360,7 +2759,7 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
                 <input
                   type="text"
                   placeholder={
-                    isAssigningCard
+                    assigneeType === "STAFF"
                       ? "Search employees by name, role, department, workstation..."
                       : "Search labour units by contractor name, specialty, or location..."
                   }
@@ -2384,7 +2783,7 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
 
             {/* Worker Selection List: In-House Employees vs Labour Contractors */}
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-              {isAssigningCard ? (
+              {assigneeType === "STAFF" ? (
                 /* ─── Employees List ─── */
                 filteredEmployees.length === 0 ? (
                   <div style={{ padding: "16px", textAlign: "center", color: "var(--text-muted)", fontSize: "12px", borderRadius: "4px", backgroundColor: "rgba(255,255,255,0.02)" }}>
