@@ -31,7 +31,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const { canNav } = useAuth();
 
   const primaryNav: NavItemDef[] = [
-    { id: "orders", label: "Orders", icon: "orders" },
     { id: "lanyard_orders", label: "Lanyard Order", icon: "tag" },
     { id: "card_orders", label: "ID Card Order", icon: "credit-card" },
     { id: "labour_lanyard", label: "Labour Lanyard", icon: "labour" },

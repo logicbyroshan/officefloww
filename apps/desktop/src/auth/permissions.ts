@@ -2,7 +2,6 @@ import { UserRole } from "@officefloww/api-types";
 
 export type AppNavSection =
   | "dashboard"
-  | "orders"
   | "lanyard_orders"
   | "card_orders"
   | "labour_lanyard"
@@ -177,7 +176,6 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
 const ROLE_NAV_SECTIONS: Record<UserRole, AppNavSection[]> = {
   [UserRole.OWNER]: [
     "dashboard",
-    "orders",
     "lanyard_orders",
     "card_orders",
     "labour_lanyard",
@@ -191,7 +189,6 @@ const ROLE_NAV_SECTIONS: Record<UserRole, AppNavSection[]> = {
   ],
   [UserRole.ADMIN]: [
     "dashboard",
-    "orders",
     "lanyard_orders",
     "card_orders",
     "labour_lanyard",
@@ -205,7 +202,6 @@ const ROLE_NAV_SECTIONS: Record<UserRole, AppNavSection[]> = {
   ],
   [UserRole.OPERATOR]: [
     "dashboard",
-    "orders",
     "lanyard_orders",
     "card_orders",
     "labour_lanyard",
@@ -225,7 +221,6 @@ const ROLE_NAV_SECTIONS: Record<UserRole, AppNavSection[]> = {
   ],
   [UserRole.MANAGER]: [
     "dashboard",
-    "orders",
     "lanyard_orders",
     "card_orders",
     "labour_lanyard",
@@ -239,7 +234,8 @@ const ROLE_NAV_SECTIONS: Record<UserRole, AppNavSection[]> = {
   ],
   [UserRole.SALES]: [
     "dashboard",
-    "orders",
+    "lanyard_orders",
+    "card_orders",
     "tasks",
     "clients",
     "settings",
@@ -277,7 +273,8 @@ const ROLE_NAV_SECTIONS: Record<UserRole, AppNavSection[]> = {
   ],
   [UserRole.ACCOUNTS]: [
     "dashboard",
-    "orders",
+    "lanyard_orders",
+    "card_orders",
     "tasks",
     "clients",
     "billing",

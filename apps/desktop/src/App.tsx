@@ -16,7 +16,7 @@ import { LoadingState } from "./design-system/components/FeedbackStates";
 
 const MainApp: React.FC = () => {
   const { user, loading: authLoading } = useAuth();
-  const [activeSection, setActiveSection] = useState<AppNavSection>("orders");
+  const [activeSection, setActiveSection] = useState<AppNavSection>("lanyard_orders");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   // Initialize theme and global search shortcut
@@ -38,9 +38,6 @@ const MainApp: React.FC = () => {
 
   const renderCurrentView = () => {
     switch (activeSection) {
-      case "orders":
-        return <OrdersWorkspaceView mode="ALL_ORDERS" />;
-
       case "lanyard_orders":
         return <OrdersWorkspaceView mode="LANYARD_ORDERS" />;
 
@@ -54,7 +51,7 @@ const MainApp: React.FC = () => {
         return <StockDashboardView />;
 
       default:
-        return <OrdersWorkspaceView mode="ALL_ORDERS" />;
+        return <OrdersWorkspaceView mode="LANYARD_ORDERS" />;
     }
   };
 

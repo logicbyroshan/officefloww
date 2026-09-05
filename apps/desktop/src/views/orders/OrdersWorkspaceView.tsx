@@ -883,7 +883,7 @@ export function useSharedOrders() {
   return [orders, setOrders] as const;
 }
 
-export type OrdersViewMode = "ALL_ORDERS" | "LANYARD_ORDERS" | "CARD_ORDERS" | "LABOUR_LANYARD";
+export type OrdersViewMode = "LANYARD_ORDERS" | "CARD_ORDERS" | "LABOUR_LANYARD";
 
 export interface OrdersWorkspaceViewProps {
   clients?: any[];
@@ -926,7 +926,7 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
   onSelectOrder,
   filterClientName,
   embedded = false,
-  mode = "ALL_ORDERS",
+  mode = "LANYARD_ORDERS",
 }) => {
   const { success } = useToast();
   const [orders, setOrders] = useSharedOrders();
@@ -1236,13 +1236,7 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
         currentItem.toLowerCase().includes(q) ||
         (o.assignedTo || []).some((a) => a.name.toLowerCase().includes(q) || a.role.toLowerCase().includes(q));
 
-      // 3. Category pill filter (only in ALL_ORDERS mode)
-      let matchFilter = true;
-      if (mode === "ALL_ORDERS" && filterItem !== "ALL") {
-        matchFilter = currentItem.toLowerCase() === filterItem.toLowerCase();
-      }
-
-      return matchSearch && matchFilter;
+      return matchSearch;
     });
 
     list = [...list].sort((a, b) => {
@@ -1544,19 +1538,6 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
             )}
           </div>
 
-          {/* Product Type Filter Pills (only in ALL_ORDERS mode) */}
-          {mode === "ALL_ORDERS" && (
-            <Tabs
-              variant="pill"
-              size="sm"
-              activeTab={filterItem}
-              onChange={(id) => setFilterItem(id)}
-              tabs={filterOptions.map((opt) => ({
-                id: opt,
-                label: opt === "ALL" ? "All" : opt,
-              }))}
-            />
-          )}
         </div>
 
         {/* Right: Counter, Hint & Refresh */}
