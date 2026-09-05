@@ -400,6 +400,8 @@ export const StockDashboardView: React.FC = () => {
     const qty = parseInt(useQty, 10) || 0;
     if (qty <= 0) return;
 
+    const person = useReportedBy.trim() || "User";
+
     setStockItems((prev) =>
       prev.map((i) =>
         i.id === targetItem.id
@@ -412,7 +414,7 @@ export const StockDashboardView: React.FC = () => {
       )
     );
 
-    // Update target item so top summary card in drawer updates in real-time
+    // Update target item so drawer top card updates in real-time
     setTargetItem((prev) => ({
       ...prev,
       availableStock: Math.max(0, prev.availableStock - qty),
@@ -426,13 +428,13 @@ export const StockDashboardView: React.FC = () => {
       type: "USAGE",
       quantity: qty,
       unit: targetItem.unit,
-      destinationOrSource: useDestination || "Production Floor",
-      reportedBy: useReportedBy || "Assembly Operator",
-      notes: useNote || "Batch usage recorded",
+      destinationOrSource: "Stock Floor",
+      reportedBy: person,
+      notes: `Deducted by ${person}`,
     };
 
     setMovements([newLog, ...movements]);
-    success("Usage Recorded", `Deducted -${qty} ${targetItem.unit} brought/taken by ${useReportedBy || "Operator"}`);
+    success("Stock Deducted", `Deducted -${qty} ${targetItem.unit} by ${person}`);
     setUseQty(targetItem.unit === "rolls" ? "2" : targetItem.unit.includes("packet") ? "2" : "100");
   };
 
@@ -789,7 +791,7 @@ export const StockDashboardView: React.FC = () => {
                             }}
                             style={{
                               height: "36px",
-                              padding: "0 10px",
+                              padding: "0 34px 0 12px",
                               backgroundColor: "rgba(10, 14, 23, 0.85)",
                               border: "1px solid rgba(255, 255, 255, 0.14)",
                               borderRadius: "var(--radius-sm, 4px)",
@@ -1002,10 +1004,8 @@ export const StockDashboardView: React.FC = () => {
                               type="button"
                               onClick={() => {
                                 setTargetItem(item);
-                                setUseQty(item.unit === "rolls" ? "2" : item.unit.includes("packet") ? "2" : "200");
-                                setUseReportedBy("Ramesh Labour");
-                                setUseDestination(item.workstation || "Production Assembly Floor");
-                                setUseNote("Material issued for current client order");
+                                setUseQty(item.unit === "rolls" ? "2" : item.unit.includes("packet") ? "2" : "100");
+                                setUseReportedBy("Rohan Sharma");
                                 setIsUsageDrawerOpen(true);
                               }}
                               style={{
@@ -1178,7 +1178,7 @@ export const StockDashboardView: React.FC = () => {
         </Modal>
       )}
 
-      {/* ─── DRAWER: MATERIAL USAGE LOG & COMPLETE AUDIT HISTORY ─────────────── */}
+      {/* ─── DRAWER: SIMPLE STOCK USAGE DEDUCTION ─────────────── */}
       <Drawer
         isOpen={isUsageDrawerOpen}
         onClose={() => setIsUsageDrawerOpen(false)}
@@ -1186,8 +1186,8 @@ export const StockDashboardView: React.FC = () => {
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <div
               style={{
-                width: "34px",
-                height: "34px",
+                width: "32px",
+                height: "32px",
                 borderRadius: "4px",
                 backgroundColor: "rgba(255, 138, 115, 0.12)",
                 border: "1px solid rgba(255, 138, 115, 0.3)",
@@ -1202,391 +1202,206 @@ export const StockDashboardView: React.FC = () => {
             </div>
             <div>
               <div style={{ fontSize: "15px", fontWeight: 700, color: "#fff" }}>
-                Material Usage Log — {targetItem.name}
+                Deduct Stock — {targetItem.name}
               </div>
               <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "1px" }}>
-                Packaging: <span style={{ color: "#cbd5e1", fontWeight: 600 }}>{targetItem.unit}</span> · Workstation: {targetItem.workstation}
+                Packaging: <span style={{ color: "#cbd5e1", fontWeight: 600 }}>{targetItem.unit}</span>
               </div>
             </div>
           </div>
         }
-        width={640}
+        width={480}
       >
-        <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
-          {/* ─── 1. FIXED TOP SUMMARY CARD: HOW MUCH TILL NOW USED ─────────────── */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          {/* ─── 1. FIXED TOP SUMMARY CARD: FLOOR AVAILABLE & USED TILL NOW ─── */}
           <div
             style={{
-              padding: "16px 18px",
-              background: "linear-gradient(135deg, rgba(16, 22, 36, 0.95) 0%, rgba(26, 32, 50, 0.9) 100%)",
-              border: "1px solid rgba(255, 138, 115, 0.25)",
-              borderRadius: "8px",
-              boxShadow: "0 8px 24px rgba(0, 0, 0, 0.4)",
+              padding: "14px 16px",
+              background: "linear-gradient(135deg, rgba(16, 22, 36, 0.95) 0%, rgba(22, 28, 44, 0.9) 100%)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              borderRadius: "6px",
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "12px",
             }}
           >
+            {/* Stat 1: Floor Available */}
             <div
               style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: "12px",
-                borderBottom: "1px solid rgba(255, 255, 255, 0.07)",
-                paddingBottom: "8px",
+                padding: "12px 14px",
+                backgroundColor: "rgba(255, 255, 255, 0.03)",
+                border: "1px solid rgba(255, 255, 255, 0.07)",
+                borderRadius: "4px",
               }}
             >
-              <span style={{ fontSize: "10.5px", fontWeight: 800, letterSpacing: "0.8px", color: "var(--accent-text)", textTransform: "uppercase" }}>
-                STOCK CONSUMPTION SUMMARY
-              </span>
-              <span
-                style={{
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  padding: "2px 8px",
-                  borderRadius: "3px",
-                  backgroundColor: targetItem.availableStock <= targetItem.minThreshold ? "rgba(239, 68, 68, 0.2)" : "rgba(16, 185, 129, 0.15)",
-                  color: targetItem.availableStock <= targetItem.minThreshold ? "#f87171" : "#34d399",
-                  border: targetItem.availableStock <= targetItem.minThreshold ? "1px solid rgba(239, 68, 68, 0.3)" : "1px solid rgba(16, 185, 129, 0.3)",
-                }}
-              >
-                {targetItem.availableStock <= targetItem.minThreshold ? "⚠️ Low Stock Alert" : "✓ Healthy Stock"}
-              </span>
+              <div style={{ fontSize: "10.5px", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.5px" }}>
+                Floor Available
+              </div>
+              <div style={{ fontSize: "20px", fontWeight: 800, color: "#ffffff", fontFamily: "var(--font-mono)", marginTop: "4px" }}>
+                {targetItem.availableStock.toLocaleString()}
+              </div>
+              <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "2px" }}>
+                {targetItem.unit} in store
+              </div>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px" }}>
-              {/* Stat 1: Total Used Till Now */}
-              <div
-                style={{
-                  padding: "12px 14px",
-                  backgroundColor: "rgba(16, 185, 129, 0.08)",
-                  border: "1px solid rgba(16, 185, 129, 0.2)",
-                  borderRadius: "6px",
-                }}
-              >
-                <div style={{ fontSize: "10px", color: "#34d399", textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.5px" }}>
-                  Used Till Now
-                </div>
-                <div style={{ fontSize: "22px", fontWeight: 800, color: "#10b981", fontFamily: "var(--font-mono)", marginTop: "4px" }}>
-                  {targetItem.usedStock.toLocaleString()}
-                </div>
-                <div style={{ fontSize: "10.5px", color: "var(--text-muted)", marginTop: "2px" }}>
-                  {targetItem.unit} recorded
-                </div>
+            {/* Stat 2: Total Used Till Now */}
+            <div
+              style={{
+                padding: "12px 14px",
+                backgroundColor: "rgba(16, 185, 129, 0.08)",
+                border: "1px solid rgba(16, 185, 129, 0.2)",
+                borderRadius: "4px",
+              }}
+            >
+              <div style={{ fontSize: "10.5px", color: "#34d399", textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.5px" }}>
+                Used Till Now
               </div>
-
-              {/* Stat 2: Current Floor Available */}
-              <div
-                style={{
-                  padding: "12px 14px",
-                  backgroundColor: "rgba(255, 255, 255, 0.03)",
-                  border: "1px solid rgba(255, 255, 255, 0.08)",
-                  borderRadius: "6px",
-                }}
-              >
-                <div style={{ fontSize: "10px", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.5px" }}>
-                  Floor Available
-                </div>
-                <div style={{ fontSize: "22px", fontWeight: 800, color: "#ffffff", fontFamily: "var(--font-mono)", marginTop: "4px" }}>
-                  {targetItem.availableStock.toLocaleString()}
-                </div>
-                <div style={{ fontSize: "10.5px", color: "var(--text-muted)", marginTop: "2px" }}>
-                  {targetItem.unit} in store
-                </div>
+              <div style={{ fontSize: "20px", fontWeight: 800, color: "#10b981", fontFamily: "var(--font-mono)", marginTop: "4px" }}>
+                {targetItem.usedStock.toLocaleString()}
               </div>
-
-              {/* Stat 3: Min Alert Safety Limit */}
-              <div
-                style={{
-                  padding: "12px 14px",
-                  backgroundColor: "rgba(245, 158, 11, 0.08)",
-                  border: "1px solid rgba(245, 158, 11, 0.2)",
-                  borderRadius: "6px",
-                }}
-              >
-                <div style={{ fontSize: "10px", color: "#fbbf24", textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.5px" }}>
-                  Min Alert Limit
-                </div>
-                <div style={{ fontSize: "22px", fontWeight: 800, color: "#f59e0b", fontFamily: "var(--font-mono)", marginTop: "4px" }}>
-                  {targetItem.minThreshold.toLocaleString()}
-                </div>
-                <div style={{ fontSize: "10.5px", color: "var(--text-muted)", marginTop: "2px" }}>
-                  {targetItem.unit} threshold
-                </div>
+              <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "2px" }}>
+                {targetItem.unit} recorded
               </div>
             </div>
           </div>
 
-          {/* ─── 2. TOP INPUT FORM: WHO BROUGHT IT, WHAT THING USED, QTY ───────── */}
-          <div
+          {/* ─── 2. SIMPLE FORM: HOW MUCH IS TAKEN & WHO DID IT ─────────────── */}
+          <form
+            onSubmit={handleConfirmLogUsage}
             style={{
               padding: "16px 18px",
               backgroundColor: "rgba(19, 23, 34, 0.95)",
               border: "1px solid rgba(255, 255, 255, 0.08)",
-              borderRadius: "8px",
+              borderRadius: "6px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "14px",
             }}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
-              <div>
-                <strong style={{ fontSize: "13.5px", color: "#fff", display: "block" }}>Log New Material Consumption</strong>
-                <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>Record who brought/took it and destination workstation</span>
-              </div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <strong style={{ fontSize: "13.5px", color: "#fff" }}>Log Material Deduction</strong>
               <span
                 style={{
                   fontSize: "10px",
                   fontWeight: 700,
-                  padding: "3px 8px",
+                  padding: "2px 7px",
                   borderRadius: "3px",
                   backgroundColor: "rgba(255, 138, 115, 0.15)",
                   color: "var(--accent-text)",
                   border: "1px solid rgba(255, 138, 115, 0.3)",
                 }}
               >
-                - USAGE DEDUCTION
+                - STOCK DEDUCTION
               </span>
             </div>
 
-            <form onSubmit={handleConfirmLogUsage} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-              {/* Row 1: Material Item (Fixed/Displayed) & Quantity to Deduct */}
-              <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "12px" }}>
-                <div>
-                  <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--text-secondary)", marginBottom: "6px" }}>
-                    What Thing Used (Material Item)
-                  </label>
-                  <div
-                    style={{
-                      height: "38px",
-                      padding: "0 12px",
-                      backgroundColor: "rgba(0, 0, 0, 0.5)",
-                      border: "1px solid rgba(255, 255, 255, 0.08)",
-                      borderRadius: "4px",
-                      color: "#fff",
-                      fontSize: "13px",
-                      fontWeight: 600,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                    }}
-                  >
-                    <Icon name={targetItem.iconName || "tool"} size={14} color={targetItem.iconColor} />
-                    <span>{targetItem.name}</span>
-                    <span style={{ marginLeft: "auto", fontSize: "11px", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
-                      ({targetItem.unit})
-                    </span>
-                  </div>
-                </div>
-
-                <div>
-                  <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--text-secondary)", marginBottom: "6px" }}>
-                    Quantity Consumed *
-                  </label>
-                  <div style={{ position: "relative" }}>
-                    <input
-                      type="number"
-                      min="1"
-                      value={useQty}
-                      onChange={(e) => setUseQty(e.target.value)}
-                      required
-                      placeholder="e.g. 200"
-                      style={{
-                        width: "100%",
-                        height: "38px",
-                        padding: "0 55px 0 12px",
-                        backgroundColor: "rgba(0, 0, 0, 0.6)",
-                        border: "1px solid var(--accent-border)",
-                        borderRadius: "4px",
-                        color: "#fff",
-                        fontSize: "13px",
-                        fontWeight: 700,
-                        fontFamily: "var(--font-mono)",
-                        outline: "none",
-                      }}
-                    />
-                    <span
-                      style={{
-                        position: "absolute",
-                        right: "10px",
-                        top: "50%",
-                        transform: "translateY(-50%)",
-                        fontSize: "11px",
-                        color: "var(--text-muted)",
-                        pointerEvents: "none",
-                      }}
-                    >
-                      {targetItem.unit}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Row 2: Who Brought / Took It */}
-              <div>
-                <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--text-secondary)", marginBottom: "6px" }}>
-                  Who Brought / Took It (Labour / Operator / Person) *
-                </label>
+            {/* Field 1: How much is taken from the stock */}
+            <div>
+              <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--text-secondary)", marginBottom: "6px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                How Much Taken (Quantity) *
+              </label>
+              <div style={{ position: "relative" }}>
                 <input
-                  type="text"
-                  value={useReportedBy}
-                  onChange={(e) => setUseReportedBy(e.target.value)}
+                  type="number"
+                  min="1"
+                  max={targetItem.availableStock}
+                  value={useQty}
+                  onChange={(e) => setUseQty(e.target.value)}
                   required
-                  placeholder="e.g., Ramesh Labour, Dinesh Assembly, Suresh Workshop..."
+                  placeholder="e.g., 200"
                   style={{
                     width: "100%",
                     height: "38px",
-                    padding: "0 12px",
+                    padding: "0 60px 0 12px",
                     backgroundColor: "rgba(0, 0, 0, 0.6)",
-                    border: "1px solid rgba(255, 255, 255, 0.12)",
+                    border: "1px solid var(--accent-border)",
                     borderRadius: "4px",
                     color: "#fff",
-                    fontSize: "13px",
+                    fontSize: "13.5px",
+                    fontWeight: 700,
+                    fontFamily: "var(--font-mono)",
                     outline: "none",
+                    boxSizing: "border-box",
                   }}
                 />
-                {/* Quick Selector Pills */}
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "6px" }}>
-                  {["Ramesh Labour", "Dinesh Labour", "Suresh Workshop", "Priya Assembly", "Vikram Sublimation"].map((person) => (
-                    <button
-                      key={person}
-                      type="button"
-                      onClick={() => setUseReportedBy(person)}
-                      style={{
-                        padding: "2px 8px",
-                        fontSize: "10.5px",
-                        borderRadius: "3px",
-                        backgroundColor: useReportedBy === person ? "rgba(255, 138, 115, 0.25)" : "rgba(255, 255, 255, 0.05)",
-                        border: useReportedBy === person ? "1px solid rgba(255, 138, 115, 0.5)" : "1px solid rgba(255, 255, 255, 0.08)",
-                        color: useReportedBy === person ? "var(--accent-text)" : "#cbd5e1",
-                        cursor: "pointer",
-                        transition: "all 0.15s ease",
-                      }}
-                    >
-                      + {person}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Row 3: Destination Workstation / Order */}
-              <div>
-                <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--text-secondary)", marginBottom: "6px" }}>
-                  Destination Workstation / Production Order *
-                </label>
-                <input
-                  type="text"
-                  value={useDestination}
-                  onChange={(e) => setUseDestination(e.target.value)}
-                  required
-                  placeholder="e.g., Lanyard Stitching Table 2, Sublimation Line 1, Client Order Batch"
+                <span
                   style={{
-                    width: "100%",
-                    height: "38px",
-                    padding: "0 12px",
-                    backgroundColor: "rgba(0, 0, 0, 0.6)",
-                    border: "1px solid rgba(255, 255, 255, 0.12)",
-                    borderRadius: "4px",
-                    color: "#fff",
-                    fontSize: "13px",
-                    outline: "none",
+                    position: "absolute",
+                    right: "12px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    fontSize: "11px",
+                    color: "var(--text-muted)",
+                    pointerEvents: "none",
                   }}
-                />
-                {/* Quick Station Pills */}
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "6px" }}>
-                  {["Production Assembly Floor", "Stitching Bench 2", "Sublimation Line 1", "Metal Ring Press", "Client Order Batch"].map((station) => (
-                    <button
-                      key={station}
-                      type="button"
-                      onClick={() => setUseDestination(station)}
-                      style={{
-                        padding: "2px 8px",
-                        fontSize: "10.5px",
-                        borderRadius: "3px",
-                        backgroundColor: useDestination === station ? "rgba(56, 189, 248, 0.2)" : "rgba(255, 255, 255, 0.05)",
-                        border: useDestination === station ? "1px solid rgba(56, 189, 248, 0.4)" : "1px solid rgba(255, 255, 255, 0.08)",
-                        color: useDestination === station ? "#38bdf8" : "#cbd5e1",
-                        cursor: "pointer",
-                        transition: "all 0.15s ease",
-                      }}
-                    >
-                      + {station}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Row 4: Job Notes */}
-              <div>
-                <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--text-secondary)", marginBottom: "6px" }}>
-                  Job Notes / Reason
-                </label>
-                <input
-                  type="text"
-                  value={useNote}
-                  onChange={(e) => setUseNote(e.target.value)}
-                  placeholder="e.g., Issued for school lanyards order, urgent rush batch..."
-                  style={{
-                    width: "100%",
-                    height: "38px",
-                    padding: "0 12px",
-                    backgroundColor: "rgba(0, 0, 0, 0.6)",
-                    border: "1px solid rgba(255, 255, 255, 0.12)",
-                    borderRadius: "4px",
-                    color: "#fff",
-                    fontSize: "13px",
-                    outline: "none",
-                  }}
-                />
-              </div>
-
-              {/* Submit & Cancel Buttons */}
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px", marginTop: "4px" }}>
-                <Button variant="secondary" size="sm" type="button" onClick={() => setIsUsageDrawerOpen(false)}>
-                  Cancel
-                </Button>
-                <Button variant="primary" size="sm" type="submit">
-                  - Deduct & Record Usage
-                </Button>
-              </div>
-            </form>
-          </div>
-
-          {/* ─── 3. BELOW: THE WHOLE HISTORY WHO BRING WHAT ETC. ───────────────── */}
-          <div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-              <div>
-                <strong style={{ fontSize: "13.5px", color: "#fff", display: "block" }}>Complete Issuance & Usage History</strong>
-                <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>
-                  Audit log of who brought/took what, quantities, timestamps and workstations
+                >
+                  {targetItem.unit}
                 </span>
               </div>
-              <span
+            </div>
+
+            {/* Field 2: Who did it */}
+            <div>
+              <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--text-secondary)", marginBottom: "6px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                Who Did It (User / Person) *
+              </label>
+              <input
+                type="text"
+                value={useReportedBy}
+                onChange={(e) => setUseReportedBy(e.target.value)}
+                required
+                placeholder="Enter user name (e.g., Rohan Sharma)..."
                 style={{
-                  fontSize: "11px",
-                  color: "var(--text-muted)",
-                  backgroundColor: "rgba(255, 255, 255, 0.05)",
-                  padding: "3px 8px",
-                  borderRadius: "3px",
+                  width: "100%",
+                  height: "38px",
+                  padding: "0 12px",
+                  backgroundColor: "rgba(0, 0, 0, 0.6)",
+                  border: "1px solid rgba(255, 255, 255, 0.12)",
+                  borderRadius: "4px",
+                  color: "#fff",
+                  fontSize: "13px",
+                  outline: "none",
+                  boxSizing: "border-box",
                 }}
-              >
+              />
+            </div>
+
+            {/* Action Buttons */}
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px", marginTop: "4px" }}>
+              <Button variant="secondary" size="sm" type="button" onClick={() => setIsUsageDrawerOpen(false)}>
+                Cancel
+              </Button>
+              <Button variant="primary" size="sm" type="submit">
+                - Deduct from Stock
+              </Button>
+            </div>
+          </form>
+
+          {/* ─── 3. DEDUCTION HISTORY ───────────────────────────────────────── */}
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+              <strong style={{ fontSize: "13px", color: "#fff" }}>Deduction History</strong>
+              <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>
                 {movements.filter((m) => m.itemName.toLowerCase() === targetItem.name.toLowerCase()).length} records
               </span>
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
               {movements
                 .filter((m) => m.itemName.toLowerCase() === targetItem.name.toLowerCase())
                 .length === 0 ? (
                 <div
                   style={{
-                    padding: "30px 20px",
+                    padding: "24px 16px",
                     textAlign: "center",
-                    backgroundColor: "rgba(0, 0, 0, 0.25)",
+                    backgroundColor: "rgba(0, 0, 0, 0.2)",
                     border: "1px dashed rgba(255, 255, 255, 0.1)",
-                    borderRadius: "6px",
+                    borderRadius: "4px",
                   }}
                 >
-                  <Icon name="tag" size={24} color="var(--text-muted)" />
-                  <p style={{ fontSize: "12.5px", color: "var(--text-secondary)", marginTop: "8px", marginBottom: 0 }}>
-                    No recorded movement history for <strong style={{ color: "#fff" }}>{targetItem.name}</strong> yet.
-                  </p>
-                  <p style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "4px", marginBottom: 0 }}>
-                    Submit the form above to record the first material consumption.
+                  <p style={{ fontSize: "12px", color: "var(--text-muted)", margin: 0 }}>
+                    No deduction history for <strong style={{ color: "#fff" }}>{targetItem.name}</strong> yet.
                   </p>
                 </div>
               ) : (
@@ -1596,90 +1411,35 @@ export const StockDashboardView: React.FC = () => {
                     <div
                       key={log.id}
                       style={{
-                        padding: "12px 14px",
+                        padding: "10px 14px",
                         backgroundColor: "rgba(10, 14, 23, 0.7)",
                         border: "1px solid rgba(255, 255, 255, 0.06)",
-                        borderRadius: "6px",
+                        borderRadius: "4px",
                         display: "flex",
-                        flexDirection: "column",
-                        gap: "6px",
-                        transition: "background 0.15s ease",
+                        justifyContent: "space-between",
+                        alignItems: "center",
                       }}
-                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.03)")}
-                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "rgba(10, 14, 23, 0.7)")}
                     >
-                      {/* Top line: Who brought/took it + Destination + Quantity */}
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                          <span
-                            style={{
-                              width: "22px",
-                              height: "22px",
-                              borderRadius: "50%",
-                              backgroundColor: log.type === "ADDITION" ? "rgba(16, 185, 129, 0.2)" : "rgba(255, 138, 115, 0.2)",
-                              display: "inline-flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              fontSize: "11px",
-                              fontWeight: 800,
-                              color: log.type === "ADDITION" ? "#10b981" : "var(--accent-text)",
-                            }}
-                          >
-                            {log.type === "ADDITION" ? "+" : "—"}
-                          </span>
-                          <div>
-                            <span style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff" }}>
-                              {log.reportedBy || "Floor Operator"}
-                            </span>
-                            <span style={{ fontSize: "11.5px", color: "var(--text-muted)", marginLeft: "6px" }}>
-                              took for <span style={{ color: "#38bdf8", fontWeight: 600 }}>{log.destinationOrSource}</span>
-                            </span>
-                          </div>
+                      <div>
+                        <div style={{ fontSize: "12.5px", fontWeight: 700, color: "#ffffff" }}>
+                          👤 {log.reportedBy || "User"}
                         </div>
-
-                        <div style={{ textAlign: "right" }}>
-                          <span
-                            style={{
-                              fontSize: "13px",
-                              fontWeight: 800,
-                              fontFamily: "var(--font-mono)",
-                              color: log.type === "ADDITION" ? "#10b981" : "#f59e0b",
-                            }}
-                          >
-                            {log.type === "ADDITION" ? "+" : "-"}
-                            {log.quantity.toLocaleString()} {log.unit}
-                          </span>
-                          <span
-                            style={{
-                              display: "block",
-                              fontSize: "9.5px",
-                              fontWeight: 700,
-                              color: log.type === "ADDITION" ? "#34d399" : "var(--accent-text)",
-                              textTransform: "uppercase",
-                              marginTop: "1px",
-                            }}
-                          >
-                            {log.type === "ADDITION" ? "Receipt" : "Usage"}
-                          </span>
+                        <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "2px" }}>
+                          🕒 {log.timestamp}
                         </div>
                       </div>
 
-                      {/* Bottom line: Note and Timestamp */}
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          paddingTop: "4px",
-                          borderTop: "1px solid rgba(255, 255, 255, 0.04)",
-                          fontSize: "11px",
-                        }}
-                      >
-                        <span style={{ color: "var(--text-secondary)", fontStyle: "italic" }}>
-                          "{log.notes || "No notes provided"}"
-                        </span>
-                        <span style={{ color: "var(--text-muted)", fontSize: "10.5px", flexShrink: 0, marginLeft: "12px" }}>
-                          🕒 {log.timestamp}
+                      <div style={{ textAlign: "right" }}>
+                        <span
+                          style={{
+                            fontSize: "13px",
+                            fontWeight: 800,
+                            fontFamily: "var(--font-mono)",
+                            color: log.type === "ADDITION" ? "#10b981" : "#f59e0b",
+                          }}
+                        >
+                          {log.type === "ADDITION" ? "+" : "-"}
+                          {log.quantity.toLocaleString()} {log.unit}
                         </span>
                       </div>
                     </div>
