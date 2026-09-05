@@ -219,8 +219,9 @@ export const Select: React.FC<SelectProps> = ({
             width: "100%",
             height: "var(--input-height, 36px)",
             boxSizing: "border-box",
-            padding: "0 28px 0 12px",
+            padding: "0 34px 0 12px",
             backgroundColor: "var(--bg-input)",
+            backgroundImage: "none",
             color: "var(--text-primary)",
             border: `1px solid ${error ? "var(--status-error)" : "var(--border-medium)"}`,
             borderRadius: "var(--radius-sm)",
@@ -259,7 +260,7 @@ export const Select: React.FC<SelectProps> = ({
         <div
           style={{
             position: "absolute",
-            right: "10px",
+            right: "13px",
             pointerEvents: "none",
             color: "var(--text-muted)",
             display: "flex",

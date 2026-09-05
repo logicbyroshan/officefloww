@@ -943,7 +943,7 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
                     style={{
                       width: "100%",
                       height: "36px",
-                      padding: "0 28px 0 12px",
+                      padding: "0 34px 0 12px",
                       backgroundColor: "rgba(9, 12, 19, 0.85)",
                       border: "1px solid var(--accent-border)",
                       borderRadius: "var(--radius-sm, 4px)",
@@ -958,7 +958,7 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
                     onClick={() => setIsClientDropdownOpen(!isClientDropdownOpen)}
                     style={{
                       position: "absolute",
-                      right: "10px",
+                      right: "13px",
                       cursor: "pointer",
                       fontSize: "10px",
                       color: "var(--accent-text)",
@@ -1043,7 +1043,7 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
                 style={{
                   width: "100%",
                   height: "36px",
-                  padding: "0 10px",
+                  padding: "0 34px 0 12px",
                   backgroundColor: "rgba(9, 12, 19, 0.85)",
                   border: "1px solid rgba(255, 255, 255, 0.16)",
                   borderRadius: "var(--radius-sm, 4px)",
