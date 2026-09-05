@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import { Button } from "../../design-system/components/Button";
 import { Icon } from "../../design-system/components/Icon";
-import { Modal } from "../../design-system/components/Modal";
+import { Modal, Drawer } from "../../design-system/components/Modal";
 import { Input, Select } from "../../design-system/components/Input";
 import { Tabs } from "../../design-system/components/Tabs";
 import { useToast } from "../../design-system/components/Toast";
@@ -243,8 +243,20 @@ interface StockMovementLog {
 const SEED_MOVEMENTS: StockMovementLog[] = [
   { id: "mov-1", timestamp: "Today, 02:45 PM", itemName: "12mm Lanyard Rolls", type: "USAGE", quantity: 3, unit: "rolls", destinationOrSource: "Sublimation Line 1", reportedBy: "Vikram Singh", notes: "St. Xavier's High School Order batch" },
   { id: "mov-2", timestamp: "Today, 11:15 AM", itemName: "Dog Hook", type: "USAGE", quantity: 500, unit: "pieces", destinationOrSource: "Lanyard Stitching Table 2", reportedBy: "Ramesh Labour", notes: "Northwind Coffee lanyards assembly" },
-  { id: "mov-3", timestamp: "Yesterday, 04:30 PM", itemName: "Clips", type: "ADDITION", quantity: 5, unit: "packets of 1000", destinationOrSource: "Supplier Receipt Bay", reportedBy: "Amit Patel", notes: "Vendor delivery receipt" },
-  { id: "mov-4", timestamp: "01 Sep 2026", itemName: "Plastic Holder-V", type: "USAGE", quantity: 800, unit: "pieces", destinationOrSource: "Packaging Bench A", reportedBy: "Priya Sharma", notes: "Govt Engineering College order" },
+  { id: "mov-3", timestamp: "Today, 09:30 AM", itemName: "Rings", type: "USAGE", quantity: 1200, unit: "pieces", destinationOrSource: "Metal Ring Press Bench", reportedBy: "Suresh Workshop", notes: "BHEL badges fitting batch" },
+  { id: "mov-4", timestamp: "Yesterday, 05:10 PM", itemName: "16mm Lanyard Rolls", type: "USAGE", quantity: 4, unit: "rolls", destinationOrSource: "Sublimation Press Line 2", reportedBy: "Kailash Sublimation", notes: "AIIMS Staff Lanyards run" },
+  { id: "mov-5", timestamp: "Yesterday, 04:30 PM", itemName: "Clips", type: "ADDITION", quantity: 5, unit: "packets of 1000", destinationOrSource: "Supplier Receipt Bay", reportedBy: "Amit Patel", notes: "Vendor delivery receipt" },
+  { id: "mov-6", timestamp: "Yesterday, 02:00 PM", itemName: "Pins", type: "USAGE", quantity: 6, unit: "packets of 1000", destinationOrSource: "Badge Pinning Bench", reportedBy: "Dinesh Labour", notes: "Symbiosis Event Badges" },
+  { id: "mov-7", timestamp: "01 Sep 2026", itemName: "Plastic Holder-V", type: "USAGE", quantity: 800, unit: "pieces", destinationOrSource: "Packaging Bench A", reportedBy: "Priya Sharma", notes: "Govt Engineering College order" },
+  { id: "mov-8", timestamp: "01 Sep 2026", itemName: "Plastic Hook", type: "USAGE", quantity: 1500, unit: "pieces", destinationOrSource: "Assembly Table 03", reportedBy: "Ramesh Labour", notes: "Delhi Public School lanyards assembly" },
+  { id: "mov-9", timestamp: "31 Aug 2026", itemName: "Crystal Holder", type: "USAGE", quantity: 400, unit: "pieces", destinationOrSource: "VIP Badge Assembly Line", reportedBy: "Sunita Printing", notes: "Executive summit badges" },
+  { id: "mov-10", timestamp: "30 Aug 2026", itemName: "Plastic Holder-H", type: "USAGE", quantity: 600, unit: "pieces", destinationOrSource: "Assembly Line 02", reportedBy: "Suresh Workshop", notes: "HCL conference badge inserts" },
+  { id: "mov-11", timestamp: "30 Aug 2026", itemName: "England Hook", type: "USAGE", quantity: 800, unit: "pieces", destinationOrSource: "Lanyard Stitching Table 1", reportedBy: "Ramesh Labour", notes: "Rotary Club annual badges" },
+  { id: "mov-12", timestamp: "29 Aug 2026", itemName: "DST-V", type: "USAGE", quantity: 500, unit: "pieces", destinationOrSource: "Stitching Bench 3", reportedBy: "Dinesh Labour", notes: "Metro Railway personnel ID cards" },
+  { id: "mov-13", timestamp: "28 Aug 2026", itemName: "DST-H", type: "USAGE", quantity: 450, unit: "pieces", destinationOrSource: "Card Assembly Line", reportedBy: "Priya Sharma", notes: "Bank of Baroda staff passes" },
+  { id: "mov-14", timestamp: "28 Aug 2026", itemName: "20mm Lanyard Rolls", type: "USAGE", quantity: 5, unit: "rolls", destinationOrSource: "Wide Sublimation Press", reportedBy: "Vikram Singh", notes: "Tech Mahindra VIP neckbands" },
+  { id: "mov-15", timestamp: "27 Aug 2026", itemName: "Dog Hook", type: "USAGE", quantity: 1000, unit: "pieces", destinationOrSource: "Assembly Table 01", reportedBy: "Dinesh Labour", notes: "Apex Hospitals lanyards issue" },
+  { id: "mov-16", timestamp: "26 Aug 2026", itemName: "Rings", type: "USAGE", quantity: 2000, unit: "pieces", destinationOrSource: "Metal Ring Press Bench", reportedBy: "Ramesh Labour", notes: "Tata Motors badge rings" },
 ];
 
 export const StockDashboardView: React.FC = () => {
@@ -281,18 +293,20 @@ export const StockDashboardView: React.FC = () => {
     }
   }, [editingCell]);
 
-  // Modals (Report Stock Addition & Report Material Usage — NO PRICING)
+  // Modals & Drawers (Report Stock Addition & Slide-Over Usage Drawer)
   const [isAddStockModalOpen, setIsAddStockModalOpen] = useState(false);
-  const [isUsageModalOpen, setIsUsageModalOpen] = useState(false);
+  const [isUsageDrawerOpen, setIsUsageDrawerOpen] = useState(false);
   const [isNewItemModalOpen, setIsNewItemModalOpen] = useState(false);
   const [targetItem, setTargetItem] = useState<StockItem>(INITIAL_STOCK_ITEMS[0]);
 
-  // Form fields
+  // Addition Form fields
   const [adjustQty, setAdjustQty] = useState("500");
   const [adjustSource, setAdjustSource] = useState("Vendor Receipt / Plant Storeroom");
   const [adjustNote, setAdjustNote] = useState("Warehouse replenishment");
 
+  // Usage Drawer Form fields (Who took it, where, why, qty)
   const [useQty, setUseQty] = useState("200");
+  const [useReportedBy, setUseReportedBy] = useState("Ramesh Labour");
   const [useDestination, setUseDestination] = useState("Production Assembly Floor");
   const [useNote, setUseNote] = useState("Issued for current client order");
 
@@ -384,6 +398,8 @@ export const StockDashboardView: React.FC = () => {
   const handleConfirmLogUsage = (e: React.FormEvent) => {
     e.preventDefault();
     const qty = parseInt(useQty, 10) || 0;
+    if (qty <= 0) return;
+
     setStockItems((prev) =>
       prev.map((i) =>
         i.id === targetItem.id
@@ -395,22 +411,29 @@ export const StockDashboardView: React.FC = () => {
           : i
       )
     );
-    setMovements([
-      {
-        id: `mov-${Date.now()}`,
-        timestamp: "Just now",
-        itemName: targetItem.name,
-        type: "USAGE",
-        quantity: qty,
-        unit: targetItem.unit,
-        destinationOrSource: useDestination,
-        reportedBy: "Assembly Operator",
-        notes: useNote,
-      },
-      ...movements,
-    ]);
-    setIsUsageModalOpen(false);
-    success("Usage Logged", `Consumed ${qty} ${targetItem.unit} of ${targetItem.name}`);
+
+    // Update target item so top summary card in drawer updates in real-time
+    setTargetItem((prev) => ({
+      ...prev,
+      availableStock: Math.max(0, prev.availableStock - qty),
+      usedStock: prev.usedStock + qty,
+    }));
+
+    const newLog: StockMovementLog = {
+      id: `mov-${Date.now()}`,
+      timestamp: "Just now",
+      itemName: targetItem.name,
+      type: "USAGE",
+      quantity: qty,
+      unit: targetItem.unit,
+      destinationOrSource: useDestination || "Production Floor",
+      reportedBy: useReportedBy || "Assembly Operator",
+      notes: useNote || "Batch usage recorded",
+    };
+
+    setMovements([newLog, ...movements]);
+    success("Usage Recorded", `Deducted -${qty} ${targetItem.unit} brought/taken by ${useReportedBy || "Operator"}`);
+    setUseQty(targetItem.unit === "rolls" ? "2" : targetItem.unit.includes("packet") ? "2" : "100");
   };
 
   const handleCreateNewItem = (e: React.FormEvent) => {
@@ -541,6 +564,7 @@ export const StockDashboardView: React.FC = () => {
                     fontWeight: 800,
                     letterSpacing: "0.8px",
                     userSelect: "none",
+                    whiteSpace: "nowrap",
                   }}
                 >
                   {/* 1. STOCK ITEM NAME */}
@@ -551,10 +575,18 @@ export const StockDashboardView: React.FC = () => {
                       cursor: "pointer",
                       borderBottom: "2px solid rgba(255, 138, 115, 0.4)",
                       borderRight: "1px solid rgba(255, 255, 255, 0.05)",
+                      whiteSpace: "nowrap",
                     }}
                     onClick={() => toggleSort("name")}
                   >
-                    Stock Item Name {sortField === "name" ? (sortDir === "asc" ? "▲" : "▼") : ""}
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", whiteSpace: "nowrap" }}>
+                      <span style={{ whiteSpace: "nowrap" }}>Stock Item Name</span>
+                      {sortField === "name" && (
+                        <span style={{ color: "var(--accent-text)", fontSize: "9px", flexShrink: 0 }}>
+                          {sortDir === "asc" ? "▲" : "▼"}
+                        </span>
+                      )}
+                    </span>
                   </th>
 
                   {/* 2. UNIT / PACKAGING */}
@@ -565,6 +597,7 @@ export const StockDashboardView: React.FC = () => {
                       width: "180px",
                       borderBottom: "2px solid rgba(255, 138, 115, 0.4)",
                       borderRight: "1px solid rgba(255, 255, 255, 0.05)",
+                      whiteSpace: "nowrap",
                     }}
                   >
                     Unit / Packaging
@@ -575,14 +608,22 @@ export const StockDashboardView: React.FC = () => {
                     style={{
                       padding: "16px 18px",
                       textAlign: "right",
-                      width: "160px",
+                      width: "195px",
                       cursor: "pointer",
                       borderBottom: "2px solid rgba(255, 138, 115, 0.4)",
                       borderRight: "1px solid rgba(255, 255, 255, 0.05)",
+                      whiteSpace: "nowrap",
                     }}
                     onClick={() => toggleSort("availableStock")}
                   >
-                    Floor Available {sortField === "availableStock" ? (sortDir === "asc" ? "▲" : "▼") : ""}
+                    <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "flex-end", gap: "6px", whiteSpace: "nowrap" }}>
+                      <span style={{ whiteSpace: "nowrap" }}>Floor Available</span>
+                      {sortField === "availableStock" && (
+                        <span style={{ color: "var(--accent-text)", fontSize: "9px", flexShrink: 0 }}>
+                          {sortDir === "asc" ? "▲" : "▼"}
+                        </span>
+                      )}
+                    </span>
                   </th>
 
                   {/* 4. TOTAL CONSUMED */}
@@ -590,14 +631,22 @@ export const StockDashboardView: React.FC = () => {
                     style={{
                       padding: "16px 18px",
                       textAlign: "right",
-                      width: "160px",
+                      width: "185px",
                       cursor: "pointer",
                       borderBottom: "2px solid rgba(255, 138, 115, 0.4)",
                       borderRight: "1px solid rgba(255, 255, 255, 0.05)",
+                      whiteSpace: "nowrap",
                     }}
                     onClick={() => toggleSort("usedStock")}
                   >
-                    Total Consumed {sortField === "usedStock" ? (sortDir === "asc" ? "▲" : "▼") : ""}
+                    <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "flex-end", gap: "6px", whiteSpace: "nowrap" }}>
+                      <span style={{ whiteSpace: "nowrap" }}>Total Consumed</span>
+                      {sortField === "usedStock" && (
+                        <span style={{ color: "var(--accent-text)", fontSize: "9px", flexShrink: 0 }}>
+                          {sortDir === "asc" ? "▲" : "▼"}
+                        </span>
+                      )}
+                    </span>
                   </th>
 
                   {/* 5. MIN ALERT */}
@@ -605,14 +654,22 @@ export const StockDashboardView: React.FC = () => {
                     style={{
                       padding: "16px 18px",
                       textAlign: "right",
-                      width: "140px",
+                      width: "160px",
                       cursor: "pointer",
                       borderBottom: "2px solid rgba(255, 138, 115, 0.4)",
                       borderRight: "1px solid rgba(255, 255, 255, 0.05)",
+                      whiteSpace: "nowrap",
                     }}
                     onClick={() => toggleSort("minThreshold")}
                   >
-                    Min Alert {sortField === "minThreshold" ? (sortDir === "asc" ? "▲" : "▼") : ""}
+                    <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "flex-end", gap: "6px", whiteSpace: "nowrap" }}>
+                      <span style={{ whiteSpace: "nowrap" }}>Min Alert</span>
+                      {sortField === "minThreshold" && (
+                        <span style={{ color: "var(--accent-text)", fontSize: "9px", flexShrink: 0 }}>
+                          {sortDir === "asc" ? "▲" : "▼"}
+                        </span>
+                      )}
+                    </span>
                   </th>
 
                   {/* 6. ACTIONS */}
@@ -620,8 +677,9 @@ export const StockDashboardView: React.FC = () => {
                     style={{
                       padding: "16px 18px",
                       textAlign: "center",
-                      width: "220px",
+                      width: "230px",
                       borderBottom: "2px solid rgba(255, 138, 115, 0.4)",
+                      whiteSpace: "nowrap",
                     }}
                   >
                     Actions
@@ -945,7 +1003,10 @@ export const StockDashboardView: React.FC = () => {
                               onClick={() => {
                                 setTargetItem(item);
                                 setUseQty(item.unit === "rolls" ? "2" : item.unit.includes("packet") ? "2" : "200");
-                                setIsUsageModalOpen(true);
+                                setUseReportedBy("Ramesh Labour");
+                                setUseDestination(item.workstation || "Production Assembly Floor");
+                                setUseNote("Material issued for current client order");
+                                setIsUsageDrawerOpen(true);
                               }}
                               style={{
                                 height: "32px",
@@ -1117,53 +1178,517 @@ export const StockDashboardView: React.FC = () => {
         </Modal>
       )}
 
-      {/* ─── MODAL 2: REPORT MATERIAL USAGE (NO PRICING) ──────────────────────── */}
-      {isUsageModalOpen && (
-        <Modal
-          isOpen={isUsageModalOpen}
-          onClose={() => setIsUsageModalOpen(false)}
-          title={`Log Consumption: ${targetItem.name}`}
-        >
-          <form onSubmit={handleConfirmLogUsage} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-            <div style={{ padding: "10px", backgroundColor: "rgba(255,255,255,0.03)", borderRadius: "2px", display: "flex", justifyContent: "space-between" }}>
-              <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>Current Floor Stock:</span>
-              <strong style={{ fontSize: "13px", color: "#fff", fontFamily: "var(--font-mono)" }}>
-                {targetItem.availableStock.toLocaleString()} {targetItem.unit}
-              </strong>
+      {/* ─── DRAWER: MATERIAL USAGE LOG & COMPLETE AUDIT HISTORY ─────────────── */}
+      <Drawer
+        isOpen={isUsageDrawerOpen}
+        onClose={() => setIsUsageDrawerOpen(false)}
+        title={
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <div
+              style={{
+                width: "34px",
+                height: "34px",
+                borderRadius: "4px",
+                backgroundColor: "rgba(255, 138, 115, 0.12)",
+                border: "1px solid rgba(255, 138, 115, 0.3)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: targetItem.iconColor || "var(--accent-text)",
+                flexShrink: 0,
+              }}
+            >
+              <Icon name={targetItem.iconName || "tool"} size={16} color={targetItem.iconColor || "var(--accent-text)"} />
+            </div>
+            <div>
+              <div style={{ fontSize: "15px", fontWeight: 700, color: "#fff" }}>
+                Material Usage Log — {targetItem.name}
+              </div>
+              <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "1px" }}>
+                Packaging: <span style={{ color: "#cbd5e1", fontWeight: 600 }}>{targetItem.unit}</span> · Workstation: {targetItem.workstation}
+              </div>
+            </div>
+          </div>
+        }
+        width={640}
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+          {/* ─── 1. FIXED TOP SUMMARY CARD: HOW MUCH TILL NOW USED ─────────────── */}
+          <div
+            style={{
+              padding: "16px 18px",
+              background: "linear-gradient(135deg, rgba(16, 22, 36, 0.95) 0%, rgba(26, 32, 50, 0.9) 100%)",
+              border: "1px solid rgba(255, 138, 115, 0.25)",
+              borderRadius: "8px",
+              boxShadow: "0 8px 24px rgba(0, 0, 0, 0.4)",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "12px",
+                borderBottom: "1px solid rgba(255, 255, 255, 0.07)",
+                paddingBottom: "8px",
+              }}
+            >
+              <span style={{ fontSize: "10.5px", fontWeight: 800, letterSpacing: "0.8px", color: "var(--accent-text)", textTransform: "uppercase" }}>
+                STOCK CONSUMPTION SUMMARY
+              </span>
+              <span
+                style={{
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  padding: "2px 8px",
+                  borderRadius: "3px",
+                  backgroundColor: targetItem.availableStock <= targetItem.minThreshold ? "rgba(239, 68, 68, 0.2)" : "rgba(16, 185, 129, 0.15)",
+                  color: targetItem.availableStock <= targetItem.minThreshold ? "#f87171" : "#34d399",
+                  border: targetItem.availableStock <= targetItem.minThreshold ? "1px solid rgba(239, 68, 68, 0.3)" : "1px solid rgba(16, 185, 129, 0.3)",
+                }}
+              >
+                {targetItem.availableStock <= targetItem.minThreshold ? "⚠️ Low Stock Alert" : "✓ Healthy Stock"}
+              </span>
             </div>
 
-            <Input
-              label={`Quantity Consumed (${targetItem.unit})`}
-              type="number"
-              value={useQty}
-              onChange={(e) => setUseQty(e.target.value)}
-              required
-            />
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px" }}>
+              {/* Stat 1: Total Used Till Now */}
+              <div
+                style={{
+                  padding: "12px 14px",
+                  backgroundColor: "rgba(16, 185, 129, 0.08)",
+                  border: "1px solid rgba(16, 185, 129, 0.2)",
+                  borderRadius: "6px",
+                }}
+              >
+                <div style={{ fontSize: "10px", color: "#34d399", textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.5px" }}>
+                  Used Till Now
+                </div>
+                <div style={{ fontSize: "22px", fontWeight: 800, color: "#10b981", fontFamily: "var(--font-mono)", marginTop: "4px" }}>
+                  {targetItem.usedStock.toLocaleString()}
+                </div>
+                <div style={{ fontSize: "10.5px", color: "var(--text-muted)", marginTop: "2px" }}>
+                  {targetItem.unit} recorded
+                </div>
+              </div>
 
-            <Input
-              label="Destination Workstation / Production Order"
-              value={useDestination}
-              onChange={(e) => setUseDestination(e.target.value)}
-              required
-            />
+              {/* Stat 2: Current Floor Available */}
+              <div
+                style={{
+                  padding: "12px 14px",
+                  backgroundColor: "rgba(255, 255, 255, 0.03)",
+                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                  borderRadius: "6px",
+                }}
+              >
+                <div style={{ fontSize: "10px", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.5px" }}>
+                  Floor Available
+                </div>
+                <div style={{ fontSize: "22px", fontWeight: 800, color: "#ffffff", fontFamily: "var(--font-mono)", marginTop: "4px" }}>
+                  {targetItem.availableStock.toLocaleString()}
+                </div>
+                <div style={{ fontSize: "10.5px", color: "var(--text-muted)", marginTop: "2px" }}>
+                  {targetItem.unit} in store
+                </div>
+              </div>
 
-            <Input
-              label="Job Notes"
-              value={useNote}
-              onChange={(e) => setUseNote(e.target.value)}
-            />
-
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px", marginTop: "6px" }}>
-              <Button variant="secondary" size="sm" onClick={() => setIsUsageModalOpen(false)}>
-                Cancel
-              </Button>
-              <Button variant="primary" size="sm" type="submit">
-                Deduct & Record Usage
-              </Button>
+              {/* Stat 3: Min Alert Safety Limit */}
+              <div
+                style={{
+                  padding: "12px 14px",
+                  backgroundColor: "rgba(245, 158, 11, 0.08)",
+                  border: "1px solid rgba(245, 158, 11, 0.2)",
+                  borderRadius: "6px",
+                }}
+              >
+                <div style={{ fontSize: "10px", color: "#fbbf24", textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.5px" }}>
+                  Min Alert Limit
+                </div>
+                <div style={{ fontSize: "22px", fontWeight: 800, color: "#f59e0b", fontFamily: "var(--font-mono)", marginTop: "4px" }}>
+                  {targetItem.minThreshold.toLocaleString()}
+                </div>
+                <div style={{ fontSize: "10.5px", color: "var(--text-muted)", marginTop: "2px" }}>
+                  {targetItem.unit} threshold
+                </div>
+              </div>
             </div>
-          </form>
-        </Modal>
-      )}
+          </div>
+
+          {/* ─── 2. TOP INPUT FORM: WHO BROUGHT IT, WHAT THING USED, QTY ───────── */}
+          <div
+            style={{
+              padding: "16px 18px",
+              backgroundColor: "rgba(19, 23, 34, 0.95)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              borderRadius: "8px",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
+              <div>
+                <strong style={{ fontSize: "13.5px", color: "#fff", display: "block" }}>Log New Material Consumption</strong>
+                <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>Record who brought/took it and destination workstation</span>
+              </div>
+              <span
+                style={{
+                  fontSize: "10px",
+                  fontWeight: 700,
+                  padding: "3px 8px",
+                  borderRadius: "3px",
+                  backgroundColor: "rgba(255, 138, 115, 0.15)",
+                  color: "var(--accent-text)",
+                  border: "1px solid rgba(255, 138, 115, 0.3)",
+                }}
+              >
+                - USAGE DEDUCTION
+              </span>
+            </div>
+
+            <form onSubmit={handleConfirmLogUsage} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              {/* Row 1: Material Item (Fixed/Displayed) & Quantity to Deduct */}
+              <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "12px" }}>
+                <div>
+                  <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--text-secondary)", marginBottom: "6px" }}>
+                    What Thing Used (Material Item)
+                  </label>
+                  <div
+                    style={{
+                      height: "38px",
+                      padding: "0 12px",
+                      backgroundColor: "rgba(0, 0, 0, 0.5)",
+                      border: "1px solid rgba(255, 255, 255, 0.08)",
+                      borderRadius: "4px",
+                      color: "#fff",
+                      fontSize: "13px",
+                      fontWeight: 600,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                    }}
+                  >
+                    <Icon name={targetItem.iconName || "tool"} size={14} color={targetItem.iconColor} />
+                    <span>{targetItem.name}</span>
+                    <span style={{ marginLeft: "auto", fontSize: "11px", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
+                      ({targetItem.unit})
+                    </span>
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--text-secondary)", marginBottom: "6px" }}>
+                    Quantity Consumed *
+                  </label>
+                  <div style={{ position: "relative" }}>
+                    <input
+                      type="number"
+                      min="1"
+                      value={useQty}
+                      onChange={(e) => setUseQty(e.target.value)}
+                      required
+                      placeholder="e.g. 200"
+                      style={{
+                        width: "100%",
+                        height: "38px",
+                        padding: "0 55px 0 12px",
+                        backgroundColor: "rgba(0, 0, 0, 0.6)",
+                        border: "1px solid var(--accent-border)",
+                        borderRadius: "4px",
+                        color: "#fff",
+                        fontSize: "13px",
+                        fontWeight: 700,
+                        fontFamily: "var(--font-mono)",
+                        outline: "none",
+                      }}
+                    />
+                    <span
+                      style={{
+                        position: "absolute",
+                        right: "10px",
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        fontSize: "11px",
+                        color: "var(--text-muted)",
+                        pointerEvents: "none",
+                      }}
+                    >
+                      {targetItem.unit}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Row 2: Who Brought / Took It */}
+              <div>
+                <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--text-secondary)", marginBottom: "6px" }}>
+                  Who Brought / Took It (Labour / Operator / Person) *
+                </label>
+                <input
+                  type="text"
+                  value={useReportedBy}
+                  onChange={(e) => setUseReportedBy(e.target.value)}
+                  required
+                  placeholder="e.g., Ramesh Labour, Dinesh Assembly, Suresh Workshop..."
+                  style={{
+                    width: "100%",
+                    height: "38px",
+                    padding: "0 12px",
+                    backgroundColor: "rgba(0, 0, 0, 0.6)",
+                    border: "1px solid rgba(255, 255, 255, 0.12)",
+                    borderRadius: "4px",
+                    color: "#fff",
+                    fontSize: "13px",
+                    outline: "none",
+                  }}
+                />
+                {/* Quick Selector Pills */}
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "6px" }}>
+                  {["Ramesh Labour", "Dinesh Labour", "Suresh Workshop", "Priya Assembly", "Vikram Sublimation"].map((person) => (
+                    <button
+                      key={person}
+                      type="button"
+                      onClick={() => setUseReportedBy(person)}
+                      style={{
+                        padding: "2px 8px",
+                        fontSize: "10.5px",
+                        borderRadius: "3px",
+                        backgroundColor: useReportedBy === person ? "rgba(255, 138, 115, 0.25)" : "rgba(255, 255, 255, 0.05)",
+                        border: useReportedBy === person ? "1px solid rgba(255, 138, 115, 0.5)" : "1px solid rgba(255, 255, 255, 0.08)",
+                        color: useReportedBy === person ? "var(--accent-text)" : "#cbd5e1",
+                        cursor: "pointer",
+                        transition: "all 0.15s ease",
+                      }}
+                    >
+                      + {person}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Row 3: Destination Workstation / Order */}
+              <div>
+                <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--text-secondary)", marginBottom: "6px" }}>
+                  Destination Workstation / Production Order *
+                </label>
+                <input
+                  type="text"
+                  value={useDestination}
+                  onChange={(e) => setUseDestination(e.target.value)}
+                  required
+                  placeholder="e.g., Lanyard Stitching Table 2, Sublimation Line 1, Client Order Batch"
+                  style={{
+                    width: "100%",
+                    height: "38px",
+                    padding: "0 12px",
+                    backgroundColor: "rgba(0, 0, 0, 0.6)",
+                    border: "1px solid rgba(255, 255, 255, 0.12)",
+                    borderRadius: "4px",
+                    color: "#fff",
+                    fontSize: "13px",
+                    outline: "none",
+                  }}
+                />
+                {/* Quick Station Pills */}
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "6px" }}>
+                  {["Production Assembly Floor", "Stitching Bench 2", "Sublimation Line 1", "Metal Ring Press", "Client Order Batch"].map((station) => (
+                    <button
+                      key={station}
+                      type="button"
+                      onClick={() => setUseDestination(station)}
+                      style={{
+                        padding: "2px 8px",
+                        fontSize: "10.5px",
+                        borderRadius: "3px",
+                        backgroundColor: useDestination === station ? "rgba(56, 189, 248, 0.2)" : "rgba(255, 255, 255, 0.05)",
+                        border: useDestination === station ? "1px solid rgba(56, 189, 248, 0.4)" : "1px solid rgba(255, 255, 255, 0.08)",
+                        color: useDestination === station ? "#38bdf8" : "#cbd5e1",
+                        cursor: "pointer",
+                        transition: "all 0.15s ease",
+                      }}
+                    >
+                      + {station}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Row 4: Job Notes */}
+              <div>
+                <label style={{ display: "block", fontSize: "11px", fontWeight: 700, color: "var(--text-secondary)", marginBottom: "6px" }}>
+                  Job Notes / Reason
+                </label>
+                <input
+                  type="text"
+                  value={useNote}
+                  onChange={(e) => setUseNote(e.target.value)}
+                  placeholder="e.g., Issued for school lanyards order, urgent rush batch..."
+                  style={{
+                    width: "100%",
+                    height: "38px",
+                    padding: "0 12px",
+                    backgroundColor: "rgba(0, 0, 0, 0.6)",
+                    border: "1px solid rgba(255, 255, 255, 0.12)",
+                    borderRadius: "4px",
+                    color: "#fff",
+                    fontSize: "13px",
+                    outline: "none",
+                  }}
+                />
+              </div>
+
+              {/* Submit & Cancel Buttons */}
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px", marginTop: "4px" }}>
+                <Button variant="secondary" size="sm" type="button" onClick={() => setIsUsageDrawerOpen(false)}>
+                  Cancel
+                </Button>
+                <Button variant="primary" size="sm" type="submit">
+                  - Deduct & Record Usage
+                </Button>
+              </div>
+            </form>
+          </div>
+
+          {/* ─── 3. BELOW: THE WHOLE HISTORY WHO BRING WHAT ETC. ───────────────── */}
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+              <div>
+                <strong style={{ fontSize: "13.5px", color: "#fff", display: "block" }}>Complete Issuance & Usage History</strong>
+                <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>
+                  Audit log of who brought/took what, quantities, timestamps and workstations
+                </span>
+              </div>
+              <span
+                style={{
+                  fontSize: "11px",
+                  color: "var(--text-muted)",
+                  backgroundColor: "rgba(255, 255, 255, 0.05)",
+                  padding: "3px 8px",
+                  borderRadius: "3px",
+                }}
+              >
+                {movements.filter((m) => m.itemName.toLowerCase() === targetItem.name.toLowerCase()).length} records
+              </span>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              {movements
+                .filter((m) => m.itemName.toLowerCase() === targetItem.name.toLowerCase())
+                .length === 0 ? (
+                <div
+                  style={{
+                    padding: "30px 20px",
+                    textAlign: "center",
+                    backgroundColor: "rgba(0, 0, 0, 0.25)",
+                    border: "1px dashed rgba(255, 255, 255, 0.1)",
+                    borderRadius: "6px",
+                  }}
+                >
+                  <Icon name="tag" size={24} color="var(--text-muted)" />
+                  <p style={{ fontSize: "12.5px", color: "var(--text-secondary)", marginTop: "8px", marginBottom: 0 }}>
+                    No recorded movement history for <strong style={{ color: "#fff" }}>{targetItem.name}</strong> yet.
+                  </p>
+                  <p style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "4px", marginBottom: 0 }}>
+                    Submit the form above to record the first material consumption.
+                  </p>
+                </div>
+              ) : (
+                movements
+                  .filter((m) => m.itemName.toLowerCase() === targetItem.name.toLowerCase())
+                  .map((log) => (
+                    <div
+                      key={log.id}
+                      style={{
+                        padding: "12px 14px",
+                        backgroundColor: "rgba(10, 14, 23, 0.7)",
+                        border: "1px solid rgba(255, 255, 255, 0.06)",
+                        borderRadius: "6px",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "6px",
+                        transition: "background 0.15s ease",
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.03)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "rgba(10, 14, 23, 0.7)")}
+                    >
+                      {/* Top line: Who brought/took it + Destination + Quantity */}
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <span
+                            style={{
+                              width: "22px",
+                              height: "22px",
+                              borderRadius: "50%",
+                              backgroundColor: log.type === "ADDITION" ? "rgba(16, 185, 129, 0.2)" : "rgba(255, 138, 115, 0.2)",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              fontSize: "11px",
+                              fontWeight: 800,
+                              color: log.type === "ADDITION" ? "#10b981" : "var(--accent-text)",
+                            }}
+                          >
+                            {log.type === "ADDITION" ? "+" : "—"}
+                          </span>
+                          <div>
+                            <span style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff" }}>
+                              {log.reportedBy || "Floor Operator"}
+                            </span>
+                            <span style={{ fontSize: "11.5px", color: "var(--text-muted)", marginLeft: "6px" }}>
+                              took for <span style={{ color: "#38bdf8", fontWeight: 600 }}>{log.destinationOrSource}</span>
+                            </span>
+                          </div>
+                        </div>
+
+                        <div style={{ textAlign: "right" }}>
+                          <span
+                            style={{
+                              fontSize: "13px",
+                              fontWeight: 800,
+                              fontFamily: "var(--font-mono)",
+                              color: log.type === "ADDITION" ? "#10b981" : "#f59e0b",
+                            }}
+                          >
+                            {log.type === "ADDITION" ? "+" : "-"}
+                            {log.quantity.toLocaleString()} {log.unit}
+                          </span>
+                          <span
+                            style={{
+                              display: "block",
+                              fontSize: "9.5px",
+                              fontWeight: 700,
+                              color: log.type === "ADDITION" ? "#34d399" : "var(--accent-text)",
+                              textTransform: "uppercase",
+                              marginTop: "1px",
+                            }}
+                          >
+                            {log.type === "ADDITION" ? "Receipt" : "Usage"}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Bottom line: Note and Timestamp */}
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          paddingTop: "4px",
+                          borderTop: "1px solid rgba(255, 255, 255, 0.04)",
+                          fontSize: "11px",
+                        }}
+                      >
+                        <span style={{ color: "var(--text-secondary)", fontStyle: "italic" }}>
+                          "{log.notes || "No notes provided"}"
+                        </span>
+                        <span style={{ color: "var(--text-muted)", fontSize: "10.5px", flexShrink: 0, marginLeft: "12px" }}>
+                          🕒 {log.timestamp}
+                        </span>
+                      </div>
+                    </div>
+                  ))
+              )}
+            </div>
+          </div>
+        </div>
+      </Drawer>
 
       {/* ─── MODAL 3: NEW STOCK ITEM (NO PRICING) ─────────────────────────────── */}
       {isNewItemModalOpen && (
