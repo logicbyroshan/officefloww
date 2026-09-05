@@ -355,6 +355,12 @@ export interface RegisteredStockItem {
 
 export type RequiredMaterialItem = RegisteredStockItem;
 
+const CLEAN_BADGE_STYLE = {
+  badgeBg: "rgba(255, 255, 255, 0.05)",
+  badgeColor: "#e2e8f0",
+  badgeBorder: "rgba(255, 255, 255, 0.12)",
+};
+
 export function parseSupportingItemsFromDescription(
   description: string,
   itemOrdered: string,
@@ -364,172 +370,24 @@ export function parseSupportingItemsFromDescription(
   const items: RegisteredStockItem[] = [];
   const isCard = itemOrdered === "Card";
 
-  if (isCard) {
-    // 1. Holders for Cards
-    if (desc.includes("plastic holder-h") || desc.includes("horizontal holder") || desc.includes("horizontal pouch") || desc.includes("horizontal") || desc.includes("-h holder") || desc.includes("holder-h")) {
-      items.push({
-        name: "Plastic Holder-H",
-        category: "HOLDERS",
-        canonicalUnit: "pieces",
-        packSize: 1,
-        unitDisplay: "pcs",
-        requiredPacks: orderQty,
-        totalPieces: orderQty,
-        icon: "🏷️",
-        badgeLabel: "Holder-H",
-        badgeBg: "rgba(16, 185, 129, 0.16)",
-        badgeColor: "#34d399",
-        badgeBorder: "rgba(16, 185, 129, 0.4)",
-        detectedReason: "Matched horizontal pouch/holder in description",
-        unit: "pieces",
-        requiredQty: orderQty,
-      });
-    } else if (desc.includes("crystal")) {
-      items.push({
-        name: "Crystal Holder",
-        category: "HOLDERS",
-        canonicalUnit: "pieces",
-        packSize: 1,
-        unitDisplay: "pcs",
-        requiredPacks: orderQty,
-        totalPieces: orderQty,
-        icon: "🏷️",
-        badgeLabel: "Crystal Holder",
-        badgeBg: "rgba(96, 165, 250, 0.16)",
-        badgeColor: "#60a5fa",
-        badgeBorder: "rgba(96, 165, 250, 0.4)",
-        detectedReason: "Matched 'crystal' VIP holder in description",
-        unit: "pieces",
-        requiredQty: orderQty,
-      });
-    } else if (desc.includes("dst-h")) {
-      items.push({
-        name: "DST-H",
-        category: "HOLDERS",
-        canonicalUnit: "pieces",
-        packSize: 1,
-        unitDisplay: "pcs",
-        requiredPacks: orderQty,
-        totalPieces: orderQty,
-        icon: "🏷️",
-        badgeLabel: "DST-H Holder",
-        badgeBg: "rgba(251, 191, 36, 0.16)",
-        badgeColor: "#fbbf24",
-        badgeBorder: "rgba(251, 191, 36, 0.4)",
-        detectedReason: "Matched 'DST-H' holder in description",
-        unit: "pieces",
-        requiredQty: orderQty,
-      });
-    } else if (desc.includes("dst-v") || desc.includes("dst")) {
-      items.push({
-        name: "DST-V",
-        category: "HOLDERS",
-        canonicalUnit: "pieces",
-        packSize: 1,
-        unitDisplay: "pcs",
-        requiredPacks: orderQty,
-        totalPieces: orderQty,
-        icon: "🏷️",
-        badgeLabel: "DST-V Holder",
-        badgeBg: "rgba(245, 158, 11, 0.16)",
-        badgeColor: "#f59e0b",
-        badgeBorder: "rgba(245, 158, 11, 0.4)",
-        detectedReason: "Matched 'DST' dual-slot holder in description",
-        unit: "pieces",
-        requiredQty: orderQty,
-      });
-    } else {
-      items.push({
-        name: "Plastic Holder-V",
-        category: "HOLDERS",
-        canonicalUnit: "pieces",
-        packSize: 1,
-        unitDisplay: "pcs",
-        requiredPacks: orderQty,
-        totalPieces: orderQty,
-        icon: "🏷️",
-        badgeLabel: "Plastic Holder-V",
-        badgeBg: "rgba(52, 211, 153, 0.16)",
-        badgeColor: "#6ee7b7",
-        badgeBorder: "rgba(52, 211, 153, 0.4)",
-        detectedReason:
-          desc.includes("holder") || desc.includes("pouch") || desc.includes("sleeve") || desc.includes("case") || desc.includes("pasting") || desc.includes("-v") || desc.includes("v holder")
-            ? "Matched vertical holder/pouch in description"
-            : "Standard vertical PVC ID card holder required",
-        unit: "pieces",
-        requiredQty: orderQty,
-      });
-    }
+  // ─── 1. Lanyard Ribbon Rolls (Strictly 3 types: 12mm, 16mm, 20mm) ───────────────
+  // Aliases/synonyms: ribbon, dori, lanyard, mpl, satin, multi-print
+  const hasLanyardSignal =
+    !isCard ||
+    desc.includes("ribbon") ||
+    desc.includes("dori") ||
+    desc.includes("lanyard") ||
+    desc.includes("mpl") ||
+    desc.includes("12mm") ||
+    desc.includes("16mm") ||
+    desc.includes("20mm") ||
+    desc.includes("10mm") ||
+    desc.includes("15mm");
 
-    // 2. Clips (Registered unit: packets of 1000)
-    const clipPacks = Math.max(1, Math.ceil(orderQty / 1000));
-    items.push({
-      name: "Clips",
-      category: "OTHERS",
-      canonicalUnit: "packets of 1000",
-      packSize: 1000,
-      unitDisplay: "pkts (1000s)",
-      requiredPacks: clipPacks,
-      totalPieces: clipPacks * 1000,
-      icon: "📦",
-      badgeLabel: "Clips",
-      badgeBg: "rgba(236, 72, 153, 0.16)",
-      badgeColor: "#f472b6",
-      badgeBorder: "rgba(236, 72, 153, 0.4)",
-      detectedReason: desc.includes("clip")
-        ? "Matched keyword 'clip' in description (unit: packets of 1000)"
-        : "Standard ID badge clips required (unit: packets of 1000)",
-      unit: "packets of 1000",
-      requiredQty: clipPacks,
-    });
-
-    // 3. Optional Jointer/Breakaway (Registered unit: packets of 1000)
-    if (desc.includes("jointer") || desc.includes("jointers") || desc.includes("breakaway") || desc.includes("buckle") || desc.includes("release")) {
-      const jointerPacks = Math.max(1, Math.ceil(orderQty / 1000));
-      items.push({
-        name: "Safety Jointer Buckles",
-        category: "OTHERS",
-        canonicalUnit: "packets of 1000",
-        packSize: 1000,
-        unitDisplay: "pkts (1000s)",
-        requiredPacks: jointerPacks,
-        totalPieces: jointerPacks * 1000,
-        icon: "🔗",
-        badgeLabel: "Safety Jointer",
-        badgeBg: "rgba(244, 63, 94, 0.16)",
-        badgeColor: "#fb7185",
-        badgeBorder: "rgba(244, 63, 94, 0.4)",
-        detectedReason: "Matched keyword 'jointer / breakaway buckle' in description (unit: packets of 1000)",
-        unit: "packets of 1000",
-        requiredQty: jointerPacks,
-      });
-    }
-
-    // 4. Optional Ring if mentioned
-    if (desc.includes("ring") || desc.includes("rings") || desc.includes("keyring")) {
-      items.push({
-        name: "Split Key Rings",
-        category: "OTHERS",
-        canonicalUnit: "pieces",
-        packSize: 1,
-        unitDisplay: "pcs",
-        requiredPacks: orderQty,
-        totalPieces: orderQty,
-        icon: "🔗",
-        badgeLabel: "Split Rings",
-        badgeBg: "rgba(217, 70, 239, 0.16)",
-        badgeColor: "#e879f9",
-        badgeBorder: "rgba(217, 70, 239, 0.4)",
-        detectedReason: "Matched keyword 'ring' accessory in description",
-        unit: "pieces",
-        requiredQty: orderQty,
-      });
-    }
-  } else {
-    // ─── Lanyard Orders ──────────────────────────────────────────────────────────
-    // 1. Ribbon Rolls (1 roll = 200 units)
+  if (hasLanyardSignal) {
     const rollsNeeded = Math.max(1, Math.ceil(orderQty / 200));
-    if (desc.includes("12mm") || desc.includes("10mm")) {
+
+    if (desc.includes("12mm") || desc.includes("10mm") || desc.includes("12 mm") || desc.includes("10 mm")) {
       items.push({
         name: "12mm Lanyard Rolls",
         category: "LANYARDS",
@@ -539,15 +397,13 @@ export function parseSupportingItemsFromDescription(
         requiredPacks: rollsNeeded,
         totalPieces: rollsNeeded * 200,
         icon: "🎗️",
-        badgeLabel: "12mm Ribbon",
-        badgeBg: "rgba(255, 138, 115, 0.15)",
-        badgeColor: "#ff8a73",
-        badgeBorder: "rgba(255, 138, 115, 0.4)",
-        detectedReason: "Matched keyword '10/12mm' ribbon rolls (unit: rolls)",
+        badgeLabel: "12mm Lanyard",
+        ...CLEAN_BADGE_STYLE,
+        detectedReason: "12mm lanyard ribbon rolls required (unit: rolls of 200)",
         unit: "rolls",
         requiredQty: rollsNeeded,
       });
-    } else if (desc.includes("20mm")) {
+    } else if (desc.includes("20mm") || desc.includes("20 mm")) {
       items.push({
         name: "20mm Lanyard Rolls",
         category: "LANYARDS",
@@ -557,15 +413,14 @@ export function parseSupportingItemsFromDescription(
         requiredPacks: rollsNeeded,
         totalPieces: rollsNeeded * 200,
         icon: "🎗️",
-        badgeLabel: "20mm Ribbon",
-        badgeBg: "rgba(249, 115, 22, 0.15)",
-        badgeColor: "#fb923c",
-        badgeBorder: "rgba(249, 115, 22, 0.4)",
-        detectedReason: "Matched keyword '20mm' satin rolls (unit: rolls)",
+        badgeLabel: "20mm Lanyard",
+        ...CLEAN_BADGE_STYLE,
+        detectedReason: "20mm lanyard ribbon rolls required (unit: rolls of 200)",
         unit: "rolls",
         requiredQty: rollsNeeded,
       });
     } else {
+      // Default standard width or 15mm/16mm/ribbon/dori/lanyard/mpl
       items.push({
         name: "16mm Lanyard Rolls",
         category: "LANYARDS",
@@ -575,19 +430,17 @@ export function parseSupportingItemsFromDescription(
         requiredPacks: rollsNeeded,
         totalPieces: rollsNeeded * 200,
         icon: "🎗️",
-        badgeLabel: "16mm Ribbon",
-        badgeBg: "rgba(234, 88, 12, 0.15)",
-        badgeColor: "#fdba74",
-        badgeBorder: "rgba(234, 88, 12, 0.4)",
-        detectedReason: desc.includes("15mm") || desc.includes("16mm")
-          ? "Matched keyword '15/16mm' ribbon from description (unit: rolls)"
-          : "Standard 16mm ribbon rolls required (unit: rolls)",
+        badgeLabel: "16mm Lanyard",
+        ...CLEAN_BADGE_STYLE,
+        detectedReason: "Standard 16mm lanyard ribbon rolls required (unit: rolls of 200)",
         unit: "rolls",
         requiredQty: rollsNeeded,
       });
     }
+  }
 
-    // 2. Hooks
+  // ─── 2. Hooks (For Lanyard orders or if hook keyword is present) ─────────────────
+  if (!isCard || desc.includes("hook")) {
     if (desc.includes("england hook")) {
       items.push({
         name: "England Hook",
@@ -599,9 +452,7 @@ export function parseSupportingItemsFromDescription(
         totalPieces: orderQty,
         icon: "🪝",
         badgeLabel: "England Hook",
-        badgeBg: "rgba(168, 85, 247, 0.15)",
-        badgeColor: "#c084fc",
-        badgeBorder: "rgba(168, 85, 247, 0.4)",
+        ...CLEAN_BADGE_STYLE,
         detectedReason: "Matched keyword 'England Hook' in description",
         unit: "pieces",
         requiredQty: orderQty,
@@ -617,14 +468,12 @@ export function parseSupportingItemsFromDescription(
         totalPieces: orderQty,
         icon: "🪝",
         badgeLabel: "Plastic Hook",
-        badgeBg: "rgba(56, 189, 248, 0.15)",
-        badgeColor: "#38bdf8",
-        badgeBorder: "rgba(56, 189, 248, 0.4)",
+        ...CLEAN_BADGE_STYLE,
         detectedReason: "Matched keyword 'Plastic Hook' in description",
         unit: "pieces",
         requiredQty: orderQty,
       });
-    } else {
+    } else if (!isCard || desc.includes("dog hook") || desc.includes("dog clip") || desc.includes("hook")) {
       items.push({
         name: "Dog Hook",
         category: "HOOKS",
@@ -635,191 +484,181 @@ export function parseSupportingItemsFromDescription(
         totalPieces: orderQty,
         icon: "🪝",
         badgeLabel: "Dog Hook",
-        badgeBg: "rgba(192, 132, 252, 0.15)",
-        badgeColor: "#e9d5ff",
-        badgeBorder: "rgba(192, 132, 252, 0.4)",
-        detectedReason: desc.includes("dog hook") || desc.includes("dog clip")
-          ? "Matched keyword 'Dog Hook' in description"
-          : "Standard lanyard dog hook required",
+        ...CLEAN_BADGE_STYLE,
+        detectedReason: "Standard lanyard dog hook required",
         unit: "pieces",
         requiredQty: orderQty,
       });
     }
+  }
 
-    // 3. Supporting items: Holders / Pouch / Pasting (written in description by user)
-    if (
-      desc.includes("holder") ||
-      desc.includes("holders") ||
-      desc.includes("pouch") ||
-      desc.includes("sleeve") ||
-      desc.includes("case") ||
-      desc.includes("dst") ||
-      desc.includes("crystal") ||
-      desc.includes("pasting") ||
-      desc.includes("-v") ||
-      desc.includes("-h")
-    ) {
-      if (desc.includes("plastic holder-h") || desc.includes("horizontal") || desc.includes("-h holder") || desc.includes("holder-h")) {
-        items.push({
-          name: "Plastic Holder-H",
-          category: "HOLDERS",
-          canonicalUnit: "pieces",
-          packSize: 1,
-          unitDisplay: "pcs",
-          requiredPacks: orderQty,
-          totalPieces: orderQty,
-          icon: "🏷️",
-          badgeLabel: "Holder-H",
-          badgeBg: "rgba(16, 185, 129, 0.16)",
-          badgeColor: "#34d399",
-          badgeBorder: "rgba(16, 185, 129, 0.4)",
-          detectedReason: "Matched keyword 'horizontal pouch/holder' in description",
-          unit: "pieces",
-          requiredQty: orderQty,
-        });
-      } else if (desc.includes("crystal")) {
-        items.push({
-          name: "Crystal Holder",
-          category: "HOLDERS",
-          canonicalUnit: "pieces",
-          packSize: 1,
-          unitDisplay: "pcs",
-          requiredPacks: orderQty,
-          totalPieces: orderQty,
-          icon: "🏷️",
-          badgeLabel: "Crystal Holder",
-          badgeBg: "rgba(96, 165, 250, 0.16)",
-          badgeColor: "#60a5fa",
-          badgeBorder: "rgba(96, 165, 250, 0.4)",
-          detectedReason: "Matched keyword 'crystal' holder in description",
-          unit: "pieces",
-          requiredQty: orderQty,
-        });
-      } else if (desc.includes("dst-h")) {
-        items.push({
-          name: "DST-H",
-          category: "HOLDERS",
-          canonicalUnit: "pieces",
-          packSize: 1,
-          unitDisplay: "pcs",
-          requiredPacks: orderQty,
-          totalPieces: orderQty,
-          icon: "🏷️",
-          badgeLabel: "DST-H Holder",
-          badgeBg: "rgba(251, 191, 36, 0.16)",
-          badgeColor: "#fbbf24",
-          badgeBorder: "rgba(251, 191, 36, 0.4)",
-          detectedReason: "Matched keyword 'DST-H' holder in description",
-          unit: "pieces",
-          requiredQty: orderQty,
-        });
-      } else if (desc.includes("dst-v") || desc.includes("dst")) {
-        items.push({
-          name: "DST-V",
-          category: "HOLDERS",
-          canonicalUnit: "pieces",
-          packSize: 1,
-          unitDisplay: "pcs",
-          requiredPacks: orderQty,
-          totalPieces: orderQty,
-          icon: "🏷️",
-          badgeLabel: "DST-V Holder",
-          badgeBg: "rgba(245, 158, 11, 0.16)",
-          badgeColor: "#f59e0b",
-          badgeBorder: "rgba(245, 158, 11, 0.4)",
-          detectedReason: "Matched keyword 'DST' holder in description",
-          unit: "pieces",
-          requiredQty: orderQty,
-        });
-      } else {
-        items.push({
-          name: "Plastic Holder-V",
-          category: "HOLDERS",
-          canonicalUnit: "pieces",
-          packSize: 1,
-          unitDisplay: "pcs",
-          requiredPacks: orderQty,
-          totalPieces: orderQty,
-          icon: "🏷️",
-          badgeLabel: "Plastic Holder-V",
-          badgeBg: "rgba(52, 211, 153, 0.16)",
-          badgeColor: "#6ee7b7",
-          badgeBorder: "rgba(52, 211, 153, 0.4)",
-          detectedReason: "Matched keyword 'holder/pouch/pasting' in description",
-          unit: "pieces",
-          requiredQty: orderQty,
-        });
-      }
-    }
+  // ─── 3. Holders / Pouches / Pasting ─────────────────────────────────────────────
+  const hasHolderKeyword =
+    isCard ||
+    desc.includes("holder") ||
+    desc.includes("holders") ||
+    desc.includes("pouch") ||
+    desc.includes("sleeve") ||
+    desc.includes("case") ||
+    desc.includes("dst") ||
+    desc.includes("crystal") ||
+    desc.includes("pasting") ||
+    desc.includes("-v") ||
+    desc.includes("-h");
 
-    // 4. Supporting items: Clips (keyword: clip, clips, crocodile)
-    // Factory unit: packets of 1000 (1000s)
-    const hasClipKeyword = (desc.includes("clip") && !desc.includes("dog clip")) || desc.includes("clips") || desc.includes("crocodile");
-    if (hasClipKeyword) {
-      const clipPacks = Math.max(1, Math.ceil(orderQty / 1000));
+  if (hasHolderKeyword) {
+    if (desc.includes("plastic holder-h") || desc.includes("horizontal") || desc.includes("-h holder") || desc.includes("holder-h")) {
       items.push({
-        name: "Clips",
-        category: "OTHERS",
-        canonicalUnit: "packets of 1000",
-        packSize: 1000,
-        unitDisplay: "pkts (1000s)",
-        requiredPacks: clipPacks,
-        totalPieces: clipPacks * 1000,
-        icon: "📦",
-        badgeLabel: "Clips",
-        badgeBg: "rgba(236, 72, 153, 0.16)",
-        badgeColor: "#f472b6",
-        badgeBorder: "rgba(236, 72, 153, 0.4)",
-        detectedReason: "Matched keyword 'clips' in description (factory unit: 1000s per packet)",
-        unit: "packets of 1000",
-        requiredQty: clipPacks,
-      });
-    }
-
-    // 5. Supporting items: Jointer / Breakaway buckle (keyword: jointer, jointers, breakaway, buckle, release)
-    // Factory unit: packets of 1000 (1000s)
-    const hasJointerKeyword = desc.includes("jointer") || desc.includes("jointers") || desc.includes("breakaway") || desc.includes("buckle") || desc.includes("release");
-    if (hasJointerKeyword) {
-      const jointerPacks = Math.max(1, Math.ceil(orderQty / 1000));
-      items.push({
-        name: "Safety Jointer Buckles",
-        category: "OTHERS",
-        canonicalUnit: "packets of 1000",
-        packSize: 1000,
-        unitDisplay: "pkts (1000s)",
-        requiredPacks: jointerPacks,
-        totalPieces: jointerPacks * 1000,
-        icon: "🔗",
-        badgeLabel: "Safety Jointer",
-        badgeBg: "rgba(244, 63, 94, 0.16)",
-        badgeColor: "#fb7185",
-        badgeBorder: "rgba(244, 63, 94, 0.4)",
-        detectedReason: "Matched keyword 'jointer / breakaway' in description (factory unit: 1000s per packet)",
-        unit: "packets of 1000",
-        requiredQty: jointerPacks,
-      });
-    }
-
-    // 6. Supporting items: Rings / Keyrings
-    if (desc.includes("ring") || desc.includes("rings") || desc.includes("keyring") || desc.includes("split ring")) {
-      items.push({
-        name: "Split Key Rings",
-        category: "OTHERS",
+        name: "Plastic Holder-H",
+        category: "HOLDERS",
         canonicalUnit: "pieces",
         packSize: 1,
         unitDisplay: "pcs",
         requiredPacks: orderQty,
         totalPieces: orderQty,
-        icon: "🔗",
-        badgeLabel: "Split Rings",
-        badgeBg: "rgba(217, 70, 239, 0.16)",
-        badgeColor: "#e879f9",
-        badgeBorder: "rgba(217, 70, 239, 0.4)",
-        detectedReason: "Matched keyword 'ring' accessory in description",
+        icon: "🏷️",
+        badgeLabel: "Holder-H",
+        ...CLEAN_BADGE_STYLE,
+        detectedReason: "Matched horizontal pouch/holder in description",
+        unit: "pieces",
+        requiredQty: orderQty,
+      });
+    } else if (desc.includes("crystal")) {
+      items.push({
+        name: "Crystal Holder",
+        category: "HOLDERS",
+        canonicalUnit: "pieces",
+        packSize: 1,
+        unitDisplay: "pcs",
+        requiredPacks: orderQty,
+        totalPieces: orderQty,
+        icon: "🏷️",
+        badgeLabel: "Crystal Holder",
+        ...CLEAN_BADGE_STYLE,
+        detectedReason: "Matched crystal holder in description",
+        unit: "pieces",
+        requiredQty: orderQty,
+      });
+    } else if (desc.includes("dst-h")) {
+      items.push({
+        name: "DST-H",
+        category: "HOLDERS",
+        canonicalUnit: "pieces",
+        packSize: 1,
+        unitDisplay: "pcs",
+        requiredPacks: orderQty,
+        totalPieces: orderQty,
+        icon: "🏷️",
+        badgeLabel: "DST-H",
+        ...CLEAN_BADGE_STYLE,
+        detectedReason: "Matched DST-H holder in description",
+        unit: "pieces",
+        requiredQty: orderQty,
+      });
+    } else if (desc.includes("dst-v") || desc.includes("dst")) {
+      items.push({
+        name: "DST-V",
+        category: "HOLDERS",
+        canonicalUnit: "pieces",
+        packSize: 1,
+        unitDisplay: "pcs",
+        requiredPacks: orderQty,
+        totalPieces: orderQty,
+        icon: "🏷️",
+        badgeLabel: "DST-V",
+        ...CLEAN_BADGE_STYLE,
+        detectedReason: "Matched DST holder in description",
+        unit: "pieces",
+        requiredQty: orderQty,
+      });
+    } else {
+      items.push({
+        name: "Plastic Holder-V",
+        category: "HOLDERS",
+        canonicalUnit: "pieces",
+        packSize: 1,
+        unitDisplay: "pcs",
+        requiredPacks: orderQty,
+        totalPieces: orderQty,
+        icon: "🏷️",
+        badgeLabel: "Plastic Holder-V",
+        ...CLEAN_BADGE_STYLE,
+        detectedReason: "Standard vertical ID card holder required",
         unit: "pieces",
         requiredQty: orderQty,
       });
     }
+  }
+
+  // ─── 4. Clips (Factory unit: packets of 1000) ──────────────────────────────────
+  const hasClipKeyword =
+    isCard ||
+    (desc.includes("clip") && !desc.includes("dog clip")) ||
+    desc.includes("clips") ||
+    desc.includes("crocodile");
+
+  if (hasClipKeyword) {
+    const clipPacks = Math.max(1, Math.ceil(orderQty / 1000));
+    items.push({
+      name: "Clips",
+      category: "OTHERS",
+      canonicalUnit: "packets of 1000",
+      packSize: 1000,
+      unitDisplay: "pkts (1000s)",
+      requiredPacks: clipPacks,
+      totalPieces: clipPacks * 1000,
+      icon: "📦",
+      badgeLabel: "Clips",
+      ...CLEAN_BADGE_STYLE,
+      detectedReason: "Matched clips in description (unit: packets of 1000)",
+      unit: "packets of 1000",
+      requiredQty: clipPacks,
+    });
+  }
+
+  // ─── 5. Jointer / Breakaway Buckles (Factory unit: packets of 1000) ─────────────
+  if (
+    desc.includes("jointer") ||
+    desc.includes("jointers") ||
+    desc.includes("breakaway") ||
+    desc.includes("buckle") ||
+    desc.includes("release")
+  ) {
+    const jointerPacks = Math.max(1, Math.ceil(orderQty / 1000));
+    items.push({
+      name: "Safety Jointer Buckles",
+      category: "OTHERS",
+      canonicalUnit: "packets of 1000",
+      packSize: 1000,
+      unitDisplay: "pkts (1000s)",
+      requiredPacks: jointerPacks,
+      totalPieces: jointerPacks * 1000,
+      icon: "🔗",
+      badgeLabel: "Safety Jointer",
+      ...CLEAN_BADGE_STYLE,
+      detectedReason: "Matched jointer/breakaway in description (unit: packets of 1000)",
+      unit: "packets of 1000",
+      requiredQty: jointerPacks,
+    });
+  }
+
+  // ─── 6. Rings / Keyrings ───────────────────────────────────────────────────────
+  if (desc.includes("ring") || desc.includes("rings") || desc.includes("keyring") || desc.includes("split ring")) {
+    items.push({
+      name: "Split Key Rings",
+      category: "OTHERS",
+      canonicalUnit: "pieces",
+      packSize: 1,
+      unitDisplay: "pcs",
+      requiredPacks: orderQty,
+      totalPieces: orderQty,
+      icon: "🔗",
+      badgeLabel: "Split Rings",
+      ...CLEAN_BADGE_STYLE,
+      detectedReason: "Matched ring accessory in description",
+      unit: "pieces",
+      requiredQty: orderQty,
+    });
   }
 
   return items;
@@ -1095,8 +934,6 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
   const [newItemOrdered, setNewItemOrdered] = useState<string>("Lanyard");
   const [customItemText, setCustomItemText] = useState("");
   const [newQty, setNewQty] = useState("");
-  const [newOrderDate, setNewOrderDate] = useState("03 Sep 2026");
-  const [newDeliveryDate, setNewDeliveryDate] = useState("10 Sep 2026");
 
   // Keep newClient synced if filterClientName prop changes
   useEffect(() => {
@@ -1120,6 +957,7 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
   // ─── Worker Assignment & Order Dividing States ──────────────────────────────
   const [assigningOrder, setAssigningOrder] = useState<OrderRecord | null>(null);
   const [allocations, setAllocations] = useState<AllocationRow[]>([]);
+  const [isDivided, setIsDivided] = useState<boolean>(false);
 
   const isAssigningCard = useMemo(() => {
     return (assigningOrder?.itemOrdered || assigningOrder?.itemsOrdered?.[0] || "Lanyard") === "Card";
@@ -1129,6 +967,9 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
   useEffect(() => {
     if (assigningOrder) {
       const isCard = (assigningOrder.itemOrdered || assigningOrder.itemsOrdered?.[0] || "Lanyard") === "Card";
+      const hasDividedAssignees = Boolean(assigningOrder.assignedTo && assigningOrder.assignedTo.length > 1);
+      setIsDivided(hasDividedAssignees);
+
       if (assigningOrder.assignedTo && assigningOrder.assignedTo.length > 0) {
         setAllocations(
           assigningOrder.assignedTo.map((w, idx) => {
@@ -1172,6 +1013,7 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
       }
     } else {
       setAllocations([]);
+      setIsDivided(false);
     }
   }, [assigningOrder]);
 
@@ -1402,6 +1244,12 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
 
     const finalDescription = newDescription.trim() || `${finalItem} Custom Production Run`;
 
+    const now = new Date();
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const orderDateStr = `${String(now.getDate()).padStart(2, "0")} ${months[now.getMonth()]} ${now.getFullYear()}`;
+    const plus7 = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const deliveryDateStr = `${String(plus7.getDate()).padStart(2, "0")} ${months[plus7.getMonth()]} ${plus7.getFullYear()}`;
+
     const createdOrder: OrderRecord = {
       internalId: `ord-${Date.now()}`,
       client: effectiveClient,
@@ -1410,8 +1258,8 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
       itemsOrdered: [finalItem],
       qty: parseInt(newQty, 10) || 500,
       assignedTo: [],
-      orderDate: newOrderDate || "03 Sep 2026",
-      deliveryDate: newDeliveryDate || "10 Sep 2026",
+      orderDate: orderDateStr,
+      deliveryDate: deliveryDateStr,
     };
 
     setOrders([createdOrder, ...orders]);
@@ -1648,8 +1496,8 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "1.3fr 1.1fr 2.2fr 0.8fr 1fr 1fr auto",
-              gap: "10px",
+              gridTemplateColumns: "1.4fr 1.1fr 2.6fr 110px auto",
+              gap: "12px",
               alignItems: "start",
             }}
           >
@@ -1790,10 +1638,10 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
               )}
             </div>
 
-            {/* 2. Things Ordered */}
+            {/* 2. Order */}
             <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
               <label style={{ fontSize: "10px", fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)", letterSpacing: "0.5px" }}>
-                Things Ordered
+                Order
               </label>
               <select
                 value={newItemOrdered}
@@ -1825,7 +1673,7 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
               </label>
               <input
                 type="text"
-                placeholder="Description (e.g. 15mm Satin, Dog Hook, Blue/White Print)..."
+                placeholder="Description (e.g. 16mm Dori, Dog Hook, Plastic Holder-V)..."
                 value={newDescription}
                 onChange={(e) => setNewDescription(e.target.value)}
                 onKeyDown={(e) => {
@@ -1877,62 +1725,7 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
               />
             </div>
 
-            {/* 5. Order Date */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-              <label style={{ fontSize: "10px", fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)", letterSpacing: "0.5px" }}>
-                Order Date
-              </label>
-              <input
-                type="text"
-                value={newOrderDate}
-                onChange={(e) => setNewOrderDate(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleAddFromQuickEntry();
-                }}
-                style={{
-                  width: "100%",
-                  height: "36px",
-                  padding: "0 10px",
-                  backgroundColor: "rgba(9, 12, 19, 0.85)",
-                  border: "1px solid rgba(255, 255, 255, 0.12)",
-                  borderRadius: "var(--radius-sm, 4px)",
-                  color: "var(--text-secondary)",
-                  fontSize: "12px",
-                  outline: "none",
-                  boxSizing: "border-box",
-                }}
-              />
-            </div>
-
-            {/* 6. Delivery Due */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-              <label style={{ fontSize: "10px", fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)", letterSpacing: "0.5px" }}>
-                Delivery Due
-              </label>
-              <input
-                type="text"
-                value={newDeliveryDate}
-                onChange={(e) => setNewDeliveryDate(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleAddFromQuickEntry();
-                }}
-                style={{
-                  width: "100%",
-                  height: "36px",
-                  padding: "0 10px",
-                  backgroundColor: "rgba(9, 12, 19, 0.85)",
-                  border: "1px solid rgba(255, 255, 255, 0.12)",
-                  borderRadius: "var(--radius-sm, 4px)",
-                  color: "#f59e0b",
-                  fontSize: "12px",
-                  fontWeight: 700,
-                  outline: "none",
-                  boxSizing: "border-box",
-                }}
-              />
-            </div>
-
-            {/* 7. Action Button */}
+            {/* 5. Action Button */}
             <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
               <label style={{ fontSize: "10px", fontWeight: 700, textTransform: "uppercase", color: "transparent", letterSpacing: "0.5px" }}>
                 Add
@@ -1954,8 +1747,8 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
               style={{
                 marginTop: "12px",
                 padding: "8px 12px",
-                backgroundColor: "rgba(10, 14, 23, 0.75)",
-                border: "1px dashed rgba(56, 189, 248, 0.35)",
+                backgroundColor: "rgba(255, 255, 255, 0.02)",
+                border: "1px solid rgba(255, 255, 255, 0.08)",
                 borderRadius: "5px",
                 display: "flex",
                 alignItems: "center",
@@ -1963,8 +1756,8 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
                 flexWrap: "wrap",
               }}
             >
-              <span style={{ fontSize: "10px", fontWeight: 800, color: "#38bdf8", textTransform: "uppercase", letterSpacing: "0.5px", display: "flex", alignItems: "center", gap: "4px" }}>
-                <span>⚡</span>
+              <span style={{ fontSize: "10px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px", display: "flex", alignItems: "center", gap: "4px" }}>
+                <span>📦</span>
                 <span>Auto-Registered Stock Requirements:</span>
               </span>
               {liveDetectedStock.map((stk, idx) => (
@@ -1977,11 +1770,10 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
                     padding: "3px 8px",
                     borderRadius: "4px",
                     fontSize: "11px",
-                    fontWeight: 700,
+                    fontWeight: 600,
                     backgroundColor: stk.badgeBg,
                     color: stk.badgeColor,
                     border: `1px solid ${stk.badgeBorder}`,
-                    boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
                   }}
                   title={`Unit: ${stk.canonicalUnit} · Total: ${stk.totalPieces.toLocaleString()} pcs (${stk.detectedReason})`}
                 >
@@ -1989,8 +1781,8 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
                   <span>{stk.badgeLabel}</span>
                 </span>
               ))}
-              <span style={{ fontSize: "10px", color: "var(--text-muted)", marginLeft: "auto", fontStyle: "italic" }}>
-                Auto-recognized from description & factory packaging units
+              <span style={{ fontSize: "10px", color: "var(--text-muted)", marginLeft: "auto" }}>
+                Auto-recognized from description
               </span>
             </div>
           )}
@@ -2036,7 +1828,7 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
                   Client {sortField === "client" ? (sortDir === "asc" ? "▲" : "▼") : ""}
                 </th>
 
-                {/* 2. THINGS ORDERED */}
+                {/* 2. ORDER */}
                 <th
                   style={{
                     padding: "16px 16px",
@@ -2046,7 +1838,7 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
                     borderRight: "1px solid rgba(255, 255, 255, 0.05)",
                   }}
                 >
-                  Things Ordered
+                  Order
                 </th>
 
                 {/* 3. DESCRIPTION */}
@@ -2689,19 +2481,7 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
                             }}
                           />
                         ) : (
-                          <span
-                            style={{
-                              display: "inline-block",
-                              padding: "4px 8px",
-                              borderRadius: "3px",
-                              backgroundColor: "rgba(245, 158, 11, 0.1)",
-                              border: "1px solid rgba(245, 158, 11, 0.25)",
-                              color: "#f59e0b",
-                              fontSize: "12.5px",
-                              fontWeight: 700,
-                              fontFamily: "var(--font-mono)",
-                            }}
-                          >
+                          <span style={{ color: "#e2e8f0", fontSize: "12.5px", fontWeight: 500 }}>
                             {order.deliveryDate}
                           </span>
                         )}
@@ -2716,33 +2496,33 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
                               type="button"
                               onClick={() => setAssigningOrder(order)}
                               style={{
-                                height: "30px",
-                                padding: "0 12px",
-                                borderRadius: "4px",
-                                backgroundColor: isCard ? "rgba(56, 189, 248, 0.14)" : "rgba(249, 115, 22, 0.14)",
-                                border: isCard ? "1px solid rgba(56, 189, 248, 0.4)" : "1px solid rgba(249, 115, 22, 0.4)",
-                                color: isCard ? "#38bdf8" : "#fdba74",
+                                height: "32px",
+                                padding: "0 14px",
+                                borderRadius: "5px",
+                                backgroundColor: isCard ? "#0284c7" : "#ea580c",
+                                border: "none",
+                                color: "#ffffff",
                                 fontSize: "11.5px",
                                 fontWeight: 700,
                                 cursor: "pointer",
                                 display: "inline-flex",
                                 alignItems: "center",
-                                gap: "5px",
+                                gap: "6px",
+                                boxShadow: isCard ? "0 2px 6px rgba(2, 132, 199, 0.35)" : "0 2px 6px rgba(234, 88, 12, 0.35)",
                                 transition: "all 0.15s ease",
+                                whiteSpace: "nowrap",
                               }}
                               onMouseEnter={(e) => {
-                                e.currentTarget.style.backgroundColor = isCard ? "rgba(56, 189, 248, 0.28)" : "rgba(249, 115, 22, 0.28)";
-                                e.currentTarget.style.borderColor = isCard ? "#7dd3fc" : "#fb923c";
-                                e.currentTarget.style.color = "#ffffff";
+                                e.currentTarget.style.backgroundColor = isCard ? "#0369a1" : "#c2410c";
+                                e.currentTarget.style.transform = "translateY(-1px)";
                               }}
                               onMouseLeave={(e) => {
-                                e.currentTarget.style.backgroundColor = isCard ? "rgba(56, 189, 248, 0.14)" : "rgba(249, 115, 22, 0.14)";
-                                e.currentTarget.style.borderColor = isCard ? "rgba(56, 189, 248, 0.4)" : "rgba(249, 115, 22, 0.4)";
-                                e.currentTarget.style.color = isCard ? "#38bdf8" : "#fdba74";
+                                e.currentTarget.style.backgroundColor = isCard ? "#0284c7" : "#ea580c";
+                                e.currentTarget.style.transform = "translateY(0)";
                               }}
                               title={`Assign order to ${isCard ? "In-House Employee" : "Labour Contractor"}`}
                             >
-                              <span>{isCard ? "👤" : "🤝"}</span>
+                              <span style={{ fontSize: "12px" }}>{isCard ? "👤" : "🤝"}</span>
                               <span>{isCard ? "Assign Staff" : "Assign Labour"}</span>
                             </button>
                           );
@@ -2837,54 +2617,7 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
         {assigningOrder && (
           <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
 
-            {/* Workflow Notice */}
-            {isAssigningCard ? (
-              <div
-                style={{
-                  padding: "10px 14px",
-                  borderRadius: "5px",
-                  backgroundColor: "rgba(56, 189, 248, 0.1)",
-                  border: "1px solid rgba(56, 189, 248, 0.35)",
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: "10px",
-                }}
-              >
-                <span style={{ fontSize: "18px", lineHeight: 1 }}>👤</span>
-                <div style={{ fontSize: "12px", lineHeight: 1.45 }}>
-                  <div style={{ fontWeight: 800, color: "#38bdf8", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                    In-House Staff Operators
-                  </div>
-                  <div style={{ color: "#e2e8f0", marginTop: "2px" }}>
-                    ID Card printing, lamination, and RFID encoding are performed internally by trained staff operators.
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div
-                style={{
-                  padding: "10px 14px",
-                  borderRadius: "5px",
-                  backgroundColor: "rgba(249, 115, 22, 0.08)",
-                  border: "1px solid rgba(249, 115, 22, 0.3)",
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: "10px",
-                }}
-              >
-                <span style={{ fontSize: "18px", lineHeight: 1 }}>🔀</span>
-                <div style={{ fontSize: "12px", lineHeight: 1.45 }}>
-                  <div style={{ fontWeight: 800, color: "#fb923c", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                    Production Delegation & Order Splitting
-                  </div>
-                  <div style={{ color: "#e2e8f0", marginTop: "2px" }}>
-                    Select which labour contractor(s) or staff operator(s) to assign. You can divide the {assigningOrder.qty.toLocaleString()} total units across multiple workers. Material buffers & handovers are managed on the Labour Profile page.
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Order Details Card with Recognized Badges */}
+            {/* Order Details Card with Clean Recognized Badges */}
             <div
               style={{
                 backgroundColor: "rgba(255, 255, 255, 0.03)",
@@ -2901,7 +2634,7 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
                 <div style={{ fontSize: "13.5px", fontWeight: 700, color: "#fff", marginTop: "2px" }}>{assigningOrder.client}</div>
               </div>
               <div>
-                <div style={{ fontSize: "10px", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700 }}>Ordered Product</div>
+                <div style={{ fontSize: "10px", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700 }}>Order</div>
                 <div style={{ marginTop: "4px" }}>
                   <ItemBadge name={assigningOrder.itemOrdered || "Lanyard"} />
                 </div>
@@ -2913,15 +2646,15 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
                 {/* Recognized Stock Badges */}
                 {orderRequiredItems.length > 0 && (
                   <div style={{ marginTop: "10px", display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-                    <span style={{ fontSize: "10px", color: "#94a3b8", textTransform: "uppercase", fontWeight: 800, letterSpacing: "0.5px" }}>
-                      Identified Items:
+                    <span style={{ fontSize: "10px", color: "#94a3b8", textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.5px" }}>
+                      Required Items:
                     </span>
                     {orderRequiredItems.map((item, idx) => (
                       <span
                         key={idx}
                         style={{
                           fontSize: "11px",
-                          fontWeight: 700,
+                          fontWeight: 600,
                           padding: "2px 8px",
                           borderRadius: "4px",
                           backgroundColor: item.badgeBg,
@@ -2948,327 +2681,473 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
               </div>
               <div>
                 <div style={{ fontSize: "10px", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700 }}>Target Delivery SLA</div>
-                <div style={{ fontSize: "13px", fontWeight: 700, color: "#f59e0b", marginTop: "2px" }}>{assigningOrder.deliveryDate}</div>
+                <div style={{ fontSize: "13px", fontWeight: 600, color: "#e2e8f0", marginTop: "2px" }}>{assigningOrder.deliveryDate}</div>
               </div>
             </div>
 
-            {/* ─── ALLOCATION WORKSPACE ─── */}
+            {/* Checkbox: Divide Order or Not */}
             <div
               style={{
-                backgroundColor: "rgba(10, 14, 23, 0.7)",
-                border: "1px solid rgba(255, 255, 255, 0.08)",
-                borderRadius: "8px",
-                padding: "16px",
                 display: "flex",
-                flexDirection: "column",
-                gap: "14px",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "11px 14px",
+                backgroundColor: "rgba(255, 255, 255, 0.02)",
+                border: "1px solid rgba(255, 255, 255, 0.08)",
+                borderRadius: "6px",
               }}
             >
-              {/* Header with allocation meter */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <span style={{ fontSize: "14px" }}>⚖️</span>
-                    <span style={{ fontSize: "12px", fontWeight: 800, color: "#ffffff", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                      Volume Allocation ({allocations.length} {allocations.length === 1 ? "Assignee" : "Assignees"})
-                    </span>
-                  </div>
+              <label
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  cursor: "pointer",
+                  userSelect: "none",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={isDivided}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setIsDivided(checked);
+                    if (!checked) {
+                      // Reset to 1 single assignee covering 100% volume
+                      if (allocations.length > 0) {
+                        setAllocations([
+                          {
+                            ...allocations[0],
+                            qty: assigningOrder.qty,
+                          },
+                        ]);
+                      }
+                    }
+                  }}
+                  style={{
+                    width: "16px",
+                    height: "16px",
+                    cursor: "pointer",
+                    accentColor: "var(--accent)",
+                  }}
+                />
+                <span style={{ fontSize: "13px", fontWeight: 600, color: "#ffffff" }}>
+                  Divide order across multiple workers
+                </span>
+              </label>
+              {isDivided && (
+                <span style={{ fontSize: "11px", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
+                  {allocations.length} {allocations.length === 1 ? "assignee" : "assignees"}
+                </span>
+              )}
+            </div>
 
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px", fontFamily: "var(--font-mono)", fontSize: "12px" }}>
-                    <strong style={{ color: totalAllocated === assigningOrder.qty ? "#34d399" : totalAllocated < assigningOrder.qty ? "#f59e0b" : "#ef4444" }}>
-                      {totalAllocated.toLocaleString()}
-                    </strong>
-                    <span style={{ color: "var(--text-muted)" }}>/</span>
-                    <span style={{ color: "#fff" }}>{assigningOrder.qty.toLocaleString()} units</span>
-                  </div>
+            {/* ─── CASE A: SINGLE ASSIGNEE (Clean, minimal, default) ─── */}
+            {!isDivided ? (
+              <div
+                style={{
+                  backgroundColor: "rgba(10, 14, 23, 0.6)",
+                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                  borderRadius: "8px",
+                  padding: "16px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "12px",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <label style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                    {allocations[0]?.workerType === "STAFF" ? "Assign Staff Operator" : "Assign Labour Contractor"}
+                  </label>
+
+                  {/* Worker Type Toggle (Only if Lanyard order) */}
+                  {!isAssigningCard && (
+                    <div style={{ display: "inline-flex", backgroundColor: "rgba(0,0,0,0.4)", borderRadius: "3px", padding: "1px" }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          handleSelectWorkerForAllocation(0, LABOUR_CONTRACTORS[0].id, "LABOUR");
+                        }}
+                        style={{
+                          padding: "3px 10px",
+                          fontSize: "10.5px",
+                          fontWeight: 700,
+                          borderRadius: "2px",
+                          border: "none",
+                          cursor: "pointer",
+                          backgroundColor: allocations[0]?.workerType !== "STAFF" ? "rgba(249, 115, 22, 0.35)" : "transparent",
+                          color: allocations[0]?.workerType !== "STAFF" ? "#fb923c" : "var(--text-muted)",
+                        }}
+                      >
+                        Labour
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          handleSelectWorkerForAllocation(0, INHOUSE_EMPLOYEES[0].id, "STAFF");
+                        }}
+                        style={{
+                          padding: "3px 10px",
+                          fontSize: "10.5px",
+                          fontWeight: 700,
+                          borderRadius: "2px",
+                          border: "none",
+                          cursor: "pointer",
+                          backgroundColor: allocations[0]?.workerType === "STAFF" ? "rgba(56, 189, 248, 0.35)" : "transparent",
+                          color: allocations[0]?.workerType === "STAFF" ? "#38bdf8" : "var(--text-muted)",
+                        }}
+                      >
+                        Staff
+                      </button>
+                    </div>
+                  )}
                 </div>
 
-                {/* Progress Meter Bar */}
-                <div style={{ width: "100%", height: "6px", backgroundColor: "rgba(255, 255, 255, 0.08)", borderRadius: "3px", overflow: "hidden" }}>
-                  <div
-                    style={{
-                      height: "100%",
-                      borderRadius: "3px",
-                      width: `${Math.min(100, Math.round((totalAllocated / (assigningOrder.qty || 1)) * 100))}%`,
-                      backgroundColor:
-                        totalAllocated === assigningOrder.qty
-                          ? "#10b981"
-                          : totalAllocated < assigningOrder.qty
-                          ? "#f59e0b"
-                          : "#ef4444",
-                      transition: "all 0.3s ease",
-                    }}
-                  />
+                <select
+                  value={allocations[0]?.workerId || ""}
+                  onChange={(e) => handleSelectWorkerForAllocation(0, e.target.value, allocations[0]?.workerType || "LABOUR")}
+                  style={{
+                    height: "40px",
+                    padding: "0 12px",
+                    backgroundColor: "rgba(9, 12, 19, 0.95)",
+                    border: "1px solid rgba(255, 255, 255, 0.16)",
+                    borderRadius: "4px",
+                    color: "#fff",
+                    fontSize: "13px",
+                    fontWeight: 600,
+                    outline: "none",
+                    cursor: "pointer",
+                  }}
+                >
+                  {allocations[0]?.workerType === "STAFF"
+                    ? INHOUSE_EMPLOYEES.map((emp) => (
+                        <option key={emp.id} value={emp.id} style={{ backgroundColor: "#0c101a", color: "#fff" }}>
+                          {emp.name} ({emp.role})
+                        </option>
+                      ))
+                    : LABOUR_CONTRACTORS.map((lab) => (
+                        <option key={lab.id} value={lab.id} style={{ backgroundColor: "#0c101a", color: "#fff" }}>
+                          {lab.name} — {lab.specialty}
+                        </option>
+                      ))}
+                </select>
+
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "8px 12px",
+                    backgroundColor: "rgba(255, 255, 255, 0.02)",
+                    borderRadius: "4px",
+                    border: "1px solid rgba(255, 255, 255, 0.05)",
+                  }}
+                >
+                  <span style={{ fontSize: "11.5px", color: "var(--text-muted)" }}>Assigned Volume</span>
+                  <strong style={{ fontSize: "13px", color: "#34d399", fontFamily: "var(--font-mono)" }}>
+                    {assigningOrder.qty.toLocaleString()} units (100%)
+                  </strong>
                 </div>
               </div>
+            ) : (
+              /* ─── CASE B: MULTI-WORKER ALLOCATION WORKSPACE (Only when divided) ─── */
+              <div
+                style={{
+                  backgroundColor: "rgba(10, 14, 23, 0.7)",
+                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                  borderRadius: "8px",
+                  padding: "16px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "14px",
+                }}
+              >
+                {/* Header with allocation meter */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <span style={{ fontSize: "14px" }}>⚖️</span>
+                      <span style={{ fontSize: "12px", fontWeight: 700, color: "#ffffff", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                        Volume Allocation ({allocations.length} Assignees)
+                      </span>
+                    </div>
 
-              {/* Allocation Rows */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                {allocations.map((alloc, idx) => {
-                  const isStaff = alloc.workerType === "STAFF";
-                  return (
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", fontFamily: "var(--font-mono)", fontSize: "12px" }}>
+                      <strong style={{ color: totalAllocated === assigningOrder.qty ? "#34d399" : totalAllocated < assigningOrder.qty ? "#f59e0b" : "#ef4444" }}>
+                        {totalAllocated.toLocaleString()}
+                      </strong>
+                      <span style={{ color: "var(--text-muted)" }}>/</span>
+                      <span style={{ color: "#fff" }}>{assigningOrder.qty.toLocaleString()} units</span>
+                    </div>
+                  </div>
+
+                  {/* Progress Meter Bar */}
+                  <div style={{ width: "100%", height: "6px", backgroundColor: "rgba(255, 255, 255, 0.08)", borderRadius: "3px", overflow: "hidden" }}>
                     <div
-                      key={idx}
                       style={{
-                        backgroundColor: "rgba(16, 21, 32, 0.9)",
-                        border: isStaff ? "1px solid rgba(56, 189, 248, 0.3)" : "1px solid rgba(249, 115, 22, 0.3)",
-                        borderRadius: "6px",
-                        padding: "12px 14px",
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "10px",
+                        height: "100%",
+                        borderRadius: "3px",
+                        width: `${Math.min(100, Math.round((totalAllocated / (assigningOrder.qty || 1)) * 100))}%`,
+                        backgroundColor:
+                          totalAllocated === assigningOrder.qty
+                            ? "#10b981"
+                            : totalAllocated < assigningOrder.qty
+                            ? "#f59e0b"
+                            : "#ef4444",
+                        transition: "all 0.3s ease",
                       }}
-                    >
-                      {/* Row Header */}
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                          <span
-                            style={{
-                              width: "20px",
-                              height: "20px",
-                              borderRadius: "50%",
-                              backgroundColor: isStaff ? "#0284c7" : "#ea580c",
-                              color: "#fff",
-                              display: "inline-flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              fontSize: "10px",
-                              fontWeight: 800,
-                            }}
-                          >
-                            {idx + 1}
-                          </span>
-                          <span style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase" }}>
-                            Assignee #{idx + 1}
-                          </span>
-                        </div>
+                    />
+                  </div>
+                </div>
 
-                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                          {/* Worker Type Toggle (Only if Lanyard order) */}
-                          {!isAssigningCard && (
-                            <div style={{ display: "inline-flex", backgroundColor: "rgba(0,0,0,0.4)", borderRadius: "3px", padding: "1px" }}>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  handleSelectWorkerForAllocation(idx, LABOUR_CONTRACTORS[0].id, "LABOUR");
-                                }}
-                                style={{
-                                  padding: "2px 8px",
-                                  fontSize: "10px",
-                                  fontWeight: 700,
-                                  borderRadius: "2px",
-                                  border: "none",
-                                  cursor: "pointer",
-                                  backgroundColor: !isStaff ? "rgba(249, 115, 22, 0.35)" : "transparent",
-                                  color: !isStaff ? "#fb923c" : "var(--text-muted)",
-                                }}
-                              >
-                                Labour
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  handleSelectWorkerForAllocation(idx, INHOUSE_EMPLOYEES[0].id, "STAFF");
-                                }}
-                                style={{
-                                  padding: "2px 8px",
-                                  fontSize: "10px",
-                                  fontWeight: 700,
-                                  borderRadius: "2px",
-                                  border: "none",
-                                  cursor: "pointer",
-                                  backgroundColor: isStaff ? "rgba(56, 189, 248, 0.35)" : "transparent",
-                                  color: isStaff ? "#38bdf8" : "var(--text-muted)",
-                                }}
-                              >
-                                Staff
-                              </button>
-                            </div>
-                          )}
-
-                          {allocations.length > 1 && (
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveAllocation(idx)}
+                {/* Allocation Rows */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                  {allocations.map((alloc, idx) => {
+                    const isStaff = alloc.workerType === "STAFF";
+                    return (
+                      <div
+                        key={idx}
+                        style={{
+                          backgroundColor: "rgba(16, 21, 32, 0.9)",
+                          border: isStaff ? "1px solid rgba(56, 189, 248, 0.3)" : "1px solid rgba(249, 115, 22, 0.3)",
+                          borderRadius: "6px",
+                          padding: "12px 14px",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "10px",
+                        }}
+                      >
+                        {/* Row Header */}
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                            <span
                               style={{
-                                width: "22px",
-                                height: "22px",
-                                borderRadius: "3px",
-                                border: "1px solid rgba(239, 68, 68, 0.3)",
-                                backgroundColor: "rgba(239, 68, 68, 0.12)",
-                                color: "#f87171",
-                                display: "flex",
+                                width: "20px",
+                                height: "20px",
+                                borderRadius: "50%",
+                                backgroundColor: isStaff ? "#0284c7" : "#ea580c",
+                                color: "#fff",
+                                display: "inline-flex",
                                 alignItems: "center",
                                 justifyContent: "center",
-                                cursor: "pointer",
-                                fontSize: "11px",
+                                fontSize: "10px",
+                                fontWeight: 800,
                               }}
-                              title="Remove this assignee"
                             >
-                              ✕
-                            </button>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Worker Selection & Qty Input */}
-                      <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: "10px", alignItems: "flex-end" }}>
-                        {/* Worker Selector */}
-                        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                          <label style={{ fontSize: "10px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase" }}>
-                            {isStaff ? "In-House Employee" : "Labour Contractor"}
-                          </label>
-                          <select
-                            value={alloc.workerId}
-                            onChange={(e) => handleSelectWorkerForAllocation(idx, e.target.value, alloc.workerType)}
-                            style={{
-                              height: "36px",
-                              padding: "0 10px",
-                              backgroundColor: "rgba(9, 12, 19, 0.95)",
-                              border: `1px solid ${isStaff ? "rgba(56, 189, 248, 0.4)" : "rgba(249, 115, 22, 0.4)"}`,
-                              borderRadius: "4px",
-                              color: "#fff",
-                              fontSize: "12.5px",
-                              fontWeight: 600,
-                              outline: "none",
-                              cursor: "pointer",
-                            }}
-                          >
-                            {isStaff
-                              ? INHOUSE_EMPLOYEES.map((emp) => (
-                                  <option key={emp.id} value={emp.id} style={{ backgroundColor: "#0c101a", color: "#fff" }}>
-                                    {emp.name} ({emp.role})
-                                  </option>
-                                ))
-                              : LABOUR_CONTRACTORS.map((lab) => (
-                                  <option key={lab.id} value={lab.id} style={{ backgroundColor: "#0c101a", color: "#fff" }}>
-                                    {lab.name} — {lab.specialty}
-                                  </option>
-                                ))}
-                          </select>
-                        </div>
-
-                        {/* Qty Input & Quick Split Helpers */}
-                        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                            <label style={{ fontSize: "10px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase" }}>
-                              Allocated Qty
-                            </label>
-                            <div style={{ display: "flex", gap: "4px" }}>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const bal = remainingToAllocate + Number(alloc.qty || 0);
-                                  handleUpdateAllocation(idx, { qty: bal });
-                                }}
-                                style={{
-                                  fontSize: "9px",
-                                  padding: "1px 5px",
-                                  borderRadius: "2px",
-                                  backgroundColor: "rgba(255,255,255,0.08)",
-                                  border: "none",
-                                  color: "#cbd5e1",
-                                  cursor: "pointer",
-                                }}
-                                title="Set to remaining balance"
-                              >
-                                Max
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const half = Math.floor(assigningOrder.qty / (allocations.length > 1 ? allocations.length : 2));
-                                  handleUpdateAllocation(idx, { qty: half });
-                                }}
-                                style={{
-                                  fontSize: "9px",
-                                  padding: "1px 5px",
-                                  borderRadius: "2px",
-                                  backgroundColor: "rgba(255,255,255,0.08)",
-                                  border: "none",
-                                  color: "#cbd5e1",
-                                  cursor: "pointer",
-                                }}
-                                title="Split equally"
-                              >
-                                Equal
-                              </button>
-                            </div>
+                              {idx + 1}
+                            </span>
+                            <span style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase" }}>
+                              Assignee #{idx + 1}
+                            </span>
                           </div>
 
                           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                            <input
-                              type="number"
-                              min={1}
-                              max={assigningOrder.qty}
-                              value={alloc.qty}
-                              onChange={(e) => handleUpdateAllocation(idx, { qty: parseInt(e.target.value, 10) || 0 })}
+                            {/* Worker Type Toggle (Only if Lanyard order) */}
+                            {!isAssigningCard && (
+                              <div style={{ display: "inline-flex", backgroundColor: "rgba(0,0,0,0.4)", borderRadius: "3px", padding: "1px" }}>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    handleSelectWorkerForAllocation(idx, LABOUR_CONTRACTORS[0].id, "LABOUR");
+                                  }}
+                                  style={{
+                                    padding: "2px 8px",
+                                    fontSize: "10px",
+                                    fontWeight: 700,
+                                    borderRadius: "2px",
+                                    border: "none",
+                                    cursor: "pointer",
+                                    backgroundColor: !isStaff ? "rgba(249, 115, 22, 0.35)" : "transparent",
+                                    color: !isStaff ? "#fb923c" : "var(--text-muted)",
+                                  }}
+                                >
+                                  Labour
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    handleSelectWorkerForAllocation(idx, INHOUSE_EMPLOYEES[0].id, "STAFF");
+                                  }}
+                                  style={{
+                                    padding: "2px 8px",
+                                    fontSize: "10px",
+                                    fontWeight: 700,
+                                    borderRadius: "2px",
+                                    border: "none",
+                                    cursor: "pointer",
+                                    backgroundColor: isStaff ? "rgba(56, 189, 248, 0.35)" : "transparent",
+                                    color: isStaff ? "#38bdf8" : "var(--text-muted)",
+                                  }}
+                                >
+                                  Staff
+                                </button>
+                              </div>
+                            )}
+
+                            {allocations.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveAllocation(idx)}
+                                style={{
+                                  width: "22px",
+                                  height: "22px",
+                                  borderRadius: "3px",
+                                  border: "1px solid rgba(239, 68, 68, 0.3)",
+                                  backgroundColor: "rgba(239, 68, 68, 0.12)",
+                                  color: "#f87171",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  cursor: "pointer",
+                                  fontSize: "11px",
+                                }}
+                                title="Remove this assignee"
+                              >
+                                ✕
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Worker Selection & Qty Input */}
+                        <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: "10px", alignItems: "flex-end" }}>
+                          {/* Worker Selector */}
+                          <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                            <label style={{ fontSize: "10px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase" }}>
+                              {isStaff ? "In-House Employee" : "Labour Contractor"}
+                            </label>
+                            <select
+                              value={alloc.workerId}
+                              onChange={(e) => handleSelectWorkerForAllocation(idx, e.target.value, alloc.workerType)}
                               style={{
-                                width: "100%",
                                 height: "36px",
                                 padding: "0 10px",
                                 backgroundColor: "rgba(9, 12, 19, 0.95)",
-                                border: "1px solid rgba(255, 255, 255, 0.15)",
+                                border: `1px solid ${isStaff ? "rgba(56, 189, 248, 0.4)" : "rgba(249, 115, 22, 0.4)"}`,
                                 borderRadius: "4px",
                                 color: "#fff",
-                                fontSize: "14px",
-                                fontWeight: 800,
-                                fontFamily: "var(--font-mono)",
+                                fontSize: "12.5px",
+                                fontWeight: 600,
                                 outline: "none",
+                                cursor: "pointer",
                               }}
-                            />
-                            <span style={{ fontSize: "11px", color: "var(--text-muted)", flexShrink: 0 }}>
-                              units
-                            </span>
+                            >
+                              {isStaff
+                                ? INHOUSE_EMPLOYEES.map((emp) => (
+                                    <option key={emp.id} value={emp.id} style={{ backgroundColor: "#0c101a", color: "#fff" }}>
+                                      {emp.name} ({emp.role})
+                                    </option>
+                                  ))
+                                : LABOUR_CONTRACTORS.map((lab) => (
+                                    <option key={lab.id} value={lab.id} style={{ backgroundColor: "#0c101a", color: "#fff" }}>
+                                      {lab.name} — {lab.specialty}
+                                    </option>
+                                  ))}
+                            </select>
+                          </div>
+
+                          {/* Qty Input & Quick Split Helpers */}
+                          <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                              <label style={{ fontSize: "10px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase" }}>
+                                Allocated Qty
+                              </label>
+                              <div style={{ display: "flex", gap: "4px" }}>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const bal = remainingToAllocate + Number(alloc.qty || 0);
+                                    handleUpdateAllocation(idx, { qty: bal });
+                                  }}
+                                  style={{
+                                    fontSize: "9px",
+                                    padding: "1px 5px",
+                                    borderRadius: "2px",
+                                    backgroundColor: "rgba(255,255,255,0.08)",
+                                    border: "none",
+                                    color: "#cbd5e1",
+                                    cursor: "pointer",
+                                  }}
+                                  title="Set to remaining balance"
+                                >
+                                  Max
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const half = Math.floor(assigningOrder.qty / (allocations.length > 1 ? allocations.length : 2));
+                                    handleUpdateAllocation(idx, { qty: half });
+                                  }}
+                                  style={{
+                                    fontSize: "9px",
+                                    padding: "1px 5px",
+                                    borderRadius: "2px",
+                                    backgroundColor: "rgba(255,255,255,0.08)",
+                                    border: "none",
+                                    color: "#cbd5e1",
+                                    cursor: "pointer",
+                                  }}
+                                  title="Split equally"
+                                >
+                                  Equal
+                                </button>
+                              </div>
+                            </div>
+
+                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                              <input
+                                type="number"
+                                min={1}
+                                max={assigningOrder.qty}
+                                value={alloc.qty}
+                                onChange={(e) => handleUpdateAllocation(idx, { qty: parseInt(e.target.value, 10) || 0 })}
+                                style={{
+                                  width: "100%",
+                                  height: "36px",
+                                  padding: "0 10px",
+                                  backgroundColor: "rgba(9, 12, 19, 0.95)",
+                                  border: "1px solid rgba(255, 255, 255, 0.15)",
+                                  borderRadius: "4px",
+                                  color: "#fff",
+                                  fontSize: "14px",
+                                  fontWeight: 800,
+                                  fontFamily: "var(--font-mono)",
+                                  outline: "none",
+                                }}
+                              />
+                              <span style={{ fontSize: "11px", color: "var(--text-muted)", flexShrink: 0 }}>
+                                units
+                              </span>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
+
+                {/* Add Assignee / Split Order Button */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: "4px" }}>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={handleAddAllocation}
+                    style={{
+                      backgroundColor: "rgba(255, 255, 255, 0.05)",
+                      border: "1px dashed rgba(255, 255, 255, 0.25)",
+                    }}
+                  >
+                    + Add Another Assignee
+                  </Button>
+
+                  {remainingToAllocate > 0 && (
+                    <span style={{ fontSize: "11px", color: "#f59e0b", fontStyle: "italic" }}>
+                      {remainingToAllocate.toLocaleString()} units left to divide
+                    </span>
+                  )}
+                </div>
               </div>
-
-              {/* Add Assignee / Split Order Button */}
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: "4px" }}>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={handleAddAllocation}
-                  style={{
-                    backgroundColor: "rgba(255, 255, 255, 0.05)",
-                    border: "1px dashed rgba(255, 255, 255, 0.25)",
-                  }}
-                >
-                  + Divide Order / Add Assignee
-                </Button>
-
-                {remainingToAllocate > 0 && (
-                  <span style={{ fontSize: "11px", color: "#f59e0b", fontStyle: "italic" }}>
-                    {remainingToAllocate.toLocaleString()} units left to divide
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* Note explaining stock buffer location */}
-            <div
-              style={{
-                padding: "10px 14px",
-                borderRadius: "5px",
-                backgroundColor: "rgba(255, 255, 255, 0.02)",
-                border: "1px solid rgba(255, 255, 255, 0.06)",
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                fontSize: "11.5px",
-                color: "var(--text-muted)",
-              }}
-            >
-              <span>ℹ️</span>
-              <span>
-                Contractor stock buffer holdings and live warehouse material issue (handover) are managed on the <strong>Labour Profile</strong> page.
-              </span>
-            </div>
+            )}
           </div>
         )}
       </Drawer>
