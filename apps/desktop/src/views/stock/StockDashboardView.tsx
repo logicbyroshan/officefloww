@@ -216,6 +216,17 @@ const INITIAL_STOCK_ITEMS: StockItem[] = [
   },
 ];
 
+// ─── Unit Options for Dropdown ────────────────────────────────────────────────
+export const STOCK_UNIT_OPTIONS = [
+  "pieces",
+  "rolls",
+  "packets of 1000",
+  "meters",
+  "boxes",
+  "sets",
+  "packets",
+];
+
 // ─── Movement / Usage Log Record ──────────────────────────────────────────────
 interface StockMovementLog {
   id: string;
@@ -244,10 +255,19 @@ export const StockDashboardView: React.FC = () => {
   const [stockItems, setStockItems] = useState<StockItem[]>(INITIAL_STOCK_ITEMS);
   const [movements, setMovements] = useState<StockMovementLog[]>(SEED_MOVEMENTS);
 
-  // Search & Category Filter
+  // Search & Column Header Sorting (Like Orders Workspace)
   const [search, setSearch] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<"ALL" | StockCategory>("ALL");
-  const [sortBy, setSortBy] = useState<"available" | "used" | "name">("available");
+  const [sortField, setSortField] = useState<"name" | "availableStock" | "usedStock" | "minThreshold">("availableStock");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+
+  const toggleSort = (field: "name" | "availableStock" | "usedStock" | "minThreshold") => {
+    if (sortField === field) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortField(field);
+      setSortDir(field === "name" ? "asc" : "desc");
+    }
+  };
 
   // Double-Click Inline Editing State
   const [editingCell, setEditingCell] = useState<{ id: string; field: keyof StockItem } | null>(null);
@@ -282,24 +302,25 @@ export const StockDashboardView: React.FC = () => {
   const [newItemUnit, setNewItemUnit] = useState("pieces");
   const [newItemQty, setNewItemQty] = useState("1000");
 
-  // ─── Filtered Items ──────────────────────────────────────────────────────────
+  // ─── Filtered Items (Searched & Sorted) ───────────────────────────────────────
   const filteredItems = useMemo(() => {
     let list = stockItems.filter((i) => {
-      const q = search.toLowerCase();
-      const matchSearch = !q || i.name.toLowerCase().includes(q) || i.workstation.toLowerCase().includes(q);
-      const matchCat = categoryFilter === "ALL" || i.category === categoryFilter;
-      return matchSearch && matchCat;
+      const q = search.toLowerCase().trim();
+      return !q || i.name.toLowerCase().includes(q) || i.unit.toLowerCase().includes(q);
     });
 
     list.sort((a, b) => {
-      if (sortBy === "available") return b.availableStock - a.availableStock;
-      if (sortBy === "used") return b.usedStock - a.usedStock;
-      if (sortBy === "name") return a.name.localeCompare(b.name);
-      return 0;
+      let comparison = 0;
+      if (sortField === "name") {
+        comparison = a.name.localeCompare(b.name);
+      } else {
+        comparison = (a[sortField] || 0) - (b[sortField] || 0);
+      }
+      return sortDir === "asc" ? comparison : -comparison;
     });
 
     return list;
-  }, [stockItems, search, categoryFilter, sortBy]);
+  }, [stockItems, search, sortField, sortDir]);
 
   // ─── Double Click Handlers ──────────────────────────────────────────────────
   const handleStartEdit = (item: StockItem, field: keyof StockItem, e: React.MouseEvent) => {
@@ -413,13 +434,6 @@ export const StockDashboardView: React.FC = () => {
     success("Item Added", `${newItem.name} registered in stock`);
   };
 
-  const categoryLabels: Record<StockCategory, { label: string; count: number; color: string }> = {
-    HOOKS: { label: "Hooks", count: stockItems.filter((i) => i.category === "HOOKS").length, color: "#c084fc" },
-    HOLDERS: { label: "Holders", count: stockItems.filter((i) => i.category === "HOLDERS").length, color: "#34d399" },
-    LANYARDS: { label: "Lanyard Rolls", count: stockItems.filter((i) => i.category === "LANYARDS").length, color: "#ff8a73" },
-    OTHERS: { label: "Others (Clips, Rings, Pins)", count: stockItems.filter((i) => i.category === "OTHERS").length, color: "#38bdf8" },
-  };
-
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", overflowY: "auto" }}>
 
@@ -503,96 +517,121 @@ export const StockDashboardView: React.FC = () => {
         </div>
       </div>
 
-      {/* ─── CATEGORY FILTER PILLS ───────────────────────────────────────────── */}
-      {activeTab === "inventory" && (
-        <div
-          style={{
-            padding: "10px 24px 0 24px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            flexWrap: "wrap",
-            gap: "10px",
-          }}
-        >
-          <Tabs
-            variant="pill"
-            size="sm"
-            activeTab={categoryFilter}
-            onChange={(id) => setCategoryFilter(id as any)}
-            tabs={[
-              { id: "ALL", label: "All Items", badge: stockItems.length },
-              ...(Object.keys(categoryLabels) as StockCategory[]).map((cat) => ({
-                id: cat,
-                label: categoryLabels[cat].label,
-                badge: categoryLabels[cat].count,
-              })),
-            ]}
-          />
-
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>Sort:</span>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
-              style={{
-                height: "28px",
-                padding: "0 8px",
-                borderRadius: "2px",
-                backgroundColor: "rgba(255,255,255,0.05)",
-                border: "1px solid rgba(255,255,255,0.12)",
-                color: "#fff",
-                fontSize: "11.5px",
-                cursor: "pointer",
-              }}
-            >
-              <option value="available" style={{ backgroundColor: "#0f1420" }}>Highest Available Stock</option>
-              <option value="used" style={{ backgroundColor: "#0f1420" }}>Most Consumed</option>
-              <option value="name" style={{ backgroundColor: "#0f1420" }}>Alphabetical Name</option>
-            </select>
-          </div>
-        </div>
-      )}
-
-      {/* ─── TAB 1: STOCKS INVENTORY TABLE (DOUBLE-CLICK EDITABLE, NO PRICING) ─── */}
+      {/* ─── TAB 1: STOCKS INVENTORY TABLE (Polished Orders Table Style, 68px Rows, Dividing Lines) ─── */}
       {activeTab === "inventory" ? (
-        <div style={{ padding: "14px 24px 24px 24px", flex: 1 }}>
+        <div style={{ padding: "18px 24px 24px 24px", flex: 1 }}>
           <div
             style={{
-              backgroundColor: "rgba(19, 23, 34, 0.85)",
-              backdropFilter: "blur(14px)",
-              border: "1px solid rgba(255,255,255,0.08)",
-              borderRadius: "3px",
+              backgroundColor: "rgba(16, 21, 32, 0.85)",
+              backdropFilter: "blur(16px)",
+              border: "1px solid rgba(255, 255, 255, 0.09)",
+              borderRadius: "6px",
+              boxShadow: "0 10px 36px rgba(0, 0, 0, 0.48)",
               overflow: "hidden",
             }}
           >
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12.5px" }}>
+            <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, fontSize: "13px" }}>
               <thead>
                 <tr
                   style={{
-                    backgroundColor: "rgba(0,0,0,0.3)",
-                    borderBottom: "1px solid rgba(255,255,255,0.08)",
-                    color: "var(--text-muted)",
-                    fontSize: "10.5px",
+                    background: "linear-gradient(180deg, #161c2c 0%, #0d121c 100%)",
+                    color: "#94a3b8",
+                    fontSize: "11px",
                     textTransform: "uppercase",
-                    fontWeight: 700,
+                    fontWeight: 800,
+                    letterSpacing: "0.8px",
+                    userSelect: "none",
                   }}
                 >
-                  <th style={{ padding: "12px 16px", textAlign: "left" }}>Stock Item Name</th>
-                  <th style={{ padding: "12px 12px", textAlign: "center", width: "130px" }}>Category</th>
-                  <th style={{ padding: "12px 12px", textAlign: "center", width: "140px" }}>Unit / Packaging</th>
-                  <th style={{ padding: "12px 14px", textAlign: "right", width: "140px" }}>Floor Available</th>
-                  <th style={{ padding: "12px 14px", textAlign: "right", width: "130px" }}>Total Consumed</th>
-                  <th style={{ padding: "12px 14px", textAlign: "right", width: "120px" }}>Reserved</th>
-                  <th style={{ padding: "12px 14px", textAlign: "right", width: "120px" }}>Min Alert</th>
-                  <th style={{ padding: "12px 16px", textAlign: "left" }}>Assigned Line / Station</th>
-                  <th style={{ padding: "12px 16px", textAlign: "right", width: "210px" }}>Actions</th>
+                  {/* 1. STOCK ITEM NAME */}
+                  <th
+                    style={{
+                      padding: "16px 18px",
+                      textAlign: "left",
+                      cursor: "pointer",
+                      borderBottom: "2px solid rgba(255, 138, 115, 0.4)",
+                      borderRight: "1px solid rgba(255, 255, 255, 0.05)",
+                    }}
+                    onClick={() => toggleSort("name")}
+                  >
+                    Stock Item Name {sortField === "name" ? (sortDir === "asc" ? "▲" : "▼") : ""}
+                  </th>
+
+                  {/* 2. UNIT / PACKAGING */}
+                  <th
+                    style={{
+                      padding: "16px 18px",
+                      textAlign: "center",
+                      width: "180px",
+                      borderBottom: "2px solid rgba(255, 138, 115, 0.4)",
+                      borderRight: "1px solid rgba(255, 255, 255, 0.05)",
+                    }}
+                  >
+                    Unit / Packaging
+                  </th>
+
+                  {/* 3. FLOOR AVAILABLE */}
+                  <th
+                    style={{
+                      padding: "16px 18px",
+                      textAlign: "right",
+                      width: "160px",
+                      cursor: "pointer",
+                      borderBottom: "2px solid rgba(255, 138, 115, 0.4)",
+                      borderRight: "1px solid rgba(255, 255, 255, 0.05)",
+                    }}
+                    onClick={() => toggleSort("availableStock")}
+                  >
+                    Floor Available {sortField === "availableStock" ? (sortDir === "asc" ? "▲" : "▼") : ""}
+                  </th>
+
+                  {/* 4. TOTAL CONSUMED */}
+                  <th
+                    style={{
+                      padding: "16px 18px",
+                      textAlign: "right",
+                      width: "160px",
+                      cursor: "pointer",
+                      borderBottom: "2px solid rgba(255, 138, 115, 0.4)",
+                      borderRight: "1px solid rgba(255, 255, 255, 0.05)",
+                    }}
+                    onClick={() => toggleSort("usedStock")}
+                  >
+                    Total Consumed {sortField === "usedStock" ? (sortDir === "asc" ? "▲" : "▼") : ""}
+                  </th>
+
+                  {/* 5. MIN ALERT */}
+                  <th
+                    style={{
+                      padding: "16px 18px",
+                      textAlign: "right",
+                      width: "140px",
+                      cursor: "pointer",
+                      borderBottom: "2px solid rgba(255, 138, 115, 0.4)",
+                      borderRight: "1px solid rgba(255, 255, 255, 0.05)",
+                    }}
+                    onClick={() => toggleSort("minThreshold")}
+                  >
+                    Min Alert {sortField === "minThreshold" ? (sortDir === "asc" ? "▲" : "▼") : ""}
+                  </th>
+
+                  {/* 6. ACTIONS */}
+                  <th
+                    style={{
+                      padding: "16px 18px",
+                      textAlign: "center",
+                      width: "220px",
+                      borderBottom: "2px solid rgba(255, 138, 115, 0.4)",
+                    }}
+                  >
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {filteredItems.length === 0 ? (
                   <tr>
-                    <td colSpan={9} style={{ padding: "48px 0", textAlign: "center", color: "var(--text-muted)" }}>
+                    <td colSpan={6} style={{ padding: "50px 0", textAlign: "center", color: "var(--text-muted)" }}>
                       No stock items found.
                     </td>
                   </tr>
@@ -606,18 +645,24 @@ export const StockDashboardView: React.FC = () => {
                       <tr
                         key={item.id}
                         style={{
-                          borderTop: "1px solid rgba(255,255,255,0.05)",
-                          backgroundColor: idx % 2 === 0 ? "transparent" : "rgba(255,255,255,0.015)",
-                          transition: "background 0.12s",
+                          height: "68px",
+                          borderBottom: "1px solid rgba(255, 255, 255, 0.06)",
+                          backgroundColor: idx % 2 === 0 ? "transparent" : "rgba(255, 255, 255, 0.015)",
+                          transition: "background 0.15s ease",
                         }}
-                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.04)")}
+                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.04)")}
                         onMouseLeave={(e) =>
-                          (e.currentTarget.style.backgroundColor = idx % 2 === 0 ? "transparent" : "rgba(255,255,255,0.015)")
+                          (e.currentTarget.style.backgroundColor = idx % 2 === 0 ? "transparent" : "rgba(255, 255, 255, 0.015)")
                         }
                       >
-                        {/* 1. Item Name (Double-click to edit) */}
+                        {/* 1. Stock Item Name */}
                         <td
-                          style={{ padding: "12px 16px", cursor: "text" }}
+                          style={{
+                            padding: "16px 18px",
+                            cursor: "text",
+                            borderRight: "1px solid rgba(255, 255, 255, 0.06)",
+                            verticalAlign: "middle",
+                          }}
                           onDoubleClick={(e) => handleStartEdit(item, "name", e)}
                           title="Double-click to edit item name"
                         >
@@ -630,25 +675,26 @@ export const StockDashboardView: React.FC = () => {
                               onKeyDown={handleKeyDown}
                               style={{
                                 width: "100%",
-                                padding: "4px 8px",
-                                backgroundColor: "rgba(0,0,0,0.6)",
+                                height: "36px",
+                                padding: "0 10px",
+                                backgroundColor: "rgba(0, 0, 0, 0.85)",
                                 border: "1px solid var(--accent-border)",
-                                borderRadius: "2px",
+                                borderRadius: "4px",
                                 color: "#fff",
-                                fontSize: "13px",
+                                fontSize: "13.5px",
                                 fontWeight: 700,
                                 outline: "none",
                               }}
                             />
                           ) : (
-                            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                               <div
                                 style={{
-                                  width: "28px",
-                                  height: "28px",
-                                  borderRadius: "2px",
-                                  backgroundColor: "rgba(255,255,255,0.04)",
-                                  border: "1px solid rgba(255,255,255,0.08)",
+                                  width: "36px",
+                                  height: "36px",
+                                  borderRadius: "4px",
+                                  backgroundColor: "rgba(255, 255, 255, 0.04)",
+                                  border: "1px solid rgba(255, 255, 255, 0.08)",
                                   display: "flex",
                                   alignItems: "center",
                                   justifyContent: "center",
@@ -656,91 +702,70 @@ export const StockDashboardView: React.FC = () => {
                                   flexShrink: 0,
                                 }}
                               >
-                                <Icon name={item.iconName} size={14} color={item.iconColor} />
+                                <Icon name={item.iconName} size={16} color={item.iconColor} />
                               </div>
-                              <strong style={{ color: "#ffffff", fontSize: "13px" }}>{item.name}</strong>
+                              <span style={{ color: "#ffffff", fontSize: "13.5px", fontWeight: 700 }}>
+                                {item.name}
+                              </span>
                             </div>
                           )}
                         </td>
 
-                        {/* 2. Category */}
+                        {/* 2. Unit / Packaging (Interactive Dropdown) */}
                         <td
-                          style={{ padding: "12px 12px", textAlign: "center", cursor: "pointer" }}
-                          onDoubleClick={(e) => handleStartEdit(item, "category", e)}
-                          title="Double-click to edit category"
+                          style={{
+                            padding: "16px 18px",
+                            textAlign: "center",
+                            borderRight: "1px solid rgba(255, 255, 255, 0.06)",
+                            verticalAlign: "middle",
+                          }}
                         >
-                          {isEditing("category") ? (
-                            <select
-                              value={editValue}
-                              onChange={(e) => {
-                                setEditValue(e.target.value);
-                              }}
-                              onBlur={handleSaveEdit}
-                              style={{
-                                padding: "3px 6px",
-                                backgroundColor: "#0f1420",
-                                border: "1px solid var(--accent-border)",
-                                borderRadius: "2px",
-                                color: "#fff",
-                                fontSize: "11px",
-                              }}
-                            >
-                              <option value="HOOKS">HOOKS</option>
-                              <option value="HOLDERS">HOLDERS</option>
-                              <option value="LANYARDS">LANYARDS</option>
-                              <option value="OTHERS">OTHERS</option>
-                            </select>
-                          ) : (
-                            <span
-                              style={{
-                                fontSize: "10.5px",
-                                fontWeight: 700,
-                                padding: "3px 8px",
-                                borderRadius: "2px",
-                                backgroundColor: `${categoryLabels[item.category]?.color || "#c084fc"}18`,
-                                color: categoryLabels[item.category]?.color || "#c084fc",
-                              }}
-                            >
-                              {item.category}
-                            </span>
-                          )}
+                          <select
+                            value={item.unit}
+                            onChange={(e) => {
+                              const newUnit = e.target.value;
+                              setStockItems((prev) =>
+                                prev.map((i) => (i.id === item.id ? { ...i, unit: newUnit } : i))
+                              );
+                              success("Unit Updated", `${item.name} packaging unit set to ${newUnit}`);
+                            }}
+                            style={{
+                              height: "36px",
+                              padding: "0 10px",
+                              backgroundColor: "rgba(10, 14, 23, 0.85)",
+                              border: "1px solid rgba(255, 255, 255, 0.14)",
+                              borderRadius: "var(--radius-sm, 4px)",
+                              color: "#cbd5e1",
+                              fontSize: "12.5px",
+                              fontWeight: 600,
+                              outline: "none",
+                              cursor: "pointer",
+                              width: "100%",
+                              maxWidth: "155px",
+                            }}
+                          >
+                            {STOCK_UNIT_OPTIONS.map((u) => (
+                              <option key={u} value={u} style={{ backgroundColor: "#0f1420", color: "#fff" }}>
+                                {u}
+                              </option>
+                            ))}
+                            {!STOCK_UNIT_OPTIONS.includes(item.unit) && (
+                              <option value={item.unit} style={{ backgroundColor: "#0f1420", color: "#fff" }}>
+                                {item.unit}
+                              </option>
+                            )}
+                          </select>
                         </td>
 
-                        {/* 3. Unit / Packaging (Double-click to edit) */}
+                        {/* 3. Floor Available (Double-click to edit) */}
                         <td
-                          style={{ padding: "12px 12px", textAlign: "center", cursor: "text" }}
-                          onDoubleClick={(e) => handleStartEdit(item, "unit", e)}
-                          title="Double-click to edit packaging unit"
-                        >
-                          {isEditing("unit") ? (
-                            <input
-                              ref={editInputRef}
-                              value={editValue}
-                              onChange={(e) => setEditValue(e.target.value)}
-                              onBlur={handleSaveEdit}
-                              onKeyDown={handleKeyDown}
-                              style={{
-                                width: "110px",
-                                padding: "3px 6px",
-                                backgroundColor: "rgba(0,0,0,0.6)",
-                                border: "1px solid var(--accent-border)",
-                                borderRadius: "2px",
-                                color: "#fff",
-                                fontSize: "11.5px",
-                                textAlign: "center",
-                                outline: "none",
-                              }}
-                            />
-                          ) : (
-                            <span style={{ fontSize: "11.5px", color: "var(--text-secondary)", fontWeight: 500 }}>
-                              {item.unit}
-                            </span>
-                          )}
-                        </td>
-
-                        {/* 4. Floor Available (Double-click to edit) */}
-                        <td
-                          style={{ padding: "12px 14px", textAlign: "right", cursor: "text" }}
+                          style={{
+                            padding: "16px 18px",
+                            textAlign: "right",
+                            cursor: "text",
+                            borderRight: "1px solid rgba(255, 255, 255, 0.06)",
+                            verticalAlign: "middle",
+                          }}
                           onDoubleClick={(e) => handleStartEdit(item, "availableStock", e)}
                           title="Double-click to edit available stock"
                         >
@@ -753,23 +778,24 @@ export const StockDashboardView: React.FC = () => {
                               onBlur={handleSaveEdit}
                               onKeyDown={handleKeyDown}
                               style={{
-                                width: "90px",
-                                padding: "3px 6px",
-                                backgroundColor: "rgba(0,0,0,0.6)",
+                                width: "100px",
+                                height: "36px",
+                                padding: "0 8px",
+                                backgroundColor: "rgba(0, 0, 0, 0.85)",
                                 border: "1px solid var(--accent-border)",
-                                borderRadius: "2px",
+                                borderRadius: "4px",
                                 color: "#fff",
-                                fontSize: "13px",
+                                fontSize: "14px",
                                 fontFamily: "var(--font-mono)",
                                 textAlign: "right",
                                 outline: "none",
                               }}
                             />
                           ) : (
-                            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "flex-end", gap: "5px" }}>
+                            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "flex-end", gap: "8px" }}>
                               <strong
                                 style={{
-                                  fontSize: "14.5px",
+                                  fontSize: "15px",
                                   fontFamily: "var(--font-mono)",
                                   fontWeight: 800,
                                   color: isLowStock ? "#f87171" : "#ffffff",
@@ -778,7 +804,17 @@ export const StockDashboardView: React.FC = () => {
                                 {item.availableStock.toLocaleString()}
                               </strong>
                               {isLowStock && (
-                                <span style={{ fontSize: "9.5px", fontWeight: 700, color: "#f87171", padding: "1px 4px", borderRadius: "2px", backgroundColor: "rgba(248,113,113,0.12)" }}>
+                                <span
+                                  style={{
+                                    fontSize: "10px",
+                                    fontWeight: 700,
+                                    color: "#f87171",
+                                    padding: "2px 6px",
+                                    borderRadius: "3px",
+                                    backgroundColor: "rgba(248, 113, 113, 0.15)",
+                                    border: "1px solid rgba(248, 113, 113, 0.3)",
+                                  }}
+                                >
                                   LOW
                                 </span>
                               )}
@@ -786,9 +822,15 @@ export const StockDashboardView: React.FC = () => {
                           )}
                         </td>
 
-                        {/* 5. Total Consumed / Used (Double-click to edit) */}
+                        {/* 4. Total Consumed (Double-click to edit) */}
                         <td
-                          style={{ padding: "12px 14px", textAlign: "right", cursor: "text" }}
+                          style={{
+                            padding: "16px 18px",
+                            textAlign: "right",
+                            cursor: "text",
+                            borderRight: "1px solid rgba(255, 255, 255, 0.06)",
+                            verticalAlign: "middle",
+                          }}
                           onDoubleClick={(e) => handleStartEdit(item, "usedStock", e)}
                           title="Double-click to edit consumed stock"
                         >
@@ -801,62 +843,35 @@ export const StockDashboardView: React.FC = () => {
                               onBlur={handleSaveEdit}
                               onKeyDown={handleKeyDown}
                               style={{
-                                width: "80px",
-                                padding: "3px 6px",
-                                backgroundColor: "rgba(0,0,0,0.6)",
+                                width: "90px",
+                                height: "36px",
+                                padding: "0 8px",
+                                backgroundColor: "rgba(0, 0, 0, 0.85)",
                                 border: "1px solid var(--accent-border)",
-                                borderRadius: "2px",
+                                borderRadius: "4px",
                                 color: "#fff",
-                                fontSize: "12px",
+                                fontSize: "13px",
                                 fontFamily: "var(--font-mono)",
                                 textAlign: "right",
                                 outline: "none",
                               }}
                             />
                           ) : (
-                            <span style={{ fontFamily: "var(--font-mono)", color: "#10b981", fontWeight: 700 }}>
+                            <span style={{ fontFamily: "var(--font-mono)", color: "#10b981", fontWeight: 700, fontSize: "14px" }}>
                               {item.usedStock.toLocaleString()}
                             </span>
                           )}
                         </td>
 
-                        {/* 6. Reserved Stock (Double-click to edit) */}
+                        {/* 5. Min Alert (Double-click to edit) */}
                         <td
-                          style={{ padding: "12px 14px", textAlign: "right", cursor: "text" }}
-                          onDoubleClick={(e) => handleStartEdit(item, "reservedStock", e)}
-                          title="Double-click to edit reserved stock"
-                        >
-                          {isEditing("reservedStock") ? (
-                            <input
-                              ref={editInputRef}
-                              type="number"
-                              value={editValue}
-                              onChange={(e) => setEditValue(e.target.value)}
-                              onBlur={handleSaveEdit}
-                              onKeyDown={handleKeyDown}
-                              style={{
-                                width: "70px",
-                                padding: "3px 6px",
-                                backgroundColor: "rgba(0,0,0,0.6)",
-                                border: "1px solid var(--accent-border)",
-                                borderRadius: "2px",
-                                color: "#fff",
-                                fontSize: "12px",
-                                fontFamily: "var(--font-mono)",
-                                textAlign: "right",
-                                outline: "none",
-                              }}
-                            />
-                          ) : (
-                            <span style={{ fontFamily: "var(--font-mono)", color: "var(--text-muted)" }}>
-                              {item.reservedStock.toLocaleString()}
-                            </span>
-                          )}
-                        </td>
-
-                        {/* 7. Min Threshold Alert (Double-click to edit) */}
-                        <td
-                          style={{ padding: "12px 14px", textAlign: "right", cursor: "text" }}
+                          style={{
+                            padding: "16px 18px",
+                            textAlign: "right",
+                            cursor: "text",
+                            borderRight: "1px solid rgba(255, 255, 255, 0.06)",
+                            verticalAlign: "middle",
+                          }}
                           onDoubleClick={(e) => handleStartEdit(item, "minThreshold", e)}
                           title="Double-click to edit minimum threshold"
                         >
@@ -869,57 +884,35 @@ export const StockDashboardView: React.FC = () => {
                               onBlur={handleSaveEdit}
                               onKeyDown={handleKeyDown}
                               style={{
-                                width: "70px",
-                                padding: "3px 6px",
-                                backgroundColor: "rgba(0,0,0,0.6)",
+                                width: "80px",
+                                height: "36px",
+                                padding: "0 8px",
+                                backgroundColor: "rgba(0, 0, 0, 0.85)",
                                 border: "1px solid var(--accent-border)",
-                                borderRadius: "2px",
+                                borderRadius: "4px",
                                 color: "#fff",
-                                fontSize: "12px",
+                                fontSize: "13px",
                                 fontFamily: "var(--font-mono)",
                                 textAlign: "right",
                                 outline: "none",
                               }}
                             />
                           ) : (
-                            <span style={{ fontFamily: "var(--font-mono)", color: "var(--text-muted)", fontSize: "11.5px" }}>
+                            <span style={{ fontFamily: "var(--font-mono)", color: "var(--text-muted)", fontSize: "12.5px" }}>
                               {item.minThreshold.toLocaleString()}
                             </span>
                           )}
                         </td>
 
-                        {/* 8. Assigned Station (Double-click to edit) */}
+                        {/* 6. Actions (+ Add Stock, - Log Usage) */}
                         <td
-                          style={{ padding: "12px 16px", fontSize: "12px", color: "var(--text-secondary)", cursor: "text" }}
-                          onDoubleClick={(e) => handleStartEdit(item, "workstation", e)}
-                          title="Double-click to edit assigned line"
+                          style={{
+                            padding: "16px 18px",
+                            textAlign: "center",
+                            verticalAlign: "middle",
+                          }}
                         >
-                          {isEditing("workstation") ? (
-                            <input
-                              ref={editInputRef}
-                              value={editValue}
-                              onChange={(e) => setEditValue(e.target.value)}
-                              onBlur={handleSaveEdit}
-                              onKeyDown={handleKeyDown}
-                              style={{
-                                width: "160px",
-                                padding: "3px 6px",
-                                backgroundColor: "rgba(0,0,0,0.6)",
-                                border: "1px solid var(--accent-border)",
-                                borderRadius: "2px",
-                                color: "#fff",
-                                fontSize: "11.5px",
-                                outline: "none",
-                              }}
-                            />
-                          ) : (
-                            item.workstation
-                          )}
-                        </td>
-
-                        {/* 9. Actions (+ Add Report, - Usage Report) */}
-                        <td style={{ padding: "12px 16px", textAlign: "right" }}>
-                          <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                          <div style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
                             <button
                               type="button"
                               onClick={() => {
@@ -928,15 +921,21 @@ export const StockDashboardView: React.FC = () => {
                                 setIsAddStockModalOpen(true);
                               }}
                               style={{
-                                padding: "4px 8px",
-                                borderRadius: "2px",
+                                height: "32px",
+                                padding: "0 12px",
+                                borderRadius: "4px",
                                 backgroundColor: "rgba(16, 185, 129, 0.15)",
                                 border: "1px solid rgba(16, 185, 129, 0.3)",
                                 color: "#34d399",
-                                fontSize: "11px",
+                                fontSize: "11.5px",
                                 fontWeight: 700,
                                 cursor: "pointer",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                transition: "all 0.15s ease",
                               }}
+                              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(16, 185, 129, 0.25)")}
+                              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "rgba(16, 185, 129, 0.15)")}
                             >
                               + Add Stock
                             </button>
@@ -949,15 +948,21 @@ export const StockDashboardView: React.FC = () => {
                                 setIsUsageModalOpen(true);
                               }}
                               style={{
-                                padding: "4px 8px",
-                                borderRadius: "2px",
+                                height: "32px",
+                                padding: "0 12px",
+                                borderRadius: "4px",
                                 backgroundColor: "rgba(255, 138, 115, 0.15)",
                                 border: "1px solid rgba(255, 138, 115, 0.3)",
                                 color: "var(--accent-text)",
-                                fontSize: "11px",
+                                fontSize: "11.5px",
                                 fontWeight: 700,
                                 cursor: "pointer",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                transition: "all 0.15s ease",
                               }}
+                              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(255, 138, 115, 0.25)")}
+                              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "rgba(255, 138, 115, 0.15)")}
                             >
                               - Log Usage
                             </button>
@@ -973,22 +978,22 @@ export const StockDashboardView: React.FC = () => {
             {/* Table Footer */}
             <div
               style={{
-                padding: "10px 18px",
-                borderTop: "1px solid rgba(255,255,255,0.06)",
+                padding: "14px 20px",
+                borderTop: "1px solid rgba(255, 255, 255, 0.06)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
-                backgroundColor: "rgba(0,0,0,0.2)",
+                backgroundColor: "rgba(0, 0, 0, 0.25)",
               }}
             >
-              <span style={{ fontSize: "11.5px", color: "var(--text-muted)" }}>
-                Showing {filteredItems.length} items (3 Hooks, 5 Holders, 3 Lanyard Rolls, 3 Others) · Total floor stock:{" "}
+              <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>
+                Showing <strong style={{ color: "#fff" }}>{filteredItems.length}</strong> items · Total floor stock:{" "}
                 <strong style={{ color: "#fff", fontFamily: "var(--font-mono)" }}>
                   {filteredItems.reduce((acc, i) => acc + i.availableStock, 0).toLocaleString()} units
                 </strong>
               </span>
               <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>
-                Double-click any cell to edit details inline
+                Double-click cells to adjust quantities · Select dropdown to change packaging unit
               </span>
             </div>
           </div>
