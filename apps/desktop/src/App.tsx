@@ -11,6 +11,7 @@ import { LoginView } from "./views/auth/LoginView";
 import { StockDashboardView } from "./views/stock/StockDashboardView";
 import { OrdersWorkspaceView } from "./views/orders/OrdersWorkspaceView";
 import { IDCardWorkspaceView } from "./views/orders/IDCardWorkspaceView";
+import { LanyardWorkspaceView } from "./views/orders/LanyardWorkspaceView";
 import { GlobalSearchModal } from "./views/search/GlobalSearchModal";
 import { LoadingState } from "./design-system/components/FeedbackStates";
 
@@ -39,7 +40,7 @@ const MainApp: React.FC = () => {
   const renderCurrentView = () => {
     switch (activeSection) {
       case "lanyard_orders":
-        return <OrdersWorkspaceView mode="LANYARD_ORDERS" />;
+        return <LanyardWorkspaceView />;
 
       case "card_orders":
         return <IDCardWorkspaceView />;
@@ -51,7 +52,7 @@ const MainApp: React.FC = () => {
         return <StockDashboardView />;
 
       default:
-        return <OrdersWorkspaceView mode="LANYARD_ORDERS" />;
+        return <LanyardWorkspaceView />;
     }
   };
 
@@ -69,7 +70,7 @@ const MainApp: React.FC = () => {
         onSelectOrder={(_id) => setIsSearchOpen(false)}
         onSelectClient={(_id) => setIsSearchOpen(false)}
         onSelectTask={() => {
-          setActiveSection("orders");
+          setActiveSection("lanyard_orders");
           setIsSearchOpen(false);
         }}
         onNavigate={(sec) => {

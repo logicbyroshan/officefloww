@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useToast } from "../../design-system/components/Toast";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -32,11 +32,13 @@ function generateId(): string {
   return `card-${_idCounter++}`;
 }
 
+const STORAGE_KEY = "officefloww_idcard_orders_v1";
+
 // ─── Seed data ────────────────────────────────────────────────────────────────
 
 const SEED: IDCardEntry[] = [
   {
-    id: generateId(),
+    id: "card-seed-1",
     date: "2026-08-28",
     details: "AIIMS Bhopal — Student ID Cards, Vertical PVC, RFID chip, laminated",
     qty: 450,
@@ -45,7 +47,7 @@ const SEED: IDCardEntry[] = [
     goneForFitting: false,
   },
   {
-    id: generateId(),
+    id: "card-seed-2",
     date: "2026-09-01",
     details: "Delhi Public School — Staff ID Cards, Horizontal PVC, no RFID",
     qty: 120,
@@ -54,7 +56,7 @@ const SEED: IDCardEntry[] = [
     goneForFitting: false,
   },
   {
-    id: generateId(),
+    id: "card-seed-3",
     date: "2026-09-03",
     details: "MP Secretariat — Govt Employee IDs, Smart Card, Hologram sticker",
     qty: 80,
@@ -107,10 +109,29 @@ const CheckCell: React.FC<CheckCellProps> = ({ checked, onChange, label, colorOn
 
 export const IDCardWorkspaceView: React.FC = () => {
   const { success: toastSuccess, error: toastError } = useToast();
-  const [entries, setEntries] = useState<IDCardEntry[]>(SEED);
+  const [entries, setEntries] = useState<IDCardEntry[]>(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {
+      // ignore
+    }
+    return SEED;
+  });
   const [searchQuery, setSearchQuery] = useState("");
   const [newDetails, setNewDetails] = useState("");
   const [newQty, setNewQty] = useState<number | "">("");
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+    } catch {
+      // ignore
+    }
+  }, [entries]);
 
   const filtered = useMemo(() => {
     if (!searchQuery.trim()) return entries;
