@@ -35,15 +35,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: "clients", label: "Clients", icon: "clients" },
     { id: "orders", label: "Orders", icon: "orders" },
     { id: "stock", label: "Stock", icon: "stock" },
-    { id: "staff", label: "Staff", icon: "staff" },
     { id: "labour", label: "Labour", icon: "labour" },
-    {
-      id: "tasks",
-      label: "Tasks",
-      icon: "tasks",
-      badge: urgentTasksCount,
-      badgeVariant: "urgent",
-    },
   ];
 
   const visiblePrimary = primaryNav.filter((item) => canNav(item.id));

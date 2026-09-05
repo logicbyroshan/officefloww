@@ -18,8 +18,6 @@ import { useAsync } from "./hooks/useAsync";
 // Views
 import { LoginView } from "./views/auth/LoginView";
 import { DashboardView } from "./views/dashboard/DashboardView";
-import { TasksView } from "./views/tasks/TasksView";
-import { StaffView } from "./views/staff/StaffView";
 import { LabourView } from "./views/labour/LabourView";
 import { StockDashboardView } from "./views/stock/StockDashboardView";
 import { ClientsView } from "./views/clients/ClientsView";
@@ -137,7 +135,7 @@ const MainApp: React.FC = () => {
             error={ordersError}
             onRefresh={refreshAll}
             onSelectOrder={(id) => setSelectedOrderId(id)}
-            onSelectTask={() => setActiveSection("tasks")}
+            onSelectTask={() => setActiveSection("orders")}
             onSelectStock={() => setActiveSection("stock")}
             onNewOrder={() => setIsNewOrderOpen(true)}
             onNewClient={() => setIsNewClientOpen(true)}
@@ -152,20 +150,6 @@ const MainApp: React.FC = () => {
             onSelectOrder={(id) => setSelectedOrderId(id)}
           />
         );
-
-      case "tasks":
-        return (
-          <TasksView
-            tasks={tasks}
-            loading={tasksLoading}
-            error={tasksError}
-            onRefresh={refreshTasks}
-            onGoToOrder={(id) => setSelectedOrderId(id)}
-          />
-        );
-
-      case "staff":
-        return <StaffView />;
 
       case "labour":
         return <LabourView />;
@@ -201,7 +185,7 @@ const MainApp: React.FC = () => {
             error={ordersError}
             onRefresh={refreshAll}
             onSelectOrder={(id) => setSelectedOrderId(id)}
-            onSelectTask={() => setActiveSection("tasks")}
+            onSelectTask={() => setActiveSection("orders")}
             onSelectStock={() => setActiveSection("stock")}
             onNewOrder={() => setIsNewOrderOpen(true)}
             onNewClient={() => setIsNewClientOpen(true)}
@@ -238,7 +222,7 @@ const MainApp: React.FC = () => {
           setIsSearchOpen(false);
         }}
         onSelectTask={() => {
-          setActiveSection("tasks");
+          setActiveSection("orders");
           setIsSearchOpen(false);
         }}
         onNavigate={(sec) => {
