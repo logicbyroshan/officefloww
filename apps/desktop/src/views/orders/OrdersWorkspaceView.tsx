@@ -1261,8 +1261,8 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
   // ─── Add Order From Separate Quick Entry Panel ─────────────────────────────
   const handleAddFromQuickEntry = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    const effectiveClient = (filterClientName || newClient).trim();
-    if (!effectiveClient) {
+    const effectiveClient = (filterClientName || newClient).trim() || (mode === "LABOUR_LANYARD" ? "Labour Production" : "");
+    if (!effectiveClient && mode !== "LABOUR_LANYARD") {
       clientInputRef.current?.focus();
       return;
     }
@@ -1297,7 +1297,11 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
     setNewQty("");
     setNewItemOrdered("Lanyard");
     setIsClientDropdownOpen(false);
-    success("Order Created", `Added order for ${createdOrder.client}. Click 'Assign' to delegate.`);
+    if (mode === "LABOUR_LANYARD") {
+      success("Labour Order Created", `Added order (${createdOrder.qty.toLocaleString()} units). Click 'Assign' to delegate.`);
+    } else {
+      success("Order Created", `Added order for ${createdOrder.client}. Click 'Assign' to delegate.`);
+    }
   };
 
   // ─── Save Inline Edit ──────────────────────────────────────────────────────
@@ -1633,180 +1637,184 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "1.4fr 1.1fr 2.6fr 110px auto",
+              gridTemplateColumns: mode === "LABOUR_LANYARD" ? "1fr 120px auto" : "1.4fr 1.1fr 2.6fr 110px auto",
               gap: "12px",
               alignItems: "start",
             }}
           >
-            {/* 1. Client Field */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-              <label style={{ fontSize: "10px", fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)", letterSpacing: "0.5px" }}>
-                Client
-              </label>
-              {filterClientName ? (
-                <div
-                  style={{
-                    height: "36px",
-                    padding: "0 12px",
-                    backgroundColor: "rgba(9, 12, 19, 0.95)",
-                    border: "1px solid var(--accent-border)",
-                    borderRadius: "var(--radius-sm, 4px)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    color: "#fff",
-                    fontSize: "13px",
-                    fontWeight: 700,
-                    boxSizing: "border-box",
-                  }}
-                  title="Locked for this client"
-                >
-                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {filterClientName}
-                  </span>
-                  <span style={{ fontSize: "9.5px", color: "var(--accent-text)", opacity: 0.85, letterSpacing: "0.5px" }}>
-                    LOCKED
-                  </span>
-                </div>
-              ) : (
-                <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-                  <input
-                    ref={clientInputRef}
-                    type="text"
-                    placeholder="Search client..."
-                    value={newClient}
-                    onChange={(e) => {
-                      setNewClient(e.target.value);
-                      setIsClientDropdownOpen(true);
-                    }}
-                    onFocus={() => setIsClientDropdownOpen(true)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") handleAddFromQuickEntry();
-                    }}
+            {/* 1. Client Field (only if not LABOUR_LANYARD) */}
+            {mode !== "LABOUR_LANYARD" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                <label style={{ fontSize: "10px", fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)", letterSpacing: "0.5px" }}>
+                  Client
+                </label>
+                {filterClientName ? (
+                  <div
                     style={{
-                      width: "100%",
                       height: "36px",
-                      padding: "0 34px 0 12px",
-                      backgroundColor: "rgba(9, 12, 19, 0.85)",
+                      padding: "0 12px",
+                      backgroundColor: "rgba(9, 12, 19, 0.95)",
                       border: "1px solid var(--accent-border)",
                       borderRadius: "var(--radius-sm, 4px)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
                       color: "#fff",
                       fontSize: "13px",
-                      fontWeight: 600,
-                      outline: "none",
+                      fontWeight: 700,
                       boxSizing: "border-box",
                     }}
-                  />
-                  <span
-                    onClick={() => setIsClientDropdownOpen(!isClientDropdownOpen)}
-                    style={{
-                      position: "absolute",
-                      right: "13px",
-                      cursor: "pointer",
-                      fontSize: "10px",
-                      color: "var(--accent-text)",
-                      userSelect: "none",
-                    }}
+                    title="Locked for this client"
                   >
-                    ▼
-                  </span>
-
-                  {/* Floating Suggestions */}
-                  {isClientDropdownOpen && (
-                    <div
-                      ref={clientDropdownRef}
+                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {filterClientName}
+                    </span>
+                    <span style={{ fontSize: "9.5px", color: "var(--accent-text)", opacity: 0.85, letterSpacing: "0.5px" }}>
+                      LOCKED
+                    </span>
+                  </div>
+                ) : (
+                  <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                    <input
+                      ref={clientInputRef}
+                      type="text"
+                      placeholder="Search client..."
+                      value={newClient}
+                      onChange={(e) => {
+                        setNewClient(e.target.value);
+                        setIsClientDropdownOpen(true);
+                      }}
+                      onFocus={() => setIsClientDropdownOpen(true)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleAddFromQuickEntry();
+                      }}
+                      style={{
+                        width: "100%",
+                        height: "36px",
+                        padding: "0 34px 0 12px",
+                        backgroundColor: "rgba(9, 12, 19, 0.85)",
+                        border: "1px solid var(--accent-border)",
+                        borderRadius: "var(--radius-sm, 4px)",
+                        color: "#fff",
+                        fontSize: "13px",
+                        fontWeight: 600,
+                        outline: "none",
+                        boxSizing: "border-box",
+                      }}
+                    />
+                    <span
+                      onClick={() => setIsClientDropdownOpen(!isClientDropdownOpen)}
                       style={{
                         position: "absolute",
-                        top: "100%",
-                        left: 0,
-                        right: 0,
-                        zIndex: 100,
-                        backgroundColor: "#0c101a",
-                        border: "1px solid var(--accent-border)",
-                        borderRadius: "3px",
-                        maxHeight: "240px",
-                        overflowY: "auto",
-                        boxShadow: "0 12px 36px rgba(0,0,0,0.8)",
-                        marginTop: "4px",
+                        right: "13px",
+                        cursor: "pointer",
+                        fontSize: "10px",
+                        color: "var(--accent-text)",
+                        userSelect: "none",
                       }}
                     >
-                      <div style={{ padding: "8px 12px", fontSize: "10px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", borderBottom: "1px solid rgba(255,255,255,0.06)", backgroundColor: "rgba(255,255,255,0.02)" }}>
-                        Registered Clients ({clientSuggestions.length})
-                      </div>
-                      {clientSuggestions.length === 0 ? (
-                        <div style={{ padding: "12px", fontSize: "12px", color: "var(--text-muted)" }}>
-                          No matching client. Press Enter to add "{newClient}"
-                        </div>
-                      ) : (
-                        clientSuggestions.map((c) => (
-                          <div
-                            key={c}
-                            onClick={() => {
-                              setNewClient(c);
-                              setIsClientDropdownOpen(false);
-                            }}
-                            style={{
-                              padding: "9px 12px",
-                              fontSize: "12.5px",
-                              color: "#fff",
-                              cursor: "pointer",
-                              borderBottom: "1px solid rgba(255,255,255,0.03)",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "space-between",
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor = "var(--accent-soft)";
-                              e.currentTarget.style.borderLeft = "2px solid var(--accent)";
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.backgroundColor = "transparent";
-                              e.currentTarget.style.borderLeft = "none";
-                            }}
-                          >
-                            <span style={{ fontWeight: 600 }}>{c}</span>
-                            <span style={{ fontSize: "10px", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>SELECT</span>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+                      ▼
+                    </span>
 
-            {/* 2. Order */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-              <label style={{ fontSize: "10px", fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)", letterSpacing: "0.5px" }}>
-                Order
-              </label>
-              <select
-                value={newItemOrdered}
-                onChange={(e) => setNewItemOrdered(e.target.value)}
-                disabled={mode === "LANYARD_ORDERS" || mode === "CARD_ORDERS" || mode === "LABOUR_LANYARD"}
-                style={{
-                  width: "100%",
-                  height: "36px",
-                  padding: "0 34px 0 12px",
-                  backgroundColor: "rgba(9, 12, 19, 0.85)",
-                  border: "1px solid rgba(255, 255, 255, 0.16)",
-                  borderRadius: "var(--radius-sm, 4px)",
-                  color: newItemOrdered === "Lanyard" ? "#c084fc" : "#38bdf8",
-                  fontSize: "12.5px",
-                  fontWeight: 700,
-                  outline: "none",
-                  cursor: (mode === "LANYARD_ORDERS" || mode === "CARD_ORDERS" || mode === "LABOUR_LANYARD") ? "default" : "pointer",
-                  boxSizing: "border-box",
-                }}
-              >
-                {mode !== "CARD_ORDERS" && (
-                  <option value="Lanyard" style={{ backgroundColor: "#0e131f", color: "#c084fc" }}>Lanyard</option>
+                    {/* Floating Suggestions */}
+                    {isClientDropdownOpen && (
+                      <div
+                        ref={clientDropdownRef}
+                        style={{
+                          position: "absolute",
+                          top: "100%",
+                          left: 0,
+                          right: 0,
+                          zIndex: 100,
+                          backgroundColor: "#0c101a",
+                          border: "1px solid var(--accent-border)",
+                          borderRadius: "3px",
+                          maxHeight: "240px",
+                          overflowY: "auto",
+                          boxShadow: "0 12px 36px rgba(0,0,0,0.8)",
+                          marginTop: "4px",
+                        }}
+                      >
+                        <div style={{ padding: "8px 12px", fontSize: "10px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", borderBottom: "1px solid rgba(255,255,255,0.06)", backgroundColor: "rgba(255,255,255,0.02)" }}>
+                          Registered Clients ({clientSuggestions.length})
+                        </div>
+                        {clientSuggestions.length === 0 ? (
+                          <div style={{ padding: "12px", fontSize: "12px", color: "var(--text-muted)" }}>
+                            No matching client. Press Enter to add "{newClient}"
+                          </div>
+                        ) : (
+                          clientSuggestions.map((c) => (
+                            <div
+                              key={c}
+                              onClick={() => {
+                                setNewClient(c);
+                                setIsClientDropdownOpen(false);
+                              }}
+                              style={{
+                                padding: "9px 12px",
+                                fontSize: "12.5px",
+                                color: "#fff",
+                                cursor: "pointer",
+                                borderBottom: "1px solid rgba(255,255,255,0.03)",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor = "var(--accent-soft)";
+                                e.currentTarget.style.borderLeft = "2px solid var(--accent)";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor = "transparent";
+                                e.currentTarget.style.borderLeft = "none";
+                              }}
+                            >
+                              <span style={{ fontWeight: 600 }}>{c}</span>
+                              <span style={{ fontSize: "10px", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>SELECT</span>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
                 )}
-                {mode !== "LANYARD_ORDERS" && mode !== "LABOUR_LANYARD" && (
-                  <option value="Card" style={{ backgroundColor: "#0e131f", color: "#38bdf8" }}>Card</option>
-                )}
-              </select>
-            </div>
+              </div>
+            )}
+
+            {/* 2. Order (only if not LABOUR_LANYARD) */}
+            {mode !== "LABOUR_LANYARD" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                <label style={{ fontSize: "10px", fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)", letterSpacing: "0.5px" }}>
+                  Order
+                </label>
+                <select
+                  value={newItemOrdered}
+                  onChange={(e) => setNewItemOrdered(e.target.value)}
+                  disabled={mode === "LANYARD_ORDERS" || mode === "CARD_ORDERS"}
+                  style={{
+                    width: "100%",
+                    height: "36px",
+                    padding: "0 34px 0 12px",
+                    backgroundColor: "rgba(9, 12, 19, 0.85)",
+                    border: "1px solid rgba(255, 255, 255, 0.16)",
+                    borderRadius: "var(--radius-sm, 4px)",
+                    color: newItemOrdered === "Lanyard" ? "#c084fc" : "#38bdf8",
+                    fontSize: "12.5px",
+                    fontWeight: 700,
+                    outline: "none",
+                    cursor: (mode === "LANYARD_ORDERS" || mode === "CARD_ORDERS") ? "default" : "pointer",
+                    boxSizing: "border-box",
+                  }}
+                >
+                  {mode !== "CARD_ORDERS" && (
+                    <option value="Lanyard" style={{ backgroundColor: "#0e131f", color: "#c084fc" }}>Lanyard</option>
+                  )}
+                  {mode !== "LANYARD_ORDERS" && (
+                    <option value="Card" style={{ backgroundColor: "#0e131f", color: "#38bdf8" }}>Card</option>
+                  )}
+                </select>
+              </div>
+            )}
 
             {/* 3. Description (Single unified text field) */}
             <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
@@ -2072,32 +2080,36 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
                 }}
               >
                 {/* 1. CLIENT */}
-                <th
-                  style={{
-                    padding: "16px 18px",
-                    textAlign: "left",
-                    cursor: "pointer",
-                    width: "200px",
-                    borderBottom: "2px solid rgba(255, 138, 115, 0.4)",
-                    borderRight: "1px solid rgba(255, 255, 255, 0.05)",
-                  }}
-                  onClick={() => toggleSort("client")}
-                >
-                  Client {sortField === "client" ? (sortDir === "asc" ? "▲" : "▼") : ""}
-                </th>
+                {mode !== "LABOUR_LANYARD" && (
+                  <th
+                    style={{
+                      padding: "16px 18px",
+                      textAlign: "left",
+                      cursor: "pointer",
+                      width: "200px",
+                      borderBottom: "2px solid rgba(255, 138, 115, 0.4)",
+                      borderRight: "1px solid rgba(255, 255, 255, 0.05)",
+                    }}
+                    onClick={() => toggleSort("client")}
+                  >
+                    Client {sortField === "client" ? (sortDir === "asc" ? "▲" : "▼") : ""}
+                  </th>
+                )}
 
                 {/* 2. ORDER */}
-                <th
-                  style={{
-                    padding: "16px 16px",
-                    textAlign: "left",
-                    width: "135px",
-                    borderBottom: "2px solid rgba(255, 138, 115, 0.4)",
-                    borderRight: "1px solid rgba(255, 255, 255, 0.05)",
-                  }}
-                >
-                  Order
-                </th>
+                {mode !== "LABOUR_LANYARD" && (
+                  <th
+                    style={{
+                      padding: "16px 16px",
+                      textAlign: "left",
+                      width: "135px",
+                      borderBottom: "2px solid rgba(255, 138, 115, 0.4)",
+                      borderRight: "1px solid rgba(255, 255, 255, 0.05)",
+                    }}
+                  >
+                    Order
+                  </th>
+                )}
 
                 {/* 3. DESCRIPTION */}
                 <th
@@ -2116,7 +2128,7 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
                   style={{
                     padding: "16px 16px",
                     textAlign: "center",
-                    width: "95px",
+                    width: mode === "LABOUR_LANYARD" ? "120px" : "95px",
                     cursor: "pointer",
                     borderBottom: "2px solid rgba(255, 138, 115, 0.4)",
                     borderRight: "1px solid rgba(255, 255, 255, 0.05)",
@@ -2131,7 +2143,7 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
                   style={{
                     padding: "16px 18px",
                     textAlign: "left",
-                    width: "220px",
+                    width: mode === "LABOUR_LANYARD" ? "280px" : "220px",
                     borderBottom: "2px solid rgba(255, 138, 115, 0.4)",
                     borderRight: "1px solid rgba(255, 255, 255, 0.05)",
                   }}
@@ -2140,34 +2152,38 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
                 </th>
 
                 {/* 6. ORDER DATE */}
-                <th
-                  style={{
-                    padding: "16px 14px",
-                    textAlign: "left",
-                    width: "115px",
-                    cursor: "pointer",
-                    borderBottom: "2px solid rgba(255, 138, 115, 0.4)",
-                    borderRight: "1px solid rgba(255, 255, 255, 0.05)",
-                  }}
-                  onClick={() => toggleSort("orderDate")}
-                >
-                  Order Date {sortField === "orderDate" ? (sortDir === "asc" ? "▲" : "▼") : ""}
-                </th>
+                {mode !== "LABOUR_LANYARD" && (
+                  <th
+                    style={{
+                      padding: "16px 14px",
+                      textAlign: "left",
+                      width: "115px",
+                      cursor: "pointer",
+                      borderBottom: "2px solid rgba(255, 138, 115, 0.4)",
+                      borderRight: "1px solid rgba(255, 255, 255, 0.05)",
+                    }}
+                    onClick={() => toggleSort("orderDate")}
+                  >
+                    Order Date {sortField === "orderDate" ? (sortDir === "asc" ? "▲" : "▼") : ""}
+                  </th>
+                )}
 
                 {/* 7. DELIVERY DUE */}
-                <th
-                  style={{
-                    padding: "16px 14px",
-                    textAlign: "left",
-                    width: "115px",
-                    cursor: "pointer",
-                    borderBottom: "2px solid rgba(255, 138, 115, 0.4)",
-                    borderRight: "1px solid rgba(255, 255, 255, 0.05)",
-                  }}
-                  onClick={() => toggleSort("deliveryDate")}
-                >
-                  Delivery Due {sortField === "deliveryDate" ? (sortDir === "asc" ? "▲" : "▼") : ""}
-                </th>
+                {mode !== "LABOUR_LANYARD" && (
+                  <th
+                    style={{
+                      padding: "16px 14px",
+                      textAlign: "left",
+                      width: "115px",
+                      cursor: "pointer",
+                      borderBottom: "2px solid rgba(255, 138, 115, 0.4)",
+                      borderRight: "1px solid rgba(255, 255, 255, 0.05)",
+                    }}
+                    onClick={() => toggleSort("deliveryDate")}
+                  >
+                    Delivery Due {sortField === "deliveryDate" ? (sortDir === "asc" ? "▲" : "▼") : ""}
+                  </th>
+                )}
 
                 {/* 8. ACTION */}
                 <th
@@ -2187,7 +2203,7 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
               {/* ─── ORDERS ROWS (Spacious 68px Row Height, Double-Click Editable) ─ */}
               {filteredOrders.length === 0 ? (
                 <tr>
-                  <td colSpan={8} style={{ padding: "50px 0", textAlign: "center", color: "var(--text-muted)" }}>
+                  <td colSpan={mode === "LABOUR_LANYARD" ? 4 : 8} style={{ padding: "50px 0", textAlign: "center", color: "var(--text-muted)" }}>
                     {filterClientName
                       ? `No orders found for ${filterClientName}. Use the Direct Order Entry panel above to create one.`
                       : "No orders match your search criteria. Use the Direct Order Entry panel above to create one."}
@@ -2213,155 +2229,159 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
                       }
                     >
                       {/* 1. Client */}
-                      <td
-                        style={{
-                          padding: "16px 18px",
-                          cursor: filterClientName ? "default" : "text",
-                          position: "relative",
-                          borderRight: "1px solid rgba(255, 255, 255, 0.06)",
-                        }}
-                        onDoubleClick={(e) => !filterClientName && handleStartEdit(order, "client", e)}
-                        title={filterClientName ? order.client : "Double-click to change client"}
-                      >
-                        {isEditing("client") ? (
-                          <div style={{ position: "relative" }}>
-                            <input
-                              ref={editInputRef}
-                              value={editValue}
-                              onChange={(e) => {
-                                setEditValue(e.target.value);
-                                setIsEditClientDropdownOpen(true);
-                              }}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") handleSaveEdit();
-                                if (e.key === "Escape") setEditingCell(null);
-                              }}
-                              onBlur={() => {
-                                setTimeout(() => handleSaveEdit(), 150);
-                              }}
-                              style={{
-                                width: "100%",
-                                height: "36px",
-                                padding: "0 10px",
-                                backgroundColor: "rgba(0,0,0,0.85)",
-                                border: "1px solid var(--accent-border)",
-                                borderRadius: "3px",
-                                color: "#fff",
-                                fontSize: "13.5px",
-                                fontWeight: 700,
-                                outline: "none",
-                              }}
-                            />
-                            {isEditClientDropdownOpen && (
-                              <div
+                      {mode !== "LABOUR_LANYARD" && (
+                        <td
+                          style={{
+                            padding: "16px 18px",
+                            cursor: filterClientName ? "default" : "text",
+                            position: "relative",
+                            borderRight: "1px solid rgba(255, 255, 255, 0.06)",
+                          }}
+                          onDoubleClick={(e) => !filterClientName && handleStartEdit(order, "client", e)}
+                          title={filterClientName ? order.client : "Double-click to change client"}
+                        >
+                          {isEditing("client") ? (
+                            <div style={{ position: "relative" }}>
+                              <input
+                                ref={editInputRef}
+                                value={editValue}
+                                onChange={(e) => {
+                                  setEditValue(e.target.value);
+                                  setIsEditClientDropdownOpen(true);
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") handleSaveEdit();
+                                  if (e.key === "Escape") setEditingCell(null);
+                                }}
+                                onBlur={() => {
+                                  setTimeout(() => handleSaveEdit(), 150);
+                                }}
                                 style={{
-                                  position: "absolute",
-                                  top: "100%",
-                                  left: 0,
-                                  right: 0,
-                                  zIndex: 100,
-                                  backgroundColor: "#0d111a",
+                                  width: "100%",
+                                  height: "36px",
+                                  padding: "0 10px",
+                                  backgroundColor: "rgba(0,0,0,0.85)",
                                   border: "1px solid var(--accent-border)",
                                   borderRadius: "3px",
-                                  maxHeight: "200px",
-                                  overflowY: "auto",
-                                  boxShadow: "0 12px 36px rgba(0,0,0,0.7)",
-                                  marginTop: "2px",
+                                  color: "#fff",
+                                  fontSize: "13.5px",
+                                  fontWeight: 700,
+                                  outline: "none",
                                 }}
-                              >
-                                {editClientSuggestions.map((c) => (
-                                  <div
-                                    key={c}
-                                    onMouseDown={() => {
-                                      setOrders((prev) =>
-                                        prev.map((o) => (o.internalId === order.internalId ? { ...o, client: c } : o))
-                                      );
-                                      setEditingCell(null);
-                                      setIsEditClientDropdownOpen(false);
-                                      success("Updated Client", `Assigned to ${c}`);
-                                    }}
-                                    style={{
-                                      padding: "8px 12px",
-                                      fontSize: "12px",
-                                      color: "#fff",
-                                      cursor: "pointer",
-                                      borderBottom: "1px solid rgba(255,255,255,0.03)",
-                                    }}
-                                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(255,138,115,0.18)")}
-                                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
-                                  >
-                                    {c}
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        ) : (
-                          <strong style={{ color: "#ffffff", fontSize: "14px", letterSpacing: "-0.2px" }}>
-                            {order.client}
-                          </strong>
-                        )}
-                      </td>
+                              />
+                              {isEditClientDropdownOpen && (
+                                <div
+                                  style={{
+                                    position: "absolute",
+                                    top: "100%",
+                                    left: 0,
+                                    right: 0,
+                                    zIndex: 100,
+                                    backgroundColor: "#0d111a",
+                                    border: "1px solid var(--accent-border)",
+                                    borderRadius: "3px",
+                                    maxHeight: "200px",
+                                    overflowY: "auto",
+                                    boxShadow: "0 12px 36px rgba(0,0,0,0.7)",
+                                    marginTop: "2px",
+                                  }}
+                                >
+                                  {editClientSuggestions.map((c) => (
+                                    <div
+                                      key={c}
+                                      onMouseDown={() => {
+                                        setOrders((prev) =>
+                                          prev.map((o) => (o.internalId === order.internalId ? { ...o, client: c } : o))
+                                        );
+                                        setEditingCell(null);
+                                        setIsEditClientDropdownOpen(false);
+                                        success("Updated Client", `Assigned to ${c}`);
+                                      }}
+                                      style={{
+                                        padding: "8px 12px",
+                                        fontSize: "12px",
+                                        color: "#fff",
+                                        cursor: "pointer",
+                                        borderBottom: "1px solid rgba(255,255,255,0.03)",
+                                      }}
+                                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(255,138,115,0.18)")}
+                                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+                                    >
+                                      {c}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <strong style={{ color: "#ffffff", fontSize: "14px", letterSpacing: "-0.2px" }}>
+                              {order.client}
+                            </strong>
+                          )}
+                        </td>
+                      )}
 
                       {/* 2. Things Ordered */}
-                      <td
-                        style={{
-                          padding: "16px 16px",
-                          cursor: "pointer",
-                          position: "relative",
-                          borderRight: "1px solid rgba(255, 255, 255, 0.06)",
-                        }}
-                        onDoubleClick={(e) => handleStartEdit(order, "itemOrdered", e)}
-                        title="Double-click to change ordered product"
-                      >
-                        {isEditing("itemOrdered") ? (
-                          <div style={{ display: "flex", flexDirection: "column", gap: "4px" }} onClick={(e) => e.stopPropagation()}>
-                            <select
-                              value={editItem}
-                              onChange={(e) => {
-                                const val = e.target.value;
-                                setEditItem(val);
-                              }}
-                              onBlur={handleSaveEdit}
-                              autoFocus
-                              style={{
-                                width: "100%",
-                                height: "32px",
-                                padding: "0 30px 0 8px",
-                                backgroundColor: "rgba(0,0,0,0.9)",
-                                border: "1px solid var(--accent-border)",
-                                borderRadius: "3px",
-                                color: editItem === "Lanyard" ? "#c084fc" : "#38bdf8",
-                                fontSize: "12px",
-                                outline: "none",
-                                cursor: "pointer",
-                              }}
-                            >
-                              <option value="Lanyard" style={{ backgroundColor: "#0e131f", color: "#c084fc" }}>Lanyard</option>
-                              <option value="Card" style={{ backgroundColor: "#0e131f", color: "#38bdf8" }}>Card</option>
-                            </select>
+                      {mode !== "LABOUR_LANYARD" && (
+                        <td
+                          style={{
+                            padding: "16px 16px",
+                            cursor: "pointer",
+                            position: "relative",
+                            borderRight: "1px solid rgba(255, 255, 255, 0.06)",
+                          }}
+                          onDoubleClick={(e) => handleStartEdit(order, "itemOrdered", e)}
+                          title="Double-click to change ordered product"
+                        >
+                          {isEditing("itemOrdered") ? (
+                            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }} onClick={(e) => e.stopPropagation()}>
+                              <select
+                                value={editItem}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setEditItem(val);
+                                }}
+                                onBlur={handleSaveEdit}
+                                autoFocus
+                                style={{
+                                  width: "100%",
+                                  height: "32px",
+                                  padding: "0 30px 0 8px",
+                                  backgroundColor: "rgba(0,0,0,0.9)",
+                                  border: "1px solid var(--accent-border)",
+                                  borderRadius: "3px",
+                                  color: editItem === "Lanyard" ? "#c084fc" : "#38bdf8",
+                                  fontSize: "12px",
+                                  outline: "none",
+                                  cursor: "pointer",
+                                }}
+                              >
+                                <option value="Lanyard" style={{ backgroundColor: "#0e131f", color: "#c084fc" }}>Lanyard</option>
+                                <option value="Card" style={{ backgroundColor: "#0e131f", color: "#38bdf8" }}>Card</option>
+                              </select>
 
-                            <div style={{ display: "flex", justifyContent: "flex-end", gap: "4px", marginTop: "2px" }}>
-                              <button
-                                type="button"
-                                onClick={() => setEditingCell(null)}
-                                style={{ padding: "2px 6px", fontSize: "10px", backgroundColor: "rgba(255,255,255,0.1)", border: "none", color: "#fff", borderRadius: "2px", cursor: "pointer" }}
-                              >
-                                ✕
-                              </button>
-                              <button
-                                type="button"
-                                onClick={handleSaveEdit}
-                                style={{ padding: "2px 8px", fontSize: "10px", backgroundColor: "var(--accent)", border: "none", color: "#fff", borderRadius: "2px", fontWeight: 700, cursor: "pointer" }}
-                              >
-                                Save
-                              </button>
+                              <div style={{ display: "flex", justifyContent: "flex-end", gap: "4px", marginTop: "2px" }}>
+                                <button
+                                  type="button"
+                                  onClick={() => setEditingCell(null)}
+                                  style={{ padding: "2px 6px", fontSize: "10px", backgroundColor: "rgba(255,255,255,0.1)", border: "none", color: "#fff", borderRadius: "2px", cursor: "pointer" }}
+                                >
+                                  ✕
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={handleSaveEdit}
+                                  style={{ padding: "2px 8px", fontSize: "10px", backgroundColor: "var(--accent)", border: "none", color: "#fff", borderRadius: "2px", fontWeight: 700, cursor: "pointer" }}
+                                >
+                                  Save
+                                </button>
+                              </div>
                             </div>
-                          </div>
-                        ) : (
-                          <ItemBadge name={order.itemOrdered || order.itemsOrdered?.[0] || "Lanyard"} />
-                        )}
-                      </td>
+                          ) : (
+                            <ItemBadge name={order.itemOrdered || order.itemsOrdered?.[0] || "Lanyard"} />
+                          )}
+                        </td>
+                      )}
 
                       {/* 3. Description (Single unified, properly formatted text) */}
                       <td
@@ -2668,82 +2688,86 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
                       </td>
 
                       {/* 6. Order Date */}
-                      <td
-                        style={{
-                          padding: "16px 14px",
-                          fontSize: "12.5px",
-                          color: "#94a3b8",
-                          cursor: "text",
-                          borderRight: "1px solid rgba(255, 255, 255, 0.06)",
-                        }}
-                        onDoubleClick={(e) => handleStartEdit(order, "orderDate", e)}
-                        title="Double-click to edit order date"
-                      >
-                        {isEditing("orderDate") ? (
-                          <input
-                            ref={editInputRef}
-                            value={editValue}
-                            onChange={(e) => setEditValue(e.target.value)}
-                            onBlur={handleSaveEdit}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") handleSaveEdit();
-                              if (e.key === "Escape") setEditingCell(null);
-                            }}
-                            style={{
-                              width: "115px",
-                              height: "34px",
-                              padding: "0 8px",
-                              backgroundColor: "rgba(0,0,0,0.85)",
-                              border: "1px solid var(--accent-border)",
-                              borderRadius: "3px",
-                              color: "#fff",
-                              fontSize: "12px",
-                              outline: "none",
-                            }}
-                          />
-                        ) : (
-                          order.orderDate
-                        )}
-                      </td>
+                      {mode !== "LABOUR_LANYARD" && (
+                        <td
+                          style={{
+                            padding: "16px 14px",
+                            fontSize: "12.5px",
+                            color: "#94a3b8",
+                            cursor: "text",
+                            borderRight: "1px solid rgba(255, 255, 255, 0.06)",
+                          }}
+                          onDoubleClick={(e) => handleStartEdit(order, "orderDate", e)}
+                          title="Double-click to edit order date"
+                        >
+                          {isEditing("orderDate") ? (
+                            <input
+                              ref={editInputRef}
+                              value={editValue}
+                              onChange={(e) => setEditValue(e.target.value)}
+                              onBlur={handleSaveEdit}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") handleSaveEdit();
+                                if (e.key === "Escape") setEditingCell(null);
+                              }}
+                              style={{
+                                width: "115px",
+                                height: "34px",
+                                padding: "0 8px",
+                                backgroundColor: "rgba(0,0,0,0.85)",
+                                border: "1px solid var(--accent-border)",
+                                borderRadius: "3px",
+                                color: "#fff",
+                                fontSize: "12px",
+                                outline: "none",
+                              }}
+                            />
+                          ) : (
+                            order.orderDate
+                          )}
+                        </td>
+                      )}
 
                       {/* 7. Delivery Due Date */}
-                      <td
-                        style={{
-                          padding: "16px 14px",
-                          cursor: "text",
-                          borderRight: "1px solid rgba(255, 255, 255, 0.06)",
-                        }}
-                        onDoubleClick={(e) => handleStartEdit(order, "deliveryDate", e)}
-                        title="Double-click to edit delivery date"
-                      >
-                        {isEditing("deliveryDate") ? (
-                          <input
-                            ref={editInputRef}
-                            value={editValue}
-                            onChange={(e) => setEditValue(e.target.value)}
-                            onBlur={handleSaveEdit}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") handleSaveEdit();
-                              if (e.key === "Escape") setEditingCell(null);
-                            }}
-                            style={{
-                              width: "115px",
-                              height: "34px",
-                              padding: "0 8px",
-                              backgroundColor: "rgba(0,0,0,0.85)",
-                              border: "1px solid var(--accent-border)",
-                              borderRadius: "3px",
-                              color: "#fff",
-                              fontSize: "12px",
-                              outline: "none",
-                            }}
-                          />
-                        ) : (
-                          <span style={{ color: "#e2e8f0", fontSize: "12.5px", fontWeight: 500 }}>
-                            {order.deliveryDate}
-                          </span>
-                        )}
-                      </td>
+                      {mode !== "LABOUR_LANYARD" && (
+                        <td
+                          style={{
+                            padding: "16px 14px",
+                            cursor: "text",
+                            borderRight: "1px solid rgba(255, 255, 255, 0.06)",
+                          }}
+                          onDoubleClick={(e) => handleStartEdit(order, "deliveryDate", e)}
+                          title="Double-click to edit delivery date"
+                        >
+                          {isEditing("deliveryDate") ? (
+                            <input
+                              ref={editInputRef}
+                              value={editValue}
+                              onChange={(e) => setEditValue(e.target.value)}
+                              onBlur={handleSaveEdit}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") handleSaveEdit();
+                                if (e.key === "Escape") setEditingCell(null);
+                              }}
+                              style={{
+                                width: "115px",
+                                height: "34px",
+                                padding: "0 8px",
+                                backgroundColor: "rgba(0,0,0,0.85)",
+                                border: "1px solid var(--accent-border)",
+                                borderRadius: "3px",
+                                color: "#fff",
+                                fontSize: "12px",
+                                outline: "none",
+                              }}
+                            />
+                          ) : (
+                            <span style={{ color: "#e2e8f0", fontSize: "12.5px", fontWeight: 500 }}>
+                              {order.deliveryDate}
+                            </span>
+                          )}
+                        </td>
+                      )}
 
                       {/* 8. Action (Assign Button: Employee for Card, Labour for Lanyard) */}
                       <td style={{ padding: "16px 16px", textAlign: "center" }}>
@@ -2864,7 +2888,9 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
         }
         subtitle={
           assigningOrder
-            ? `${assigningOrder.client} · Total Volume: ${assigningOrder.qty.toLocaleString()} units`
+            ? mode === "LABOUR_LANYARD"
+              ? `Total Volume: ${assigningOrder.qty.toLocaleString()} units`
+              : `${assigningOrder.client} · Total Volume: ${assigningOrder.qty.toLocaleString()} units`
             : undefined
         }
         width={560}
@@ -2912,21 +2938,25 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
                 borderRadius: "6px",
                 padding: "14px 16px",
                 display: "grid",
-                gridTemplateColumns: "1.2fr 1fr",
+                gridTemplateColumns: mode === "LABOUR_LANYARD" ? "1fr auto" : "1.2fr 1fr",
                 gap: "12px",
               }}
             >
-              <div>
-                <div style={{ fontSize: "10px", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700 }}>Client</div>
-                <div style={{ fontSize: "13.5px", fontWeight: 700, color: "#fff", marginTop: "2px" }}>{assigningOrder.client}</div>
-              </div>
-              <div>
-                <div style={{ fontSize: "10px", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700 }}>Order</div>
-                <div style={{ marginTop: "4px" }}>
-                  <ItemBadge name={assigningOrder.itemOrdered || "Lanyard"} />
-                </div>
-              </div>
-              <div style={{ gridColumn: "span 2" }}>
+              {mode !== "LABOUR_LANYARD" && (
+                <>
+                  <div>
+                    <div style={{ fontSize: "10px", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700 }}>Client</div>
+                    <div style={{ fontSize: "13.5px", fontWeight: 700, color: "#fff", marginTop: "2px" }}>{assigningOrder.client}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: "10px", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700 }}>Order</div>
+                    <div style={{ marginTop: "4px" }}>
+                      <ItemBadge name={assigningOrder.itemOrdered || "Lanyard"} />
+                    </div>
+                  </div>
+                </>
+              )}
+              <div style={{ gridColumn: mode === "LABOUR_LANYARD" ? "1" : "span 2" }}>
                 <div style={{ fontSize: "10px", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700 }}>Description</div>
                 <div style={{ fontSize: "12.5px", color: "#e2e8f0", marginTop: "2px" }}>{assigningOrder.product}</div>
 
@@ -2966,10 +2996,12 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
                   {assigningOrder.qty.toLocaleString()} units
                 </div>
               </div>
-              <div>
-                <div style={{ fontSize: "10px", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700 }}>Target Delivery SLA</div>
-                <div style={{ fontSize: "13px", fontWeight: 600, color: "#e2e8f0", marginTop: "2px" }}>{assigningOrder.deliveryDate}</div>
-              </div>
+              {mode !== "LABOUR_LANYARD" && (
+                <div>
+                  <div style={{ fontSize: "10px", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700 }}>Target Delivery SLA</div>
+                  <div style={{ fontSize: "13px", fontWeight: 600, color: "#e2e8f0", marginTop: "2px" }}>{assigningOrder.deliveryDate}</div>
+                </div>
+              )}
             </div>
 
             {/* Checkbox: Divide Order or Not */}
