@@ -86,10 +86,17 @@ export const INHOUSE_EMPLOYEES: EmployeeMember[] = [
       },
       {
         item: "Clips",
-        qtyOnHand: 200,
-        unit: "pieces",
+        qtyOnHand: 1,
+        unit: "packets of 1000",
         sourceOrder: "Stock Lot #STK-49",
-        details: "Metal crocodile badge clips on workbench",
+        details: "1 packet of 1000 crocodile badge clips on workbench",
+      },
+      {
+        item: "Safety Jointer Buckles",
+        qtyOnHand: 1,
+        unit: "packets of 1000",
+        sourceOrder: "Batch #LN-380",
+        details: "1 packet of 1000 breakaway jointers on workbench",
       },
       {
         item: "Dog Hook",
@@ -126,10 +133,10 @@ export const INHOUSE_EMPLOYEES: EmployeeMember[] = [
       },
       {
         item: "Clips",
-        qtyOnHand: 150,
-        unit: "pieces",
+        qtyOnHand: 1,
+        unit: "packets of 1000",
         sourceOrder: "Lot #STK-49",
-        details: "Standard badge clips",
+        details: "1 packet of 1000 standard badge clips staged on rack",
       },
     ],
   },
@@ -171,10 +178,10 @@ export const INHOUSE_EMPLOYEES: EmployeeMember[] = [
       },
       {
         item: "Clips",
-        qtyOnHand: 100,
-        unit: "pieces",
+        qtyOnHand: 1,
+        unit: "packets of 1000",
         sourceOrder: "Buffer stock",
-        details: "Finishing clips",
+        details: "1 packet of 1000 finishing clips in tray",
       },
     ],
   },
@@ -222,11 +229,18 @@ export const LABOUR_CONTRACTORS: LabourContractor[] = [
         details: "Vertical pouch holders held in contractor buffer",
       },
       {
+        item: "Clips",
+        qtyOnHand: 1,
+        unit: "packets of 1000",
+        sourceOrder: "Stock Lot #STK-49",
+        details: "1 packet of 1000 crocodile badge clips on workbench",
+      },
+      {
         item: "Safety Jointer Buckles",
-        qtyOnHand: 150,
-        unit: "pieces",
+        qtyOnHand: 1,
+        unit: "packets of 1000",
         sourceOrder: "Buffer Lot #STK-92",
-        details: "Safety breakaway buckles on workbench",
+        details: "1 packet of 1000 safety breakaway buckles on workbench",
       },
     ],
     activeJobsCount: 2,
@@ -298,17 +312,17 @@ export const LABOUR_CONTRACTORS: LabourContractor[] = [
       },
       {
         item: "Clips",
-        qtyOnHand: 250,
-        unit: "pieces",
+        qtyOnHand: 1,
+        unit: "packets of 1000",
         sourceOrder: "Stock Lot #STK-49",
-        details: "Crocodile badge clips in assembly bin",
+        details: "1 packet of 1000 crocodile badge clips in assembly bin",
       },
       {
         item: "Safety Jointer Buckles",
-        qtyOnHand: 180,
-        unit: "pieces",
+        qtyOnHand: 1,
+        unit: "packets of 1000",
         sourceOrder: "Batch #LN-380",
-        details: "Breakaway jointer buckles on hand",
+        details: "1 packet of 1000 breakaway jointer buckles on hand",
       },
     ],
     activeJobsCount: 1,
@@ -317,127 +331,259 @@ export const LABOUR_CONTRACTORS: LabourContractor[] = [
 ];
 
 // ─── Supporting Accessories Detection from Order Description ───────────────────
-export interface RequiredMaterialItem {
+// ─── Registered Stock Item & Factory Unit Requirements ─────────────────────────
+export type StockUnit = "packets of 1000" | "rolls" | "pieces";
+
+export interface RegisteredStockItem {
   name: string;
   category: "HOOKS" | "LANYARDS" | "HOLDERS" | "OTHERS";
+  canonicalUnit: StockUnit;
+  packSize: number; // 1000 for clips/jointers, 200 for rolls, 1 for pieces
+  unitDisplay: string; // "pkts (1000s)", "rolls", "pcs"
+  requiredPacks: number;
+  totalPieces: number;
+  icon: string;
+  badgeLabel: string;
+  badgeBg: string;
+  badgeColor: string;
+  badgeBorder: string;
+  detectedReason: string;
+  // Aliases for backwards compatibility
   unit: string;
   requiredQty: number;
-  detectedReason: string;
 }
+
+export type RequiredMaterialItem = RegisteredStockItem;
 
 export function parseSupportingItemsFromDescription(
   description: string,
   itemOrdered: string,
   orderQty: number
-): RequiredMaterialItem[] {
+): RegisteredStockItem[] {
   const desc = (description || "").toLowerCase();
-  const items: RequiredMaterialItem[] = [];
+  const items: RegisteredStockItem[] = [];
   const isCard = itemOrdered === "Card";
 
   if (isCard) {
-    // 1. Holder
-    if (desc.includes("plastic holder-h") || desc.includes("horizontal holder") || desc.includes("horizontal pouch")) {
+    // 1. Holders for Cards
+    if (desc.includes("plastic holder-h") || desc.includes("horizontal holder") || desc.includes("horizontal pouch") || desc.includes("horizontal")) {
       items.push({
         name: "Plastic Holder-H",
         category: "HOLDERS",
+        canonicalUnit: "pieces",
+        packSize: 1,
+        unitDisplay: "pcs",
+        requiredPacks: orderQty,
+        totalPieces: orderQty,
+        icon: "🏷️",
+        badgeLabel: `Holder-H (${orderQty.toLocaleString()} pcs)`,
+        badgeBg: "rgba(16, 185, 129, 0.16)",
+        badgeColor: "#34d399",
+        badgeBorder: "rgba(16, 185, 129, 0.4)",
+        detectedReason: "Matched horizontal pouch/holder in description",
         unit: "pieces",
         requiredQty: orderQty,
-        detectedReason: "Matched horizontal holder/pouch in description",
       });
     } else if (desc.includes("crystal")) {
       items.push({
         name: "Crystal Holder",
         category: "HOLDERS",
+        canonicalUnit: "pieces",
+        packSize: 1,
+        unitDisplay: "pcs",
+        requiredPacks: orderQty,
+        totalPieces: orderQty,
+        icon: "🏷️",
+        badgeLabel: `Crystal Holder (${orderQty.toLocaleString()} pcs)`,
+        badgeBg: "rgba(96, 165, 250, 0.16)",
+        badgeColor: "#60a5fa",
+        badgeBorder: "rgba(96, 165, 250, 0.4)",
+        detectedReason: "Matched 'crystal' VIP holder in description",
         unit: "pieces",
         requiredQty: orderQty,
-        detectedReason: "Matched 'crystal' VIP holder in description",
       });
     } else if (desc.includes("dst-h")) {
       items.push({
         name: "DST-H",
         category: "HOLDERS",
+        canonicalUnit: "pieces",
+        packSize: 1,
+        unitDisplay: "pcs",
+        requiredPacks: orderQty,
+        totalPieces: orderQty,
+        icon: "🏷️",
+        badgeLabel: `DST-H Holder (${orderQty.toLocaleString()} pcs)`,
+        badgeBg: "rgba(251, 191, 36, 0.16)",
+        badgeColor: "#fbbf24",
+        badgeBorder: "rgba(251, 191, 36, 0.4)",
+        detectedReason: "Matched 'DST-H' holder in description",
         unit: "pieces",
         requiredQty: orderQty,
-        detectedReason: "Matched 'DST-H' holder in description",
       });
     } else if (desc.includes("dst-v") || desc.includes("dst")) {
       items.push({
         name: "DST-V",
         category: "HOLDERS",
+        canonicalUnit: "pieces",
+        packSize: 1,
+        unitDisplay: "pcs",
+        requiredPacks: orderQty,
+        totalPieces: orderQty,
+        icon: "🏷️",
+        badgeLabel: `DST-V Holder (${orderQty.toLocaleString()} pcs)`,
+        badgeBg: "rgba(245, 158, 11, 0.16)",
+        badgeColor: "#f59e0b",
+        badgeBorder: "rgba(245, 158, 11, 0.4)",
+        detectedReason: "Matched 'DST' dual-slot holder in description",
         unit: "pieces",
         requiredQty: orderQty,
-        detectedReason: "Matched 'DST' dual-slot holder in description",
       });
     } else {
       items.push({
         name: "Plastic Holder-V",
         category: "HOLDERS",
-        unit: "pieces",
-        requiredQty: orderQty,
+        canonicalUnit: "pieces",
+        packSize: 1,
+        unitDisplay: "pcs",
+        requiredPacks: orderQty,
+        totalPieces: orderQty,
+        icon: "🏷️",
+        badgeLabel: `Holder-V (${orderQty.toLocaleString()} pcs)`,
+        badgeBg: "rgba(52, 211, 153, 0.16)",
+        badgeColor: "#6ee7b7",
+        badgeBorder: "rgba(52, 211, 153, 0.4)",
         detectedReason:
           desc.includes("holder") || desc.includes("pouch") || desc.includes("sleeve") || desc.includes("case")
-            ? "Matched holder/pouch in description"
+            ? "Matched vertical holder/pouch in description"
             : "Standard vertical PVC ID card holder required",
+        unit: "pieces",
+        requiredQty: orderQty,
       });
     }
 
-    // 2. Clips
+    // 2. Clips (Registered unit: packets of 1000)
+    const clipPacks = Math.max(1, Math.ceil(orderQty / 1000));
     items.push({
       name: "Clips",
       category: "OTHERS",
-      unit: "pieces",
-      requiredQty: orderQty,
-      detectedReason: desc.includes("clip") ? "Matched 'clip' in description" : "Standard badge clip fitting",
+      canonicalUnit: "packets of 1000",
+      packSize: 1000,
+      unitDisplay: "pkts (1000s)",
+      requiredPacks: clipPacks,
+      totalPieces: clipPacks * 1000,
+      icon: "📦",
+      badgeLabel: `${clipPacks} ${clipPacks === 1 ? "pkt" : "pkts"} Clips (1000s)`,
+      badgeBg: "rgba(236, 72, 153, 0.16)",
+      badgeColor: "#f472b6",
+      badgeBorder: "rgba(236, 72, 153, 0.4)",
+      detectedReason: desc.includes("clip")
+        ? "Matched keyword 'clip' in description (unit: packets of 1000)"
+        : "Standard ID badge clips required (unit: packets of 1000)",
+      unit: "packets of 1000",
+      requiredQty: clipPacks,
     });
 
-    // 3. Optional Jointer/Breakaway if mentioned in description
-    if (desc.includes("jointer") || desc.includes("jointers") || desc.includes("breakaway") || desc.includes("buckle")) {
+    // 3. Optional Jointer/Breakaway (Registered unit: packets of 1000)
+    if (desc.includes("jointer") || desc.includes("jointers") || desc.includes("breakaway") || desc.includes("buckle") || desc.includes("release")) {
+      const jointerPacks = Math.max(1, Math.ceil(orderQty / 1000));
       items.push({
         name: "Safety Jointer Buckles",
         category: "OTHERS",
-        unit: "pieces",
-        requiredQty: orderQty,
-        detectedReason: "Matched 'jointer / breakaway buckle' in description",
+        canonicalUnit: "packets of 1000",
+        packSize: 1000,
+        unitDisplay: "pkts (1000s)",
+        requiredPacks: jointerPacks,
+        totalPieces: jointerPacks * 1000,
+        icon: "📦",
+        badgeLabel: `${jointerPacks} ${jointerPacks === 1 ? "pkt" : "pkts"} Jointers (1000s)`,
+        badgeBg: "rgba(244, 63, 94, 0.16)",
+        badgeColor: "#fb7185",
+        badgeBorder: "rgba(244, 63, 94, 0.4)",
+        detectedReason: "Matched keyword 'jointer / breakaway buckle' in description (unit: packets of 1000)",
+        unit: "packets of 1000",
+        requiredQty: jointerPacks,
       });
     }
 
     // 4. Optional Ring if mentioned
-    if (desc.includes("ring")) {
+    if (desc.includes("ring") || desc.includes("rings") || desc.includes("keyring")) {
       items.push({
         name: "Split Key Rings",
         category: "OTHERS",
+        canonicalUnit: "pieces",
+        packSize: 1,
+        unitDisplay: "pcs",
+        requiredPacks: orderQty,
+        totalPieces: orderQty,
+        icon: "🔗",
+        badgeLabel: `Rings (${orderQty.toLocaleString()} pcs)`,
+        badgeBg: "rgba(217, 70, 239, 0.16)",
+        badgeColor: "#e879f9",
+        badgeBorder: "rgba(217, 70, 239, 0.4)",
+        detectedReason: "Matched keyword 'ring' accessory in description",
         unit: "pieces",
         requiredQty: orderQty,
-        detectedReason: "Matched 'ring' accessory in description",
       });
     }
   } else {
-    // Lanyard Orders
-    // 1. Ribbon Rolls
+    // ─── Lanyard Orders ──────────────────────────────────────────────────────────
+    // 1. Ribbon Rolls (1 roll = 200 units)
     const rollsNeeded = Math.max(1, Math.ceil(orderQty / 200));
     if (desc.includes("12mm") || desc.includes("10mm")) {
       items.push({
         name: "12mm Lanyard Rolls",
         category: "LANYARDS",
+        canonicalUnit: "rolls",
+        packSize: 200,
+        unitDisplay: "rolls",
+        requiredPacks: rollsNeeded,
+        totalPieces: rollsNeeded * 200,
+        icon: "🎗️",
+        badgeLabel: `${rollsNeeded} ${rollsNeeded === 1 ? "roll" : "rolls"} 12mm Ribbon`,
+        badgeBg: "rgba(255, 138, 115, 0.15)",
+        badgeColor: "#ff8a73",
+        badgeBorder: "rgba(255, 138, 115, 0.4)",
+        detectedReason: "Matched keyword '10/12mm' ribbon rolls (unit: rolls)",
         unit: "rolls",
         requiredQty: rollsNeeded,
-        detectedReason: "Detected 10/12mm ribbon rolls from description",
       });
     } else if (desc.includes("20mm")) {
       items.push({
         name: "20mm Lanyard Rolls",
         category: "LANYARDS",
+        canonicalUnit: "rolls",
+        packSize: 200,
+        unitDisplay: "rolls",
+        requiredPacks: rollsNeeded,
+        totalPieces: rollsNeeded * 200,
+        icon: "🎗️",
+        badgeLabel: `${rollsNeeded} ${rollsNeeded === 1 ? "roll" : "rolls"} 20mm Ribbon`,
+        badgeBg: "rgba(249, 115, 22, 0.15)",
+        badgeColor: "#fb923c",
+        badgeBorder: "rgba(249, 115, 22, 0.4)",
+        detectedReason: "Matched keyword '20mm' satin rolls (unit: rolls)",
         unit: "rolls",
         requiredQty: rollsNeeded,
-        detectedReason: "Detected 20mm satin rolls from description",
       });
     } else {
       items.push({
         name: "16mm Lanyard Rolls",
         category: "LANYARDS",
+        canonicalUnit: "rolls",
+        packSize: 200,
+        unitDisplay: "rolls",
+        requiredPacks: rollsNeeded,
+        totalPieces: rollsNeeded * 200,
+        icon: "🎗️",
+        badgeLabel: `${rollsNeeded} ${rollsNeeded === 1 ? "roll" : "rolls"} 16mm Ribbon`,
+        badgeBg: "rgba(234, 88, 12, 0.15)",
+        badgeColor: "#fdba74",
+        badgeBorder: "rgba(234, 88, 12, 0.4)",
+        detectedReason: desc.includes("15mm") || desc.includes("16mm")
+          ? "Matched keyword '15/16mm' ribbon from description (unit: rolls)"
+          : "Standard 16mm ribbon rolls required (unit: rolls)",
         unit: "rolls",
         requiredQty: rollsNeeded,
-        detectedReason: desc.includes("15mm") || desc.includes("16mm") ? "Detected 15/16mm ribbon from description" : "Standard 16mm ribbon rolls",
       });
     }
 
@@ -446,79 +592,208 @@ export function parseSupportingItemsFromDescription(
       items.push({
         name: "England Hook",
         category: "HOOKS",
+        canonicalUnit: "pieces",
+        packSize: 1,
+        unitDisplay: "pcs",
+        requiredPacks: orderQty,
+        totalPieces: orderQty,
+        icon: "🪝",
+        badgeLabel: `England Hook (${orderQty.toLocaleString()} pcs)`,
+        badgeBg: "rgba(168, 85, 247, 0.15)",
+        badgeColor: "#c084fc",
+        badgeBorder: "rgba(168, 85, 247, 0.4)",
+        detectedReason: "Matched keyword 'England Hook' in description",
         unit: "pieces",
         requiredQty: orderQty,
-        detectedReason: "Detected 'England Hook' from description",
       });
     } else if (desc.includes("plastic hook") || desc.includes("snap hook")) {
       items.push({
         name: "Plastic Hook",
         category: "HOOKS",
+        canonicalUnit: "pieces",
+        packSize: 1,
+        unitDisplay: "pcs",
+        requiredPacks: orderQty,
+        totalPieces: orderQty,
+        icon: "🪝",
+        badgeLabel: `Plastic Hook (${orderQty.toLocaleString()} pcs)`,
+        badgeBg: "rgba(56, 189, 248, 0.15)",
+        badgeColor: "#38bdf8",
+        badgeBorder: "rgba(56, 189, 248, 0.4)",
+        detectedReason: "Matched keyword 'Plastic Hook' in description",
         unit: "pieces",
         requiredQty: orderQty,
-        detectedReason: "Detected 'Plastic Hook' from description",
       });
     } else {
       items.push({
         name: "Dog Hook",
         category: "HOOKS",
+        canonicalUnit: "pieces",
+        packSize: 1,
+        unitDisplay: "pcs",
+        requiredPacks: orderQty,
+        totalPieces: orderQty,
+        icon: "🪝",
+        badgeLabel: `Dog Hook (${orderQty.toLocaleString()} pcs)`,
+        badgeBg: "rgba(192, 132, 252, 0.15)",
+        badgeColor: "#e9d5ff",
+        badgeBorder: "rgba(192, 132, 252, 0.4)",
+        detectedReason: desc.includes("dog hook") || desc.includes("dog clip")
+          ? "Matched keyword 'Dog Hook' in description"
+          : "Standard lanyard dog hook required",
         unit: "pieces",
         requiredQty: orderQty,
-        detectedReason: desc.includes("dog hook") || desc.includes("dog clip") ? "Detected 'Dog Hook' from description" : "Standard lanyard dog hook",
       });
     }
 
     // 3. Supporting items: Holders / Pouch (written in description by user)
     if (
       desc.includes("holder") ||
+      desc.includes("holders") ||
       desc.includes("pouch") ||
       desc.includes("sleeve") ||
       desc.includes("case") ||
       desc.includes("dst") ||
       desc.includes("crystal")
     ) {
-      let holderType = "Plastic Holder-V";
-      if (desc.includes("plastic holder-h") || desc.includes("horizontal")) holderType = "Plastic Holder-H";
-      else if (desc.includes("crystal")) holderType = "Crystal Holder";
-      else if (desc.includes("dst-h")) holderType = "DST-H";
-      else if (desc.includes("dst-v") || desc.includes("dst")) holderType = "DST-V";
-
-      items.push({
-        name: holderType,
-        category: "HOLDERS",
-        unit: "pieces",
-        requiredQty: orderQty,
-        detectedReason: `Detected accessory '${holderType}' from description`,
-      });
+      if (desc.includes("plastic holder-h") || desc.includes("horizontal")) {
+        items.push({
+          name: "Plastic Holder-H",
+          category: "HOLDERS",
+          canonicalUnit: "pieces",
+          packSize: 1,
+          unitDisplay: "pcs",
+          requiredPacks: orderQty,
+          totalPieces: orderQty,
+          icon: "🏷️",
+          badgeLabel: `Holder-H (${orderQty.toLocaleString()} pcs)`,
+          badgeBg: "rgba(16, 185, 129, 0.16)",
+          badgeColor: "#34d399",
+          badgeBorder: "rgba(16, 185, 129, 0.4)",
+          detectedReason: "Matched keyword 'horizontal pouch/holder' in description",
+          unit: "pieces",
+          requiredQty: orderQty,
+        });
+      } else if (desc.includes("crystal")) {
+        items.push({
+          name: "Crystal Holder",
+          category: "HOLDERS",
+          canonicalUnit: "pieces",
+          packSize: 1,
+          unitDisplay: "pcs",
+          requiredPacks: orderQty,
+          totalPieces: orderQty,
+          icon: "🏷️",
+          badgeLabel: `Crystal Holder (${orderQty.toLocaleString()} pcs)`,
+          badgeBg: "rgba(96, 165, 250, 0.16)",
+          badgeColor: "#60a5fa",
+          badgeBorder: "rgba(96, 165, 250, 0.4)",
+          detectedReason: "Matched keyword 'crystal' holder in description",
+          unit: "pieces",
+          requiredQty: orderQty,
+        });
+      } else if (desc.includes("dst-h")) {
+        items.push({
+          name: "DST-H",
+          category: "HOLDERS",
+          canonicalUnit: "pieces",
+          packSize: 1,
+          unitDisplay: "pcs",
+          requiredPacks: orderQty,
+          totalPieces: orderQty,
+          icon: "🏷️",
+          badgeLabel: `DST-H Holder (${orderQty.toLocaleString()} pcs)`,
+          badgeBg: "rgba(251, 191, 36, 0.16)",
+          badgeColor: "#fbbf24",
+          badgeBorder: "rgba(251, 191, 36, 0.4)",
+          detectedReason: "Matched keyword 'DST-H' holder in description",
+          unit: "pieces",
+          requiredQty: orderQty,
+        });
+      } else if (desc.includes("dst-v") || desc.includes("dst")) {
+        items.push({
+          name: "DST-V",
+          category: "HOLDERS",
+          canonicalUnit: "pieces",
+          packSize: 1,
+          unitDisplay: "pcs",
+          requiredPacks: orderQty,
+          totalPieces: orderQty,
+          icon: "🏷️",
+          badgeLabel: `DST-V Holder (${orderQty.toLocaleString()} pcs)`,
+          badgeBg: "rgba(245, 158, 11, 0.16)",
+          badgeColor: "#f59e0b",
+          badgeBorder: "rgba(245, 158, 11, 0.4)",
+          detectedReason: "Matched keyword 'DST' holder in description",
+          unit: "pieces",
+          requiredQty: orderQty,
+        });
+      } else {
+        items.push({
+          name: "Plastic Holder-V",
+          category: "HOLDERS",
+          canonicalUnit: "pieces",
+          packSize: 1,
+          unitDisplay: "pcs",
+          requiredPacks: orderQty,
+          totalPieces: orderQty,
+          icon: "🏷️",
+          badgeLabel: `Holder-V (${orderQty.toLocaleString()} pcs)`,
+          badgeBg: "rgba(52, 211, 153, 0.16)",
+          badgeColor: "#6ee7b7",
+          badgeBorder: "rgba(52, 211, 153, 0.4)",
+          detectedReason: "Matched keyword 'holder/pouch' in description",
+          unit: "pieces",
+          requiredQty: orderQty,
+        });
+      }
     }
 
-    // 4. Supporting items: Clips (clips, crocodile)
-    if (desc.includes("clip") && !desc.includes("dog clip")) {
+    // 4. Supporting items: Clips (keyword: clip, clips, crocodile)
+    // Factory unit: packets of 1000 (1000s)
+    const hasClipKeyword = (desc.includes("clip") && !desc.includes("dog clip")) || desc.includes("clips") || desc.includes("crocodile");
+    if (hasClipKeyword) {
+      const clipPacks = Math.max(1, Math.ceil(orderQty / 1000));
       items.push({
         name: "Clips",
         category: "OTHERS",
-        unit: "pieces",
-        requiredQty: orderQty,
-        detectedReason: "Detected accessory 'clips' from description",
-      });
-    } else if (desc.includes("clips") || desc.includes("crocodile")) {
-      items.push({
-        name: "Clips",
-        category: "OTHERS",
-        unit: "pieces",
-        requiredQty: orderQty,
-        detectedReason: "Detected accessory 'clips' from description",
+        canonicalUnit: "packets of 1000",
+        packSize: 1000,
+        unitDisplay: "pkts (1000s)",
+        requiredPacks: clipPacks,
+        totalPieces: clipPacks * 1000,
+        icon: "📦",
+        badgeLabel: `${clipPacks} ${clipPacks === 1 ? "pkt" : "pkts"} Clips (1000s)`,
+        badgeBg: "rgba(236, 72, 153, 0.16)",
+        badgeColor: "#f472b6",
+        badgeBorder: "rgba(236, 72, 153, 0.4)",
+        detectedReason: "Matched keyword 'clips' in description (factory unit: 1000s per packet)",
+        unit: "packets of 1000",
+        requiredQty: clipPacks,
       });
     }
 
-    // 5. Supporting items: Jointer / Breakaway buckle
-    if (desc.includes("jointer") || desc.includes("jointers") || desc.includes("breakaway") || desc.includes("buckle") || desc.includes("release")) {
+    // 5. Supporting items: Jointer / Breakaway buckle (keyword: jointer, jointers, breakaway, buckle, release)
+    // Factory unit: packets of 1000 (1000s)
+    const hasJointerKeyword = desc.includes("jointer") || desc.includes("jointers") || desc.includes("breakaway") || desc.includes("buckle") || desc.includes("release");
+    if (hasJointerKeyword) {
+      const jointerPacks = Math.max(1, Math.ceil(orderQty / 1000));
       items.push({
         name: "Safety Jointer Buckles",
         category: "OTHERS",
-        unit: "pieces",
-        requiredQty: orderQty,
-        detectedReason: "Detected accessory 'jointer / breakaway buckle' from description",
+        canonicalUnit: "packets of 1000",
+        packSize: 1000,
+        unitDisplay: "pkts (1000s)",
+        requiredPacks: jointerPacks,
+        totalPieces: jointerPacks * 1000,
+        icon: "📦",
+        badgeLabel: `${jointerPacks} ${jointerPacks === 1 ? "pkt" : "pkts"} Jointers (1000s)`,
+        badgeBg: "rgba(244, 63, 94, 0.16)",
+        badgeColor: "#fb7185",
+        badgeBorder: "rgba(244, 63, 94, 0.4)",
+        detectedReason: "Matched keyword 'jointer / breakaway' in description (factory unit: 1000s per packet)",
+        unit: "packets of 1000",
+        requiredQty: jointerPacks,
       });
     }
 
@@ -527,9 +802,19 @@ export function parseSupportingItemsFromDescription(
       items.push({
         name: "Split Key Rings",
         category: "OTHERS",
+        canonicalUnit: "pieces",
+        packSize: 1,
+        unitDisplay: "pcs",
+        requiredPacks: orderQty,
+        totalPieces: orderQty,
+        icon: "🔗",
+        badgeLabel: `Rings (${orderQty.toLocaleString()} pcs)`,
+        badgeBg: "rgba(217, 70, 239, 0.16)",
+        badgeColor: "#e879f9",
+        badgeBorder: "rgba(217, 70, 239, 0.4)",
+        detectedReason: "Matched keyword 'ring' accessory in description",
         unit: "pieces",
         requiredQty: orderQty,
-        detectedReason: "Detected accessory 'ring' from description",
       });
     }
   }
@@ -563,7 +848,7 @@ export const INITIAL_ORDERS: OrderRecord[] = [
   {
     internalId: "ord-1",
     client: "St. Xavier's High School",
-    product: "Multicolor Lanyards (15mm) — Triple color blue/white/red satin",
+    product: "Multicolor Lanyards (15mm) — Satin ribbon with Dog Hook & Clips",
     itemOrdered: "Lanyard",
     itemsOrdered: ["Lanyard"],
     qty: 2000,
@@ -576,7 +861,7 @@ export const INITIAL_ORDERS: OrderRecord[] = [
   {
     internalId: "ord-2",
     client: "BHEL Township Admin",
-    product: "Single Color Lanyards (10mm) — Navy blue polyester with ID pouch",
+    product: "Single Color Lanyards (10mm) — Navy blue polyester with Plastic Holder-V, Clips & Jointer",
     itemOrdered: "Lanyard",
     itemsOrdered: ["Lanyard"],
     qty: 500,
@@ -589,7 +874,7 @@ export const INITIAL_ORDERS: OrderRecord[] = [
   {
     internalId: "ord-3",
     client: "Northwind Coffee",
-    product: "Custom Printed Premium Lanyards — Red/white double color print",
+    product: "Custom Printed Premium Lanyards — Red/white satin print, Dog Hook & Safety Jointer",
     itemOrdered: "Lanyard",
     itemsOrdered: ["Lanyard"],
     qty: 1500,
@@ -602,7 +887,7 @@ export const INITIAL_ORDERS: OrderRecord[] = [
   {
     internalId: "ord-4",
     client: "AIIMS Bhopal",
-    product: "Medical Staff ID Cards — PVC laminated, NFC chip & photo embed",
+    product: "Medical Staff ID Cards — PVC laminated with Plastic Holder-V & Clips",
     itemOrdered: "Card",
     itemsOrdered: ["Card"],
     qty: 350,
@@ -615,7 +900,7 @@ export const INITIAL_ORDERS: OrderRecord[] = [
   {
     internalId: "ord-5",
     client: "Govt Engineering College Bhopal",
-    product: "PVC Identity Cards (58mm) — Metal clip & high-gloss film",
+    product: "PVC Identity Cards (58mm) — Plastic Holder-H & Clips",
     itemOrdered: "Card",
     itemsOrdered: ["Card"],
     qty: 800,
@@ -628,7 +913,7 @@ export const INITIAL_ORDERS: OrderRecord[] = [
   {
     internalId: "ord-6",
     client: "Reliance Retail - Bhopal",
-    product: "Staff Access Cards — Barcode & magnetic stripe encoded",
+    product: "Staff Access Cards — Barcode & magnetic stripe encoded with DST-V Holder",
     itemOrdered: "Card",
     itemsOrdered: ["Card"],
     qty: 200,
@@ -641,7 +926,7 @@ export const INITIAL_ORDERS: OrderRecord[] = [
   {
     internalId: "ord-7",
     client: "NIT Bhopal",
-    product: "Faculty + Student Lanyards — 20mm full color heat sublimation",
+    product: "Faculty + Student Lanyards — 20mm full color heat sublimation with Plastic Hook & Jointer",
     itemOrdered: "Lanyard",
     itemsOrdered: ["Lanyard"],
     qty: 1200,
@@ -654,7 +939,7 @@ export const INITIAL_ORDERS: OrderRecord[] = [
   {
     internalId: "ord-8",
     client: "Maulana Azad Hospital",
-    product: "Staff ID Lanyards — Screen printed navy with heavy dog hook",
+    product: "Staff ID Lanyards — Screen printed navy with England Hook & Clips",
     itemOrdered: "Lanyard",
     itemsOrdered: ["Lanyard"],
     qty: 600,
@@ -667,7 +952,7 @@ export const INITIAL_ORDERS: OrderRecord[] = [
   {
     internalId: "ord-9",
     client: "Smart City Council",
-    product: "Event Delegate Smart Cards — Magnetic clip back & rush conference foil",
+    product: "Event Delegate Smart Cards — Magnetic clip back with Crystal Holder",
     itemOrdered: "Card",
     itemsOrdered: ["Card"],
     qty: 450,
@@ -680,7 +965,7 @@ export const INITIAL_ORDERS: OrderRecord[] = [
   {
     internalId: "ord-10",
     client: "Indraprastha School",
-    product: "Heavy Duty School ID Lanyards — Transparent vinyl pouch with dog clip",
+    product: "Heavy Duty School ID Lanyards — Transparent Plastic Holder-V with Dog Hook & Clips",
     itemOrdered: "Lanyard",
     itemsOrdered: ["Lanyard"],
     qty: 1000,
@@ -693,7 +978,7 @@ export const INITIAL_ORDERS: OrderRecord[] = [
   {
     internalId: "ord-11",
     client: "MP Secretariat",
-    product: "Embossed Security ID Cards — Hologram foil & micro-text overlay",
+    product: "Embossed Security ID Cards — Hologram foil & micro-text overlay with Clips",
     itemOrdered: "Card",
     itemsOrdered: ["Card"],
     qty: 150,
@@ -706,7 +991,7 @@ export const INITIAL_ORDERS: OrderRecord[] = [
   {
     internalId: "ord-12",
     client: "Bansal Group Schools",
-    product: "Lanyards (12mm Blue/White) — Double-sided screen print line",
+    product: "Lanyards (12mm Blue/White) — Double-sided print with Dog Hook, Clips & Safety Jointer",
     itemOrdered: "Lanyard",
     itemsOrdered: ["Lanyard"],
     qty: 3000,
@@ -929,7 +1214,13 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
     return parseSupportingItemsFromDescription(assigningOrder.product, itemOrdered, assigningOrder.qty);
   }, [assigningOrder]);
 
-  // Material reconciliation calculation (shows what is required, what worker holds, and net to physically give)
+  // Live detected stock requirements as the user types in Direct Order Entry
+  const liveDetectedStock = useMemo(() => {
+    const qty = parseInt(newQty, 10) || 500;
+    return parseSupportingItemsFromDescription(newDescription, newItemOrdered, qty);
+  }, [newDescription, newItemOrdered, newQty]);
+
+  // Material reconciliation calculation (checks worker stock buffer against required items, remembering units)
   const materialReconciliation = useMemo(() => {
     if (!assigningOrder) return [];
 
@@ -942,27 +1233,56 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
         if (req.category === "HOOKS" && hNorm.includes("hook")) return true;
         if (req.category === "LANYARDS" && hNorm.includes("roll")) return true;
         if (req.category === "HOLDERS" && (hNorm.includes("holder") || hNorm.includes("pouch") || hNorm.includes("dst") || hNorm.includes("crystal"))) return true;
-        if (req.category === "OTHERS" && req.name === "Clips" && hNorm.includes("clip")) return true;
-        if (req.category === "OTHERS" && req.name.includes("Jointer") && (hNorm.includes("jointer") || hNorm.includes("buckle"))) return true;
+        if (req.category === "OTHERS" && req.name.includes("Clip") && hNorm.includes("clip")) return true;
+        if (req.category === "OTHERS" && (req.name.includes("Jointer") || req.name.includes("Buckle")) && (hNorm.includes("jointer") || hNorm.includes("buckle"))) return true;
         if (req.category === "OTHERS" && req.name.includes("Ring") && hNorm.includes("ring")) return true;
         return false;
       });
 
-      const heldQty = matchedHolding ? matchedHolding.qtyOnHand : 0;
-      const netToIssue = Math.max(0, req.requiredQty - heldQty);
+      let heldPacks = 0;
+      let heldPieces = 0;
+
+      if (matchedHolding) {
+        if (req.packSize === 1000) {
+          // Clips or Jointers: unit is packets of 1000
+          if (matchedHolding.unit.includes("packet") || matchedHolding.unit.includes("1000")) {
+            heldPacks = matchedHolding.qtyOnHand;
+            heldPieces = heldPacks * 1000;
+          } else {
+            heldPieces = matchedHolding.qtyOnHand;
+            heldPacks = Math.floor(heldPieces / 1000);
+          }
+        } else if (req.packSize === 200) {
+          // Rolls
+          heldPacks = matchedHolding.qtyOnHand;
+          heldPieces = heldPacks * 200;
+        } else {
+          // Pieces
+          heldPacks = matchedHolding.qtyOnHand;
+          heldPieces = matchedHolding.qtyOnHand;
+        }
+      }
+
+      const netPacksToIssue = Math.max(0, req.requiredPacks - heldPacks);
+      const netPiecesToIssue = Math.max(0, req.totalPieces - heldPieces);
+      const isFullyCovered = netPacksToIssue === 0;
+
       const sourceNote = matchedHolding?.sourceOrder
         ? `${matchedHolding.details || matchedHolding.item} (${matchedHolding.sourceOrder})`
         : matchedHolding?.details || null;
 
       return {
-        name: req.name,
-        category: req.category,
-        unit: req.unit,
-        requiredQty: req.requiredQty,
-        heldQty,
-        netToIssue,
+        ...req,
+        heldPacks,
+        heldPieces,
+        heldUnitDisplay: matchedHolding ? matchedHolding.unit : req.canonicalUnit,
+        netPacksToIssue,
+        netPiecesToIssue,
+        isFullyCovered,
         sourceNote,
-        detectedReason: req.detectedReason,
+        // Legacy aliases
+        heldQty: heldPacks,
+        netToIssue: netPacksToIssue,
       };
     });
   }, [assigningOrder, orderRequiredItems, activeHoldings]);
@@ -998,8 +1318,8 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
     );
 
     const netSummary = materialReconciliation
-      .filter((m) => m.netToIssue > 0)
-      .map((m) => `${m.netToIssue.toLocaleString()} ${m.unit} ${m.name}`)
+      .filter((m) => !m.isFullyCovered)
+      .map((m) => `${m.netPacksToIssue.toLocaleString()} ${m.unitDisplay} ${m.name}`)
       .join(", ");
 
     if (isStaff) {
@@ -1660,6 +1980,53 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
               </Button>
             </div>
           </div>
+
+          {/* Live Auto-Registered Stock Requirements Preview */}
+          {liveDetectedStock.length > 0 && (
+            <div
+              style={{
+                marginTop: "12px",
+                padding: "8px 12px",
+                backgroundColor: "rgba(10, 14, 23, 0.75)",
+                border: "1px dashed rgba(56, 189, 248, 0.35)",
+                borderRadius: "5px",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                flexWrap: "wrap",
+              }}
+            >
+              <span style={{ fontSize: "10px", fontWeight: 800, color: "#38bdf8", textTransform: "uppercase", letterSpacing: "0.5px", display: "flex", alignItems: "center", gap: "4px" }}>
+                <span>⚡</span>
+                <span>Auto-Registered Stock Requirements:</span>
+              </span>
+              {liveDetectedStock.map((stk, idx) => (
+                <span
+                  key={idx}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "4px",
+                    padding: "3px 8px",
+                    borderRadius: "4px",
+                    fontSize: "11px",
+                    fontWeight: 700,
+                    backgroundColor: stk.badgeBg,
+                    color: stk.badgeColor,
+                    border: `1px solid ${stk.badgeBorder}`,
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+                  }}
+                  title={`Unit: ${stk.canonicalUnit} · Total: ${stk.totalPieces.toLocaleString()} pcs (${stk.detectedReason})`}
+                >
+                  <span>{stk.icon}</span>
+                  <span>{stk.badgeLabel}</span>
+                </span>
+              ))}
+              <span style={{ fontSize: "10px", color: "var(--text-muted)", marginLeft: "auto", fontStyle: "italic" }}>
+                Auto-recognized from description & factory packaging units
+              </span>
+            </div>
+          )}
         </div>
 
         {/* ─── ORDERS TABLE (Polished Gradient Header, Spacious 68px Rows) ────── */}
@@ -2012,9 +2379,45 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
                             }}
                           />
                         ) : (
-                          <span style={{ color: "#e2e8f0", fontWeight: 500, fontSize: "13.5px", lineHeight: 1.45, display: "block" }}>
-                            {order.product}
-                          </span>
+                          <div>
+                            <span style={{ color: "#e2e8f0", fontWeight: 600, fontSize: "13.5px", lineHeight: 1.45, display: "block" }}>
+                              {order.product}
+                            </span>
+                            {(() => {
+                              const itemOrdered = order.itemOrdered || order.itemsOrdered?.[0] || "Lanyard";
+                              const detected = parseSupportingItemsFromDescription(order.product, itemOrdered, order.qty);
+                              if (detected.length === 0) return null;
+                              return (
+                                <div style={{ display: "flex", alignItems: "center", gap: "5px", flexWrap: "wrap", marginTop: "6px" }}>
+                                  <span style={{ fontSize: "9.5px", color: "#94a3b8", textTransform: "uppercase", fontWeight: 800, letterSpacing: "0.5px" }}>
+                                    Req. Stock:
+                                  </span>
+                                  {detected.map((item, idx) => (
+                                    <span
+                                      key={idx}
+                                      style={{
+                                        display: "inline-flex",
+                                        alignItems: "center",
+                                        gap: "4px",
+                                        padding: "2px 7px",
+                                        borderRadius: "4px",
+                                        fontSize: "10.5px",
+                                        fontWeight: 700,
+                                        backgroundColor: item.badgeBg,
+                                        color: item.badgeColor,
+                                        border: `1px solid ${item.badgeBorder}`,
+                                        boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+                                      }}
+                                      title={`Registered Requirement: ${item.name} (${item.totalPieces.toLocaleString()} pcs in ${item.canonicalUnit}) — ${item.detectedReason}`}
+                                    >
+                                      <span>{item.icon}</span>
+                                      <span>{item.badgeLabel}</span>
+                                    </span>
+                                  ))}
+                                </div>
+                              );
+                            })()}
+                          </div>
                         )}
                       </td>
 
@@ -2504,27 +2907,31 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
                 <div style={{ fontSize: "10px", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700 }}>Description</div>
                 <div style={{ fontSize: "12.5px", color: "#e2e8f0", marginTop: "2px" }}>{assigningOrder.product}</div>
 
-                {/* Detected Supporting Accessories Badges */}
+                {/* Registered Stock Requirements Badges */}
                 {orderRequiredItems.length > 0 && (
-                  <div style={{ marginTop: "8px", display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-                    <span style={{ fontSize: "10px", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700 }}>
-                      Detected Items:
+                  <div style={{ marginTop: "10px", display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                    <span style={{ fontSize: "10px", color: "#38bdf8", textTransform: "uppercase", fontWeight: 800, letterSpacing: "0.5px" }}>
+                      Registered Required Stock ({orderRequiredItems.length}):
                     </span>
                     {orderRequiredItems.map((item, idx) => (
                       <span
                         key={idx}
                         style={{
-                          fontSize: "10.5px",
+                          fontSize: "11px",
                           fontWeight: 700,
-                          padding: "2px 7px",
+                          padding: "2px 8px",
                           borderRadius: "4px",
-                          backgroundColor: "rgba(56, 189, 248, 0.15)",
-                          color: "#38bdf8",
-                          border: "1px solid rgba(56, 189, 248, 0.3)",
+                          backgroundColor: item.badgeBg,
+                          color: item.badgeColor,
+                          border: `1px solid ${item.badgeBorder}`,
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px",
                         }}
+                        title={`Requirement: ${item.name} (${item.totalPieces.toLocaleString()} pcs in ${item.canonicalUnit})`}
                       >
-                        {item.category === "HOOKS" ? "🪝 " : item.category === "HOLDERS" ? "🏷️ " : item.category === "LANYARDS" ? "🎗️ " : "🔗 "}
-                        {item.name}
+                        <span>{item.icon}</span>
+                        <span>{item.badgeLabel}</span>
                       </span>
                     ))}
                   </div>
@@ -2564,13 +2971,13 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
                   </span>
                 </div>
                 <span style={{ fontSize: "10px", fontWeight: 700, color: "#a7f3d0", backgroundColor: "rgba(16, 185, 129, 0.18)", padding: "2px 8px", borderRadius: "10px" }}>
-                  {materialReconciliation.filter((m) => m.netToIssue > 0).length} items to issue
+                  {materialReconciliation.filter((m) => !m.isFullyCovered).length} items to issue
                 </span>
               </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                 {materialReconciliation.map((mat, idx) => {
-                  const isFullyCovered = mat.netToIssue === 0;
+                  const isFullyCovered = mat.isFullyCovered;
                   return (
                     <div
                       key={idx}
@@ -2588,34 +2995,36 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
                       <div style={{ display: "flex", flexDirection: "column", gap: "2px", minWidth: 0, flex: 1 }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                           <span style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff" }}>
-                            {mat.name}
+                            {mat.icon} {mat.name}
                           </span>
                           <span
                             style={{
                               fontSize: "9px",
                               fontWeight: 700,
-                              padding: "1px 5px",
+                              padding: "1px 6px",
                               borderRadius: "2px",
-                              backgroundColor: "rgba(255, 255, 255, 0.08)",
-                              color: "var(--text-muted)",
+                              backgroundColor: mat.badgeBg,
+                              color: mat.badgeColor,
+                              border: `1px solid ${mat.badgeBorder}`,
                               textTransform: "uppercase",
+                              letterSpacing: "0.4px",
                             }}
                           >
-                            {mat.category}
+                            {mat.canonicalUnit}
                           </span>
                         </div>
-                        <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>
+                        <div style={{ fontSize: "11.5px", color: "var(--text-muted)", marginTop: "2px" }}>
                           {isFullyCovered ? (
                             <span style={{ color: "#34d399", fontWeight: 600 }}>
-                              Worker already holds {mat.heldQty.toLocaleString()} {mat.unit} in buffer. 0 issue needed.
+                              Worker already holds {mat.heldPacks.toLocaleString()} {mat.unitDisplay} in buffer ({mat.heldPieces.toLocaleString()} pcs). 0 needed from factory stockroom.
                             </span>
-                          ) : mat.heldQty > 0 ? (
+                          ) : mat.heldPacks > 0 ? (
                             <span>
-                              Needs {mat.requiredQty.toLocaleString()} {mat.unit} — Holds {mat.heldQty.toLocaleString()} in buffer = Issue remaining <strong style={{ color: "#34d399" }}>{mat.netToIssue.toLocaleString()} {mat.unit}</strong>
+                              Needs {mat.requiredPacks.toLocaleString()} {mat.unitDisplay} ({mat.totalPieces.toLocaleString()} pcs) — Worker holds {mat.heldPacks.toLocaleString()} {mat.unitDisplay} in buffer = Issue remaining <strong style={{ color: "#34d399" }}>{mat.netPacksToIssue.toLocaleString()} {mat.unitDisplay} ({mat.netPiecesToIssue.toLocaleString()} pcs)</strong>
                             </span>
                           ) : (
                             <span>
-                              Needs full batch of {mat.requiredQty.toLocaleString()} {mat.unit} (fresh stock issue)
+                              Needs full batch of {mat.requiredPacks.toLocaleString()} {mat.unitDisplay} ({mat.totalPieces.toLocaleString()} pcs fresh stock issue)
                             </span>
                           )}
                         </div>
@@ -2637,11 +3046,16 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
                         }}
                       >
                         <div style={{ fontSize: "8.5px", fontWeight: 800, textTransform: "uppercase", color: isFullyCovered ? "#34d399" : "#86efac" }}>
-                          {isFullyCovered ? "BUFFER COVERS" : "GIVE WORKER"}
+                          {isFullyCovered ? "BUFFER COVERS ✅" : "GIVE WORKER"}
                         </div>
                         <div style={{ fontSize: "15px", fontWeight: 900, fontFamily: "var(--font-mono)", color: isFullyCovered ? "#34d399" : "#4ade80" }}>
-                          {mat.netToIssue.toLocaleString()} <span style={{ fontSize: "10.5px", fontWeight: 600 }}>{mat.unit}</span>
+                          {isFullyCovered ? "0" : mat.netPacksToIssue.toLocaleString()} <span style={{ fontSize: "10.5px", fontWeight: 600 }}>{mat.unitDisplay}</span>
                         </div>
+                        {!isFullyCovered && mat.packSize > 1 && (
+                          <div style={{ fontSize: "10px", color: "#86efac", fontFamily: "var(--font-mono)" }}>
+                            ({mat.netPiecesToIssue.toLocaleString()} pcs)
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
@@ -2688,20 +3102,20 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
                         key={hIdx}
                         style={{
                           backgroundColor: "rgba(10, 14, 23, 0.8)",
-                          border: "1px solid rgba(255, 255, 255, 0.06)",
+                          border: isUsedInOrder ? "1px solid rgba(16, 185, 129, 0.35)" : "1px solid rgba(255, 255, 255, 0.06)",
                           borderRadius: "5px",
-                          padding: "8px 12px",
+                          padding: "9px 13px",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "space-between",
                         }}
                       >
                         <div>
-                          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                             <span style={{ fontSize: "12.5px", fontWeight: 700, color: "#f1f5f9" }}>{h.item}</span>
                             {isUsedInOrder && (
-                              <span style={{ fontSize: "9px", fontWeight: 700, padding: "1px 5px", borderRadius: "2px", backgroundColor: "rgba(16, 185, 129, 0.2)", color: "#34d399" }}>
-                                USED IN THIS ORDER
+                              <span style={{ fontSize: "9px", fontWeight: 800, padding: "1px 6px", borderRadius: "2px", backgroundColor: "rgba(16, 185, 129, 0.2)", color: "#34d399", border: "1px solid rgba(16, 185, 129, 0.4)" }}>
+                                CHECKED & DEDUCTED ✅
                               </span>
                             )}
                           </div>
@@ -2712,10 +3126,10 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
 
                         <div style={{ textAlign: "right" }}>
                           <div style={{ fontSize: "14px", fontWeight: 800, color: "#fb923c", fontFamily: "var(--font-mono)" }}>
-                            {h.qtyOnHand.toLocaleString()} <span style={{ fontSize: "10px", color: "var(--text-muted)" }}>{h.unit}</span>
+                            {h.qtyOnHand.toLocaleString()} <span style={{ fontSize: "11px", color: "#fdba74" }}>{h.unit}</span>
                           </div>
                           <div style={{ fontSize: "8.5px", color: "var(--text-muted)", textTransform: "uppercase" }}>
-                            ON HAND
+                            BUFFER ON HAND
                           </div>
                         </div>
                       </div>
