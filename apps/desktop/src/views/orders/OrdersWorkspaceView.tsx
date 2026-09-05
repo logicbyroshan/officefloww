@@ -29,9 +29,6 @@ export const DEFAULT_CLIENTS = [
 export const STANDARD_ORDER_ITEMS = [
   "Lanyard",
   "Card",
-  "Badge",
-  "Clear Sleeves",
-  "Other",
 ] as const;
 
 export type StandardItem = (typeof STANDARD_ORDER_ITEMS)[number];
@@ -244,12 +241,12 @@ export const INITIAL_ORDERS: OrderRecord[] = [
   {
     internalId: "ord-5",
     client: "Govt Engineering College Bhopal",
-    product: "PVC Round Badges (58mm) — Metal pin back & high-gloss film",
-    itemOrdered: "Badge",
-    itemsOrdered: ["Badge"],
+    product: "PVC Identity Cards (58mm) — Metal clip & high-gloss film",
+    itemOrdered: "Card",
+    itemsOrdered: ["Card"],
     qty: 800,
     assignedTo: [
-      { name: "Suresh Badge Assembly Workshop", role: "Pin & Film Badge Labour", type: "LABOUR", contractorId: "lb-2" },
+      { name: "Deepak Card Lamination Unit", role: "Card Lamination & Foil", type: "LABOUR", contractorId: "lb-3" },
     ],
     orderDate: "25 Aug 2026",
     deliveryDate: "03 Sep 2026",
@@ -296,12 +293,12 @@ export const INITIAL_ORDERS: OrderRecord[] = [
   {
     internalId: "ord-9",
     client: "Smart City Council",
-    product: "Event Delegate Badges — Magnetic clip back & rush conference foil",
-    itemOrdered: "Badge",
-    itemsOrdered: ["Badge"],
+    product: "Event Delegate Smart Cards — Magnetic clip back & rush conference foil",
+    itemOrdered: "Card",
+    itemsOrdered: ["Card"],
     qty: 450,
     assignedTo: [
-      { name: "Suresh Badge Assembly Workshop", role: "Pin & Film Badge Labour", type: "LABOUR", contractorId: "lb-2" },
+      { name: "Deepak Card Lamination Unit", role: "Card Lamination & Foil", type: "LABOUR", contractorId: "lb-3" },
     ],
     orderDate: "02 Sep 2026",
     deliveryDate: "06 Sep 2026",
@@ -309,12 +306,12 @@ export const INITIAL_ORDERS: OrderRecord[] = [
   {
     internalId: "ord-10",
     client: "Indraprastha School",
-    product: "Heavy Duty Clear ID Sleeves — Transparent vinyl pouch with dog clip",
-    itemOrdered: "Clear Sleeves",
-    itemsOrdered: ["Clear Sleeves"],
+    product: "Heavy Duty School ID Lanyards — Transparent vinyl pouch with dog clip",
+    itemOrdered: "Lanyard",
+    itemsOrdered: ["Lanyard"],
     qty: 1000,
     assignedTo: [
-      { name: "Amit ID Finishing & Sleeves Unit", role: "Transparent Vinyl Sleeves", type: "LABOUR", contractorId: "lb-5" },
+      { name: "Ramesh Lanyard Stitching Unit", role: "Lanyard Stitching Labour", type: "LABOUR", contractorId: "lb-1" },
     ],
     orderDate: "20 Aug 2026",
     deliveryDate: "01 Sep 2026",
@@ -384,19 +381,9 @@ export interface OrdersWorkspaceViewProps {
 // ─── Helper Badge for Single Product (Things Ordered) ─────────────────────────
 export const ItemBadge: React.FC<{ name: string }> = ({ name }) => {
   const isLanyard = name.toLowerCase().includes("lanyard");
-  const isCard = name.toLowerCase().includes("card");
-  const isBadge = name.toLowerCase().includes("badge");
-  const isSleeve = name.toLowerCase().includes("sleeve");
-
   const colors = isLanyard
     ? { bg: "rgba(168, 85, 247, 0.18)", text: "#c084fc", border: "rgba(168, 85, 247, 0.4)" }
-    : isCard
-    ? { bg: "rgba(56, 189, 248, 0.18)", text: "#38bdf8", border: "rgba(56, 189, 248, 0.4)" }
-    : isBadge
-    ? { bg: "rgba(244, 114, 182, 0.18)", text: "#f472b6", border: "rgba(244, 114, 182, 0.4)" }
-    : isSleeve
-    ? { bg: "rgba(251, 191, 36, 0.18)", text: "#fbbf24", border: "rgba(251, 191, 36, 0.4)" }
-    : { bg: "rgba(148, 163, 184, 0.18)", text: "#cbd5e1", border: "rgba(148, 163, 184, 0.4)" };
+    : { bg: "rgba(56, 189, 248, 0.18)", text: "#38bdf8", border: "rgba(56, 189, 248, 0.4)" };
 
   return (
     <span
@@ -570,7 +557,7 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const filterOptions = ["ALL", "Lanyard", "Card", "Badge", "Clear Sleeves", "Other"];
+  const filterOptions = ["ALL", "Lanyard", "Card"];
 
   const filteredOrders = useMemo(() => {
     let list = orders.filter((o) => {
@@ -598,11 +585,7 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
       // 3. Category pill filter
       let matchFilter = true;
       if (filterItem !== "ALL") {
-        if (filterItem === "Other") {
-          matchFilter = !["lanyard", "card", "badge", "clear sleeves"].includes(currentItem.toLowerCase());
-        } else {
-          matchFilter = currentItem.toLowerCase() === filterItem.toLowerCase();
-        }
+        matchFilter = currentItem.toLowerCase() === filterItem.toLowerCase();
       }
 
       return matchSearch && matchFilter;
@@ -636,9 +619,7 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
       return;
     }
 
-    const finalItem = (
-      newItemOrdered === "Other" ? (customItemText.trim() || "Other") : newItemOrdered
-    ).trim();
+    const finalItem = newItemOrdered === "Card" ? "Card" : "Lanyard";
 
     const finalDescription = newDescription.trim() || `${finalItem} Custom Production Run`;
 
@@ -661,7 +642,6 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
     setNewDescription("");
     setNewQty("");
     setNewItemOrdered("Lanyard");
-    setCustomItemText("");
     setIsClientDropdownOpen(false);
     success("Order Created", `Added order for ${createdOrder.client}. Click 'Assign' to delegate.`);
   };
@@ -678,8 +658,7 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
           return { ...o, qty: parseInt(editValue, 10) || 0 };
         }
         if (field === "itemOrdered") {
-          const finalItem =
-            editItem === "Other" ? (editCustomItem.trim() || "Other") : editItem;
+          const finalItem = editItem === "Card" ? "Card" : "Lanyard";
           return { ...o, itemOrdered: finalItem, itemsOrdered: [finalItem] };
         }
         return { ...o, [field]: editValue };
@@ -700,14 +679,7 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
       setIsEditClientDropdownOpen(true);
     } else if (field === "itemOrdered") {
       const current = order.itemOrdered || order.itemsOrdered?.[0] || "Lanyard";
-      const isStandard = ["Lanyard", "Card", "Badge", "Clear Sleeves"].includes(current);
-      if (isStandard) {
-        setEditItem(current);
-        setEditCustomItem("");
-      } else {
-        setEditItem("Other");
-        setEditCustomItem(current);
-      }
+      setEditItem(current === "Card" ? "Card" : "Lanyard");
     }
   };
 
@@ -1047,16 +1019,7 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
                   backgroundColor: "rgba(9, 12, 19, 0.85)",
                   border: "1px solid rgba(255, 255, 255, 0.16)",
                   borderRadius: "var(--radius-sm, 4px)",
-                  color:
-                    newItemOrdered === "Lanyard"
-                      ? "#c084fc"
-                      : newItemOrdered === "Card"
-                      ? "#38bdf8"
-                      : newItemOrdered === "Badge"
-                      ? "#f472b6"
-                      : newItemOrdered === "Clear Sleeves"
-                      ? "#fbbf24"
-                      : "#fff",
+                  color: newItemOrdered === "Lanyard" ? "#c084fc" : "#38bdf8",
                   fontSize: "12.5px",
                   fontWeight: 700,
                   outline: "none",
@@ -1066,33 +1029,7 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
               >
                 <option value="Lanyard" style={{ backgroundColor: "#0e131f", color: "#c084fc" }}>Lanyard</option>
                 <option value="Card" style={{ backgroundColor: "#0e131f", color: "#38bdf8" }}>Card</option>
-                <option value="Badge" style={{ backgroundColor: "#0e131f", color: "#f472b6" }}>Badge</option>
-                <option value="Clear Sleeves" style={{ backgroundColor: "#0e131f", color: "#fbbf24" }}>Clear Sleeves</option>
-                <option value="Other" style={{ backgroundColor: "#0e131f", color: "#e2e8f0" }}>Other (Custom)</option>
               </select>
-
-              {newItemOrdered === "Other" && (
-                <input
-                  type="text"
-                  placeholder="Specify custom product..."
-                  value={customItemText}
-                  onChange={(e) => setCustomItemText(e.target.value)}
-                  autoFocus
-                  style={{
-                    marginTop: "2px",
-                    width: "100%",
-                    height: "30px",
-                    padding: "0 8px",
-                    backgroundColor: "rgba(0, 0, 0, 0.6)",
-                    border: "1px solid var(--accent-border)",
-                    borderRadius: "2px",
-                    color: "#fff",
-                    fontSize: "11.5px",
-                    outline: "none",
-                    boxSizing: "border-box",
-                  }}
-                />
-              )}
             </div>
 
             {/* 3. Description (Single unified text field) */}
@@ -1498,15 +1435,21 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
                           <div style={{ display: "flex", flexDirection: "column", gap: "4px" }} onClick={(e) => e.stopPropagation()}>
                             <select
                               value={editItem}
-                              onChange={(e) => setEditItem(e.target.value)}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setEditItem(val);
+                                handleSaveDirectField(order.internalId, "itemOrdered", val);
+                              }}
+                              onBlur={handleSaveEdit}
+                              autoFocus
                               style={{
                                 width: "100%",
                                 height: "32px",
-                                padding: "0 6px",
+                                padding: "0 30px 0 8px",
                                 backgroundColor: "rgba(0,0,0,0.9)",
                                 border: "1px solid var(--accent-border)",
                                 borderRadius: "3px",
-                                color: "#fff",
+                                color: editItem === "Lanyard" ? "#c084fc" : "#38bdf8",
                                 fontSize: "12px",
                                 outline: "none",
                                 cursor: "pointer",
@@ -1514,34 +1457,7 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
                             >
                               <option value="Lanyard" style={{ backgroundColor: "#0e131f", color: "#c084fc" }}>Lanyard</option>
                               <option value="Card" style={{ backgroundColor: "#0e131f", color: "#38bdf8" }}>Card</option>
-                              <option value="Badge" style={{ backgroundColor: "#0e131f", color: "#f472b6" }}>Badge</option>
-                              <option value="Clear Sleeves" style={{ backgroundColor: "#0e131f", color: "#fbbf24" }}>Clear Sleeves</option>
-                              <option value="Other" style={{ backgroundColor: "#0e131f", color: "#e2e8f0" }}>Other...</option>
                             </select>
-
-                            {editItem === "Other" && (
-                              <input
-                                type="text"
-                                placeholder="Custom product..."
-                                value={editCustomItem}
-                                onChange={(e) => setEditCustomItem(e.target.value)}
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter") handleSaveEdit();
-                                  if (e.key === "Escape") setEditingCell(null);
-                                }}
-                                style={{
-                                  width: "100%",
-                                  height: "28px",
-                                  padding: "0 6px",
-                                  backgroundColor: "rgba(0,0,0,0.8)",
-                                  border: "1px solid var(--accent-border)",
-                                  borderRadius: "2px",
-                                  color: "#fff",
-                                  fontSize: "11px",
-                                  outline: "none",
-                                }}
-                              />
-                            )}
 
                             <div style={{ display: "flex", justifyContent: "flex-end", gap: "4px", marginTop: "2px" }}>
                               <button
