@@ -99,7 +99,7 @@ export const LabourDetailProfileView: React.FC<LabourDetailProfileViewProps> = (
   >([
     {
       date: "01 Sep 2026",
-      summary: "Dispensed 1,500 Dog Hooks & 8 rolls 16mm Ribbon for Northwind Coffee",
+      summary: "Dispensed 1,500 Dog Hooks & 8 rolls 16mm Lanyard for Northwind Coffee",
       itemsCount: 2,
     },
   ]);
