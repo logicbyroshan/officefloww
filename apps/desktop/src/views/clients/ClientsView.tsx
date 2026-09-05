@@ -4,10 +4,13 @@ import { Button } from "../../design-system/components/Button";
 import { Icon } from "../../design-system/components/Icon";
 import { PriorityBadge, OrderStatusBadge } from "../../design-system/components/Badge";
 import { LoadingState, ErrorState } from "../../design-system/components/FeedbackStates";
-import { Modal } from "../../design-system/components/Modal";
+import { Modal, Drawer } from "../../design-system/components/Modal";
 import { Input } from "../../design-system/components/Input";
+import { Tabs } from "../../design-system/components/Tabs";
 import { useToast } from "../../design-system/components/Toast";
+import { getInitials, getAvatarColor } from "../../design-system/components/UserAvatar";
 import { NewClientModal } from "./NewClientModal";
+import { OrdersWorkspaceView } from "../orders/OrdersWorkspaceView";
 
 export interface ClientsViewProps {
   clients: Client[];
@@ -49,27 +52,6 @@ interface AssignedCrewMember {
   role: string;
   color: string;
 }
-
-const getInitials = (name: string) => {
-  const parts = name.trim().split(" ");
-  if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-  return name.slice(0, 2).toUpperCase();
-};
-
-const getAvatarColor = (name: string) => {
-  const colors = [
-    "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)",
-    "linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)",
-    "linear-gradient(135deg, #ec4899 0%, #be185d 100%)",
-    "linear-gradient(135deg, #10b981 0%, #047857 100%)",
-    "linear-gradient(135deg, #f59e0b 0%, #b45309 100%)",
-    "linear-gradient(135deg, #06b6d4 0%, #0e7490 100%)",
-    "linear-gradient(135deg, #f43f5e 0%, #be123c 100%)",
-  ];
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  return colors[Math.abs(hash) % colors.length];
-};
 
 // Production Assigned Crew by Client
 const CLIENT_CREW_POOL: AssignedCrewMember[][] = [
@@ -215,20 +197,23 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
     }
   }, [initialClientId]);
 
-  // Active Tab inside Client Management View (Tabs at top header: Overview, Projects, Invoices, Logs)
-  // Contacts is moved inside Overview as requested!
-  const [clientTab, setClientTab] = useState<"overview" | "projects" | "invoices" | "logs">("overview");
+  // Active Tab inside Client Management View (Tabs at top header: Overview, Orders, Logs)
+  const [clientTab, setClientTab] = useState<"overview" | "orders" | "logs">("overview");
 
   // Directory search filter
   const [search, setSearch] = useState("");
   const [showNewClientModal, setShowNewClientModal] = useState(false);
 
-  // Interactive Modals
+  // Interactive Drawers
   const [showMessageModal, setShowMessageModal] = useState(false);
   const [messageSubject, setMessageSubject] = useState("");
   const [messageBody, setMessageBody] = useState("");
 
-  const [showNewProjectModal, setShowNewProjectModal] = useState(false);
+  const [showNewOrderModal, setShowNewOrderModal] = useState(false);
+  const [newOrderProduct, setNewOrderProduct] = useState("Custom Printed Lanyards (15mm)");
+  const [newOrderQty, setNewOrderQty] = useState("1500");
+  const [newOrderValue, setNewOrderValue] = useState("152000");
+  const [newOrderDelivery, setNewOrderDelivery] = useState("2026-09-15");
 
   const [showNewInvoiceModal, setShowNewInvoiceModal] = useState(false);
   const [newInvoiceAmount, setNewInvoiceAmount] = useState("182500");
@@ -272,6 +257,76 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
     if (!selectedClient) return [];
     return orders.filter((o) => o.client_id === selectedClient.id);
   }, [orders, selectedClient]);
+
+  // Synchronized Client Orders (synced with Orders workspace registry + backend orders)
+  const syncedOrders = useMemo(() => {
+    if (!selectedClient) return [];
+    const clientNameLower = selectedClient.organization_name.toLowerCase();
+
+    // 1. Backend orders matching this client
+    const backendMatches = orders
+      .filter((o) => {
+        if (o.client_id === selectedClient.id) return true;
+        const c = clients.find((cl) => cl.id === o.client_id);
+        return (
+          c?.organization_name?.toLowerCase().includes(clientNameLower) ||
+          clientNameLower.includes(c?.organization_name?.toLowerCase() || "")
+        );
+      })
+      .map((ord) => ({
+        id: ord.id,
+        orderNumber: ord.order_number,
+        product: ord.notes || "High-Volume Production Run",
+        itemsOrdered: ["Lanyard", "Card"],
+        quantity: 1000,
+        deliveryDate: ord.promised_delivery_date
+          ? new Date(ord.promised_delivery_date).toLocaleDateString("en-IN")
+          : "Flexible",
+        totalAmount: Number(ord.total_amount || 0),
+        priority: ord.priority,
+        status: ord.status,
+      }));
+
+    // 2. Orders workspace registry
+    const registry = [
+      { id: "ord-1", client: "St. Xavier's High School", orderNumber: "ORD-2026-0001", product: "Multicolor Lanyards (15mm)", itemsOrdered: ["Lanyard", "Card"], quantity: 2000, deliveryDate: "05 Sep 2026", totalAmount: 182500, priority: OrderPriority.HIGH, status: OrderStatus.IN_PRODUCTION },
+      { id: "ord-2", client: "BHEL Township Admin", orderNumber: "ORD-2026-0002", product: "Single Color Lanyards (10mm)", itemsOrdered: ["Lanyard", "Card"], quantity: 500, deliveryDate: "07 Sep 2026", totalAmount: 49560, priority: OrderPriority.NORMAL, status: OrderStatus.IN_PRODUCTION },
+      { id: "ord-3", client: "Northwind Coffee", orderNumber: "ORD-2026-0003", product: "Custom Printed Lanyards", itemsOrdered: ["Lanyard"], quantity: 1500, deliveryDate: "02 Sep 2026", totalAmount: 152000, priority: OrderPriority.HIGH, status: OrderStatus.IN_PRODUCTION },
+      { id: "ord-4", client: "AIIMS Bhopal", orderNumber: "ORD-2026-0004", product: "Medical Staff ID Cards", itemsOrdered: ["Card"], quantity: 350, deliveryDate: "04 Sep 2026", totalAmount: 52500, priority: OrderPriority.URGENT, status: OrderStatus.PENDING_PREPRESS },
+      { id: "ord-5", client: "Govt Engineering College Bhopal", orderNumber: "ORD-2026-0005", product: "Lanyards + PVC Badges", itemsOrdered: ["Lanyard", "Badge"], quantity: 800, deliveryDate: "03 Sep 2026", totalAmount: 96000, priority: OrderPriority.NORMAL, status: OrderStatus.IN_PRODUCTION },
+      { id: "ord-6", client: "Reliance Retail - Bhopal", orderNumber: "ORD-2026-0006", product: "Staff Access Cards", itemsOrdered: ["Card"], quantity: 200, deliveryDate: "10 Sep 2026", totalAmount: 38000, priority: OrderPriority.NORMAL, status: OrderStatus.DRAFT },
+      { id: "ord-7", client: "NIT Bhopal", orderNumber: "ORD-2026-0007", product: "Faculty + Student Lanyards", itemsOrdered: ["Lanyard"], quantity: 1200, deliveryDate: "08 Sep 2026", totalAmount: 144000, priority: OrderPriority.HIGH, status: OrderStatus.IN_PRODUCTION },
+      { id: "ord-8", client: "Maulana Azad Hospital", orderNumber: "ORD-2026-0008", product: "Staff ID Lanyards", itemsOrdered: ["Lanyard", "Card"], quantity: 600, deliveryDate: "12 Sep 2026", totalAmount: 78000, priority: OrderPriority.NORMAL, status: OrderStatus.IN_PRODUCTION },
+      { id: "ord-9", client: "Smart City Council", orderNumber: "ORD-2026-0009", product: "Event Delegate Badges", itemsOrdered: ["Badge"], quantity: 450, deliveryDate: "06 Sep 2026", totalAmount: 63000, priority: OrderPriority.URGENT, status: OrderStatus.IN_PRODUCTION },
+      { id: "ord-10", client: "Indraprastha School", orderNumber: "ORD-2026-0010", product: "Lanyards + Clear Sleeves", itemsOrdered: ["Lanyard", "Card"], quantity: 1000, deliveryDate: "01 Sep 2026", totalAmount: 115000, priority: OrderPriority.NORMAL, status: OrderStatus.COMPLETED },
+      { id: "ord-11", client: "MP Secretariat", orderNumber: "ORD-2026-0011", product: "Embossed Security ID Cards", itemsOrdered: ["Card", "Badge"], quantity: 150, deliveryDate: "09 Sep 2026", totalAmount: 42000, priority: OrderPriority.HIGH, status: OrderStatus.IN_PRODUCTION },
+      { id: "ord-12", client: "Bansal Group Schools", orderNumber: "ORD-2026-0012", product: "Lanyards (12mm Blue/White)", itemsOrdered: ["Lanyard"], quantity: 3000, deliveryDate: "06 Sep 2026", totalAmount: 285000, priority: OrderPriority.HIGH, status: OrderStatus.IN_PRODUCTION },
+    ];
+
+    const matchedRegistry = registry.filter(
+      (r) =>
+        r.client.toLowerCase().includes(clientNameLower) ||
+        clientNameLower.includes(r.client.toLowerCase())
+    );
+
+    if (backendMatches.length > 0) return backendMatches;
+    if (matchedRegistry.length > 0) return matchedRegistry;
+
+    return [
+      {
+        id: `ord-mock-${selectedClient.id}`,
+        orderNumber: "ORD-2026-0001",
+        product: "Campus Identification Smartcards & Lanyards",
+        itemsOrdered: ["Lanyard", "Card"],
+        quantity: 2500,
+        deliveryDate: "15 Sep 2026",
+        totalAmount: 182500,
+        priority: OrderPriority.HIGH,
+        status: OrderStatus.IN_PRODUCTION,
+      },
+    ];
+  }, [selectedClient, orders, clients]);
+
 
   // Client contacts
   const clientContacts = useMemo(() => {
@@ -535,100 +590,31 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
           }}
         >
           {/* Left: Back button & Tabs Bar */}
-          <div style={{ display: "flex", alignItems: "center", gap: "24px" }}>
-            <button
-              type="button"
+          <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
+            <Button
+              variant="secondary"
+              size="sm"
+              icon="chevron-left"
               onClick={() => {
                 setSelectedClientId(null);
                 onSelectClient?.("");
               }}
-              style={{
-                background: "rgba(255, 255, 255, 0.05)",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
-                borderRadius: "20px",
-                color: "#e2e8f0",
-                fontSize: "12.5px",
-                fontWeight: 600,
-                cursor: "pointer",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
-                padding: "6px 14px",
-                transition: "all 0.15s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.1)";
-                e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.2)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
-                e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
-              }}
             >
-              <span style={{ fontSize: "14px" }}>‹</span>
-              <span>All Clients</span>
-            </button>
+              All Clients
+            </Button>
 
-            {/* TABS IN HEADER (Overview, Projects, Invoices, Logs) - Contacts moved inside Overview */}
-            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              {[
-                { id: "overview" as const, label: "Overview", count: undefined },
-                { id: "projects" as const, label: "Projects", count: Math.max(clientOrders.length, 2) },
-                { id: "invoices" as const, label: "Invoices", count: clientInvoices.length },
-                { id: "logs" as const, label: "Logs", count: clientLogs.length },
-              ].map((t) => {
-                const isActive = clientTab === t.id;
-                return (
-                  <button
-                    key={t.id}
-                    type="button"
-                    onClick={() => setClientTab(t.id)}
-                    style={{
-                      border: "none",
-                      backgroundColor: isActive ? "rgba(255, 138, 115, 0.15)" : "transparent",
-                      borderRadius: "6px",
-                      padding: "8px 14px",
-                      fontSize: "13px",
-                      fontWeight: isActive ? 700 : 500,
-                      color: isActive ? "var(--accent-text)" : "var(--text-secondary)",
-                      cursor: "pointer",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "6px",
-                      transition: "all 0.15s ease",
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isActive) {
-                        e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
-                        e.currentTarget.style.color = "#ffffff";
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isActive) {
-                        e.currentTarget.style.backgroundColor = "transparent";
-                        e.currentTarget.style.color = "var(--text-secondary)";
-                      }
-                    }}
-                  >
-                    <span>{t.label}</span>
-                    {t.count !== undefined && (
-                      <span
-                        style={{
-                          fontSize: "11px",
-                          fontWeight: 700,
-                          padding: "1px 6px",
-                          borderRadius: "10px",
-                          backgroundColor: isActive ? "rgba(255, 138, 115, 0.25)" : "rgba(255, 255, 255, 0.06)",
-                          color: isActive ? "var(--accent-text)" : "var(--text-muted)",
-                        }}
-                      >
-                        {t.count}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+            {/* TABS IN HEADER (Overview, Orders, Logs) - Invoices merged with Overview */}
+            <Tabs
+              variant="pill"
+              size="md"
+              activeTab={clientTab}
+              onChange={(id) => setClientTab(id as any)}
+              tabs={[
+                { id: "overview", label: "Overview" },
+                { id: "orders", label: "Orders", badge: syncedOrders.length },
+                { id: "logs", label: "Logs", badge: clientLogs.length },
+              ]}
+            />
           </div>
 
           {/* Right: Switcher & Quick Actions */}
@@ -640,9 +626,9 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                 onSelectClient?.(e.target.value);
               }}
               style={{
-                height: "34px",
+                height: "var(--input-height, 36px)",
                 padding: "0 10px",
-                borderRadius: "4px",
+                borderRadius: "var(--radius-sm, 4px)",
                 backgroundColor: "rgba(255, 255, 255, 0.06)",
                 border: "1px solid rgba(255, 255, 255, 0.12)",
                 color: "#fff",
@@ -659,76 +645,35 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
               ))}
             </select>
 
-            <button
-              type="button"
+            <Button
+              variant="secondary"
+              size="sm"
+              icon="message-square"
               onClick={() => setShowMessageModal(true)}
-              style={{
-                height: "34px",
-                padding: "0 14px",
-                borderRadius: "4px",
-                backgroundColor: "rgba(255, 255, 255, 0.05)",
-                border: "1px solid rgba(255, 255, 255, 0.14)",
-                color: "#ffffff",
-                fontSize: "12.5px",
-                fontWeight: 600,
-                cursor: "pointer",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
-              }}
             >
-              <Icon name="message-square" size={13} color="var(--text-muted)" />
-              <span>Message</span>
-            </button>
+              Message
+            </Button>
 
-            <button
-              type="button"
+            <Button
+              variant="secondary"
+              size="sm"
+              icon="plus"
               onClick={() => {
                 if (onNewOrder) onNewOrder();
-                else setShowNewProjectModal(true);
-              }}
-              style={{
-                height: "34px",
-                padding: "0 14px",
-                borderRadius: "4px",
-                backgroundColor: "rgba(255, 255, 255, 0.05)",
-                border: "1px solid rgba(255, 255, 255, 0.14)",
-                color: "#ffffff",
-                fontSize: "12.5px",
-                fontWeight: 600,
-                cursor: "pointer",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
+                else setShowNewOrderModal(true);
               }}
             >
-              <Icon name="plus" size={13} color="var(--text-muted)" />
-              <span>New Project</span>
-            </button>
+              New Order
+            </Button>
 
-            <button
-              type="button"
+            <Button
+              variant="primary"
+              size="sm"
+              icon="billing"
               onClick={() => setShowNewInvoiceModal(true)}
-              style={{
-                height: "34px",
-                padding: "0 16px",
-                borderRadius: "4px",
-                backgroundColor: "#2563eb",
-                backgroundImage: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
-                border: "1px solid rgba(59, 130, 246, 0.4)",
-                color: "#ffffff",
-                fontSize: "12.5px",
-                fontWeight: 700,
-                cursor: "pointer",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
-                boxShadow: "0 2px 8px rgba(37, 99, 235, 0.35)",
-              }}
             >
-              <Icon name="file-text" size={13} color="#fff" />
-              <span>New Invoice</span>
-            </button>
+              New Invoice
+            </Button>
           </div>
         </div>
 
@@ -738,271 +683,120 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
             padding: "20px 28px",
             display: "flex",
             flexDirection: "column",
-            gap: "18px",
+            gap: "20px",
             width: "100%",
             boxSizing: "border-box",
           }}
         >
-          {/* Client Identity Banner */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: "20px",
-              flexWrap: "wrap",
-              backgroundColor: "rgba(18, 23, 35, 0.7)",
-              backdropFilter: "blur(20px)",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
-              borderRadius: "8px",
-              padding: "18px 24px",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-              <div
-                style={{
-                  width: "56px",
-                  height: "56px",
-                  borderRadius: "12px",
-                  background: isNorthwind
-                    ? "linear-gradient(135deg, #d97706 0%, #78350f 100%)"
-                    : "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)",
-                  border: "2px solid rgba(255, 255, 255, 0.18)",
-                  boxShadow: "0 4px 14px rgba(0, 0, 0, 0.45)",
-                  flexShrink: 0,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "22px",
-                  fontWeight: 800,
-                  color: "#ffffff",
-                }}
-              >
-                {isNorthwind ? "🏢" : selectedClient.organization_name.slice(0, 2).toUpperCase()}
-              </div>
-
-              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                  <h1 style={{ margin: 0, fontSize: "22px", fontWeight: 800, color: "#ffffff", letterSpacing: "-0.4px" }}>
-                    {selectedClient.organization_name}
-                  </h1>
-                  <span
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "5px",
-                      padding: "2px 10px",
-                      borderRadius: "14px",
-                      backgroundColor: "rgba(16, 185, 129, 0.14)",
-                      border: "1px solid rgba(16, 185, 129, 0.35)",
-                      color: "#34d399",
-                      fontSize: "11px",
-                      fontWeight: 700,
-                    }}
-                  >
-                    <span style={{ width: "5px", height: "5px", borderRadius: "50%", backgroundColor: "#10b981", boxShadow: "0 0 6px #10b981" }} />
-                    Active Account
-                  </span>
-                </div>
-
-                <span style={{ fontSize: "12.5px", color: "var(--text-secondary)" }}>
-                  {clientMeta}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Full-width KPI Metrics Strip */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(4, 1fr)",
-              backgroundColor: "rgba(18, 23, 35, 0.75)",
-              backdropFilter: "blur(18px)",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
-              borderRadius: "8px",
-              padding: "18px 22px",
-              gap: "20px",
-              width: "100%",
-              boxSizing: "border-box",
-            }}
-          >
-            {/* Tile 1: Lifetime Revenue */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "4px", borderRight: "1px solid rgba(255, 255, 255, 0.07)", paddingRight: "14px" }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.6px" }}>
-                  Lifetime Revenue
-                </span>
-                <span style={{ fontSize: "10.5px", padding: "1px 6px", borderRadius: "10px", backgroundColor: "rgba(16, 185, 129, 0.12)", color: "#10b981", fontWeight: 700 }}>
-                  +18.4% YoY
-                </span>
-              </div>
-              <span style={{ fontFamily: "var(--font-mono)", fontSize: "24px", fontWeight: 800, color: "#ffffff", letterSpacing: "-0.5px" }}>
-                ₹{metrics.revenue.toLocaleString("en-IN")}
-              </span>
-              <span style={{ fontSize: "11px", color: "var(--text-secondary)" }}>
-                Total cumulative billed orders
-              </span>
-            </div>
-
-            {/* Tile 2: Outstanding */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "4px", borderRight: "1px solid rgba(255, 255, 255, 0.07)", paddingRight: "14px" }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.6px" }}>
-                  Outstanding Dues
-                </span>
-                <span style={{ fontSize: "10.5px", padding: "1px 6px", borderRadius: "10px", backgroundColor: "rgba(255, 138, 115, 0.12)", color: "#ff8a73", fontWeight: 700 }}>
-                  Due in 15d
-                </span>
-              </div>
-              <span style={{ fontFamily: "var(--font-mono)", fontSize: "24px", fontWeight: 800, color: "#ff8a73", letterSpacing: "-0.5px" }}>
-                ₹{metrics.outstanding.toLocaleString("en-IN")}
-              </span>
-              <span style={{ fontSize: "11px", color: "var(--text-secondary)" }}>
-                Active receivables ledger
-              </span>
-            </div>
-
-            {/* Tile 3: Avg Days to Pay */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "4px", borderRight: "1px solid rgba(255, 255, 255, 0.07)", paddingRight: "14px" }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.6px" }}>
-                  Avg Days to Pay
-                </span>
-                <span style={{ fontSize: "10.5px", padding: "1px 6px", borderRadius: "10px", backgroundColor: "rgba(56, 189, 248, 0.12)", color: "#38bdf8", fontWeight: 700 }}>
-                  ⚡ Prime Grade
-                </span>
-              </div>
-              <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
-                <span style={{ fontFamily: "var(--font-mono)", fontSize: "24px", fontWeight: 800, color: "#ffffff", letterSpacing: "-0.5px" }}>
-                  {metrics.avgDays}
-                </span>
-                <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>days</span>
-              </div>
-              <span style={{ fontSize: "11px", color: "var(--text-secondary)" }}>
-                Net 30 benchmark
-              </span>
-            </div>
-
-            {/* Tile 4: Active Projects */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.6px" }}>
-                  Active Production Jobs
-                </span>
-                <span style={{ fontSize: "10.5px", padding: "1px 6px", borderRadius: "10px", backgroundColor: "rgba(167, 139, 250, 0.12)", color: "#a78bfa", fontWeight: 700 }}>
-                  Floor Live
-                </span>
-              </div>
-              <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
-                <span style={{ fontFamily: "var(--font-mono)", fontSize: "24px", fontWeight: 800, color: "#ffffff", letterSpacing: "-0.5px" }}>
-                  {metrics.activeProjects}
-                </span>
-                <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>manufacturing runs</span>
-              </div>
-              <span style={{ fontSize: "11px", color: "var(--text-secondary)" }}>
-                In printing & encoding queues
-              </span>
-            </div>
-          </div>
-
-          {/* TAB CONTENTS */}
-          <div style={{ width: "100%", boxSizing: "border-box" }}>
-            
-            {/* 1. OVERVIEW TAB: (Includes Dossier, Credit Standing, AND Contacts Section!) */}
-            {clientTab === "overview" && (
-              <div style={{ display: "flex", flexDirection: "column", gap: "22px", width: "100%", boxSizing: "border-box" }}>
+          {/* 1. OVERVIEW TAB: 2-Column Layout (Left Workspace + Right Profile Card) */}
+          {clientTab === "overview" && (
+            <div
+              style={{
+                display: "flex",
+                gap: "24px",
+                width: "100%",
+                boxSizing: "border-box",
+                alignItems: "flex-start",
+              }}
+            >
+              {/* Left Side: KPIs + Contacts + Merged Invoices */}
+              <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "22px" }}>
                 
-                {/* Upper Dossier & Credit Grid */}
-                <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "20px", width: "100%", boxSizing: "border-box" }}>
-                  {/* Institutional Coordinates */}
-                  <div
-                    style={{
-                      backgroundColor: "rgba(18, 23, 35, 0.75)",
-                      border: "1px solid rgba(255, 255, 255, 0.08)",
-                      borderRadius: "8px",
-                      padding: "24px",
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "16px",
-                    }}
-                  >
-                    <h3 style={{ margin: 0, fontSize: "15px", fontWeight: 700, color: "#fff", display: "flex", alignItems: "center", gap: "8px" }}>
-                      <Icon name="briefcase" size={15} color="#60a5fa" />
-                      <span>Corporate Dossier & Commercial Terms</span>
-                    </h3>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "12px", fontSize: "13px" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid rgba(255, 255, 255, 0.05)", paddingBottom: "8px" }}>
-                        <span style={{ color: "var(--text-muted)" }}>Tax Identifier / GSTIN:</span>
-                        <strong style={{ fontFamily: "var(--font-mono)", color: "#fff" }}>{selectedClient.tax_identifier || "23AAAAA0000A1Z5"}</strong>
-                      </div>
-                      <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid rgba(255, 255, 255, 0.05)", paddingBottom: "8px" }}>
-                        <span style={{ color: "var(--text-muted)" }}>Agreed Payment Terms:</span>
-                        <strong style={{ color: "#34d399" }}>Net 30 Days (Direct NEFT/RTGS)</strong>
-                      </div>
-                      <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid rgba(255, 255, 255, 0.05)", paddingBottom: "8px" }}>
-                        <span style={{ color: "var(--text-muted)" }}>Registered Office Address:</span>
-                        <span style={{ color: "var(--text-secondary)", textAlign: "right", maxWidth: "340px" }}>
-                          {selectedClient.billing_address || "12 Industrial Corridor, Govindpura, Bhopal 462023"}
-                        </span>
-                      </div>
-                      <div style={{ display: "flex", justifyContent: "space-between" }}>
-                        <span style={{ color: "var(--text-muted)" }}>Central Dispatch Works:</span>
-                        <span style={{ color: "var(--text-secondary)", textAlign: "right", maxWidth: "340px" }}>
-                          {selectedClient.delivery_address || "AIDC Central Factory Hub, Sector 4, Mandideep"}
-                        </span>
-                      </div>
+                {/* Full-width KPI Metrics Strip (Only rendered on Overview tab!) */}
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(4, 1fr)",
+                    backgroundColor: "rgba(18, 23, 35, 0.75)",
+                    backdropFilter: "blur(18px)",
+                    border: "1px solid rgba(255, 255, 255, 0.08)",
+                    borderRadius: "8px",
+                    padding: "18px 22px",
+                    gap: "20px",
+                    width: "100%",
+                    boxSizing: "border-box",
+                  }}
+                >
+                  {/* Tile 1: Lifetime Revenue */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "4px", borderRight: "1px solid rgba(255, 255, 255, 0.07)", paddingRight: "14px" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.6px" }}>
+                        Lifetime Revenue
+                      </span>
+                      <span style={{ fontSize: "10.5px", padding: "1px 6px", borderRadius: "10px", backgroundColor: "rgba(16, 185, 129, 0.12)", color: "#10b981", fontWeight: 700 }}>
+                        +18.4% YoY
+                      </span>
                     </div>
+                    <span style={{ fontFamily: "var(--font-mono)", fontSize: "24px", fontWeight: 800, color: "#ffffff", letterSpacing: "-0.5px" }}>
+                      ₹{metrics.revenue.toLocaleString("en-IN")}
+                    </span>
+                    <span style={{ fontSize: "11px", color: "var(--text-secondary)" }}>
+                      Total cumulative billed orders
+                    </span>
                   </div>
 
-                  {/* Credit Ledger Health */}
-                  <div
-                    style={{
-                      backgroundColor: "rgba(18, 23, 35, 0.75)",
-                      border: "1px solid rgba(255, 255, 255, 0.08)",
-                      borderRadius: "8px",
-                      padding: "24px",
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "16px",
-                    }}
-                  >
-                    <h3 style={{ margin: 0, fontSize: "15px", fontWeight: 700, color: "#fff", display: "flex", alignItems: "center", gap: "8px" }}>
-                      <Icon name="pie-chart" size={15} color="#34d399" />
-                      <span>Commercial Credit & Ledger Standing</span>
-                    </h3>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "12px", fontSize: "13px" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between" }}>
-                        <span style={{ color: "var(--text-muted)" }}>Account Standing:</span>
-                        <strong style={{ color: "#10b981" }}>A+ Prime Corporate (Punctual Payee)</strong>
-                      </div>
-                      <div style={{ display: "flex", justifyContent: "space-between" }}>
-                        <span style={{ color: "var(--text-muted)" }}>Credit Limit Authorized:</span>
-                        <strong style={{ fontFamily: "var(--font-mono)", color: "#fff" }}>₹10,00,000</strong>
-                      </div>
-                      <div style={{ display: "flex", justifyContent: "space-between" }}>
-                        <span style={{ color: "var(--text-muted)" }}>Active Credit Utilization:</span>
-                        <strong style={{ fontFamily: "var(--font-mono)", color: "#ff8a73" }}>₹{metrics.outstanding.toLocaleString("en-IN")} (42.5%)</strong>
-                      </div>
-
-                      {/* Progress bar */}
-                      <div style={{ width: "100%", height: "8px", backgroundColor: "rgba(255, 255, 255, 0.08)", borderRadius: "4px", overflow: "hidden", marginTop: "4px" }}>
-                        <div style={{ width: "42.5%", height: "100%", backgroundColor: "#34d399", borderRadius: "4px" }} />
-                      </div>
-
-                      <div style={{ marginTop: "8px", padding: "14px", backgroundColor: "rgba(255, 255, 255, 0.02)", borderRadius: "6px", border: "1px solid rgba(255, 255, 255, 0.06)" }}>
-                        <span style={{ fontSize: "11px", color: "var(--text-muted)", display: "block", fontWeight: 700, letterSpacing: "0.5px" }}>
-                          OFFICEFLOWW CREDIT ADVISORY
-                        </span>
-                        <span style={{ fontSize: "12px", color: "var(--text-secondary)", marginTop: "4px", display: "block", lineHeight: 1.4 }}>
-                          Client account has cleared 98% of all prior invoices within the Net 30 window. Approved for high-volume automated production dispatch.
-                        </span>
-                      </div>
+                  {/* Tile 2: Outstanding */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "4px", borderRight: "1px solid rgba(255, 255, 255, 0.07)", paddingRight: "14px" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.6px" }}>
+                        Outstanding Dues
+                      </span>
+                      <span style={{ fontSize: "10.5px", padding: "1px 6px", borderRadius: "10px", backgroundColor: "rgba(255, 138, 115, 0.12)", color: "#ff8a73", fontWeight: 700 }}>
+                        Due in 15d
+                      </span>
                     </div>
+                    <span style={{ fontFamily: "var(--font-mono)", fontSize: "24px", fontWeight: 800, color: "#ff8a73", letterSpacing: "-0.5px" }}>
+                      ₹{metrics.outstanding.toLocaleString("en-IN")}
+                    </span>
+                    <span style={{ fontSize: "11px", color: "var(--text-secondary)" }}>
+                      Active receivables ledger
+                    </span>
+                  </div>
+
+                  {/* Tile 3: Avg Days to Pay */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "4px", borderRight: "1px solid rgba(255, 255, 255, 0.07)", paddingRight: "14px" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.6px" }}>
+                        Avg Days to Pay
+                      </span>
+                      <span style={{ fontSize: "10.5px", padding: "1px 6px", borderRadius: "10px", backgroundColor: "rgba(56, 189, 248, 0.12)", color: "#38bdf8", fontWeight: 700 }}>
+                        ⚡ Prime Grade
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
+                      <span style={{ fontFamily: "var(--font-mono)", fontSize: "24px", fontWeight: 800, color: "#ffffff", letterSpacing: "-0.5px" }}>
+                        {metrics.avgDays}
+                      </span>
+                      <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>days</span>
+                    </div>
+                    <span style={{ fontSize: "11px", color: "var(--text-secondary)" }}>
+                      Net 30 benchmark
+                    </span>
+                  </div>
+
+                  {/* Tile 4: Active Projects */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.6px" }}>
+                        Active Production Jobs
+                      </span>
+                      <span style={{ fontSize: "10.5px", padding: "1px 6px", borderRadius: "10px", backgroundColor: "rgba(167, 139, 250, 0.12)", color: "#a78bfa", fontWeight: 700 }}>
+                        Floor Live
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
+                      <span style={{ fontFamily: "var(--font-mono)", fontSize: "24px", fontWeight: 800, color: "#ffffff", letterSpacing: "-0.5px" }}>
+                        {metrics.activeProjects}
+                      </span>
+                      <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>manufacturing runs</span>
+                    </div>
+                    <span style={{ fontSize: "11px", color: "var(--text-secondary)" }}>
+                      In printing & encoding queues
+                    </span>
                   </div>
                 </div>
 
-                {/* Lower Contacts Section (MOVED INSIDE OVERVIEW) */}
+                {/* Contacts Section */}
                 <div
                   style={{
                     backgroundColor: "rgba(18, 23, 35, 0.75)",
@@ -1020,7 +814,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                       <Icon name="users" size={16} color="var(--accent-text)" />
                       <h3 style={{ margin: 0, fontSize: "15px", fontWeight: 700, color: "#fff" }}>
-                        Key Stakeholders & Authorized Contacts ({clientContacts.length})
+                        Contacts ({clientContacts.length})
                       </h3>
                     </div>
                     <button
@@ -1039,10 +833,13 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                         display: "inline-flex",
                         alignItems: "center",
                         gap: "6px",
+                        transition: "all 0.15s ease",
                       }}
+                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.12)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.06)")}
                     >
                       <span>+</span>
-                      <span>Add Stakeholder</span>
+                      <span>Add Contact</span>
                     </button>
                   </div>
 
@@ -1081,7 +878,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                             </div>
                             <div>
                               <div style={{ fontSize: "14px", fontWeight: 700, color: "#fff" }}>{cnt.name}</div>
-                              <div style={{ fontSize: "11.5px", color: "var(--text-muted)" }}>{cnt.designation || "Stakeholder"}</div>
+                              <div style={{ fontSize: "11.5px", color: "var(--text-muted)" }}>{cnt.designation || "Contact Person"}</div>
                             </div>
                           </div>
 
@@ -1126,236 +923,388 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                   </div>
                 </div>
 
-              </div>
-            )}
+                {/* Merged Tax Invoices & Billing Section (Directly on Overview!) */}
+                <div
+                  style={{
+                    backgroundColor: "rgba(18, 23, 35, 0.75)",
+                    backdropFilter: "blur(18px)",
+                    border: "1px solid rgba(255, 255, 255, 0.08)",
+                    borderRadius: "8px",
+                    padding: "18px 22px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "16px",
+                    width: "100%",
+                    boxSizing: "border-box",
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <Icon name="file-text" size={16} color="var(--accent-text)" />
+                      <span style={{ fontSize: "14px", fontWeight: 700, color: "#fff" }}>
+                        Tax Invoices & Billing ({clientInvoices.length})
+                      </span>
+                    </div>
 
-            {/* 2. PROJECTS TAB (NO CRYPTIC CODES) */}
-            {clientTab === "projects" && (
-              <div style={{ display: "flex", flexDirection: "column", gap: "16px", width: "100%" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontSize: "13px", color: "var(--text-muted)" }}>
-                    Production Batches & Manufacturing Orders
+                    <button
+                      type="button"
+                      onClick={() => setShowNewInvoiceModal(true)}
+                      style={{
+                        height: "32px",
+                        padding: "0 14px",
+                        borderRadius: "4px",
+                        backgroundColor: "#2563eb",
+                        backgroundImage: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
+                        border: "1px solid rgba(59, 130, 246, 0.4)",
+                        color: "#fff",
+                        fontSize: "12px",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        boxShadow: "0 2px 8px rgba(37, 99, 235, 0.35)",
+                      }}
+                    >
+                      <span>+</span>
+                      <span>Draft Invoice</span>
+                    </button>
+                  </div>
+
+                  <div
+                    style={{
+                      border: "1px solid rgba(255, 255, 255, 0.07)",
+                      borderRadius: "6px",
+                      overflow: "hidden",
+                      backgroundColor: "rgba(12, 15, 23, 0.6)",
+                    }}
+                  >
+                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12.5px", textAlign: "left" }}>
+                      <thead>
+                        <tr style={{ backgroundColor: "rgba(255, 255, 255, 0.03)", borderBottom: "1px solid rgba(255, 255, 255, 0.08)", color: "var(--text-muted)", fontSize: "11px", textTransform: "uppercase" }}>
+                          <th style={{ padding: "12px 16px" }}>Tax Invoice #</th>
+                          <th style={{ padding: "12px 16px" }}>Date Issued</th>
+                          <th style={{ padding: "12px 16px" }}>Payment Due</th>
+                          <th style={{ padding: "12px 16px", textAlign: "right" }}>Total Amount</th>
+                          <th style={{ padding: "12px 16px", textAlign: "right" }}>Paid</th>
+                          <th style={{ padding: "12px 16px", textAlign: "center" }}>Status</th>
+                          <th style={{ padding: "12px 16px", textAlign: "right" }}>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {clientInvoices.map((inv) => (
+                          <tr
+                            key={inv.id}
+                            style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.05)", transition: "background-color 0.15s ease" }}
+                            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.03)")}
+                            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+                          >
+                            <td style={{ padding: "12px 16px", fontWeight: 700, color: "#fff", fontFamily: "var(--font-mono)" }}>
+                              {inv.invoiceNumber}
+                            </td>
+                            <td style={{ padding: "12px 16px", color: "var(--text-secondary)" }}>{inv.issueDate}</td>
+                            <td style={{ padding: "12px 16px", color: "var(--text-secondary)" }}>{inv.dueDate}</td>
+                            <td style={{ padding: "12px 16px", textAlign: "right", fontFamily: "var(--font-mono)", fontWeight: 700, color: "#fff" }}>
+                              ₹{inv.total.toLocaleString("en-IN")}
+                            </td>
+                            <td style={{ padding: "12px 16px", textAlign: "right", fontFamily: "var(--font-mono)", fontWeight: 700, color: "#10b981" }}>
+                              ₹{inv.paid.toLocaleString("en-IN")}
+                            </td>
+                            <td style={{ padding: "12px 16px", textAlign: "center" }}>
+                              <span
+                                style={{
+                                  padding: "2px 8px",
+                                  borderRadius: "4px",
+                                  fontSize: "10.5px",
+                                  fontWeight: 700,
+                                  backgroundColor:
+                                    inv.status === "PAID"
+                                      ? "rgba(16, 185, 129, 0.15)"
+                                      : inv.status === "PENDING"
+                                      ? "rgba(255, 138, 115, 0.15)"
+                                      : "rgba(56, 189, 248, 0.15)",
+                                  color:
+                                    inv.status === "PAID"
+                                      ? "#10b981"
+                                      : inv.status === "PENDING"
+                                      ? "var(--accent-text)"
+                                      : "#38bdf8",
+                                  border:
+                                    inv.status === "PAID"
+                                      ? "1px solid rgba(16, 185, 129, 0.3)"
+                                      : "1px solid var(--accent-border)",
+                                }}
+                              >
+                                {inv.status}
+                              </span>
+                            </td>
+                            <td style={{ padding: "12px 16px", textAlign: "right" }}>
+                              <button
+                                type="button"
+                                onClick={() => success("PDF Downloaded", `${inv.invoiceNumber} saved to Downloads.`)}
+                                style={{
+                                  background: "rgba(255, 255, 255, 0.05)",
+                                  border: "1px solid rgba(255, 255, 255, 0.12)",
+                                  borderRadius: "4px",
+                                  padding: "4px 10px",
+                                  color: "var(--text-secondary)",
+                                  fontSize: "11px",
+                                  cursor: "pointer",
+                                }}
+                              >
+                                Download PDF
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Side: Clean Profile Card (Strictly on Overview Tab Only!) */}
+              <div
+                style={{
+                  width: "320px",
+                  flexShrink: 0,
+                  backgroundColor: "rgba(18, 23, 35, 0.8)",
+                  backdropFilter: "blur(20px)",
+                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                  borderRadius: "8px",
+                  padding: "20px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "16px",
+                  boxShadow: "0 8px 32px rgba(0, 0, 0, 0.35)",
+                }}
+              >
+                {/* Avatar & Organization Identity */}
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: "8px" }}>
+                  <div
+                    style={{
+                      width: "56px",
+                      height: "56px",
+                      borderRadius: "14px",
+                      background: isNorthwind
+                        ? "linear-gradient(135deg, #d97706 0%, #78350f 100%)"
+                        : "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)",
+                      border: "2px solid rgba(255, 255, 255, 0.18)",
+                      boxShadow: "0 6px 18px rgba(0, 0, 0, 0.45)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: "22px",
+                      fontWeight: 800,
+                      color: "#ffffff",
+                    }}
+                  >
+                    {isNorthwind ? "🏢" : selectedClient.organization_name.slice(0, 2).toUpperCase()}
+                  </div>
+
+                  <div>
+                    <h2 style={{ margin: 0, fontSize: "17px", fontWeight: 800, color: "#ffffff", letterSpacing: "-0.3px" }}>
+                      {selectedClient.organization_name}
+                    </h2>
+                    <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "3px", lineHeight: 1.3 }}>
+                      {isNorthwind ? "Enterprise Security & NFC Smartcard Systems" : (selectedClient.notes || "Commercial Printing Client")}
+                    </div>
+                  </div>
+
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "5px",
+                      padding: "2px 9px",
+                      borderRadius: "14px",
+                      backgroundColor: "rgba(16, 185, 129, 0.14)",
+                      border: "1px solid rgba(16, 185, 129, 0.35)",
+                      color: "#34d399",
+                      fontSize: "10.5px",
+                      fontWeight: 700,
+                    }}
+                  >
+                    <span style={{ width: "5px", height: "5px", borderRadius: "50%", backgroundColor: "#10b981", boxShadow: "0 0 6px #10b981" }} />
+                    Active Account
                   </span>
+                </div>
+
+                {/* Quick Actions */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
                   <button
                     type="button"
-                    onClick={() => {
-                      if (onNewOrder) onNewOrder();
-                      else setShowNewProjectModal(true);
-                    }}
+                    onClick={() => setShowMessageModal(true)}
                     style={{
-                      height: "36px",
-                      padding: "0 16px",
-                      borderRadius: "5px",
-                      backgroundColor: "rgba(255, 255, 255, 0.06)",
-                      border: "1px solid rgba(255, 255, 255, 0.15)",
+                      height: "32px",
+                      padding: "0 10px",
+                      borderRadius: "4px",
+                      backgroundColor: "rgba(255, 255, 255, 0.05)",
+                      border: "1px solid rgba(255, 255, 255, 0.12)",
                       color: "#fff",
-                      fontSize: "12.5px",
+                      fontSize: "11.5px",
                       fontWeight: 600,
                       cursor: "pointer",
                       display: "inline-flex",
                       alignItems: "center",
+                      justifyContent: "center",
                       gap: "6px",
                     }}
                   >
-                    <span>+</span>
-                    <span>New Production Batch</span>
+                    <Icon name="message-square" size={12} color="var(--text-muted)" />
+                    <span>Message</span>
                   </button>
-                </div>
 
-                <div
-                  style={{
-                    backgroundColor: "rgba(18, 23, 35, 0.75)",
-                    border: "1px solid rgba(255, 255, 255, 0.08)",
-                    borderRadius: "8px",
-                    overflow: "hidden",
-                    width: "100%",
-                  }}
-                >
-                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", textAlign: "left" }}>
-                    <thead>
-                      <tr style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.08)", color: "var(--text-muted)", fontSize: "11px", textTransform: "uppercase" }}>
-                        <th style={{ padding: "16px 20px" }}>Project / Specification</th>
-                        <th style={{ padding: "16px 20px" }}>Promised Delivery</th>
-                        <th style={{ padding: "16px 20px", textAlign: "right" }}>Total Value</th>
-                        <th style={{ padding: "16px 20px" }}>Priority</th>
-                        <th style={{ padding: "16px 20px" }}>Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {clientOrders.length === 0 ? (
-                        <tr>
-                          <td style={{ padding: "16px 20px" }}>
-                            <div style={{ fontWeight: 700, color: "#fff" }}>
-                              5,000 High-Gloss RFID Smart PVC Cards + Multicolor Satin Lanyards
-                            </div>
-                            <div style={{ fontSize: "11.5px", color: "var(--text-muted)", marginTop: "2px" }}>
-                              Campus Identification & Access Control Package
-                            </div>
-                          </td>
-                          <td style={{ padding: "16px 20px", color: "var(--text-secondary)" }}>
-                            10 Sep 2026
-                          </td>
-                          <td style={{ padding: "16px 20px", textAlign: "right", fontFamily: "var(--font-mono)", fontWeight: 700, color: "#34d399" }}>
-                            ₹1,82,500
-                          </td>
-                          <td style={{ padding: "16px 20px" }}>
-                            <PriorityBadge priority={OrderPriority.HIGH} />
-                          </td>
-                          <td style={{ padding: "16px 20px" }}>
-                            <OrderStatusBadge status={OrderStatus.IN_PRODUCTION} />
-                          </td>
-                        </tr>
-                      ) : (
-                        clientOrders.map((ord) => (
-                          <tr
-                            key={ord.id}
-                            onClick={() => onSelectOrder?.(ord.id)}
-                            style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.05)", cursor: "pointer" }}
-                            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.02)")}
-                            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
-                          >
-                            <td style={{ padding: "16px 20px" }}>
-                              <div style={{ fontWeight: 700, color: "#fff" }}>
-                                {ord.notes || "Production Manufacturing Run"}
-                              </div>
-                              <div style={{ fontSize: "11.5px", color: "var(--text-muted)", marginTop: "2px" }}>
-                                Floor Workstation: Offset & Thermal Transfer Line
-                              </div>
-                            </td>
-                            <td style={{ padding: "16px 20px", color: "var(--text-secondary)" }}>
-                              {ord.promised_delivery_date ? new Date(ord.promised_delivery_date).toLocaleDateString("en-IN") : "Flexible"}
-                            </td>
-                            <td style={{ padding: "16px 20px", textAlign: "right", fontFamily: "var(--font-mono)", fontWeight: 700, color: "#34d399" }}>
-                              ₹{Number(ord.total_amount || 0).toLocaleString("en-IN")}
-                            </td>
-                            <td style={{ padding: "16px 20px" }}>
-                              <PriorityBadge priority={ord.priority} />
-                            </td>
-                            <td style={{ padding: "16px 20px" }}>
-                              <OrderStatusBadge status={ord.status} />
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-            {/* 3. INVOICES TAB (NO CRYPTIC CODES) */}
-            {clientTab === "invoices" && (
-              <div style={{ display: "flex", flexDirection: "column", gap: "16px", width: "100%" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontSize: "13px", color: "var(--text-muted)" }}>
-                    GST Tax Invoices & Billing Records
-                  </span>
                   <button
                     type="button"
-                    onClick={() => setShowNewInvoiceModal(true)}
+                    onClick={() => {
+                      if (onNewOrder) onNewOrder();
+                      else setShowNewOrderModal(true);
+                    }}
                     style={{
-                      height: "36px",
-                      padding: "0 16px",
-                      borderRadius: "5px",
-                      backgroundColor: "#2563eb",
-                      border: "none",
-                      color: "#fff",
-                      fontSize: "12.5px",
-                      fontWeight: 700,
+                      height: "32px",
+                      padding: "0 10px",
+                      borderRadius: "4px",
+                      backgroundColor: "rgba(255, 138, 115, 0.15)",
+                      border: "1px solid var(--accent-border)",
+                      color: "var(--accent-text)",
+                      fontSize: "11.5px",
+                      fontWeight: 600,
                       cursor: "pointer",
                       display: "inline-flex",
                       alignItems: "center",
+                      justifyContent: "center",
                       gap: "6px",
                     }}
                   >
-                    <span>+</span>
-                    <span>Draft Invoice</span>
+                    <Icon name="plus" size={12} />
+                    <span>New Order</span>
                   </button>
                 </div>
 
-                <div
-                  style={{
-                    backgroundColor: "rgba(18, 23, 35, 0.75)",
-                    border: "1px solid rgba(255, 255, 255, 0.08)",
-                    borderRadius: "8px",
-                    overflow: "hidden",
-                    width: "100%",
-                  }}
-                >
-                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", textAlign: "left" }}>
-                    <thead>
-                      <tr style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.08)", color: "var(--text-muted)", fontSize: "11px", textTransform: "uppercase" }}>
-                        <th style={{ padding: "16px 20px" }}>Tax Invoice</th>
-                        <th style={{ padding: "16px 20px" }}>Date Issued</th>
-                        <th style={{ padding: "16px 20px" }}>Payment Due</th>
-                        <th style={{ padding: "16px 20px", textAlign: "right" }}>Total Amount</th>
-                        <th style={{ padding: "16px 20px", textAlign: "right" }}>Paid</th>
-                        <th style={{ padding: "16px 20px" }}>Status</th>
-                        <th style={{ padding: "16px 20px", textAlign: "right" }}>Action</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {clientInvoices.map((inv) => (
-                        <tr key={inv.id} style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.05)" }}>
-                          <td style={{ padding: "16px 20px", fontWeight: 700, color: "#fff" }}>
-                            {inv.invoiceNumber}
-                          </td>
-                          <td style={{ padding: "16px 20px", color: "var(--text-secondary)" }}>{inv.issueDate}</td>
-                          <td style={{ padding: "16px 20px", color: "var(--text-secondary)" }}>{inv.dueDate}</td>
-                          <td style={{ padding: "16px 20px", textAlign: "right", fontFamily: "var(--font-mono)", fontWeight: 700, color: "#fff" }}>
-                            ₹{inv.total.toLocaleString("en-IN")}
-                          </td>
-                          <td style={{ padding: "16px 20px", textAlign: "right", fontFamily: "var(--font-mono)", fontWeight: 700, color: "#10b981" }}>
-                            ₹{inv.paid.toLocaleString("en-IN")}
-                          </td>
-                          <td style={{ padding: "16px 20px" }}>
-                            <span
-                              style={{
-                                padding: "3px 9px",
-                                borderRadius: "4px",
-                                fontSize: "11px",
-                                fontWeight: 700,
-                                backgroundColor:
-                                  inv.status === "PAID"
-                                    ? "rgba(16, 185, 129, 0.15)"
-                                    : inv.status === "PENDING"
-                                    ? "rgba(255, 138, 115, 0.15)"
-                                    : "rgba(56, 189, 248, 0.15)",
-                                color:
-                                  inv.status === "PAID"
-                                    ? "#10b981"
-                                    : inv.status === "PENDING"
-                                    ? "var(--accent-text)"
-                                    : "#38bdf8",
-                              }}
-                            >
-                              {inv.status}
-                            </span>
-                          </td>
-                          <td style={{ padding: "16px 20px", textAlign: "right" }}>
-                            <button
-                              type="button"
-                              onClick={() => success("PDF Downloaded", `${inv.invoiceNumber} saved.`)}
-                              style={{
-                                background: "none",
-                                border: "1px solid rgba(255, 255, 255, 0.12)",
-                                borderRadius: "4px",
-                                padding: "4px 10px",
-                                color: "var(--text-secondary)",
-                                fontSize: "11px",
-                                cursor: "pointer",
-                              }}
-                            >
-                              Download PDF
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                {/* Divider */}
+                <div style={{ height: "1px", backgroundColor: "rgba(255, 255, 255, 0.07)" }} />
+
+                {/* Profile Details Only (Clean, no credit deficit or extraneous metrics) */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "11px" }}>
+                  <div style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.6px", color: "var(--text-muted)" }}>
+                    Profile Details
+                  </div>
+
+                  <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                    <span style={{ fontSize: "10.5px", color: "var(--text-muted)" }}>Primary Contact</span>
+                    <span style={{ fontSize: "12.5px", fontWeight: 600, color: "#fff" }}>
+                      {isNorthwind ? "Sophia Williams" : (selectedClient.contact_person || "Primary Contact")} {isNorthwind ? "(Owner & MD)" : ""}
+                    </span>
+                  </div>
+
+                  <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                    <span style={{ fontSize: "10.5px", color: "var(--text-muted)" }}>Email</span>
+                    <div
+                      onClick={(e) => handleCopy(isNorthwind ? "sophia@northwindcoffee.com" : (selectedClient.email || "contact@client.com"), "Email", e)}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        cursor: "pointer",
+                        padding: "3px 6px",
+                        borderRadius: "4px",
+                        backgroundColor: "rgba(255, 255, 255, 0.02)",
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.06)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.02)")}
+                    >
+                      <span style={{ fontSize: "12px", color: "#38bdf8" }}>
+                        {isNorthwind ? "sophia@northwindcoffee.com" : (selectedClient.email || "contact@client.com")}
+                      </span>
+                      <Icon name="copy" size={12} color="var(--text-muted)" />
+                    </div>
+                  </div>
+
+                  <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                    <span style={{ fontSize: "10.5px", color: "var(--text-muted)" }}>Phone</span>
+                    <div
+                      onClick={(e) => handleCopy(isNorthwind ? "+91 98260 11223" : (selectedClient.phone || "+91 98260 00000"), "Phone", e)}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        cursor: "pointer",
+                        padding: "3px 6px",
+                        borderRadius: "4px",
+                        backgroundColor: "rgba(255, 255, 255, 0.02)",
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.06)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.02)")}
+                    >
+                      <span style={{ fontSize: "12px", color: "#f59e0b", fontFamily: "var(--font-mono)" }}>
+                        {isNorthwind ? "+91 98260 11223" : (selectedClient.phone || "+91 98260 00000")}
+                      </span>
+                      <Icon name="copy" size={12} color="var(--text-muted)" />
+                    </div>
+                  </div>
+
+                  <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                    <span style={{ fontSize: "10.5px", color: "var(--text-muted)" }}>Payment Terms</span>
+                    <span style={{ fontSize: "12px", fontWeight: 600, color: "#34d399" }}>
+                      {isNorthwind ? "Net 30 Days (Direct NEFT/RTGS)" : "Net 30 Days"}
+                    </span>
+                  </div>
+
+                  <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                    <span style={{ fontSize: "10.5px", color: "var(--text-muted)" }}>GSTIN / Tax ID</span>
+                    <div
+                      onClick={(e) => handleCopy(isNorthwind ? "23MWCFE9999N1Z0" : (selectedClient.tax_identifier || "23AACCF9823K1ZM"), "GSTIN", e)}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        cursor: "pointer",
+                        padding: "3px 6px",
+                        borderRadius: "4px",
+                        backgroundColor: "rgba(255, 255, 255, 0.02)",
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.06)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.02)")}
+                    >
+                      <span style={{ fontSize: "12px", color: "#fff", fontFamily: "var(--font-mono)", fontWeight: 700 }}>
+                        {isNorthwind ? "23MWCFE9999N1Z0" : (selectedClient.tax_identifier || "23AACCF9823K1ZM")}
+                      </span>
+                      <Icon name="copy" size={12} color="var(--text-muted)" />
+                    </div>
+                  </div>
+
+                  <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                    <span style={{ fontSize: "10.5px", color: "var(--text-muted)" }}>Registered Office</span>
+                    <span style={{ fontSize: "11.5px", color: "var(--text-secondary)", lineHeight: 1.4 }}>
+                      {isNorthwind ? "42 Roaster's Alley, Old Bhopal, MP 462001" : (selectedClient.billing_address || "Industrial Zone, Bhopal, MP 462023")}
+                    </span>
+                  </div>
+
+                  <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                    <span style={{ fontSize: "10.5px", color: "var(--text-muted)" }}>Central Dispatch</span>
+                    <span style={{ fontSize: "11.5px", color: "var(--text-secondary)", lineHeight: 1.4 }}>
+                      {isNorthwind ? "Central Warehouse, 10 Bean Depot, MP 462002" : (selectedClient.shipping_address || "Bhopal Central Logistics Works, MP")}
+                    </span>
+                  </div>
                 </div>
               </div>
+            </div>
+          )}
+
+            {/* 2. ORDERS TAB (EXACT SAME UI AS ORDERS PAGE, FILTERED FOR THIS CLIENT) */}
+            {clientTab === "orders" && (
+              <div style={{ width: "100%" }}>
+                <OrdersWorkspaceView
+                  clients={clients}
+                  filterClientName={selectedClient.organization_name}
+                  embedded
+                  onSelectOrder={onSelectOrder}
+                />
+              </div>
             )}
+
+
 
             {/* 4. LOGS TAB (RENAMED FROM ACTIVITY, NO CRYPTIC CODES) */}
             {clientTab === "logs" && (
@@ -1523,37 +1472,48 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
               </div>
             )}
 
-          </div>
         </div>
 
-        {/* MODAL 1: MESSAGE */}
+        {/* DRAWER 1: MESSAGE */}
         {showMessageModal && (
-          <Modal
+          <Drawer
             isOpen={showMessageModal}
             onClose={() => setShowMessageModal(false)}
-            title={`Message to ${selectedClient.organization_name}`}
+            title="Dispatch Message"
+            subtitle={selectedClient.organization_name}
+            width={480}
+            footer={
+              <>
+                <Button variant="secondary" size="md" onClick={() => setShowMessageModal(false)}>
+                  Cancel
+                </Button>
+                <Button variant="primary" size="md" onClick={handleSendMessage}>
+                  Send Message
+                </Button>
+              </>
+            }
           >
-            <form onSubmit={handleSendMessage} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+            <form onSubmit={handleSendMessage} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
               <Input
                 label="Subject Line"
                 value={messageSubject}
                 onChange={(e) => setMessageSubject(e.target.value)}
-                placeholder="e.g. Schedule for upcoming RFID batch delivery"
+                placeholder="e.g. Production dispatch update & QA signoff"
                 required
               />
-              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                <label style={{ fontSize: "12px", color: "var(--text-muted)" }}>Message Body</label>
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                <label style={{ fontSize: "12px", color: "var(--text-muted)", fontWeight: 600 }}>Message Content</label>
                 <textarea
-                  rows={4}
+                  rows={5}
                   value={messageBody}
                   onChange={(e) => setMessageBody(e.target.value)}
-                  placeholder="Type your communication to the client account team..."
+                  placeholder="Type your notice or dispatch advice..."
                   style={{
-                    backgroundColor: "rgba(0, 0, 0, 0.25)",
-                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    backgroundColor: "rgba(0, 0, 0, 0.3)",
+                    border: "1px solid rgba(255, 255, 255, 0.12)",
                     borderRadius: "4px",
                     color: "#fff",
-                    padding: "10px",
+                    padding: "12px",
                     fontSize: "13px",
                     outline: "none",
                     resize: "vertical",
@@ -1561,26 +1521,30 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                   required
                 />
               </div>
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "8px" }}>
-                <Button variant="secondary" size="md" onClick={() => setShowMessageModal(false)}>
-                  Cancel
-                </Button>
-                <Button variant="primary" size="md" type="submit">
-                  Dispatch Message
-                </Button>
-              </div>
             </form>
-          </Modal>
+          </Drawer>
         )}
 
-        {/* MODAL 2: NEW INVOICE */}
+        {/* DRAWER 2: NEW INVOICE */}
         {showNewInvoiceModal && (
-          <Modal
+          <Drawer
             isOpen={showNewInvoiceModal}
             onClose={() => setShowNewInvoiceModal(false)}
-            title={`Draft GST Tax Invoice: ${selectedClient.organization_name}`}
+            title="Draft GST Tax Invoice"
+            subtitle={selectedClient.organization_name}
+            width={480}
+            footer={
+              <>
+                <Button variant="secondary" size="md" onClick={() => setShowNewInvoiceModal(false)}>
+                  Cancel
+                </Button>
+                <Button variant="primary" size="md" onClick={handleCreateNewInvoice}>
+                  Generate Tax Invoice
+                </Button>
+              </>
+            }
           >
-            <form onSubmit={handleCreateNewInvoice} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+            <form onSubmit={handleCreateNewInvoice} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
               <Input
                 label="Invoice Amount (₹)"
                 type="number"
@@ -1595,26 +1559,33 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                 onChange={(e) => setNewInvoiceDue(e.target.value)}
                 required
               />
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "8px" }}>
-                <Button variant="secondary" size="md" onClick={() => setShowNewInvoiceModal(false)}>
-                  Cancel
-                </Button>
-                <Button variant="primary" size="md" type="submit">
-                  Generate Tax Invoice
-                </Button>
+              <div style={{ padding: "12px", backgroundColor: "rgba(255, 255, 255, 0.03)", borderRadius: "6px", border: "1px solid rgba(255, 255, 255, 0.06)", fontSize: "12px", color: "var(--text-secondary)" }}>
+                Tax calculation with CGST 9% and SGST 9% will automatically be generated in client receivables.
               </div>
             </form>
-          </Modal>
+          </Drawer>
         )}
 
-        {/* MODAL 3: ADD CONTACT */}
+        {/* DRAWER 3: ADD CONTACT */}
         {showNewContactModal && (
-          <Modal
+          <Drawer
             isOpen={showNewContactModal}
             onClose={() => setShowNewContactModal(false)}
-            title={`Register Stakeholder: ${selectedClient.organization_name}`}
+            title="Add New Contact"
+            subtitle={selectedClient.organization_name}
+            width={460}
+            footer={
+              <>
+                <Button variant="secondary" size="md" onClick={() => setShowNewContactModal(false)}>
+                  Cancel
+                </Button>
+                <Button variant="primary" size="md" onClick={handleAddContact}>
+                  Save Contact
+                </Button>
+              </>
+            }
           >
-            <form onSubmit={handleAddContact} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+            <form onSubmit={handleAddContact} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
               <Input
                 label="Contact Full Name"
                 value={newContactName}
@@ -1626,7 +1597,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                 label="Designation / Role"
                 value={newContactRole}
                 onChange={(e) => setNewContactRole(e.target.value)}
-                placeholder="e.g. Operations Director"
+                placeholder="e.g. Director of Operations"
               />
               <Input
                 label="Email Address"
@@ -1641,16 +1612,69 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                 onChange={(e) => setNewContactPhone(e.target.value)}
                 placeholder="e.g. +91 98260 12345"
               />
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "8px" }}>
-                <Button variant="secondary" size="md" onClick={() => setShowNewContactModal(false)}>
+            </form>
+          </Drawer>
+        )}
+
+        {/* DRAWER 4: NEW ORDER */}
+        {showNewOrderModal && (
+          <Drawer
+            isOpen={showNewOrderModal}
+            onClose={() => setShowNewOrderModal(false)}
+            title="New Order"
+            subtitle={selectedClient.organization_name}
+            width={500}
+            footer={
+              <>
+                <Button variant="secondary" size="md" onClick={() => setShowNewOrderModal(false)}>
                   Cancel
                 </Button>
-                <Button variant="primary" size="md" type="submit">
-                  Save Contact Person
+                <Button
+                  variant="primary"
+                  size="md"
+                  onClick={() => {
+                    setShowNewOrderModal(false);
+                    if (onNewOrder) {
+                      onNewOrder();
+                    } else {
+                      success("Order Queued", `Order created for ${selectedClient.organization_name}`);
+                    }
+                  }}
+                >
+                  Create Order
                 </Button>
+              </>
+            }
+          >
+            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              <Input
+                label="Product / Specification"
+                value={newOrderProduct}
+                onChange={(e) => setNewOrderProduct(e.target.value)}
+                placeholder="e.g. 15mm Multicolor Satin Lanyards"
+              />
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                <Input
+                  label="Quantity (pcs)"
+                  type="number"
+                  value={newOrderQty}
+                  onChange={(e) => setNewOrderQty(e.target.value)}
+                />
+                <Input
+                  label="Total Value (₹)"
+                  type="number"
+                  value={newOrderValue}
+                  onChange={(e) => setNewOrderValue(e.target.value)}
+                />
               </div>
-            </form>
-          </Modal>
+              <Input
+                label="Promised Delivery Date"
+                type="date"
+                value={newOrderDelivery}
+                onChange={(e) => setNewOrderDelivery(e.target.value)}
+              />
+            </div>
+          </Drawer>
         )}
       </div>
     );
@@ -1700,8 +1724,8 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
               alignItems: "center",
               gap: "6px",
               padding: "5px 12px",
-              borderRadius: "20px",
-              backgroundColor: "rgba(255, 138, 115, 0.12)",
+              borderRadius: "var(--radius-sm, 4px)",
+              backgroundColor: "var(--accent-soft)",
               border: "1px solid var(--accent-border)",
               color: "var(--accent-text)",
               fontSize: "12.5px",
@@ -1724,11 +1748,11 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
               display: "flex",
               alignItems: "center",
               gap: "8px",
-              height: "38px",
+              height: "var(--input-height, 36px)",
               boxSizing: "border-box",
               backgroundColor: "rgba(0, 0, 0, 0.3)",
               border: "1px solid rgba(255, 255, 255, 0.1)",
-              borderRadius: "5px",
+              borderRadius: "var(--radius-sm, 4px)",
               padding: "0 14px",
               flex: 1,
               maxWidth: "380px",
@@ -1751,30 +1775,14 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
             />
           </div>
 
-          <button
-            type="button"
+          <Button
+            variant="primary"
+            size="md"
+            icon="plus"
             onClick={() => setShowNewClientModal(true)}
-            style={{
-              height: "38px",
-              padding: "0 16px",
-              borderRadius: "5px",
-              backgroundColor: "var(--accent)",
-              backgroundImage: "linear-gradient(135deg, #ff8a73 0%, #ea580c 100%)",
-              border: "none",
-              color: "#ffffff",
-              fontSize: "13px",
-              fontWeight: 700,
-              cursor: "pointer",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              boxShadow: "0 2px 10px rgba(234, 88, 12, 0.35)",
-              flexShrink: 0,
-            }}
           >
-            <Icon name="plus" size={14} color="#fff" />
-            <span>New Client</span>
-          </button>
+            New Client
+          </Button>
         </div>
       </div>
 

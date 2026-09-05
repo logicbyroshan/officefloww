@@ -402,7 +402,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
                 <div
                   key={inv.id}
                   onClick={() => {
-                    if (onNavigate) onNavigate("billing");
+                    if (onNavigate) onNavigate("dashboard");
                     onClose();
                   }}
                   style={{

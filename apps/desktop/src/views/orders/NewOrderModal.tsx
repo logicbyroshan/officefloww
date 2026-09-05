@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Client, Product, OrderPriority, OrderCreate } from "@officefloww/api-types";
 import { OrdersService } from "../../api/services";
-import { Modal } from "../../design-system/components/Modal";
+import { Drawer } from "../../design-system/components/Drawer";
 import { Input, Select } from "../../design-system/components/Input";
 import { Button, IconButton } from "../../design-system/components/Button";
 import { useToast } from "../../design-system/components/Toast";
@@ -108,12 +108,12 @@ export const NewOrderModal: React.FC<NewOrderModalProps> = ({
   );
 
   return (
-    <Modal
+    <Drawer
       isOpen={isOpen}
       onClose={onClose}
       title="Create Production Order"
       subtitle="Instantiate a multi-product job with automatic DAG workflow generation"
-      width={640}
+      width={560}
       footer={
         <>
           <Button variant="secondary" onClick={onClose} disabled={loading}>
@@ -156,67 +156,48 @@ export const NewOrderModal: React.FC<NewOrderModalProps> = ({
           required
         />
 
-        {/* Order Items */}
+        {/* Order Item (Single Product Per Order) */}
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <span style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)" }}>
-              Order Items & Specifications
-            </span>
-            <Button size="sm" variant="outline" icon="plus" onClick={addItem}>
-              Add Product Line
-            </Button>
-          </div>
+          <span style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)" }}>
+            Ordered Product & Specification
+          </span>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            {items.map((item, idx) => (
-              <div
-                key={idx}
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1.8fr 1fr 1fr auto",
-                  gap: "8px",
-                  alignItems: "flex-end",
-                  backgroundColor: "var(--bg-surface)",
-                  padding: "10px",
-                  borderRadius: "var(--radius-xs)",
-                  border: "1px solid var(--border-subtle)",
-                }}
-              >
-                <Select
-                  label="Product"
-                  options={products.map((p) => ({ label: p.name, value: p.id }))}
-                  value={item.product_id}
-                  onChange={(e) => updateItem(idx, "product_id", e.target.value)}
-                />
-                <Input
-                  label="Quantity"
-                  type="number"
-                  value={item.quantity}
-                  onChange={(e) => updateItem(idx, "quantity", Number(e.target.value))}
-                  min={1}
-                />
-                <Input
-                  label="Unit Price (₹)"
-                  type="number"
-                  value={item.unit_price}
-                  onChange={(e) => updateItem(idx, "unit_price", Number(e.target.value))}
-                  step="0.01"
-                  min={0}
-                />
-                <div style={{ paddingBottom: "2px" }}>
-                  <IconButton
-                    icon="trash"
-                    variant="danger"
-                    size="sm"
-                    onClick={() => removeItem(idx)}
-                    disabled={items.length <= 1}
-                  />
-                </div>
-              </div>
-            ))}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1.8fr 1fr 1fr",
+              gap: "8px",
+              alignItems: "flex-end",
+              backgroundColor: "var(--bg-surface)",
+              padding: "12px",
+              borderRadius: "var(--radius-xs)",
+              border: "1px solid var(--border-subtle)",
+            }}
+          >
+            <Select
+              label="Product"
+              options={products.map((p) => ({ label: p.name, value: p.id }))}
+              value={items[0]?.product_id || ""}
+              onChange={(e) => updateItem(0, "product_id", e.target.value)}
+            />
+            <Input
+              label="Quantity"
+              type="number"
+              value={items[0]?.quantity || 1000}
+              onChange={(e) => updateItem(0, "quantity", Number(e.target.value))}
+              min={1}
+            />
+            <Input
+              label="Unit Price (₹)"
+              type="number"
+              value={items[0]?.unit_price || 35}
+              onChange={(e) => updateItem(0, "unit_price", Number(e.target.value))}
+              step="0.01"
+              min={0}
+            />
           </div>
         </div>
       </form>
-    </Modal>
+    </Drawer>
   );
 };

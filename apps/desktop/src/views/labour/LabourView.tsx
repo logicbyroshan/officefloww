@@ -3,6 +3,7 @@ import { Icon } from "../../design-system/components/Icon";
 import { Button } from "../../design-system/components/Button";
 import { Modal } from "../../design-system/components/Modal";
 import { Input } from "../../design-system/components/Input";
+import { Tabs } from "../../design-system/components/Tabs";
 import { useToast } from "../../design-system/components/Toast";
 import { LabourDetailProfileView } from "./LabourDetailProfileView";
 
@@ -277,31 +278,17 @@ export const LabourView: React.FC = () => {
             <span>{labourList.length} Task-Based Labour Contractors</span>
           </span>
 
-          <div style={{ display: "flex", gap: "4px", backgroundColor: "rgba(0,0,0,0.3)", padding: "3px", borderRadius: "2px" }}>
-            {[
-              { id: "ALL" as const, label: `All (${labourList.length})` },
-              { id: "ACTIVE" as const, label: `On Floor (${labourList.filter((c) => c.status === "ACTIVE").length})` },
-              { id: "STANDBY" as const, label: `Standby (${labourList.filter((c) => c.status === "STANDBY").length})` },
-            ].map((f) => (
-              <button
-                key={f.id}
-                type="button"
-                onClick={() => setFilterStatus(f.id)}
-                style={{
-                  padding: "4px 10px",
-                  borderRadius: "2px",
-                  border: "none",
-                  backgroundColor: filterStatus === f.id ? "rgba(168, 85, 247, 0.2)" : "transparent",
-                  color: filterStatus === f.id ? "#c084fc" : "var(--text-muted)",
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  cursor: "pointer",
-                }}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
+          <Tabs
+            variant="pill"
+            size="sm"
+            activeTab={filterStatus}
+            onChange={(id) => setFilterStatus(id as any)}
+            tabs={[
+              { id: "ALL", label: `All (${labourList.length})` },
+              { id: "ACTIVE", label: `On Floor (${labourList.filter((c) => c.status === "ACTIVE").length})` },
+              { id: "STANDBY", label: `Standby (${labourList.filter((c) => c.status === "STANDBY").length})` },
+            ]}
+          />
         </div>
 
         {/* Right: Search + Action Buttons */}
@@ -313,9 +300,9 @@ export const LabourView: React.FC = () => {
               gap: "8px",
               backgroundColor: "rgba(0, 0, 0, 0.35)",
               border: "1px solid rgba(255, 255, 255, 0.1)",
-              borderRadius: "2px",
+              borderRadius: "var(--radius-sm, 4px)",
               padding: "0 12px",
-              height: "38px",
+              height: "var(--input-height, 36px)",
               width: "300px",
             }}
           >
@@ -340,7 +327,6 @@ export const LabourView: React.FC = () => {
             variant="secondary"
             size="md"
             icon="package"
-            style={{ borderRadius: "2px" }}
             onClick={() => {
               setIssueTargetContractor(labourList[0]);
               setShowIssueModal(true);
@@ -353,12 +339,6 @@ export const LabourView: React.FC = () => {
             variant="primary"
             size="md"
             icon="plus"
-            style={{
-              borderRadius: "2px",
-              backgroundColor: "var(--accent)",
-              backgroundImage: "linear-gradient(135deg, #ff8a73 0%, #ea580c 100%)",
-              border: "none",
-            }}
             onClick={() => setShowOnboardModal(true)}
           >
             + Onboard Labour

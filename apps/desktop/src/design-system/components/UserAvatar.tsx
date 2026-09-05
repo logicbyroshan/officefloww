@@ -2,12 +2,37 @@ import React from "react";
 import { UserRole } from "@officefloww/api-types";
 import { StatusDot } from "./Badge";
 
+export const getInitials = (n: string): string => {
+  if (!n) return "OF";
+  const parts = n.trim().split(" ");
+  if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+  return n.slice(0, 2).toUpperCase();
+};
+
+export const getAvatarColor = (name: string): string => {
+  const colors = [
+    "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)",
+    "linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)",
+    "linear-gradient(135deg, #ec4899 0%, #be185d 100%)",
+    "linear-gradient(135deg, #10b981 0%, #047857 100%)",
+    "linear-gradient(135deg, #f59e0b 0%, #b45309 100%)",
+    "linear-gradient(135deg, #06b6d4 0%, #0e7490 100%)",
+    "linear-gradient(135deg, #f43f5e 0%, #be123c 100%)",
+  ];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return colors[Math.abs(hash) % colors.length];
+};
+
 export interface UserAvatarProps {
   name: string;
   role?: UserRole | string;
   size?: number;
   showStatus?: boolean;
   status?: "online" | "offline" | "busy" | "idle";
+  background?: string;
+  color?: string;
+  borderRadius?: string;
 }
 
 export const UserAvatar: React.FC<UserAvatarProps> = ({
@@ -16,13 +41,12 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
   size = 28,
   showStatus = false,
   status = "online",
+  background,
+  color,
+  borderRadius = "var(--radius-xs)",
 }) => {
-  const getInitials = (n: string) => {
-    if (!n) return "OF";
-    const parts = n.trim().split(" ");
-    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-    return n.slice(0, 2).toUpperCase();
-  };
+  const bg = background || "var(--bg-muted)";
+  const textColor = color || (background ? "#ffffff" : "var(--accent-text)");
 
   return (
     <div style={{ position: "relative", display: "inline-flex", flexShrink: 0 }}>
@@ -30,17 +54,18 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
         style={{
           width: size,
           height: size,
-          borderRadius: "var(--radius-xs)",
-          backgroundColor: "var(--bg-muted)",
+          borderRadius,
+          background: bg,
           border: "1px solid var(--border-medium)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          fontSize: size <= 28 ? "11px" : "13px",
+          fontSize: size <= 28 ? "11px" : size <= 36 ? "12px" : "14px",
           fontWeight: 700,
           fontFamily: "var(--font-mono)",
-          color: "var(--accent-text)",
+          color: textColor,
           userSelect: "none",
+          boxSizing: "border-box",
         }}
       >
         {getInitials(name)}
@@ -138,4 +163,3 @@ export const ConnectionBanner: React.FC<{
 
   return null;
 };
-

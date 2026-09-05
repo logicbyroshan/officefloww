@@ -1,8 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
 import { Icon, IconName } from "./Icon";
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "outline" | "danger" | "ghost";
+  variant?: "primary" | "secondary" | "outline" | "danger" | "success" | "ghost";
   size?: "sm" | "md" | "lg";
   icon?: IconName;
   iconPosition?: "left" | "right";
@@ -18,52 +18,66 @@ export const Button: React.FC<ButtonProps> = ({
   loading = false,
   disabled,
   style,
+  onMouseEnter,
+  onMouseLeave,
   ...props
 }) => {
-  const getStyles = (): React.CSSProperties => {
-    let background = "linear-gradient(135deg, #ff9980 0%, #ff6b8b 100%)";
-    let color = "#0f172a";
-    let border = "1px solid rgba(255, 255, 255, 0.25)";
+  const [isHovered, setIsHovered] = useState(false);
+
+  const getBaseStyles = (): React.CSSProperties => {
+    let background = "var(--accent-gradient, var(--accent))";
+    let color = "var(--accent-contrast, #111827)";
+    let border = "1px solid var(--accent-border, rgba(255, 255, 255, 0.25))";
     let fontWeight = 650;
-    let boxShadow = "0 2px 8px rgba(255, 107, 139, 0.25)";
+    let boxShadow = "0 2px 8px var(--accent-soft, rgba(255, 107, 139, 0.25))";
 
     if (variant === "secondary") {
-      background = "rgba(255, 255, 255, 0.05)";
+      background = isHovered ? "rgba(255, 255, 255, 0.08)" : "rgba(255, 255, 255, 0.05)";
       color = "var(--text-primary, #f8fafc)";
-      border = "1px solid rgba(255, 255, 255, 0.12)";
+      border = "1px solid " + (isHovered ? "rgba(255, 255, 255, 0.22)" : "rgba(255, 255, 255, 0.12)");
       fontWeight = 500;
       boxShadow = "none";
     } else if (variant === "outline") {
-      background = "transparent";
-      color = "var(--text-primary, #f8fafc)";
-      border = "1px solid var(--border-medium, #2a3346)";
+      background = isHovered ? "rgba(255, 255, 255, 0.04)" : "transparent";
+      color = isHovered ? "var(--text-primary, #f8fafc)" : "var(--text-secondary, #cbd5e1)";
+      border = "1px solid " + (isHovered ? "var(--accent-border)" : "var(--border-medium, #2a3346)");
       fontWeight = 500;
       boxShadow = "none";
     } else if (variant === "danger") {
-      background = "var(--status-error, #ef4444)";
+      background = isHovered ? "#dc2626" : "var(--status-error, #ef4444)";
       color = "#ffffff";
       border = "1px solid rgba(255, 255, 255, 0.2)";
       fontWeight = 600;
       boxShadow = "0 2px 6px rgba(239, 68, 68, 0.25)";
+    } else if (variant === "success") {
+      background = isHovered ? "#059669" : "var(--status-success, #10b981)";
+      color = "#ffffff";
+      border = "1px solid rgba(255, 255, 255, 0.2)";
+      fontWeight = 600;
+      boxShadow = "0 2px 6px rgba(16, 185, 129, 0.25)";
     } else if (variant === "ghost") {
-      background = "transparent";
-      color = "var(--text-secondary, #cbd5e1)";
+      background = isHovered ? "rgba(255, 255, 255, 0.05)" : "transparent";
+      color = isHovered ? "var(--text-primary, #f8fafc)" : "var(--text-secondary, #cbd5e1)";
       border = "1px solid transparent";
       fontWeight = 500;
       boxShadow = "none";
+    } else if (variant === "primary" && isHovered && !disabled && !loading) {
+      boxShadow = "0 4px 14px var(--accent-soft, rgba(255, 107, 139, 0.35))";
+      background = "var(--accent-hover, var(--accent))";
     }
 
     let padding = "0 16px";
     let fontSize = "12.5px";
-    let height = "36px";
+    let height = "var(--btn-height-md, 36px)";
+
     if (size === "sm") {
       padding = "0 12px";
       fontSize = "12px";
-      height = "32px";
+      height = "var(--btn-height-sm, 32px)";
     } else if (size === "lg") {
       padding = "0 20px";
       fontSize = "13.5px";
-      height = "42px";
+      height = "var(--btn-height-lg, 42px)";
     }
 
     return {
@@ -95,7 +109,15 @@ export const Button: React.FC<ButtonProps> = ({
   return (
     <button
       disabled={disabled || loading}
-      style={getStyles()}
+      style={getBaseStyles()}
+      onMouseEnter={(e) => {
+        setIsHovered(true);
+        if (onMouseEnter) onMouseEnter(e);
+      }}
+      onMouseLeave={(e) => {
+        setIsHovered(false);
+        if (onMouseLeave) onMouseLeave(e);
+      }}
       {...props}
     >
       {loading ? (
@@ -147,32 +169,36 @@ export const IconButton: React.FC<IconButtonProps> = ({
   size = "md",
   tooltip,
   style,
+  onMouseEnter,
+  onMouseLeave,
   ...props
 }) => {
+  const [isHovered, setIsHovered] = useState(false);
+
   const getDimension = () => {
-    if (size === "sm") return { width: 24, height: 24, iconSize: 12 };
-    if (size === "lg") return { width: 36, height: 36, iconSize: 18 };
-    return { width: 30, height: 30, iconSize: 14 };
+    if (size === "sm") return { width: 28, height: 28, iconSize: 13 };
+    if (size === "lg") return { width: 40, height: 40, iconSize: 17 };
+    return { width: 34, height: 34, iconSize: 15 };
   };
 
   const { width, height, iconSize } = getDimension();
 
-  let bg = "transparent";
-  let color = "var(--text-secondary)";
+  let bg = isHovered ? "rgba(255, 255, 255, 0.05)" : "transparent";
+  let color = isHovered ? "var(--text-primary)" : "var(--text-secondary)";
   let border = "1px solid transparent";
 
   if (variant === "primary") {
-    bg = "var(--accent)";
+    bg = isHovered ? "var(--accent-hover)" : "var(--accent)";
     color = "var(--accent-contrast)";
     border = "1px solid var(--accent)";
   } else if (variant === "secondary") {
-    bg = "var(--bg-muted)";
+    bg = isHovered ? "rgba(255, 255, 255, 0.08)" : "var(--bg-muted)";
     color = "var(--text-primary)";
-    border = "1px solid var(--border-medium)";
+    border = "1px solid " + (isHovered ? "var(--border-strong)" : "var(--border-medium)");
   } else if (variant === "outline") {
-    border = "1px solid var(--border-subtle)";
+    border = "1px solid " + (isHovered ? "var(--accent-border)" : "var(--border-subtle)");
   } else if (variant === "danger") {
-    bg = "var(--status-error-soft)";
+    bg = isHovered ? "rgba(239, 68, 68, 0.22)" : "var(--status-error-soft)";
     color = "var(--status-error)";
     border = "1px solid var(--status-error-border)";
   }
@@ -198,6 +224,14 @@ export const IconButton: React.FC<IconButtonProps> = ({
         opacity: props.disabled ? 0.5 : 1,
         transition: "all 0.15s ease",
         ...style,
+      }}
+      onMouseEnter={(e) => {
+        setIsHovered(true);
+        if (onMouseEnter) onMouseEnter(e);
+      }}
+      onMouseLeave={(e) => {
+        setIsHovered(false);
+        if (onMouseLeave) onMouseLeave(e);
       }}
       {...props}
     >

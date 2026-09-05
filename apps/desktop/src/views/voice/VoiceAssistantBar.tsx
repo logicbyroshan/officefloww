@@ -52,10 +52,6 @@ export const VoiceAssistantBar: React.FC<VoiceAssistantBarProps> = ({
           setResponse({
             answer: "Say or type: 'Find St. Xavier's High School', 'Show unpaid invoices', or 'Check proof status.'",
           });
-        } else if (activeSection === "billing") {
-          setResponse({
-            answer: "Say or type: 'What are total collections today?', 'List overdue invoices', or 'Show client ledger.'",
-          });
         }
       }
     }
@@ -128,7 +124,7 @@ export const VoiceAssistantBar: React.FC<VoiceAssistantBarProps> = ({
       } else if (lower.includes("staff") || lower.includes("priya") || lower.includes("who")) {
         action = { type: "navigate", target: "staff", label: "Open Staff Workspace" };
       } else if (lower.includes("invoice") || lower.includes("billing") || lower.includes("payment")) {
-        action = { type: "navigate", target: "billing", label: "Open Billing Center" };
+        action = { type: "navigate", target: "dashboard", label: "Open Invoices & Ledger in Home" };
       } else if (lower.includes("order") || lower.includes("client") || lower.includes("xavier")) {
         action = { type: "navigate", target: "clients", label: "Open Client Orders" };
       }
@@ -158,7 +154,7 @@ export const VoiceAssistantBar: React.FC<VoiceAssistantBarProps> = ({
       } else if (lower.includes("unpaid") || lower.includes("invoice") || lower.includes("billing")) {
         setResponse({
           answer: "Total outstanding receivables: ₹82,500 across 1 partially paid invoice (#INV-2026-0001).",
-          action: { type: "navigate", target: "billing", label: "Open Invoices" },
+          action: { type: "navigate", target: "dashboard", label: "Open Invoices in Home" },
         });
       } else {
         setResponse({

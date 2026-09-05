@@ -87,8 +87,22 @@
 
   /* Layout Constants */
   --topbar-height: 56px;
-  --sidebar-width: 256px;
+  --sidebar-width: 190px;
   --sidebar-collapsed-width: 68px;
+
+  /* Standard Component Dimensions */
+  --btn-height-sm: 32px;
+  --btn-height-md: 36px;
+  --btn-height-lg: 42px;
+  --input-height: 36px;
+  --modal-width-sm: 420px;
+  --modal-width-md: 540px;
+  --modal-width-lg: 680px;
+  --drawer-width: 520px;
+  --drawer-width-wide: 640px;
+
+  /* Focus Ring */
+  --focus-ring: 0 0 0 2px var(--accent-soft), 0 0 0 1px var(--accent);
 }
 
 /* ==========================================================================
@@ -153,4 +167,27 @@ a:hover {
 code, kbd, samp, pre {
   font-family: var(--font-mono);
   font-size: 13px;
+}
+
+/* Animations */
+@keyframes drawerSlideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0.6;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }

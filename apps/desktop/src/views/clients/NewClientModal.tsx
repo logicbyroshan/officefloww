@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { ClientCreate } from "@officefloww/api-types";
 import { ClientsService } from "../../api/services";
-import { Modal } from "../../design-system/components/Modal";
+import { Drawer } from "../../design-system/components/Modal";
 import { Input, Textarea } from "../../design-system/components/Input";
 import { Button } from "../../design-system/components/Button";
 import { useToast } from "../../design-system/components/Toast";
@@ -69,12 +69,12 @@ export const NewClientModal: React.FC<NewClientModalProps> = ({
   };
 
   return (
-    <Modal
+    <Drawer
       isOpen={isOpen}
       onClose={onClose}
-      title="Onboard New Commercial Client"
+      title="Onboard New Client"
       subtitle="Register institutional client details, GSTIN tax identifiers, and primary contacts"
-      width={560}
+      width={520}
       footer={
         <>
           <Button variant="secondary" onClick={onClose} disabled={loading}>
@@ -164,6 +164,6 @@ export const NewClientModal: React.FC<NewClientModalProps> = ({
           </div>
         </div>
       </form>
-    </Modal>
+    </Drawer>
   );
 };

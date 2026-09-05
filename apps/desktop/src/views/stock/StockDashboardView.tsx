@@ -3,6 +3,7 @@ import { Button } from "../../design-system/components/Button";
 import { Icon } from "../../design-system/components/Icon";
 import { Modal } from "../../design-system/components/Modal";
 import { Input, Select } from "../../design-system/components/Input";
+import { Tabs } from "../../design-system/components/Tabs";
 import { useToast } from "../../design-system/components/Toast";
 
 // ─── Stock Item Interface (NO PRICING) ─────────────────────────────────────────
@@ -442,40 +443,16 @@ export const StockDashboardView: React.FC = () => {
       >
         {/* Left: View Switcher (Inventory Table / Movement Log) & Search */}
         <div style={{ display: "flex", alignItems: "center", gap: "12px", flex: 1, minWidth: "320px", maxWidth: "680px" }}>
-          <div style={{ display: "flex", gap: "2px", backgroundColor: "rgba(0,0,0,0.3)", padding: "3px", borderRadius: "2px" }}>
-            <button
-              type="button"
-              onClick={() => setActiveTab("inventory")}
-              style={{
-                padding: "6px 12px",
-                borderRadius: "2px",
-                border: "none",
-                backgroundColor: activeTab === "inventory" ? "rgba(255,138,115,0.15)" : "transparent",
-                color: activeTab === "inventory" ? "var(--accent-text)" : "var(--text-secondary)",
-                fontSize: "12px",
-                fontWeight: activeTab === "inventory" ? 700 : 500,
-                cursor: "pointer",
-              }}
-            >
-              Stocks Inventory ({stockItems.length})
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("log")}
-              style={{
-                padding: "6px 12px",
-                borderRadius: "2px",
-                border: "none",
-                backgroundColor: activeTab === "log" ? "rgba(255,138,115,0.15)" : "transparent",
-                color: activeTab === "log" ? "var(--accent-text)" : "var(--text-secondary)",
-                fontSize: "12px",
-                fontWeight: activeTab === "log" ? 700 : 500,
-                cursor: "pointer",
-              }}
-            >
-              Material Usage Log
-            </button>
-          </div>
+          <Tabs
+            variant="pill"
+            size="sm"
+            activeTab={activeTab}
+            onChange={(id) => setActiveTab(id as any)}
+            tabs={[
+              { id: "inventory", label: "Stocks Inventory", badge: stockItems.length },
+              { id: "log", label: "Material Usage Log" },
+            ]}
+          />
 
           <div
             style={{
@@ -483,8 +460,8 @@ export const StockDashboardView: React.FC = () => {
               flex: 1,
               backgroundColor: "rgba(255, 255, 255, 0.05)",
               border: "1px solid rgba(255, 255, 255, 0.12)",
-              borderRadius: "2px",
-              height: "36px",
+              borderRadius: "var(--radius-sm, 4px)",
+              height: "var(--input-height, 36px)",
               display: "flex",
               alignItems: "center",
               padding: "0 10px",
@@ -519,7 +496,6 @@ export const StockDashboardView: React.FC = () => {
             variant="primary"
             size="sm"
             icon="plus"
-            style={{ borderRadius: "2px", backgroundColor: "var(--accent)", border: "none" }}
             onClick={() => setIsNewItemModalOpen(true)}
           >
             New Stock Item
@@ -539,48 +515,20 @@ export const StockDashboardView: React.FC = () => {
             gap: "10px",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-            <button
-              type="button"
-              onClick={() => setCategoryFilter("ALL")}
-              style={{
-                padding: "5px 12px",
-                borderRadius: "2px",
-                border: "1px solid " + (categoryFilter === "ALL" ? "var(--accent-border)" : "rgba(255,255,255,0.08)"),
-                backgroundColor: categoryFilter === "ALL" ? "rgba(255,138,115,0.15)" : "rgba(255,255,255,0.03)",
-                color: categoryFilter === "ALL" ? "var(--accent-text)" : "var(--text-secondary)",
-                fontSize: "11.5px",
-                fontWeight: categoryFilter === "ALL" ? 700 : 500,
-                cursor: "pointer",
-              }}
-            >
-              All Items ({stockItems.length})
-            </button>
-
-            {(Object.keys(categoryLabels) as StockCategory[]).map((cat) => {
-              const meta = categoryLabels[cat];
-              const isSelected = categoryFilter === cat;
-              return (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => setCategoryFilter(cat)}
-                  style={{
-                    padding: "5px 12px",
-                    borderRadius: "2px",
-                    border: "1px solid " + (isSelected ? `${meta.color}66` : "rgba(255,255,255,0.08)"),
-                    backgroundColor: isSelected ? `${meta.color}22` : "rgba(255,255,255,0.03)",
-                    color: isSelected ? meta.color : "var(--text-secondary)",
-                    fontSize: "11.5px",
-                    fontWeight: isSelected ? 700 : 500,
-                    cursor: "pointer",
-                  }}
-                >
-                  {meta.label} ({meta.count})
-                </button>
-              );
-            })}
-          </div>
+          <Tabs
+            variant="pill"
+            size="sm"
+            activeTab={categoryFilter}
+            onChange={(id) => setCategoryFilter(id as any)}
+            tabs={[
+              { id: "ALL", label: "All Items", badge: stockItems.length },
+              ...(Object.keys(categoryLabels) as StockCategory[]).map((cat) => ({
+                id: cat,
+                label: categoryLabels[cat].label,
+                badge: categoryLabels[cat].count,
+              })),
+            ]}
+          />
 
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>Sort:</span>

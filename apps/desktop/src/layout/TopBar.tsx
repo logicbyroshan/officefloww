@@ -77,8 +77,9 @@ export const TopBar: React.FC<TopBarProps> = ({
             backgroundColor: "rgba(19, 23, 34, 0.85)",
             backdropFilter: "blur(12px)",
             border: "1px solid rgba(255, 255, 255, 0.08)",
-            borderRadius: "4px",
-            padding: "8px 16px",
+            borderRadius: "var(--radius-sm)",
+            height: "var(--input-height, 36px)",
+            padding: "0 14px",
             color: "var(--text-muted)",
             fontSize: "13px",
             cursor: "pointer",
@@ -133,7 +134,7 @@ export const TopBar: React.FC<TopBarProps> = ({
               ? "1px solid var(--accent)"
               : "1px solid rgba(255, 255, 255, 0.08)",
             backgroundColor: isVoiceActive
-              ? "rgba(255, 138, 115, 0.18)"
+              ? "var(--accent-soft)"
               : "rgba(255, 255, 255, 0.03)",
             color: isVoiceActive ? "var(--accent-text)" : "var(--text-secondary)",
             fontSize: "12.5px",
@@ -408,7 +409,7 @@ export const TopBar: React.FC<TopBarProps> = ({
                       border: "none",
                       backgroundColor:
                         user?.email === acc.email
-                          ? "rgba(255, 138, 115, 0.12)"
+                          ? "var(--accent-soft)"
                           : "transparent",
                       color:
                         user?.email === acc.email

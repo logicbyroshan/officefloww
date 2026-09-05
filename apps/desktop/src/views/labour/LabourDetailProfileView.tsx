@@ -127,12 +127,14 @@ export const LabourDetailProfileView: React.FC<LabourDetailProfileViewProps> = (
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-          <button
-            type="button" onClick={onBack}
-            style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "6px 12px", borderRadius: "2px", backgroundColor: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "var(--text-secondary)", fontSize: "12px", fontWeight: 600, cursor: "pointer" }}
+          <Button
+            variant="secondary"
+            size="sm"
+            icon="chevron-left"
+            onClick={onBack}
           >
-            <span>‹</span><span>Back to Contract Labour</span>
-          </button>
+            Back to Contract Labour
+          </Button>
 
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <span style={{ fontSize: "13px", fontWeight: 800, color: "#fff" }}>

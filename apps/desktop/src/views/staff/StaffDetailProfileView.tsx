@@ -4,6 +4,7 @@ import { Icon } from "../../design-system/components/Icon";
 import { Button } from "../../design-system/components/Button";
 import { Modal } from "../../design-system/components/Modal";
 import { Input } from "../../design-system/components/Input";
+import { Tabs } from "../../design-system/components/Tabs";
 import { useToast } from "../../design-system/components/Toast";
 
 export interface StaffDetailProfileViewProps {
@@ -294,86 +295,26 @@ export const StaffDetailProfileView: React.FC<StaffDetailProfileViewProps> = ({
       >
         {/* Left: Back button + Profile Tabs */}
         <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-          <button
-            type="button"
+          <Button
+            variant="secondary"
+            size="sm"
+            icon="chevron-left"
             onClick={onBack}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              padding: "6px 12px",
-              borderRadius: "2px",
-              backgroundColor: "rgba(255, 255, 255, 0.05)",
-              border: "1px solid rgba(255, 255, 255, 0.1)",
-              color: "var(--text-secondary)",
-              fontSize: "12px",
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
           >
-            <span>‹</span>
-            <span>Back to Workforce</span>
-          </button>
+            Back to Workforce
+          </Button>
 
           {/* Top Tabs (Overview, Tasks Kanban) */}
-          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            {[
-              { id: "overview" as const, label: "Overview", icon: "user" as const },
-              { id: "tasks" as const, label: "Assigned Tasks (Kanban)", icon: "tasks" as const, count: kanbanTasks.length },
-            ].map((tab) => {
-              const isActive = activeProfileTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setActiveProfileTab(tab.id)}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    padding: "7px 14px",
-                    borderRadius: "2px",
-                    border: "none",
-                    backgroundColor: isActive ? "rgba(255, 138, 115, 0.15)" : "transparent",
-                    color: isActive ? "var(--accent-text)" : "var(--text-secondary)",
-                    fontSize: "12.5px",
-                    fontWeight: isActive ? 700 : 500,
-                    cursor: "pointer",
-                    transition: "all 0.15s ease",
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isActive) {
-                      e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
-                      e.currentTarget.style.color = "#fff";
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isActive) {
-                      e.currentTarget.style.backgroundColor = "transparent";
-                      e.currentTarget.style.color = "var(--text-secondary)";
-                    }
-                  }}
-                >
-                  <Icon name={tab.icon} size={13} color={isActive ? "var(--accent-text)" : "currentColor"} />
-                  <span>{tab.label}</span>
-                  {tab.count !== undefined && (
-                    <span
-                      style={{
-                        fontSize: "10.5px",
-                        fontWeight: 700,
-                        padding: "1px 5px",
-                        borderRadius: "2px",
-                        backgroundColor: isActive ? "rgba(255, 138, 115, 0.25)" : "rgba(255, 255, 255, 0.08)",
-                        color: isActive ? "var(--accent-text)" : "var(--text-muted)",
-                      }}
-                    >
-                      {tab.count}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
+          <Tabs
+            variant="pill"
+            size="md"
+            activeTab={activeProfileTab}
+            onChange={(id) => setActiveProfileTab(id as any)}
+            tabs={[
+              { id: "overview", label: "Overview" },
+              { id: "tasks", label: "Assigned Tasks (Kanban)", badge: kanbanTasks.length },
+            ]}
+          />
         </div>
 
         {/* Right: Actions (Edit Profile) */}

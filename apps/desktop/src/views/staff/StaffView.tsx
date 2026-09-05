@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Icon } from "../../design-system/components/Icon";
+import { Button } from "../../design-system/components/Button";
 import { useToast } from "../../design-system/components/Toast";
 import { StaffDetailProfileView } from "./StaffDetailProfileView";
 
@@ -185,8 +186,8 @@ export const StaffView: React.FC = () => {
               alignItems: "center",
               gap: "6px",
               padding: "5px 12px",
-              borderRadius: "3px",
-              backgroundColor: "rgba(255, 138, 115, 0.12)",
+              borderRadius: "var(--radius-sm, 4px)",
+              backgroundColor: "var(--accent-soft)",
               border: "1px solid var(--accent-border)",
               color: "var(--accent-text)",
               fontSize: "12.5px",
@@ -209,11 +210,11 @@ export const StaffView: React.FC = () => {
               display: "flex",
               alignItems: "center",
               gap: "8px",
-              height: "38px",
+              height: "var(--input-height, 36px)",
               boxSizing: "border-box",
               backgroundColor: "rgba(0, 0, 0, 0.3)",
               border: "1px solid rgba(255, 255, 255, 0.1)",
-              borderRadius: "3px",
+              borderRadius: "var(--radius-sm, 4px)",
               padding: "0 14px",
               flex: 1,
               maxWidth: "380px",
@@ -236,30 +237,14 @@ export const StaffView: React.FC = () => {
             />
           </div>
 
-          <button
-            type="button"
+          <Button
+            variant="primary"
+            size="md"
+            icon="plus"
             onClick={() => success("Personnel Provisioning", "Staff record creation opened.")}
-            style={{
-              height: "38px",
-              padding: "0 16px",
-              borderRadius: "3px",
-              backgroundColor: "var(--accent)",
-              backgroundImage: "linear-gradient(135deg, #ff8a73 0%, #ea580c 100%)",
-              border: "none",
-              color: "#ffffff",
-              fontSize: "13px",
-              fontWeight: 700,
-              cursor: "pointer",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              boxShadow: "0 2px 10px rgba(234, 88, 12, 0.35)",
-              flexShrink: 0,
-            }}
           >
-            <Icon name="plus" size={14} color="#fff" />
-            <span>Add Personnel</span>
-          </button>
+            Add Personnel
+          </Button>
         </div>
       </div>
 

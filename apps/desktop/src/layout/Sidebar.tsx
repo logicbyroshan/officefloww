@@ -35,7 +35,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: "clients", label: "Clients", icon: "clients" },
     { id: "orders", label: "Orders", icon: "orders" },
     { id: "stock", label: "Stock", icon: "stock" },
-    { id: "billing", label: "Billing", icon: "billing" },
     { id: "staff", label: "Staff", icon: "staff" },
     { id: "labour", label: "Labour", icon: "labour" },
     {
@@ -53,14 +52,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <aside
       style={{
-        width: "240px",
-        backgroundColor: "rgba(14, 18, 26, 0.88)",
+        width: isCollapsed ? "68px" : "190px",
+        backgroundColor: "rgba(14, 18, 26, 0.92)",
         backdropFilter: "blur(18px)",
         borderRight: "1px solid rgba(255, 255, 255, 0.07)",
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
-        padding: isCollapsed ? "16px 8px 14px 8px" : "16px 12px 14px 12px",
+        padding: isCollapsed ? "14px 6px" : "14px 8px 12px 8px",
         flexShrink: 0,
         height: "100%",
         overflowY: "auto",
@@ -73,23 +72,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Brand Header */}
         <div
           style={{
-            padding: isCollapsed ? "2px 0 16px 0" : "2px 8px 16px 8px",
+            padding: isCollapsed ? "2px 0 14px 0" : "2px 6px 14px 6px",
             borderBottom: "1px solid rgba(255, 255, 255, 0.07)",
-            marginBottom: "18px",
+            marginBottom: "14px",
             display: "flex",
             alignItems: "center",
             justifyContent: isCollapsed ? "center" : "flex-start",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "11px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "9px" }}>
             <img
               src="./assets/logo.png"
               alt="PrintFlow"
               title="PrintFlow — Adharsh Bhopal OS"
               style={{
-                width: 36,
-                height: 36,
-                borderRadius: "6px",
+                width: 30,
+                height: 30,
+                borderRadius: "5px",
                 objectFit: "contain",
                 filter: "drop-shadow(0 2px 8px rgba(124, 58, 237, 0.45))",
                 flexShrink: 0,
@@ -99,7 +98,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <div>
                 <div
                   style={{
-                    fontSize: "15px",
+                    fontSize: "14px",
                     fontWeight: 700,
                     color: "var(--text-primary)",
                     letterSpacing: "-0.2px",
@@ -110,15 +109,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </div>
                 <div
                   style={{
-                    fontSize: "10px",
+                    fontSize: "9.5px",
                     color: "var(--accent-text)",
                     textTransform: "uppercase",
-                    letterSpacing: "0.6px",
+                    letterSpacing: "0.5px",
                     fontWeight: 700,
                     whiteSpace: "nowrap",
                   }}
                 >
-                  Adharsh Bhopal OS
+                  Adharsh OS
                 </div>
               </div>
             )}
@@ -175,7 +174,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         : "3px solid transparent"
                       : undefined,
                     backgroundColor: isActive
-                      ? "rgba(255, 138, 115, 0.12)"
+                      ? "var(--accent-soft)"
                       : "transparent",
                     color: isActive ? "var(--accent-text)" : "var(--text-secondary)",
                     fontSize: "13.5px",
@@ -185,7 +184,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     transition: "all 0.15s ease",
                     width: "100%",
                     boxShadow: isActive
-                      ? "0 2px 10px rgba(255, 138, 115, 0.15)"
+                      ? "0 2px 10px var(--accent-soft)"
                       : "none",
                   }}
                   onMouseEnter={(e) => {
@@ -279,7 +278,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 : undefined,
               backgroundColor:
                 activeSection === "settings"
-                  ? "rgba(255, 138, 115, 0.12)"
+                  ? "var(--accent-soft)"
                   : "transparent",
               color:
                 activeSection === "settings"

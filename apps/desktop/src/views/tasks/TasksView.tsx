@@ -7,6 +7,7 @@ import { Button } from "../../design-system/components/Button";
 import { Icon } from "../../design-system/components/Icon";
 import { TaskDetailDrawer } from "./TaskDetailDrawer";
 import { LoadingState, ErrorState } from "../../design-system/components/FeedbackStates";
+import { Tabs } from "../../design-system/components/Tabs";
 import { useAuth } from "../../auth/AuthContext";
 import { TasksService } from "../../api/services";
 import { useToast } from "../../design-system/components/Toast";
@@ -206,44 +207,17 @@ export const TasksView: React.FC<TasksViewProps> = ({
       width: "95px",
       align: "right",
       render: (t) => (
-        <button
-          type="button"
+        <Button
+          variant="secondary"
+          size="sm"
           onClick={(e) => {
             e.stopPropagation();
             setSelectedTask(t);
           }}
-          style={{
-            display: "inline-flex",
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "5px",
-            padding: "5px 12px",
-            borderRadius: "4px",
-            backgroundColor: "rgba(255, 255, 255, 0.05)",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
-            color: "var(--text-secondary)",
-            fontSize: "12px",
-            fontWeight: 500,
-            cursor: "pointer",
-            whiteSpace: "nowrap",
-            lineHeight: 1,
-            transition: "all 0.15s ease",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = "rgba(255, 138, 115, 0.15)";
-            e.currentTarget.style.borderColor = "var(--accent-border)";
-            e.currentTarget.style.color = "var(--accent-text)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
-            e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
-            e.currentTarget.style.color = "var(--text-secondary)";
-          }}
+          style={{ height: "28px", padding: "0 10px", fontSize: "11.5px" }}
         >
-          <span>Details</span>
-          <span style={{ fontSize: "11px" }}>→</span>
-        </button>
+          Details →
+        </Button>
       ),
     },
   ];
@@ -301,44 +275,20 @@ export const TasksView: React.FC<TasksViewProps> = ({
             flexWrap: "wrap",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-            {[
-              { id: "all" as const, label: "All Tasks", icon: "tasks" },
-              { id: "my" as const, label: "My Tasks", icon: "clipboard" },
-              { id: "board" as const, label: "Board", icon: "columns" },
-              { id: "overdue" as const, label: "Overdue", icon: "clock" },
-              { id: "blocked" as const, label: "Blocked", icon: "alert-circle" },
-              { id: "approvals" as const, label: "Approvals", icon: "check-circle" },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id)}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  padding: "6px 12px",
-                  borderRadius: "4px",
-                  border: "none",
-                  backgroundColor:
-                    activeTab === tab.id
-                      ? "rgba(255, 138, 115, 0.14)"
-                      : "transparent",
-                  color:
-                    activeTab === tab.id
-                      ? "var(--accent-text)"
-                      : "var(--text-secondary)",
-                  fontSize: "12.5px",
-                  fontWeight: activeTab === tab.id ? 600 : 500,
-                  cursor: "pointer",
-                  transition: "all 0.12s ease",
-                }}
-              >
-                <span>{tab.label}</span>
-              </button>
-            ))}
-          </div>
+          <Tabs
+            variant="pill"
+            size="md"
+            activeTab={activeTab}
+            onChange={(id) => setActiveTab(id as TaskViewTab)}
+            tabs={[
+              { id: "all", label: "All Tasks" },
+              { id: "my", label: "My Tasks" },
+              { id: "board", label: "Board" },
+              { id: "overdue", label: "Overdue" },
+              { id: "blocked", label: "Blocked" },
+              { id: "approvals", label: "Approvals" },
+            ]}
+          />
 
           {/* Search bar inside Tasks */}
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -347,11 +297,11 @@ export const TasksView: React.FC<TasksViewProps> = ({
                 display: "flex",
                 alignItems: "center",
                 gap: "8px",
-                height: "36px",
+                height: "var(--input-height, 36px)",
                 boxSizing: "border-box",
                 backgroundColor: "rgba(0, 0, 0, 0.25)",
                 border: "1px solid rgba(255, 255, 255, 0.08)",
-                borderRadius: "4px",
+                borderRadius: "var(--radius-sm, 4px)",
                 padding: "0 12px",
               }}
             >
@@ -375,46 +325,25 @@ export const TasksView: React.FC<TasksViewProps> = ({
         </div>
 
         {/* Work Type Filter Chips */}
-        <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-          <span style={{ fontSize: "11px", color: "var(--text-muted)", marginRight: "4px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+          <span style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)", letterSpacing: "0.5px" }}>
             Work Type:
           </span>
-          {[
-            { id: "ALL", label: "All Types" },
-            { id: "PRODUCTION", label: "Production Press" },
-            { id: "FITTING", label: "Assembly & Fitting" },
-            { id: "DATA", label: "Data Roster" },
-            { id: "DESIGN", label: "Artwork Proofing" },
-            { id: "PACKING", label: "Packing Verification" },
-            { id: "DISPATCH", label: "Dispatch Logistics" },
-          ].map((wt) => (
-            <button
-              key={wt.id}
-              type="button"
-              onClick={() => setWorkTypeFilter(wt.id as WorkTypeFilter)}
-              style={{
-                padding: "3px 9px",
-                borderRadius: "3px",
-                fontSize: "11.5px",
-                fontWeight: 500,
-                cursor: "pointer",
-                border:
-                  workTypeFilter === wt.id
-                    ? "1px solid var(--accent-border)"
-                    : "1px solid rgba(255, 255, 255, 0.06)",
-                backgroundColor:
-                  workTypeFilter === wt.id
-                    ? "rgba(255, 138, 115, 0.12)"
-                    : "rgba(255, 255, 255, 0.02)",
-                color:
-                  workTypeFilter === wt.id
-                    ? "var(--accent-text)"
-                    : "var(--text-muted)",
-              }}
-            >
-              {wt.label}
-            </button>
-          ))}
+          <Tabs
+            variant="pill"
+            size="sm"
+            activeTab={workTypeFilter}
+            onChange={(id) => setWorkTypeFilter(id as WorkTypeFilter)}
+            tabs={[
+              { id: "ALL", label: "All Types" },
+              { id: "PRODUCTION", label: "Production Press" },
+              { id: "FITTING", label: "Assembly & Fitting" },
+              { id: "DATA", label: "Data Roster" },
+              { id: "DESIGN", label: "Artwork Proofing" },
+              { id: "PACKING", label: "Packing Verification" },
+              { id: "DISPATCH", label: "Dispatch Logistics" },
+            ]}
+          />
         </div>
 
         {/* Board View vs Table View */}

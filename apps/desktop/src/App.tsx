@@ -27,7 +27,6 @@ import { OrderDetailView } from "./views/orders/OrderDetailView";
 import { NewOrderModal } from "./views/orders/NewOrderModal";
 import { OrdersWorkspaceView } from "./views/orders/OrdersWorkspaceView";
 import { NewClientModal } from "./views/clients/NewClientModal";
-import { BillingView } from "./views/billing/BillingView";
 import { SettingsView } from "./views/settings/SettingsView";
 import { GlobalSearchModal } from "./views/search/GlobalSearchModal";
 import { LoadingState } from "./design-system/components/FeedbackStates";
@@ -188,10 +187,6 @@ const MainApp: React.FC = () => {
             onNewOrder={() => setIsNewOrderOpen(true)}
           />
         );
-
-      case "billing":
-        return <BillingView />;
-
       case "settings":
         return <SettingsView />;
 
