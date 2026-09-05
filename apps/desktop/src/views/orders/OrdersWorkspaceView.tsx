@@ -4,6 +4,8 @@ import { Icon } from "../../design-system/components/Icon";
 import { Drawer } from "../../design-system/components/Drawer";
 import { Tabs } from "../../design-system/components/Tabs";
 import { useToast } from "../../design-system/components/Toast";
+import { LabourContractor as LabourProfileContractor, INITIAL_LABOUR } from "../labour/LabourView";
+import { LabourDetailProfileView } from "../labour/LabourDetailProfileView";
 
 // ─── Default Known Clients List for Auto-Fetch ────────────────────────────────
 export const DEFAULT_CLIENTS = [
@@ -63,6 +65,14 @@ export interface LabourContractor {
   materialHoldings: MaterialHolding[];
   activeJobsCount: number;
   phone: string;
+}
+
+export interface AllocationRow {
+  workerId: string;
+  workerName: string;
+  workerRole: string;
+  workerType: "STAFF" | "LABOUR";
+  qty: number;
 }
 
 // In-House Staff/Employees for ID Card Production
@@ -873,11 +883,14 @@ export function useSharedOrders() {
   return [orders, setOrders] as const;
 }
 
+export type OrdersViewMode = "ALL_ORDERS" | "LANYARD_ORDERS" | "CARD_ORDERS" | "LABOUR_LANYARD";
+
 export interface OrdersWorkspaceViewProps {
   clients?: any[];
   onSelectOrder?: (id: string) => void;
   filterClientName?: string;
   embedded?: boolean;
+  mode?: OrdersViewMode;
 }
 
 // ─── Helper Badge for Single Product (Things Ordered) ─────────────────────────
@@ -913,6 +926,7 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
   onSelectOrder,
   filterClientName,
   embedded = false,
+  mode = "ALL_ORDERS",
 }) => {
   const { success } = useToast();
   const [orders, setOrders] = useSharedOrders();
@@ -920,6 +934,18 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
   const [filterItem, setFilterItem] = useState("ALL");
   const [sortField, setSortField] = useState<"client" | "qty" | "orderDate" | "deliveryDate">("deliveryDate");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+
+  // In-place Labour Profile viewing (from Labour Lanyard workspace)
+  const [selectedContractorForProfile, setSelectedContractorForProfile] = useState<LabourProfileContractor | null>(null);
+  const [labourSubTab, setLabourSubTab] = useState<"TABLE" | "CONTRACTORS">("TABLE");
+
+  const handleOpenContractorProfile = (contractorNameOrId: string) => {
+    const q = contractorNameOrId.toLowerCase();
+    const matched = INITIAL_LABOUR.find(
+      (c) => c.name.toLowerCase().includes(q) || q.includes(c.name.toLowerCase()) || c.id.toLowerCase() === q
+    ) || INITIAL_LABOUR[0];
+    setSelectedContractorForProfile(matched);
+  };
 
   // Combined client names list from props + defaults
   const clientNames = useMemo(() => {
@@ -1182,6 +1208,14 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
 
   const filteredOrders = useMemo(() => {
     let list = orders.filter((o) => {
+      // 0. Mode specific product filtering
+      const currentItem = o.itemOrdered || o.itemsOrdered?.[0] || "Lanyard";
+      if (mode === "LANYARD_ORDERS" || mode === "LABOUR_LANYARD") {
+        if (currentItem.toLowerCase() !== "lanyard") return false;
+      } else if (mode === "CARD_ORDERS") {
+        if (currentItem.toLowerCase() !== "card") return false;
+      }
+
       // 1. Client filter if specific client tab
       if (filterClientName) {
         const clientA = o.client.toLowerCase().trim();
@@ -1195,7 +1229,6 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
 
       // 2. Search query filter
       const q = search.toLowerCase();
-      const currentItem = o.itemOrdered || o.itemsOrdered?.[0] || "";
       const matchSearch =
         !q ||
         o.client.toLowerCase().includes(q) ||
@@ -1203,9 +1236,9 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
         currentItem.toLowerCase().includes(q) ||
         (o.assignedTo || []).some((a) => a.name.toLowerCase().includes(q) || a.role.toLowerCase().includes(q));
 
-      // 3. Category pill filter
+      // 3. Category pill filter (only in ALL_ORDERS mode)
       let matchFilter = true;
-      if (filterItem !== "ALL") {
+      if (mode === "ALL_ORDERS" && filterItem !== "ALL") {
         matchFilter = currentItem.toLowerCase() === filterItem.toLowerCase();
       }
 
@@ -1220,7 +1253,7 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
     });
 
     return list;
-  }, [orders, search, filterItem, sortField, sortDir, filterClientName]);
+  }, [orders, search, filterItem, sortField, sortDir, filterClientName, mode]);
 
   const toggleSort = (field: typeof sortField) => {
     if (sortField === field) {
@@ -1323,6 +1356,16 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
     return clientNames.filter((c) => c.toLowerCase().includes(q));
   }, [clientNames, editValue]);
 
+  // If user clicked into a Labour Contractor profile from Labour Lanyard
+  if (selectedContractorForProfile) {
+    return (
+      <LabourDetailProfileView
+        contractor={selectedContractorForProfile}
+        onBack={() => setSelectedContractorForProfile(null)}
+      />
+    );
+  }
+
   return (
     <div style={{ display: "flex", flexDirection: "column", width: "100%", height: "100%", overflowY: "auto" }}>
 
@@ -1344,8 +1387,113 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
           flexWrap: "wrap",
         }}
       >
-        {/* Left: Modern Search Bar & Product Filter Pills */}
-        <div style={{ display: "flex", alignItems: "center", gap: "12px", flex: 1, minWidth: "300px", maxWidth: "720px" }}>
+        {/* Left: Mode Badge / Toggle & Search Bar */}
+        <div style={{ display: "flex", alignItems: "center", gap: "12px", flex: 1, minWidth: "300px", maxWidth: "800px" }}>
+          {/* Mode Title Badges & Toggles */}
+          {mode === "LANYARD_ORDERS" && (
+            <span
+              style={{
+                fontSize: "11px",
+                fontWeight: 800,
+                color: "#c084fc",
+                padding: "5px 10px",
+                borderRadius: "3px",
+                backgroundColor: "rgba(168, 85, 247, 0.12)",
+                border: "1px solid rgba(168, 85, 247, 0.3)",
+                whiteSpace: "nowrap",
+                letterSpacing: "0.5px",
+                textTransform: "uppercase",
+              }}
+            >
+              🏷️ Lanyard Order
+            </span>
+          )}
+
+          {mode === "CARD_ORDERS" && (
+            <span
+              style={{
+                fontSize: "11px",
+                fontWeight: 800,
+                color: "#38bdf8",
+                padding: "5px 10px",
+                borderRadius: "3px",
+                backgroundColor: "rgba(56, 189, 248, 0.12)",
+                border: "1px solid rgba(56, 189, 248, 0.3)",
+                whiteSpace: "nowrap",
+                letterSpacing: "0.5px",
+                textTransform: "uppercase",
+              }}
+            >
+              🪪 ID Card Order
+            </span>
+          )}
+
+          {mode === "LABOUR_LANYARD" && (
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
+              <span
+                style={{
+                  fontSize: "11px",
+                  fontWeight: 800,
+                  color: "#fb923c",
+                  padding: "5px 10px",
+                  borderRadius: "3px",
+                  backgroundColor: "rgba(249, 115, 22, 0.12)",
+                  border: "1px solid rgba(249, 115, 22, 0.3)",
+                  whiteSpace: "nowrap",
+                  letterSpacing: "0.5px",
+                  textTransform: "uppercase",
+                }}
+              >
+                🤝 Labour Lanyard
+              </span>
+
+              {/* Sub-tab switcher */}
+              <div
+                style={{
+                  display: "flex",
+                  backgroundColor: "rgba(255, 255, 255, 0.04)",
+                  borderRadius: "4px",
+                  padding: "2px",
+                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => setLabourSubTab("TABLE")}
+                  style={{
+                    padding: "4px 10px",
+                    fontSize: "11px",
+                    fontWeight: 700,
+                    borderRadius: "3px",
+                    border: "none",
+                    cursor: "pointer",
+                    backgroundColor: labourSubTab === "TABLE" ? "rgba(255, 255, 255, 0.12)" : "transparent",
+                    color: labourSubTab === "TABLE" ? "#fff" : "var(--text-muted)",
+                  }}
+                >
+                  📋 Orders Table
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLabourSubTab("CONTRACTORS")}
+                  style={{
+                    padding: "4px 10px",
+                    fontSize: "11px",
+                    fontWeight: 700,
+                    borderRadius: "3px",
+                    border: "none",
+                    cursor: "pointer",
+                    backgroundColor: labourSubTab === "CONTRACTORS" ? "rgba(255, 255, 255, 0.12)" : "transparent",
+                    color: labourSubTab === "CONTRACTORS" ? "#fff" : "var(--text-muted)",
+                  }}
+                >
+                  👥 Contractors & Buffers ({INITIAL_LABOUR.length})
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Search Box */}
           <div
             style={{
               position: "relative",
@@ -1367,6 +1515,12 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
               placeholder={
                 filterClientName
                   ? `Search orders for ${filterClientName}...`
+                  : mode === "LANYARD_ORDERS"
+                  ? "Search lanyard orders by client or worker..."
+                  : mode === "CARD_ORDERS"
+                  ? "Search card orders by client or staff..."
+                  : mode === "LABOUR_LANYARD"
+                  ? "Search labour lanyard orders..."
                   : "Search orders by client, product, or worker..."
               }
               value={search}
@@ -1390,17 +1544,19 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
             )}
           </div>
 
-          {/* Product Type Filter Pills */}
-          <Tabs
-            variant="pill"
-            size="sm"
-            activeTab={filterItem}
-            onChange={(id) => setFilterItem(id)}
-            tabs={filterOptions.map((opt) => ({
-              id: opt,
-              label: opt === "ALL" ? "All" : opt,
-            }))}
-          />
+          {/* Product Type Filter Pills (only in ALL_ORDERS mode) */}
+          {mode === "ALL_ORDERS" && (
+            <Tabs
+              variant="pill"
+              size="sm"
+              activeTab={filterItem}
+              onChange={(id) => setFilterItem(id)}
+              tabs={filterOptions.map((opt) => ({
+                id: opt,
+                label: opt === "ALL" ? "All" : opt,
+              }))}
+            />
+          )}
         </div>
 
         {/* Right: Counter, Hint & Refresh */}
@@ -1646,6 +1802,7 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
               <select
                 value={newItemOrdered}
                 onChange={(e) => setNewItemOrdered(e.target.value)}
+                disabled={mode === "LANYARD_ORDERS" || mode === "CARD_ORDERS" || mode === "LABOUR_LANYARD"}
                 style={{
                   width: "100%",
                   height: "36px",
@@ -1657,12 +1814,16 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
                   fontSize: "12.5px",
                   fontWeight: 700,
                   outline: "none",
-                  cursor: "pointer",
+                  cursor: (mode === "LANYARD_ORDERS" || mode === "CARD_ORDERS" || mode === "LABOUR_LANYARD") ? "default" : "pointer",
                   boxSizing: "border-box",
                 }}
               >
-                <option value="Lanyard" style={{ backgroundColor: "#0e131f", color: "#c084fc" }}>Lanyard</option>
-                <option value="Card" style={{ backgroundColor: "#0e131f", color: "#38bdf8" }}>Card</option>
+                {mode !== "CARD_ORDERS" && (
+                  <option value="Lanyard" style={{ backgroundColor: "#0e131f", color: "#c084fc" }}>Lanyard</option>
+                )}
+                {mode !== "LANYARD_ORDERS" && mode !== "LABOUR_LANYARD" && (
+                  <option value="Card" style={{ backgroundColor: "#0e131f", color: "#38bdf8" }}>Card</option>
+                )}
               </select>
             </div>
 
@@ -1673,7 +1834,13 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
               </label>
               <input
                 type="text"
-                placeholder="Description (e.g. 16mm Dori, Dog Hook, Plastic Holder-V)..."
+                placeholder={
+                  mode === "CARD_ORDERS"
+                    ? "Description (e.g. 58mm PVC, Plastic Holder-V, Clips)..."
+                    : mode === "LABOUR_LANYARD"
+                    ? "Description (e.g. 16mm Dori with Dog Hook, Safety Jointer for stitching)..."
+                    : "Description (e.g. 16mm Dori, Dog Hook, Plastic Holder-V)..."
+                }
                 value={newDescription}
                 onChange={(e) => setNewDescription(e.target.value)}
                 onKeyDown={(e) => {
@@ -1788,18 +1955,128 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
           )}
         </div>
 
-        {/* ─── ORDERS TABLE (Polished Gradient Header, Spacious 68px Rows) ────── */}
-        {/* Columns: CLIENT -> THINGS ORDERED -> DESCRIPTION -> QUANTITY -> ASSIGNED -> ORDER DATE -> DELIVERY DUE -> ACTION */}
-        <div
-          style={{
-            backgroundColor: "rgba(16, 21, 32, 0.85)",
-            backdropFilter: "blur(16px)",
-            border: "1px solid rgba(255,255,255,0.09)",
-            borderRadius: "6px",
-            boxShadow: "0 10px 36px rgba(0, 0, 0, 0.48)",
-            overflow: "hidden",
-          }}
-        >
+        {/* ─── ORDERS TABLE OR CONTRACTORS OVERVIEW ────── */}
+        {mode === "LABOUR_LANYARD" && labourSubTab === "CONTRACTORS" ? (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "16px" }}>
+            {INITIAL_LABOUR.map((contractor) => {
+              const assigned = orders.filter((o) =>
+                o.assignedTo?.some(
+                  (w) =>
+                    w.name.toLowerCase().includes(contractor.name.toLowerCase()) ||
+                    contractor.name.toLowerCase().includes(w.name.toLowerCase()) ||
+                    w.contractorId === contractor.id
+                )
+              );
+              const activeUnits = assigned.reduce((sum, o) => {
+                const match = o.assignedTo?.find(
+                  (w) =>
+                    w.name.toLowerCase().includes(contractor.name.toLowerCase()) ||
+                    contractor.name.toLowerCase().includes(w.name.toLowerCase()) ||
+                    w.contractorId === contractor.id
+                );
+                return sum + (match?.allocatedQty ?? o.qty);
+              }, 0);
+              const capacityPct = Math.min(100, Math.round((activeUnits / 2500) * 100));
+
+              return (
+                <div
+                  key={contractor.id}
+                  style={{
+                    backgroundColor: "rgba(19, 23, 34, 0.85)",
+                    backdropFilter: "blur(14px)",
+                    border: "1px solid rgba(255, 255, 255, 0.08)",
+                    borderRadius: "6px",
+                    padding: "18px 20px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "12px",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+                    <div>
+                      <div style={{ fontSize: "14.5px", fontWeight: 800, color: "#fff" }}>
+                        {contractor.name}
+                      </div>
+                      <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "3px" }}>
+                        {contractor.workstation} • {contractor.phone}
+                      </div>
+                    </div>
+                    <span
+                      style={{
+                        fontSize: "9.5px",
+                        fontWeight: 700,
+                        padding: "2px 7px",
+                        borderRadius: "2px",
+                        backgroundColor: "rgba(249, 115, 22, 0.15)",
+                        color: "#fb923c",
+                      }}
+                    >
+                      {contractor.status}
+                    </span>
+                  </div>
+
+                  {/* Active Workload Bar (2,500 limit) */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px" }}>
+                      <span style={{ color: "var(--text-muted)", fontWeight: 600 }}>Active Production Load:</span>
+                      <strong style={{ color: "#fff", fontFamily: "var(--font-mono)" }}>
+                        {activeUnits.toLocaleString()} / 2,500 units
+                      </strong>
+                    </div>
+                    <div style={{ height: "6px", width: "100%", backgroundColor: "rgba(255,255,255,0.06)", borderRadius: "3px", overflow: "hidden" }}>
+                      <div
+                        style={{
+                          height: "100%",
+                          width: `${capacityPct}%`,
+                          backgroundColor: capacityPct >= 100 ? "#f97316" : "#0ea5e9",
+                          borderRadius: "3px",
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      paddingTop: "10px",
+                      borderTop: "1px solid rgba(255, 255, 255, 0.06)",
+                    }}
+                  >
+                    <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>
+                      {assigned.length} Active Orders
+                    </span>
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={() => handleOpenContractorProfile(contractor.id)}
+                      style={{
+                        fontSize: "11px",
+                        padding: "4px 12px",
+                        backgroundColor: "rgba(255, 255, 255, 0.08)",
+                        border: "1px solid rgba(255, 255, 255, 0.16)",
+                        color: "#fff",
+                      }}
+                    >
+                      Open Profile & Buffers →
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div
+            style={{
+              backgroundColor: "rgba(16, 21, 32, 0.85)",
+              backdropFilter: "blur(16px)",
+              border: "1px solid rgba(255,255,255,0.09)",
+              borderRadius: "6px",
+              boxShadow: "0 10px 36px rgba(0, 0, 0, 0.48)",
+              overflow: "hidden",
+            }}
+          >
           <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, fontSize: "13px" }}>
             <thead>
               <tr
@@ -1878,7 +2155,7 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
                     borderRight: "1px solid rgba(255, 255, 255, 0.05)",
                   }}
                 >
-                  Assigned
+                  {mode === "LABOUR_LANYARD" ? "Labour Contractor" : "Assigned"}
                 </th>
 
                 {/* 6. ORDER DATE */}
@@ -2492,39 +2769,67 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
                         {(() => {
                           const isCard = (order.itemOrdered || order.itemsOrdered?.[0] || "Lanyard") === "Card";
                           return (
-                            <button
-                              type="button"
-                              onClick={() => setAssigningOrder(order)}
-                              style={{
-                                height: "32px",
-                                padding: "0 14px",
-                                borderRadius: "5px",
-                                backgroundColor: isCard ? "#0284c7" : "#ea580c",
-                                border: "none",
-                                color: "#ffffff",
-                                fontSize: "11.5px",
-                                fontWeight: 700,
-                                cursor: "pointer",
-                                display: "inline-flex",
-                                alignItems: "center",
-                                gap: "6px",
-                                boxShadow: isCard ? "0 2px 6px rgba(2, 132, 199, 0.35)" : "0 2px 6px rgba(234, 88, 12, 0.35)",
-                                transition: "all 0.15s ease",
-                                whiteSpace: "nowrap",
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.backgroundColor = isCard ? "#0369a1" : "#c2410c";
-                                e.currentTarget.style.transform = "translateY(-1px)";
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.backgroundColor = isCard ? "#0284c7" : "#ea580c";
-                                e.currentTarget.style.transform = "translateY(0)";
-                              }}
-                              title={`Assign order to ${isCard ? "In-House Employee" : "Labour Contractor"}`}
-                            >
-                              <span style={{ fontSize: "12px" }}>{isCard ? "👤" : "🤝"}</span>
-                              <span>{isCard ? "Assign Staff" : "Assign Labour"}</span>
-                            </button>
+                            <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                              <button
+                                type="button"
+                                onClick={() => setAssigningOrder(order)}
+                                style={{
+                                  height: "32px",
+                                  padding: "0 14px",
+                                  borderRadius: "5px",
+                                  backgroundColor: isCard ? "#0284c7" : "#ea580c",
+                                  border: "none",
+                                  color: "#ffffff",
+                                  fontSize: "11.5px",
+                                  fontWeight: 700,
+                                  cursor: "pointer",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "6px",
+                                  boxShadow: isCard ? "0 2px 6px rgba(2, 132, 199, 0.35)" : "0 2px 6px rgba(234, 88, 12, 0.35)",
+                                  transition: "all 0.15s ease",
+                                  whiteSpace: "nowrap",
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.backgroundColor = isCard ? "#0369a1" : "#c2410c";
+                                  e.currentTarget.style.transform = "translateY(-1px)";
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.backgroundColor = isCard ? "#0284c7" : "#ea580c";
+                                  e.currentTarget.style.transform = "translateY(0)";
+                                }}
+                                title={`Assign order to ${isCard ? "In-House Employee" : "Labour Contractor"}`}
+                              >
+                                <span style={{ fontSize: "12px" }}>{isCard ? "👤" : "🤝"}</span>
+                                <span>{isCard ? "Assign Staff" : "Assign Labour"}</span>
+                              </button>
+
+                              {mode === "LABOUR_LANYARD" && order.assignedTo && order.assignedTo.length > 0 && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenContractorProfile(order.assignedTo![0].name)}
+                                  style={{
+                                    height: "32px",
+                                    padding: "0 10px",
+                                    borderRadius: "5px",
+                                    backgroundColor: "rgba(255, 255, 255, 0.08)",
+                                    border: "1px solid rgba(255, 255, 255, 0.16)",
+                                    color: "#e2e8f0",
+                                    fontSize: "11px",
+                                    fontWeight: 700,
+                                    cursor: "pointer",
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: "4px",
+                                    whiteSpace: "nowrap",
+                                  }}
+                                  title="Open Labour Profile, Stock Buffer & Handover"
+                                >
+                                  <span>👤</span>
+                                  <span>Profile</span>
+                                </button>
+                              )}
+                            </div>
                           );
                         })()}
                       </td>
@@ -2557,6 +2862,7 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
             </span>
           </div>
         </div>
+        )}
       </div>
 
       {/* ─── WORKER ASSIGNMENT & ORDER DIVIDING DRAWER ─── */}

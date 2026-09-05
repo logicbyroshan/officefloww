@@ -31,7 +31,7 @@ import { LoadingState } from "./design-system/components/FeedbackStates";
 
 const MainApp: React.FC = () => {
   const { user, loading: authLoading } = useAuth();
-  const [activeSection, setActiveSection] = useState<AppNavSection>("dashboard");
+  const [activeSection, setActiveSection] = useState<AppNavSection>("orders");
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
 
@@ -109,7 +109,7 @@ const MainApp: React.FC = () => {
   const pendingApprovalsCount = approvals.filter((a) => a.status === "PENDING").length;
   const urgentTasksCount = tasks.filter((t) => t.status === "BLOCKED").length;
 
-  // View routing for the 7 primary workspaces
+  // View routing for the primary workspaces
   const renderCurrentView = () => {
     // 1. Order Detail View (accessible from Clients or Dashboard)
     if (selectedOrderId) {
@@ -124,6 +124,63 @@ const MainApp: React.FC = () => {
 
     // 2. Primary Workspaces
     switch (activeSection) {
+      case "orders":
+        return (
+          <OrdersWorkspaceView
+            mode="ALL_ORDERS"
+            clients={clients}
+            onSelectOrder={(id) => setSelectedOrderId(id)}
+          />
+        );
+
+      case "lanyard_orders":
+        return (
+          <OrdersWorkspaceView
+            mode="LANYARD_ORDERS"
+            clients={clients}
+            onSelectOrder={(id) => setSelectedOrderId(id)}
+          />
+        );
+
+      case "card_orders":
+        return (
+          <OrdersWorkspaceView
+            mode="CARD_ORDERS"
+            clients={clients}
+            onSelectOrder={(id) => setSelectedOrderId(id)}
+          />
+        );
+
+      case "labour_lanyard":
+        return (
+          <OrdersWorkspaceView
+            mode="LABOUR_LANYARD"
+            clients={clients}
+            onSelectOrder={(id) => setSelectedOrderId(id)}
+          />
+        );
+
+      case "stock":
+        return <StockDashboardView />;
+
+      case "labour":
+        return <LabourView />;
+
+      case "clients":
+        return (
+          <ClientsView
+            clients={clients}
+            orders={orders}
+            loading={clientsLoading}
+            error={clientsError}
+            onRefresh={refreshClients}
+            initialClientId={selectedClientId}
+            onSelectClient={(id) => setSelectedClientId(id)}
+            onSelectOrder={(id) => setSelectedOrderId(id)}
+            onNewOrder={() => setIsNewOrderOpen(true)}
+          />
+        );
+
       case "dashboard":
         return (
           <DashboardView
@@ -143,53 +200,15 @@ const MainApp: React.FC = () => {
           />
         );
 
-      case "orders":
-        return (
-          <OrdersWorkspaceView
-            clients={clients}
-            onSelectOrder={(id) => setSelectedOrderId(id)}
-          />
-        );
-
-      case "labour":
-        return <LabourView />;
-
-      case "stock":
-        return <StockDashboardView />;
-
-      case "clients":
-        return (
-          <ClientsView
-            clients={clients}
-            orders={orders}
-            loading={clientsLoading}
-            error={clientsError}
-            onRefresh={refreshClients}
-            initialClientId={selectedClientId}
-            onSelectClient={(id) => setSelectedClientId(id)}
-            onSelectOrder={(id) => setSelectedOrderId(id)}
-            onNewOrder={() => setIsNewOrderOpen(true)}
-          />
-        );
       case "settings":
         return <SettingsView />;
 
       default:
         return (
-          <DashboardView
-            orders={orders}
-            tasks={tasks}
-            approvals={approvals}
+          <OrdersWorkspaceView
+            mode="ALL_ORDERS"
             clients={clients}
-            loading={ordersLoading}
-            error={ordersError}
-            onRefresh={refreshAll}
             onSelectOrder={(id) => setSelectedOrderId(id)}
-            onSelectTask={() => setActiveSection("orders")}
-            onSelectStock={() => setActiveSection("stock")}
-            onNewOrder={() => setIsNewOrderOpen(true)}
-            onNewClient={() => setIsNewClientOpen(true)}
-            onNavigateSection={(sec) => setActiveSection(sec)}
           />
         );
     }

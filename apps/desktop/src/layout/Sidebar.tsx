@@ -31,11 +31,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const { canNav } = useAuth();
 
   const primaryNav: NavItemDef[] = [
-    { id: "dashboard", label: "Home", icon: "dashboard" },
-    { id: "clients", label: "Clients", icon: "clients" },
     { id: "orders", label: "Orders", icon: "orders" },
+    { id: "lanyard_orders", label: "Lanyard Order", icon: "tag" },
+    { id: "card_orders", label: "ID Card Order", icon: "credit-card" },
+    { id: "labour_lanyard", label: "Labour Lanyard", icon: "labour" },
     { id: "stock", label: "Stock", icon: "stock" },
-    { id: "labour", label: "Labour", icon: "labour" },
   ];
 
   const visiblePrimary = primaryNav.filter((item) => canNav(item.id));

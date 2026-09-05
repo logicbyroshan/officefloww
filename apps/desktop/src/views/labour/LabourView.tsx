@@ -31,7 +31,7 @@ export interface LabourContractor {
   batches: LabourBatchHandover[];
 }
 
-const INITIAL_LABOUR: LabourContractor[] = [
+export const INITIAL_LABOUR: LabourContractor[] = [
   {
     id: "lab-1",
     name: "Ramesh Lanyard Stitching Unit",
