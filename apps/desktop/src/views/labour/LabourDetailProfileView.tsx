@@ -1,10 +1,17 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Icon } from "../../design-system/components/Icon";
 import { Button } from "../../design-system/components/Button";
 import { Modal } from "../../design-system/components/Modal";
 import { Input } from "../../design-system/components/Input";
 import { useToast } from "../../design-system/components/Toast";
 import { LabourContractor } from "./LabourView";
+import {
+  useSharedOrders,
+  parseSupportingItemsFromDescription,
+  LABOUR_CONTRACTORS,
+  MaterialHolding,
+  OrderRecord,
+} from "../orders/OrdersWorkspaceView";
 
 export interface LabourDetailProfileViewProps {
   contractor: LabourContractor;
@@ -13,103 +20,296 @@ export interface LabourDetailProfileViewProps {
 
 // ─── Small stat tile ──────────────────────────────────────────────────────────
 const StatTile: React.FC<{ label: string; value: string; sub?: string; color?: string }> = ({
-  label, value, sub, color = "#fff",
+  label,
+  value,
+  sub,
+  color = "#fff",
 }) => (
   <div
     style={{
       backgroundColor: "rgba(19, 23, 34, 0.85)",
       backdropFilter: "blur(14px)",
       border: "1px solid rgba(255,255,255,0.08)",
-      borderRadius: "3px",
-      padding: "14px 16px",
+      borderRadius: "4px",
+      padding: "12px 14px",
       display: "flex",
       flexDirection: "column",
-      gap: "4px",
+      gap: "3px",
     }}
   >
-    <span style={{ fontSize: "10px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+    <span style={{ fontSize: "9.5px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>
       {label}
     </span>
-    <strong style={{ fontSize: "22px", fontWeight: 800, color, fontFamily: "var(--font-mono)", lineHeight: 1 }}>
+    <strong style={{ fontSize: "20px", fontWeight: 800, color, fontFamily: "var(--font-mono)", lineHeight: 1 }}>
       {value}
     </strong>
-    {sub && <span style={{ fontSize: "10.5px", color: "var(--text-secondary)" }}>{sub}</span>}
+    {sub && <span style={{ fontSize: "10px", color: "var(--text-secondary)" }}>{sub}</span>}
   </div>
 );
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-interface MplOrder {
-  id: string;
-  school: string;
-  mplSpec: string;
-  holderType: string;
-  hookType: string;
-  qtyGiven: number;
-  qtyReturned: number;
-  deliveryDate: string;
-  status: "IN_PROGRESS" | "COMPLETED" | "PENDING";
-}
-
-interface StockItem {
-  item: string;
-  unit: string;
-  lastGiven: number;
-  used: number;
-  remaining: number;
-  recommend: number;
-}
-
-// ─── Component ────────────────────────────────────────────────────────────────
 export const LabourDetailProfileView: React.FC<LabourDetailProfileViewProps> = ({
   contractor,
   onBack,
 }) => {
   const { success } = useToast();
+  const [sharedOrders, setSharedOrders] = useSharedOrders();
 
-  const [showIssueModal, setShowIssueModal] = useState(false);
+  // Match initial contractor buffer holdings from workspace defaults or contractor prop
+  const matchedDefault = useMemo(() => {
+    return LABOUR_CONTRACTORS.find(
+      (c) =>
+        c.name.toLowerCase().includes(contractor.name.toLowerCase()) ||
+        contractor.name.toLowerCase().includes(c.name.toLowerCase()) ||
+        c.id === contractor.id
+    );
+  }, [contractor]);
+
+  const defaultHoldings: MaterialHolding[] = useMemo(() => {
+    if (contractor.materialHoldings && contractor.materialHoldings.length > 0) {
+      return contractor.materialHoldings;
+    }
+    if (matchedDefault?.materialHoldings && matchedDefault.materialHoldings.length > 0) {
+      return matchedDefault.materialHoldings;
+    }
+    return [
+      { item: "Dog Hook", qtyOnHand: 500, unit: "pieces", details: "Standard nickel hooks on workbench" },
+      { item: "16mm Lanyard Rolls", qtyOnHand: 2, unit: "rolls", details: "Satin ribbon rolls in table drawer" },
+      { item: "Clips", qtyOnHand: 1, unit: "packets of 1000", details: "1 packet of 1000 badge clips on workbench" },
+      { item: "Safety Jointer Buckles", qtyOnHand: 1, unit: "packets of 1000", details: "1 packet of 1000 breakaway jointers on workbench" },
+    ];
+  }, [contractor, matchedDefault]);
+
+  // Mutable state for Contractor Stock Buffer ("Things Already With Contractor")
+  const [bufferHoldings, setBufferHoldings] = useState<MaterialHolding[]>(defaultHoldings);
+
+  // Modals
+  const [showAddBufferModal, setShowAddBufferModal] = useState(false);
   const [showEditContractModal, setShowEditContractModal] = useState(false);
   const [editStation, setEditStation] = useState(contractor.workstation);
 
-  const [newSchool, setNewSchool] = useState("");
-  const [newMplSpec, setNewMplSpec] = useState("12mm Double Color (Red/White)");
-  const [newHolder, setNewHolder] = useState("Clear PVC Pouch");
-  const [newHook, setNewHook] = useState("Silver Swivel J-Hook");
-  const [newQty, setNewQty] = useState("500");
-  const [newDelivery, setNewDelivery] = useState("");
+  // New Buffer Stock form states
+  const [newBufferItem, setNewBufferItem] = useState("Dog Hook");
+  const [newBufferQty, setNewBufferQty] = useState("200");
+  const [newBufferUnit, setNewBufferUnit] = useState<"pieces" | "packets of 1000" | "rolls">("pieces");
+  const [newBufferDetails, setNewBufferDetails] = useState("Buffer lot staged at workbench");
 
-  const [mplOrders, setMplOrders] = useState<MplOrder[]>([
-    { id: "mpl-1", school: "Northwind Coffee", mplSpec: "12mm Double Color (Red/White)", holderType: "Clear PVC ID Pouch", hookType: "Silver Swivel J-Hook", qtyGiven: 1500, qtyReturned: 1500, deliveryDate: "02 Sep 2026", status: "COMPLETED" },
-    { id: "mpl-2", school: "St. Xavier's High School", mplSpec: "15mm Triple Color (Blue/White/Red)", holderType: "Frosted Rigid ID Holder", hookType: "Black Lobster Claw Hook", qtyGiven: 1000, qtyReturned: 800, deliveryDate: "05 Sep 2026", status: "IN_PROGRESS" },
-    { id: "mpl-3", school: "BHEL Township Admin", mplSpec: "10mm Single Color (Navy Blue)", holderType: "Vinyl Sleeve (Landscape)", hookType: "Silver Snap Hook", qtyGiven: 500, qtyReturned: 0, deliveryDate: "07 Sep 2026", status: "PENDING" },
+  // Handover confirmation log
+  const [handoverLogs, setHandoverLogs] = useState<
+    { date: string; summary: string; itemsCount: number }[]
+  >([
+    {
+      date: "01 Sep 2026",
+      summary: "Dispensed 1,500 Dog Hooks & 8 rolls 16mm Ribbon for Northwind Coffee",
+      itemsCount: 2,
+    },
   ]);
 
-  const stockItems: StockItem[] = [
-    { item: "MPL Ribbon Spool (10m roll)", unit: "Rolls", lastGiven: 25, used: 22, remaining: 3, recommend: 18 },
-    { item: "Clear PVC ID Pouches", unit: "Pcs", lastGiven: 1500, used: 1500, remaining: 0, recommend: 1000 },
-    { item: "Frosted Rigid ID Holders", unit: "Pcs", lastGiven: 600, used: 300, remaining: 300, recommend: 700 },
-    { item: "Silver Swivel J-Hooks", unit: "Pcs", lastGiven: 1500, used: 1500, remaining: 0, recommend: 1000 },
-    { item: "Black Lobster Claw Hooks", unit: "Pcs", lastGiven: 800, used: 500, remaining: 300, recommend: 700 },
-    { item: "Silver Snap Hooks", unit: "Pcs", lastGiven: 600, used: 50, remaining: 550, recommend: 0 },
-  ];
+  // ─── Active Assigned Orders for this Contractor ──────────────────────────────
+  const assignedJobs = useMemo(() => {
+    return sharedOrders.filter((o) =>
+      o.assignedTo?.some(
+        (w) =>
+          w.name.toLowerCase().includes(contractor.name.toLowerCase()) ||
+          contractor.name.toLowerCase().includes(w.name.toLowerCase()) ||
+          w.contractorId === contractor.id ||
+          w.id === contractor.id
+      )
+    );
+  }, [sharedOrders, contractor]);
 
-  const activeOrders = mplOrders.filter((o) => o.status !== "COMPLETED");
-  const completedOrders = mplOrders.filter((o) => o.status === "COMPLETED");
+  // Get specific allocated quantity for this contractor on an order
+  const getContractorAllocatedQty = (order: OrderRecord) => {
+    const match = order.assignedTo?.find(
+      (w) =>
+        w.name.toLowerCase().includes(contractor.name.toLowerCase()) ||
+        contractor.name.toLowerCase().includes(w.name.toLowerCase())
+    );
+    return match?.allocatedQty ?? order.qty;
+  };
 
-  const weeklyGiven = mplOrders.reduce((s, o) => s + o.qtyGiven, 0);
-  const weeklyDone = mplOrders.reduce((s, o) => s + o.qtyReturned, 0);
-  const weeklyPending = weeklyGiven - weeklyDone;
-  const completionRate = Math.round((weeklyDone / (weeklyGiven || 1)) * 100);
+  // Total units allocated across active orders
+  const totalAllocatedUnits = useMemo(() => {
+    return assignedJobs.reduce((sum, order) => sum + getContractorAllocatedQty(order), 0);
+  }, [assignedJobs]);
 
-  const statusColor: Record<string, string> = { IN_PROGRESS: "#f59e0b", COMPLETED: "#10b981", PENDING: "#60a5fa" };
-  const statusLabel: Record<string, string> = { IN_PROGRESS: "In Progress", COMPLETED: "Completed", PENDING: "Pending" };
+  // ─── Aggregated Material Requirements for Assigned Jobs ─────────────────────
+  // For each job, parse supporting items with the allocated quantity and aggregate
+  const aggregatedRequirements = useMemo(() => {
+    const map = new Map<
+      string,
+      {
+        name: string;
+        category: string;
+        canonicalUnit: string;
+        packSize: number;
+        unitDisplay: string;
+        icon: string;
+        badgeBg: string;
+        badgeColor: string;
+        badgeBorder: string;
+        totalPieces: number;
+        requiredPacks: number;
+        orderCount: number;
+      }
+    >();
 
-  const handleAddOrder = (e: React.FormEvent) => {
+    assignedJobs.forEach((order) => {
+      const allocatedQty = getContractorAllocatedQty(order);
+      const items = parseSupportingItemsFromDescription(
+        order.product,
+        order.itemOrdered || "Lanyard",
+        allocatedQty
+      );
+
+      items.forEach((item) => {
+        const key = item.name.toLowerCase().trim();
+        const existing = map.get(key);
+        if (existing) {
+          existing.totalPieces += item.totalPieces;
+          existing.requiredPacks += item.requiredPacks;
+          existing.orderCount += 1;
+        } else {
+          map.set(key, {
+            name: item.name,
+            category: item.category,
+            canonicalUnit: item.canonicalUnit,
+            packSize: item.packSize,
+            unitDisplay: item.unitDisplay,
+            icon: item.icon,
+            badgeBg: item.badgeBg,
+            badgeColor: item.badgeColor,
+            badgeBorder: item.badgeBorder,
+            totalPieces: item.totalPieces,
+            requiredPacks: item.requiredPacks,
+            orderCount: 1,
+          });
+        }
+      });
+    });
+
+    return Array.from(map.values());
+  }, [assignedJobs]);
+
+  // ─── Live Handover Reconciliation (Requirements vs Contractor Buffer) ────────
+  const handoverReconciliation = useMemo(() => {
+    return aggregatedRequirements.map((req) => {
+      const norm = req.name.toLowerCase().trim();
+      const matchedHolding = bufferHoldings.find((h) => {
+        const hNorm = h.item.toLowerCase().trim();
+        if (hNorm === norm) return true;
+        if (hNorm.includes(norm) || norm.includes(hNorm)) return true;
+        if (req.category === "HOOKS" && hNorm.includes("hook")) return true;
+        if (req.category === "LANYARDS" && hNorm.includes("roll")) return true;
+        if (req.category === "HOLDERS" && (hNorm.includes("holder") || hNorm.includes("pouch") || hNorm.includes("dst") || hNorm.includes("crystal"))) return true;
+        if (req.category === "OTHERS" && req.name.includes("Clip") && hNorm.includes("clip")) return true;
+        if (req.category === "OTHERS" && (req.name.includes("Jointer") || req.name.includes("Buckle")) && (hNorm.includes("jointer") || hNorm.includes("buckle"))) return true;
+        return false;
+      });
+
+      let heldPacks = 0;
+      let heldPieces = 0;
+
+      if (matchedHolding) {
+        if (req.packSize === 1000) {
+          if (matchedHolding.unit.includes("packet") || matchedHolding.unit.includes("1000")) {
+            heldPacks = matchedHolding.qtyOnHand;
+            heldPieces = heldPacks * 1000;
+          } else {
+            heldPieces = matchedHolding.qtyOnHand;
+            heldPacks = Math.floor(heldPieces / 1000);
+          }
+        } else if (req.packSize === 200) {
+          heldPacks = matchedHolding.qtyOnHand;
+          heldPieces = heldPacks * 200;
+        } else {
+          heldPacks = matchedHolding.qtyOnHand;
+          heldPieces = matchedHolding.qtyOnHand;
+        }
+      }
+
+      const netPacksToIssue = Math.max(0, req.requiredPacks - heldPacks);
+      const netPiecesToIssue = Math.max(0, req.totalPieces - heldPieces);
+      const isFullyCovered = netPacksToIssue === 0;
+
+      return {
+        ...req,
+        heldPacks,
+        heldPieces,
+        heldUnitDisplay: matchedHolding ? matchedHolding.unit : req.canonicalUnit,
+        netPacksToIssue,
+        netPiecesToIssue,
+        isFullyCovered,
+        matchedHolding,
+      };
+    });
+  }, [aggregatedRequirements, bufferHoldings]);
+
+  // Handover action
+  const handleDispenseMaterials = () => {
+    const pendingItems = handoverReconciliation.filter((m) => !m.isFullyCovered);
+    if (pendingItems.length === 0) {
+      success(
+        "Buffer Covers All Materials",
+        `All required materials for ${contractor.name} are 100% covered by their table buffer. 0 factory stock issue required.`
+      );
+      return;
+    }
+
+    const summaryStr = pendingItems
+      .map((m) => `${m.netPacksToIssue.toLocaleString()} ${m.unitDisplay} ${m.name}`)
+      .join(", ");
+
+    setHandoverLogs((prev) => [
+      {
+        date: "Today, Just Now",
+        summary: `Dispensed: ${summaryStr}`,
+        itemsCount: pendingItems.length,
+      },
+      ...prev,
+    ]);
+
+    success(
+      "Warehouse Stock Handover Recorded",
+      `Dispensed and handed over to ${contractor.name}: ${summaryStr}. Factory inventory updated.`
+    );
+  };
+
+  // Add / Adjust Buffer stock handler
+  const handleAddBufferSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const o: MplOrder = { id: `mpl-${Date.now()}`, school: newSchool, mplSpec: newMplSpec, holderType: newHolder, hookType: newHook, qtyGiven: parseInt(newQty) || 500, qtyReturned: 0, deliveryDate: newDelivery, status: "PENDING" };
-    setMplOrders([o, ...mplOrders]);
-    setShowIssueModal(false);
-    setNewSchool("");
-    success("MPL Batch Issued", `${newQty} units issued to ${contractor.name} for ${newSchool}`);
+    const qty = parseInt(newBufferQty, 10) || 100;
+    if (qty <= 0) return;
+
+    setBufferHoldings((prev) => {
+      const existingIdx = prev.findIndex(
+        (h) => h.item.toLowerCase() === newBufferItem.toLowerCase()
+      );
+      if (existingIdx >= 0) {
+        const updated = [...prev];
+        updated[existingIdx] = {
+          ...updated[existingIdx],
+          qtyOnHand: updated[existingIdx].qtyOnHand + qty,
+          details: newBufferDetails || updated[existingIdx].details,
+        };
+        return updated;
+      } else {
+        return [
+          ...prev,
+          {
+            item: newBufferItem,
+            qtyOnHand: qty,
+            unit: newBufferUnit,
+            details: newBufferDetails,
+          },
+        ];
+      }
+    });
+
+    setShowAddBufferModal(false);
+    success(
+      "Buffer Stock Updated",
+      `Added ${qty.toLocaleString()} ${newBufferUnit} of ${newBufferItem} to ${contractor.name}'s buffer holding.`
+    );
   };
 
   return (
@@ -122,8 +322,13 @@ export const LabourDetailProfileView: React.FC<LabourDetailProfileViewProps> = (
           backgroundColor: "rgba(14, 18, 26, 0.95)",
           backdropFilter: "blur(20px)",
           borderBottom: "1px solid rgba(255,255,255,0.08)",
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          flexShrink: 0, position: "sticky", top: 0, zIndex: 40,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexShrink: 0,
+          position: "sticky",
+          top: 0,
+          zIndex: 40,
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
@@ -137,300 +342,739 @@ export const LabourDetailProfileView: React.FC<LabourDetailProfileViewProps> = (
           </Button>
 
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <span style={{ fontSize: "13px", fontWeight: 800, color: "#fff" }}>
-              Active MPL Assembly Orders
+            <span style={{ fontSize: "14px", fontWeight: 800, color: "#fff" }}>
+              {contractor.name}
             </span>
-            <span style={{ fontSize: "11px", fontWeight: 700, padding: "2px 7px", borderRadius: "2px", backgroundColor: "rgba(168,85,247,0.15)", color: "#c084fc" }}>
-              {activeOrders.length} Active Batches
+            <span
+              style={{
+                fontSize: "11px",
+                fontWeight: 700,
+                padding: "2px 7px",
+                borderRadius: "2px",
+                backgroundColor: "rgba(249, 115, 22, 0.15)",
+                color: "#fb923c",
+              }}
+            >
+              Labour Profile & Stock Buffer
             </span>
           </div>
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <Button variant="secondary" size="sm" style={{ borderRadius: "2px" }} onClick={() => setShowEditContractModal(true)}>Edit Station</Button>
-          <Button variant="primary" size="sm" icon="plus" style={{ borderRadius: "2px", backgroundColor: "var(--accent)", border: "none" }} onClick={() => setShowIssueModal(true)}>Issue New MPL Batch</Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            style={{ borderRadius: "3px" }}
+            onClick={() => setShowEditContractModal(true)}
+          >
+            Edit Workstation
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            style={{ borderRadius: "3px", backgroundColor: "var(--accent)", border: "none" }}
+            onClick={() => setShowAddBufferModal(true)}
+          >
+            + Add Buffer Stock
+          </Button>
         </div>
       </div>
 
       {/* =========================================================================
-          ACTIVE MPL ORDERS WORKSPACE
+          MAIN WORKSPACE LAYOUT (3-COLUMN DOSSIER / JOBS / BUFFER & HANDOVER)
           ========================================================================= */}
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "240px 1fr 290px",
-          gap: "18px",
+          gridTemplateColumns: "250px 1fr 340px",
+          gap: "20px",
           padding: "20px 24px",
           alignItems: "start",
         }}
       >
-        {/* ── COL 1: Dossier ── */}
+        {/* ── COL 1: Contractor Dossier ── */}
         <div
           style={{
             backgroundColor: "rgba(19, 23, 34, 0.85)",
             backdropFilter: "blur(14px)",
             border: "1px solid rgba(255,255,255,0.08)",
-            borderRadius: "3px",
+            borderRadius: "4px",
             padding: "20px 16px",
-            display: "flex", flexDirection: "column", alignItems: "center",
-            textAlign: "center", gap: "12px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            textAlign: "center",
+            gap: "12px",
           }}
         >
           <div
             style={{
-              width: "64px", height: "64px", borderRadius: "3px",
-              background: "linear-gradient(135deg, rgba(168,85,247,0.25) 0%, rgba(168,85,247,0.05) 100%)",
-              border: "1px solid rgba(168,85,247,0.3)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: "22px", fontWeight: 800, color: "#c084fc", fontFamily: "var(--font-mono)",
+              width: "64px",
+              height: "64px",
+              borderRadius: "4px",
+              background: "linear-gradient(135deg, rgba(249,115,22,0.3) 0%, rgba(194,65,12,0.2) 100%)",
+              border: "1px solid rgba(249,115,22,0.4)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "24px",
+              fontWeight: 800,
+              color: "#fb923c",
+              fontFamily: "var(--font-mono)",
             }}
           >
-            {contractor.name.split(" ").slice(0, 2).map((w) => w[0]).join("")}
+            {contractor.name.slice(0, 1).toUpperCase()}
           </div>
+
           <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-            <h2 style={{ fontSize: "15px", fontWeight: 800, color: "#fff", margin: 0 }}>{contractor.name}</h2>
-            <span style={{ fontSize: "11.5px", color: "var(--text-muted)" }}>Contract Labour • MPL Assembly</span>
+            <h2 style={{ fontSize: "15px", fontWeight: 800, color: "#fff", margin: 0 }}>
+              {contractor.name}
+            </h2>
+            <span style={{ fontSize: "11.5px", color: "var(--text-muted)" }}>
+              {matchedDefault?.specialty || "Lanyard Stitching & Assembly"}
+            </span>
           </div>
+
           <div style={{ display: "flex", gap: "6px" }}>
-            <span style={{ fontSize: "10.5px", fontWeight: 700, padding: "3px 7px", borderRadius: "2px", backgroundColor: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "var(--text-secondary)", fontFamily: "var(--font-mono)" }}>
+            <span
+              style={{
+                fontSize: "10px",
+                fontWeight: 700,
+                padding: "3px 7px",
+                borderRadius: "2px",
+                backgroundColor: "rgba(255,255,255,0.05)",
+                border: "1px solid rgba(255,255,255,0.1)",
+                color: "var(--text-secondary)",
+                fontFamily: "var(--font-mono)",
+              }}
+            >
               {contractor.id.toUpperCase()}
             </span>
-            <span style={{ fontSize: "10.5px", fontWeight: 700, padding: "3px 7px", borderRadius: "2px", backgroundColor: contractor.status === "ACTIVE" ? "rgba(16,185,129,0.15)" : "rgba(245,158,11,0.15)", color: contractor.status === "ACTIVE" ? "#10b981" : "#f59e0b" }}>
-              {contractor.status === "ACTIVE" ? "● On Run" : "● Standby"}
+            <span
+              style={{
+                fontSize: "10px",
+                fontWeight: 700,
+                padding: "3px 7px",
+                borderRadius: "2px",
+                backgroundColor: "rgba(16,185,129,0.15)",
+                color: "#10b981",
+              }}
+            >
+              ● On Run
             </span>
           </div>
-          <div style={{ width: "100%", borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "12px", display: "flex", flexDirection: "column", gap: "8px", textAlign: "left" }}>
+
+          {/* Details list */}
+          <div
+            style={{
+              width: "100%",
+              borderTop: "1px solid rgba(255,255,255,0.06)",
+              paddingTop: "12px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "8px",
+              textAlign: "left",
+            }}
+          >
             {[
-              { label: "Assigned Workstation", val: contractor.workstation, color: "#c084fc" },
-              { label: "Shift Floor", val: "South Assembly Bay", color: "" },
-              { label: "Phone", val: contractor.phone, mono: true },
+              { label: "Workstation", val: contractor.workstation, color: "#fb923c" },
+              { label: "Rate / Pc", val: `₹${(matchedDefault?.ratePerPiece || contractor.pieceRate || 1.5).toFixed(2)}`, color: "#10b981", mono: true },
+              { label: "Phone", val: contractor.phone || matchedDefault?.phone || "+91 98260 11420", mono: true },
+              { label: "Active Jobs", val: `${assignedJobs.length} orders`, color: "#fff" },
+              { label: "Total Volume", val: `${totalAllocatedUnits.toLocaleString()} units`, color: "#fff", mono: true },
             ].map((r) => (
               <div key={r.label} style={{ display: "flex", justifyContent: "space-between", fontSize: "11.5px" }}>
                 <span style={{ color: "var(--text-muted)" }}>{r.label}:</span>
-                <strong style={{ color: r.color || "#fff", fontFamily: (r as any).mono ? "var(--font-mono)" : undefined }}>{r.val}</strong>
+                <strong style={{ color: r.color || "#fff", fontFamily: r.mono ? "var(--font-mono)" : undefined }}>
+                  {r.val}
+                </strong>
               </div>
             ))}
           </div>
-        </div>
 
-        {/* ── COL 2: Orders (Active big cards + Completed compact table) ── */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-
-          {/* Active / In-Progress header */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <span style={{ fontSize: "13px", fontWeight: 800, color: "#fff" }}>
-              Current Orders
-              <span style={{ marginLeft: "8px", fontSize: "11px", fontWeight: 700, padding: "2px 7px", borderRadius: "2px", backgroundColor: "rgba(245,158,11,0.15)", color: "#f59e0b" }}>
-                {activeOrders.length} Active
-              </span>
-            </span>
-            <span style={{ fontSize: "10.5px", color: "var(--text-muted)" }}>In Progress / Pending</span>
-          </div>
-
-          {/* Each active order — BIG featured card */}
-          {activeOrders.map((order) => (
-            <div
-              key={order.id}
-              style={{
-                backgroundColor: "rgba(19, 23, 34, 0.9)",
-                backdropFilter: "blur(14px)",
-                border: `1px solid ${order.status === "IN_PROGRESS" ? "rgba(245,158,11,0.3)" : "rgba(96,165,250,0.3)"}`,
-                borderRadius: "3px",
-                overflow: "hidden",
-              }}
-            >
-              {/* Strip header */}
-              <div
-                style={{
-                  backgroundColor: order.status === "IN_PROGRESS" ? "rgba(245,158,11,0.08)" : "rgba(96,165,250,0.08)",
-                  borderBottom: `1px solid ${order.status === "IN_PROGRESS" ? "rgba(245,158,11,0.2)" : "rgba(96,165,250,0.2)"}`,
-                  padding: "10px 18px",
-                  display: "flex", alignItems: "center", justifyContent: "space-between",
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  <strong style={{ fontSize: "14px", color: "#fff" }}>{order.school}</strong>
-                  <span style={{ fontSize: "10.5px", fontWeight: 700, padding: "2px 8px", borderRadius: "2px", backgroundColor: `${statusColor[order.status]}22`, color: statusColor[order.status], border: `1px solid ${statusColor[order.status]}44` }}>
-                    {statusLabel[order.status]}
-                  </span>
-                </div>
-                <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>Deliver by {order.deliveryDate}</span>
-              </div>
-
-              {/* Specs + Progress body */}
-              <div style={{ padding: "14px 18px", display: "grid", gridTemplateColumns: "1fr 1fr 1fr auto", gap: "14px", alignItems: "center" }}>
-                <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
-                  <span style={{ fontSize: "10px", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700 }}>MPL Spec</span>
-                  <span style={{ fontSize: "12.5px", fontWeight: 700, color: "#c084fc" }}>{order.mplSpec}</span>
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
-                  <span style={{ fontSize: "10px", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700 }}>Holder</span>
-                  <span style={{ fontSize: "12px", color: "var(--text-secondary)" }}>{order.holderType}</span>
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
-                  <span style={{ fontSize: "10px", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700 }}>Hook</span>
-                  <span style={{ fontSize: "12px", color: "var(--text-secondary)" }}>{order.hookType}</span>
-                </div>
-                {/* Progress */}
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px", minWidth: "118px" }}>
-                  <div style={{ display: "flex", gap: "5px", alignItems: "baseline" }}>
-                    <strong style={{ fontSize: "20px", color: order.qtyReturned === order.qtyGiven ? "#10b981" : "#f59e0b", fontFamily: "var(--font-mono)" }}>
-                      {order.qtyReturned.toLocaleString()}
-                    </strong>
-                    <span style={{ fontSize: "11.5px", color: "var(--text-muted)" }}>/ {order.qtyGiven.toLocaleString()} done</span>
-                  </div>
-                  <div style={{ width: "100%", height: "4px", backgroundColor: "rgba(255,255,255,0.08)", borderRadius: "1px" }}>
-                    <div style={{ height: "100%", borderRadius: "1px", width: `${Math.round((order.qtyReturned / order.qtyGiven) * 100)}%`, backgroundColor: order.qtyReturned === order.qtyGiven ? "#10b981" : "#f59e0b", transition: "width 0.4s ease" }} />
-                  </div>
-                  <span style={{ fontSize: "10px", color: "var(--text-muted)" }}>{Math.round((order.qtyReturned / order.qtyGiven) * 100)}% complete</span>
-                </div>
-              </div>
-            </div>
-          ))}
-
-          {/* Divider */}
-          {completedOrders.length > 0 && (
-            <div style={{ display: "flex", alignItems: "center", gap: "10px", margin: "4px 0" }}>
-              <div style={{ flex: 1, height: "1px", backgroundColor: "rgba(255,255,255,0.07)" }} />
-              <span style={{ fontSize: "10.5px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                Past Orders — Completed
-              </span>
-              <div style={{ flex: 1, height: "1px", backgroundColor: "rgba(255,255,255,0.07)" }} />
-            </div>
-          )}
-
-          {/* Completed orders — compact table */}
-          {completedOrders.length > 0 && (
-            <div style={{ backgroundColor: "rgba(19, 23, 34, 0.7)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "3px", overflow: "hidden" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
-                <thead>
-                  <tr style={{ backgroundColor: "rgba(0,0,0,0.2)", color: "var(--text-muted)", fontSize: "10px", textTransform: "uppercase", fontWeight: 700 }}>
-                    <th style={{ padding: "8px 14px", textAlign: "left" }}>School</th>
-                    <th style={{ padding: "8px 14px", textAlign: "left" }}>MPL Spec</th>
-                    <th style={{ padding: "8px 14px", textAlign: "left" }}>Holder · Hook</th>
-                    <th style={{ padding: "8px 14px", textAlign: "center" }}>Qty</th>
-                    <th style={{ padding: "8px 14px", textAlign: "left" }}>Delivered</th>
-                    <th style={{ padding: "8px 14px", textAlign: "center" }}>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {completedOrders.map((order) => (
-                    <tr key={order.id} style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
-                      <td style={{ padding: "10px 14px", color: "var(--text-secondary)", fontWeight: 600 }}>{order.school}</td>
-                      <td style={{ padding: "10px 14px" }}>
-                        <span style={{ fontSize: "10.5px", fontWeight: 600, padding: "2px 6px", borderRadius: "2px", backgroundColor: "rgba(168,85,247,0.1)", color: "#a78bfa" }}>
-                          {order.mplSpec}
-                        </span>
-                      </td>
-                      <td style={{ padding: "10px 14px", fontSize: "11px", color: "var(--text-muted)" }}>{order.holderType} · {order.hookType}</td>
-                      <td style={{ padding: "10px 14px", textAlign: "center", fontFamily: "var(--font-mono)", color: "#10b981", fontWeight: 700 }}>{order.qtyGiven.toLocaleString()}</td>
-                      <td style={{ padding: "10px 14px", fontSize: "11px", color: "var(--text-muted)" }}>{order.deliveryDate}</td>
-                      <td style={{ padding: "10px 14px", textAlign: "center" }}>
-                        <span style={{ fontSize: "10px", fontWeight: 700, padding: "2px 6px", borderRadius: "2px", backgroundColor: "rgba(16,185,129,0.12)", color: "#10b981", border: "1px solid rgba(16,185,129,0.3)" }}>
-                          Completed
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-
-        {/* ── COL 3: Weekly Stats + Stock Ledger ── */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-
-          {/* 2×2 Stat tiles (Operational Metrics only — NO MONEY) */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
-            <StatTile label="Given" value={weeklyGiven.toLocaleString()} sub="MPL units" color="#fff" />
-            <StatTile label="Done" value={weeklyDone.toLocaleString()} sub="Assembled" color="#10b981" />
-            <StatTile label="Pending" value={weeklyPending.toLocaleString()} sub="On table" color={weeklyPending > 0 ? "#f59e0b" : "#10b981"} />
-            <StatTile label="Rate" value={`${completionRate}%`} sub="Completion" color="#a855f7" />
-          </div>
-
-          {/* Stock Ledger */}
+          {/* Compensation summary */}
           <div
             style={{
-              backgroundColor: "rgba(19, 23, 34, 0.85)",
-              backdropFilter: "blur(14px)",
-              border: "1px solid rgba(255,255,255,0.08)",
-              borderRadius: "3px",
-              padding: "14px 16px",
-              display: "flex", flexDirection: "column", gap: "10px",
+              width: "100%",
+              marginTop: "6px",
+              padding: "10px 12px",
+              borderRadius: "4px",
+              backgroundColor: "rgba(16, 185, 129, 0.08)",
+              border: "1px solid rgba(16, 185, 129, 0.2)",
+              textAlign: "left",
+            }}
+          >
+            <div style={{ fontSize: "9.5px", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700 }}>
+              Estimated Labour Payable
+            </div>
+            <div style={{ fontSize: "16px", fontWeight: 800, color: "#34d399", fontFamily: "var(--font-mono)", marginTop: "2px" }}>
+              ₹{(totalAllocatedUnits * (matchedDefault?.ratePerPiece || contractor.pieceRate || 1.5)).toFixed(2)}
+            </div>
+            <div style={{ fontSize: "9.5px", color: "var(--text-muted)", marginTop: "2px" }}>
+              Strictly Q_accepted @ piece-rate (material scrap mathematically excluded)
+            </div>
+          </div>
+        </div>
+
+        {/* ── COL 2: Active Assigned Jobs + Warehouse Handover Calculator ── */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+
+          {/* SECTION 1: Active Assigned Production Jobs */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <span style={{ fontSize: "14px" }}>📋</span>
+                <span style={{ fontSize: "13px", fontWeight: 800, color: "#fff" }}>
+                  Active Assigned Jobs ({assignedJobs.length})
+                </span>
+                <span style={{ fontSize: "10.5px", color: "var(--text-muted)" }}>
+                  (Synced reactively from Orders Workspace)
+                </span>
+              </div>
+              <span style={{ fontSize: "11px", color: "#fb923c", fontWeight: 700, fontFamily: "var(--font-mono)" }}>
+                {totalAllocatedUnits.toLocaleString()} units allocated
+              </span>
+            </div>
+
+            {assignedJobs.length === 0 ? (
+              <div
+                style={{
+                  padding: "24px",
+                  backgroundColor: "rgba(19, 23, 34, 0.7)",
+                  border: "1px dashed rgba(255, 255, 255, 0.12)",
+                  borderRadius: "4px",
+                  textAlign: "center",
+                  color: "var(--text-muted)",
+                  fontSize: "12.5px",
+                }}
+              >
+                No active orders currently assigned to {contractor.name}. Assign orders from the Orders workspace to view requirements here.
+              </div>
+            ) : (
+              assignedJobs.map((order) => {
+                const allocatedQty = getContractorAllocatedQty(order);
+                const isDivided = order.assignedTo && order.assignedTo.length > 1;
+                const itemsDetected = parseSupportingItemsFromDescription(
+                  order.product,
+                  order.itemOrdered || "Lanyard",
+                  allocatedQty
+                );
+
+                return (
+                  <div
+                    key={order.internalId}
+                    style={{
+                      backgroundColor: "rgba(19, 23, 34, 0.9)",
+                      backdropFilter: "blur(14px)",
+                      border: "1px solid rgba(255, 255, 255, 0.08)",
+                      borderRadius: "4px",
+                      overflow: "hidden",
+                    }}
+                  >
+                    {/* Job Strip Header */}
+                    <div
+                      style={{
+                        padding: "10px 16px",
+                        backgroundColor: "rgba(255, 255, 255, 0.02)",
+                        borderBottom: "1px solid rgba(255, 255, 255, 0.06)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                        <strong style={{ fontSize: "13.5px", color: "#fff" }}>{order.client}</strong>
+                        {isDivided && (
+                          <span
+                            style={{
+                              fontSize: "9.5px",
+                              fontWeight: 800,
+                              padding: "1px 6px",
+                              borderRadius: "2px",
+                              backgroundColor: "rgba(168, 85, 247, 0.2)",
+                              color: "#c084fc",
+                            }}
+                          >
+                            🔀 Divided Order
+                          </span>
+                        )}
+                      </div>
+
+                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                        <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>
+                          Target Due: <strong style={{ color: "#f59e0b" }}>{order.deliveryDate}</strong>
+                        </span>
+                        <span
+                          style={{
+                            fontSize: "12.5px",
+                            fontWeight: 800,
+                            color: "#fff",
+                            fontFamily: "var(--font-mono)",
+                            padding: "2px 8px",
+                            borderRadius: "3px",
+                            backgroundColor: "rgba(255, 255, 255, 0.06)",
+                          }}
+                        >
+                          {allocatedQty.toLocaleString()} units
+                          {isDivided && (
+                            <span style={{ fontSize: "10px", color: "var(--text-muted)", marginLeft: "4px" }}>
+                              (of {order.qty.toLocaleString()})
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Job Details & Recognized Badges */}
+                    <div style={{ padding: "12px 16px", display: "flex", flexDirection: "column", gap: "8px" }}>
+                      <div style={{ fontSize: "12.5px", color: "#e2e8f0" }}>{order.product}</div>
+
+                      {itemsDetected.length > 0 && (
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", marginTop: "2px" }}>
+                          <span style={{ fontSize: "9.5px", color: "#94a3b8", textTransform: "uppercase", fontWeight: 800 }}>
+                            Req. Stock:
+                          </span>
+                          {itemsDetected.map((item, idx) => (
+                            <span
+                              key={idx}
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "4px",
+                                padding: "2px 7px",
+                                borderRadius: "3px",
+                                fontSize: "10.5px",
+                                fontWeight: 700,
+                                backgroundColor: item.badgeBg,
+                                color: item.badgeColor,
+                                border: `1px solid ${item.badgeBorder}`,
+                              }}
+                            >
+                              <span>{item.icon}</span>
+                              <span>{item.badgeLabel}</span>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* SECTION 2: 🟢 LIVE WAREHOUSE STOCK HANDOVER CALCULATOR */}
+          <div
+            style={{
+              backgroundColor: "rgba(16, 185, 129, 0.05)",
+              border: "1px solid rgba(16, 185, 129, 0.3)",
+              borderRadius: "6px",
+              padding: "16px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "12px",
             }}
           >
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <span style={{ fontSize: "12.5px", fontWeight: 800, color: "#fff" }}>Stock Ledger</span>
-              <span style={{ fontSize: "10px", color: "var(--text-muted)" }}>Last Issue → Now</span>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <span style={{ fontSize: "16px" }}>🟢</span>
+                <div>
+                  <div style={{ fontSize: "12px", fontWeight: 800, color: "#34d399", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                    Things We Need To Give Them (Warehouse Stock Handover)
+                  </div>
+                  <div style={{ fontSize: "10.5px", color: "var(--text-muted)", marginTop: "1px" }}>
+                    Calculates required stock for active jobs minus contractor's buffer holding
+                  </div>
+                </div>
+              </div>
+
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleDispenseMaterials}
+                style={{
+                  backgroundColor: "#059669",
+                  border: "none",
+                  fontWeight: 700,
+                  borderRadius: "3px",
+                  fontSize: "11.5px",
+                }}
+              >
+                📦 Dispense & Record Handover
+              </Button>
             </div>
 
-            {stockItems.map((s, idx) => (
-              <div key={idx} style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                <span style={{ fontSize: "10.5px", fontWeight: 700, color: "var(--text-secondary)" }}>{s.item}</span>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "4px", fontSize: "10px" }}>
-                  {[
-                    { label: "Given", val: s.lastGiven, color: "#fff" },
-                    { label: "Used", val: s.used, color: "#10b981" },
-                    { label: "Left", val: s.remaining, color: s.remaining > 0 ? "#fbbf24" : "#f87171" },
-                  ].map((cell) => (
-                    <div key={cell.label} style={{ display: "flex", flexDirection: "column", alignItems: "center", backgroundColor: "rgba(255,255,255,0.03)", borderRadius: "2px", padding: "3px 4px" }}>
-                      <strong style={{ color: cell.color, fontFamily: "var(--font-mono)" }}>{cell.val}</strong>
-                      <span style={{ color: "var(--text-muted)" }}>{cell.label}</span>
-                    </div>
-                  ))}
-                </div>
-                {s.recommend > 0 && (
-                  <span style={{ fontSize: "10px", color: "#60a5fa" }}>→ Issue <strong>{s.recommend}</strong> {s.unit} next</span>
-                )}
-                {idx < stockItems.length - 1 && <div style={{ height: "1px", backgroundColor: "rgba(255,255,255,0.04)", marginTop: "2px" }} />}
+            {/* Handover List */}
+            {handoverReconciliation.length === 0 ? (
+              <div style={{ padding: "12px", color: "var(--text-muted)", fontSize: "11.5px", textAlign: "center" }}>
+                No active requirements to calculate.
               </div>
-            ))}
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                {handoverReconciliation.map((mat, idx) => {
+                  const isFullyCovered = mat.isFullyCovered;
+                  return (
+                    <div
+                      key={idx}
+                      style={{
+                        backgroundColor: "rgba(10, 14, 23, 0.85)",
+                        border: isFullyCovered ? "1px solid rgba(52, 211, 153, 0.25)" : "1px solid rgba(16, 185, 129, 0.4)",
+                        borderRadius: "5px",
+                        padding: "10px 14px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: "12px",
+                      }}
+                    >
+                      <div style={{ display: "flex", flexDirection: "column", gap: "2px", minWidth: 0, flex: 1 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <span style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff" }}>
+                            {mat.icon} {mat.name}
+                          </span>
+                          <span
+                            style={{
+                              fontSize: "9px",
+                              fontWeight: 700,
+                              padding: "1px 6px",
+                              borderRadius: "2px",
+                              backgroundColor: mat.badgeBg,
+                              color: mat.badgeColor,
+                              border: `1px solid ${mat.badgeBorder}`,
+                              textTransform: "uppercase",
+                              letterSpacing: "0.4px",
+                            }}
+                          >
+                            {mat.canonicalUnit}
+                          </span>
+                        </div>
+
+                        <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "2px" }}>
+                          {isFullyCovered ? (
+                            <span style={{ color: "#34d399", fontWeight: 600 }}>
+                              Contractor holds {mat.heldPacks.toLocaleString()} {mat.unitDisplay} in table buffer ({mat.heldPieces.toLocaleString()} pcs). 0 needed from warehouse.
+                            </span>
+                          ) : mat.heldPacks > 0 ? (
+                            <span>
+                              Active orders need {mat.requiredPacks.toLocaleString()} {mat.unitDisplay} ({mat.totalPieces.toLocaleString()} pcs) — Table buffer holds {mat.heldPacks.toLocaleString()} {mat.unitDisplay} = Issue remaining <strong style={{ color: "#34d399" }}>{mat.netPacksToIssue.toLocaleString()} {mat.unitDisplay} ({mat.netPiecesToIssue.toLocaleString()} pcs)</strong>
+                            </span>
+                          ) : (
+                            <span>
+                              Active orders need {mat.requiredPacks.toLocaleString()} {mat.unitDisplay} ({mat.totalPieces.toLocaleString()} pcs fresh factory issue)
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Right Handover Badge */}
+                      <div
+                        style={{
+                          padding: "6px 14px",
+                          borderRadius: "4px",
+                          backgroundColor: isFullyCovered ? "rgba(52, 211, 153, 0.12)" : "rgba(16, 185, 129, 0.2)",
+                          border: isFullyCovered ? "1px solid rgba(52, 211, 153, 0.3)" : "1px solid rgba(52, 211, 153, 0.55)",
+                          textAlign: "right",
+                          flexShrink: 0,
+                        }}
+                      >
+                        <div style={{ fontSize: "8.5px", fontWeight: 800, textTransform: "uppercase", color: isFullyCovered ? "#34d399" : "#86efac" }}>
+                          {isFullyCovered ? "BUFFER COVERS ✅" : "HANDOVER TO LABOUR"}
+                        </div>
+                        <div style={{ fontSize: "15px", fontWeight: 900, fontFamily: "var(--font-mono)", color: isFullyCovered ? "#34d399" : "#4ade80" }}>
+                          {isFullyCovered ? "0" : mat.netPacksToIssue.toLocaleString()} <span style={{ fontSize: "10.5px", fontWeight: 600 }}>{mat.unitDisplay}</span>
+                        </div>
+                        {!isFullyCovered && mat.packSize > 1 && (
+                          <div style={{ fontSize: "10px", color: "#86efac", fontFamily: "var(--font-mono)" }}>
+                            ({mat.netPiecesToIssue.toLocaleString()} pcs)
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ── COL 3: Contractor Stock Buffer ("Things Already With Contractor") + Activity Log ── */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+
+          {/* Quick Metrics */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+            <StatTile label="Allocated" value={totalAllocatedUnits.toLocaleString()} sub="Units across orders" color="#fff" />
+            <StatTile label="Buffer Items" value={`${bufferHoldings.length}`} sub="Material categories" color="#fb923c" />
+          </div>
+
+          {/* SECTION 3: 🟠 Things Already With Contractor (Current Buffer) */}
+          <div
+            style={{
+              backgroundColor: "rgba(249, 115, 22, 0.05)",
+              border: "1px solid rgba(249, 115, 22, 0.28)",
+              borderRadius: "6px",
+              padding: "16px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "10px",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <span style={{ fontSize: "16px" }}>🟠</span>
+                <div>
+                  <span style={{ fontSize: "12px", fontWeight: 800, color: "#fb923c", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                    Things They Already Have
+                  </span>
+                  <div style={{ fontSize: "10px", color: "var(--text-muted)" }}>
+                    Contractor Table Buffer Holdings
+                  </div>
+                </div>
+              </div>
+
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setShowAddBufferModal(true)}
+                style={{ fontSize: "10.5px", padding: "2px 8px" }}
+              >
+                + Add
+              </Button>
+            </div>
+
+            {bufferHoldings.length === 0 ? (
+              <div style={{ padding: "14px", textAlign: "center", color: "var(--text-muted)", fontSize: "11.5px" }}>
+                Contractor has 0 buffer holdings on hand.
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                {bufferHoldings.map((h, hIdx) => {
+                  const isDeductedInHandover = handoverReconciliation.some(
+                    (m) => m.name.toLowerCase().includes(h.item.toLowerCase()) || h.item.toLowerCase().includes(m.name.toLowerCase())
+                  );
+
+                  return (
+                    <div
+                      key={hIdx}
+                      style={{
+                        backgroundColor: "rgba(10, 14, 23, 0.8)",
+                        border: isDeductedInHandover ? "1px solid rgba(16, 185, 129, 0.35)" : "1px solid rgba(255, 255, 255, 0.06)",
+                        borderRadius: "4px",
+                        padding: "8px 12px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <div>
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                          <span style={{ fontSize: "12px", fontWeight: 700, color: "#f1f5f9" }}>{h.item}</span>
+                          {isDeductedInHandover && (
+                            <span
+                              style={{
+                                fontSize: "8.5px",
+                                fontWeight: 800,
+                                padding: "1px 5px",
+                                borderRadius: "2px",
+                                backgroundColor: "rgba(16, 185, 129, 0.2)",
+                                color: "#34d399",
+                              }}
+                            >
+                              DEDUCTED ✅
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ fontSize: "10px", color: "var(--text-muted)", marginTop: "2px" }}>
+                          {h.details || "Staged at contractor workstation"}
+                        </div>
+                      </div>
+
+                      <div style={{ textAlign: "right" }}>
+                        <div style={{ fontSize: "14px", fontWeight: 800, color: "#fb923c", fontFamily: "var(--font-mono)" }}>
+                          {h.qtyOnHand.toLocaleString()}{" "}
+                          <span style={{ fontSize: "10px", color: "#fdba74" }}>{h.unit}</span>
+                        </div>
+                        <div style={{ fontSize: "8px", color: "var(--text-muted)", textTransform: "uppercase" }}>
+                          BUFFER ON HAND
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Handover Activity Log */}
+          <div
+            style={{
+              backgroundColor: "rgba(19, 23, 34, 0.85)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              borderRadius: "6px",
+              padding: "14px 16px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "8px",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span style={{ fontSize: "11.5px", fontWeight: 800, color: "#fff" }}>
+                Recent Handover Log
+              </span>
+              <span style={{ fontSize: "10px", color: "var(--text-muted)" }}>
+                Factory → Workbench
+              </span>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              {handoverLogs.map((log, lIdx) => (
+                <div
+                  key={lIdx}
+                  style={{
+                    backgroundColor: "rgba(0, 0, 0, 0.3)",
+                    borderRadius: "3px",
+                    padding: "6px 10px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "2px",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <span style={{ fontSize: "9.5px", color: "#60a5fa", fontWeight: 700 }}>{log.date}</span>
+                    <span style={{ fontSize: "9px", color: "var(--text-muted)" }}>{log.itemsCount} items</span>
+                  </div>
+                  <span style={{ fontSize: "11px", color: "#e2e8f0" }}>{log.summary}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* ─── ISSUE MPL BATCH MODAL ──────────────────────────────────────────── */}
-      {showIssueModal && (
-        <Modal isOpen={showIssueModal} onClose={() => setShowIssueModal(false)} title="Issue New MPL Batch">
-          <form onSubmit={handleAddOrder} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-            <Input label="School / Client Name" placeholder="e.g. St. Xavier's High School" value={newSchool} onChange={(e) => setNewSchool(e.target.value)} required />
+      {/* ─── ADD / ADJUST BUFFER STOCK MODAL ─────────────────────────────────── */}
+      {showAddBufferModal && (
+        <Modal
+          isOpen={showAddBufferModal}
+          onClose={() => setShowAddBufferModal(false)}
+          title={`Add / Adjust Table Buffer: ${contractor.name}`}
+        >
+          <form onSubmit={handleAddBufferSubmit} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
             <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-              <label style={{ fontSize: "12px", color: "var(--text-muted)" }}>MPL Specification</label>
-              <select value={newMplSpec} onChange={(e) => setNewMplSpec(e.target.value)} style={{ height: "38px", padding: "0 10px", borderRadius: "2px", backgroundColor: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.15)", color: "#fff", fontSize: "13px" }}>
-                {["10mm Single Color", "12mm Double Color (Red/White)", "12mm Double Color (Blue/White)", "15mm Triple Color (Blue/White/Red)", "15mm Triple Color (Custom)", "20mm Full Color Print"].map((v) => <option key={v} value={v} style={{ backgroundColor: "#131722" }}>{v}</option>)}
+              <label style={{ fontSize: "12px", color: "var(--text-muted)" }}>Stock Material Item</label>
+              <select
+                value={newBufferItem}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setNewBufferItem(val);
+                  if (val.includes("Clip") || val.includes("Jointer")) {
+                    setNewBufferUnit("packets of 1000");
+                    setNewBufferQty("1");
+                  } else if (val.includes("Roll")) {
+                    setNewBufferUnit("rolls");
+                    setNewBufferQty("2");
+                  } else {
+                    setNewBufferUnit("pieces");
+                    setNewBufferQty("200");
+                  }
+                }}
+                style={{
+                  height: "38px",
+                  padding: "0 10px",
+                  borderRadius: "3px",
+                  backgroundColor: "rgba(255,255,255,0.05)",
+                  border: "1px solid rgba(255,255,255,0.15)",
+                  color: "#fff",
+                  fontSize: "13px",
+                }}
+              >
+                <option value="Dog Hook" style={{ backgroundColor: "#131722" }}>Dog Hook (pieces)</option>
+                <option value="16mm Lanyard Rolls" style={{ backgroundColor: "#131722" }}>16mm Lanyard Rolls (rolls)</option>
+                <option value="12mm Lanyard Rolls" style={{ backgroundColor: "#131722" }}>12mm Lanyard Rolls (rolls)</option>
+                <option value="20mm Lanyard Rolls" style={{ backgroundColor: "#131722" }}>20mm Lanyard Rolls (rolls)</option>
+                <option value="Clips" style={{ backgroundColor: "#131722" }}>Clips (packets of 1000)</option>
+                <option value="Safety Jointer Buckles" style={{ backgroundColor: "#131722" }}>Safety Jointer Buckles (packets of 1000)</option>
+                <option value="Plastic Holder-V" style={{ backgroundColor: "#131722" }}>Plastic Holder-V (pieces)</option>
+                <option value="Plastic Holder-H" style={{ backgroundColor: "#131722" }}>Plastic Holder-H (pieces)</option>
+                <option value="Plastic Hook" style={{ backgroundColor: "#131722" }}>Plastic Hook (pieces)</option>
+                <option value="England Hook" style={{ backgroundColor: "#131722" }}>England Hook (pieces)</option>
               </select>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-              <label style={{ fontSize: "12px", color: "var(--text-muted)" }}>Holder / ID Sleeve</label>
-              <select value={newHolder} onChange={(e) => setNewHolder(e.target.value)} style={{ height: "38px", padding: "0 10px", borderRadius: "2px", backgroundColor: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.15)", color: "#fff", fontSize: "13px" }}>
-                {["Clear PVC Pouch", "Frosted Rigid ID Holder", "Vinyl Sleeve (Landscape)", "Vinyl Sleeve (Portrait)", "None (Lanyard Only)"].map((v) => <option key={v} value={v} style={{ backgroundColor: "#131722" }}>{v}</option>)}
-              </select>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+              <Input
+                label="Quantity to Add"
+                type="number"
+                min={1}
+                value={newBufferQty}
+                onChange={(e) => setNewBufferQty(e.target.value)}
+                required
+              />
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                <label style={{ fontSize: "12px", color: "var(--text-muted)" }}>Unit</label>
+                <input
+                  type="text"
+                  value={newBufferUnit}
+                  readOnly
+                  style={{
+                    height: "38px",
+                    padding: "0 10px",
+                    borderRadius: "3px",
+                    backgroundColor: "rgba(255,255,255,0.03)",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    color: "#94a3b8",
+                    fontSize: "13px",
+                  }}
+                />
+              </div>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-              <label style={{ fontSize: "12px", color: "var(--text-muted)" }}>Hook / Clip Type</label>
-              <select value={newHook} onChange={(e) => setNewHook(e.target.value)} style={{ height: "38px", padding: "0 10px", borderRadius: "2px", backgroundColor: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.15)", color: "#fff", fontSize: "13px" }}>
-                {["Silver Swivel J-Hook", "Black Lobster Claw Hook", "Silver Snap Hook", "Safety Breakaway Clip", "Thumb Trigger Hook"].map((v) => <option key={v} value={v} style={{ backgroundColor: "#131722" }}>{v}</option>)}
-              </select>
-            </div>
-            <Input label="Quantity (MPL units)" type="number" value={newQty} onChange={(e) => setNewQty(e.target.value)} required />
-            <Input label="Delivery Date" type="date" value={newDelivery} onChange={(e) => setNewDelivery(e.target.value)} required />
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "6px" }}>
-              <Button variant="secondary" size="md" style={{ borderRadius: "2px" }} onClick={() => setShowIssueModal(false)}>Cancel</Button>
-              <Button variant="primary" size="md" type="submit" style={{ borderRadius: "2px" }}>Issue Batch</Button>
+
+            <Input
+              label="Details / Source Credit"
+              placeholder="e.g. Leftover buffer from previous batch #LN-401"
+              value={newBufferDetails}
+              onChange={(e) => setNewBufferDetails(e.target.value)}
+            />
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "8px" }}>
+              <Button variant="secondary" size="md" onClick={() => setShowAddBufferModal(false)}>
+                Cancel
+              </Button>
+              <Button variant="primary" size="md" type="submit">
+                Add to Buffer
+              </Button>
             </div>
           </form>
         </Modal>
       )}
 
-      {/* ─── EDIT TERMS MODAL ────────────────────────────────────────────────── */}
+      {/* ─── EDIT WORKSTATION MODAL ────────────────────────────────────────── */}
       {showEditContractModal && (
-        <Modal isOpen={showEditContractModal} onClose={() => setShowEditContractModal(false)} title={`Edit Station: ${contractor.name}`}>
-          <form onSubmit={(e) => { e.preventDefault(); setShowEditContractModal(false); success("Station Updated", `Workstation assigned to ${editStation}`); }} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-            <Input label="Assigned Table / Workstation" value={editStation} onChange={(e) => setEditStation(e.target.value)} required />
+        <Modal
+          isOpen={showEditContractModal}
+          onClose={() => setShowEditContractModal(false)}
+          title={`Edit Workstation: ${contractor.name}`}
+        >
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              setShowEditContractModal(false);
+              success("Workstation Updated", `Workstation set to ${editStation}`);
+            }}
+            style={{ display: "flex", flexDirection: "column", gap: "12px" }}
+          >
+            <Input
+              label="Assigned Table / Location"
+              value={editStation}
+              onChange={(e) => setEditStation(e.target.value)}
+              required
+            />
             <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "6px" }}>
-              <Button variant="secondary" size="md" style={{ borderRadius: "2px" }} onClick={() => setShowEditContractModal(false)}>Cancel</Button>
-              <Button variant="primary" size="md" type="submit" style={{ borderRadius: "2px" }}>Save Changes</Button>
+              <Button variant="secondary" size="md" onClick={() => setShowEditContractModal(false)}>
+                Cancel
+              </Button>
+              <Button variant="primary" size="md" type="submit">
+                Save Changes
+              </Button>
             </div>
           </form>
         </Modal>
