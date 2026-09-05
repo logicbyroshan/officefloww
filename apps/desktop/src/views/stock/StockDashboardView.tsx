@@ -24,7 +24,7 @@ export interface StockItem {
 }
 
 // ─── The Fixed 14 Items ───────────────────────────────────────────────────────
-const INITIAL_STOCK_ITEMS: StockItem[] = [
+export const INITIAL_STOCK_ITEMS: StockItem[] = [
   // 3 Hooks (Unit: pieces)
   {
     id: "stk-hook-1",
@@ -152,8 +152,8 @@ const INITIAL_STOCK_ITEMS: StockItem[] = [
     name: "16mm Lanyard Rolls",
     category: "LANYARDS",
     unit: "rolls",
-    availableStock: 32,
-    usedStock: 19,
+    availableStock: 6, // Low Stock Alert (< 8 minThreshold)
+    usedStock: 45,
     reservedStock: 6,
     minThreshold: 8,
     workstation: "Sublimation Press Line 2",
@@ -206,8 +206,8 @@ const INITIAL_STOCK_ITEMS: StockItem[] = [
     name: "Pins",
     category: "OTHERS",
     unit: "packets of 1000",
-    availableStock: 25, // 25 packets
-    usedStock: 16,
+    availableStock: 4, // Low Stock Alert (< 6 minThreshold)
+    usedStock: 37,
     reservedStock: 5,
     minThreshold: 6,
     workstation: "Badge Pinning Bench",
