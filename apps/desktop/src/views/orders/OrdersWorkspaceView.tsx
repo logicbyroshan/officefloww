@@ -33,13 +33,25 @@ export const STANDARD_ORDER_ITEMS = [
 
 export type StandardItem = (typeof STANDARD_ORDER_ITEMS)[number];
 
-// ─── Labour Contractors & Unconsumed Material Holdings ────────────────────────
-export interface LabourMaterialHolding {
-  productType: string;
+// ─── Worker Material Holdings & Profiles ─────────────────────────────────────
+export interface MaterialHolding {
+  item: string;
   qtyOnHand: number;
   unit: string;
-  sourceOrder: string;
-  details: string;
+  sourceOrder?: string;
+  details?: string;
+}
+
+export interface EmployeeMember {
+  id: string;
+  name: string;
+  role: string;
+  department: string;
+  workstation: string;
+  activeJobsCount: number;
+  phone: string;
+  email: string;
+  materialHoldings: MaterialHolding[];
 }
 
 export interface LabourContractor {
@@ -48,11 +60,124 @@ export interface LabourContractor {
   specialty: string;
   location: string;
   ratePerPiece: number;
-  materialHoldings: LabourMaterialHolding[];
+  materialHoldings: MaterialHolding[];
   activeJobsCount: number;
   phone: string;
 }
 
+// In-House Staff/Employees for ID Card Production
+export const INHOUSE_EMPLOYEES: EmployeeMember[] = [
+  {
+    id: "emp-1",
+    name: "Sneha Roy",
+    role: "ID Card Print Specialist",
+    department: "Digital Printing & RFID Desk",
+    workstation: "Card Printing Desk 01",
+    activeJobsCount: 2,
+    phone: "+91 98200 11005",
+    email: "sneha.roy@adharshbhopal.in",
+    materialHoldings: [
+      {
+        item: "Plastic Holder-V",
+        qtyOnHand: 150,
+        unit: "pieces",
+        sourceOrder: "Previous Order #ORD-974 (AIIMS)",
+        details: "Vertical PVC Card Holders held at Desk 01",
+      },
+      {
+        item: "Clips",
+        qtyOnHand: 200,
+        unit: "pieces",
+        sourceOrder: "Stock Lot #STK-49",
+        details: "Metal crocodile badge clips on workbench",
+      },
+    ],
+  },
+  {
+    id: "emp-2",
+    name: "Priya Nair",
+    role: "Smart Card & Quality Operator",
+    department: "Card Thermal Lamination",
+    workstation: "Thermal Press Station A",
+    activeJobsCount: 1,
+    phone: "+91 98200 11003",
+    email: "priya.nair@adharshbhopal.in",
+    materialHoldings: [
+      {
+        item: "Plastic Holder-H",
+        qtyOnHand: 300,
+        unit: "pieces",
+        sourceOrder: "Previous Order #ORD-965 (Govt Engg)",
+        details: "Horizontal PVC Card Holders staged on rack",
+      },
+      {
+        item: "Clips",
+        qtyOnHand: 150,
+        unit: "pieces",
+        sourceOrder: "Lot #STK-49",
+        details: "Standard badge clips",
+      },
+    ],
+  },
+  {
+    id: "emp-3",
+    name: "Dinesh Kumar",
+    role: "Card Embossing & Encoding Worker",
+    department: "Encoding & Foil Stamping",
+    workstation: "Embossing Bench 02",
+    activeJobsCount: 1,
+    phone: "+91 98200 11008",
+    email: "dinesh.kumar@adharshbhopal.in",
+    materialHoldings: [
+      {
+        item: "DST-V",
+        qtyOnHand: 100,
+        unit: "pieces",
+        sourceOrder: "Previous Order #ORD-961 (Indraprastha)",
+        details: "Dual-slot Card Holders at station",
+      },
+    ],
+  },
+  {
+    id: "emp-4",
+    name: "Sunil Yadav",
+    role: "ID Card Finishing & QC",
+    department: "Quality Control & Packaging",
+    workstation: "Card QC Table 01",
+    activeJobsCount: 0,
+    phone: "+91 98200 11009",
+    email: "sunil.yadav@adharshbhopal.in",
+    materialHoldings: [
+      {
+        item: "Crystal Holder",
+        qtyOnHand: 80,
+        unit: "pieces",
+        sourceOrder: "Lot #CR-12",
+        details: "VIP Crystal Card Holders buffer",
+      },
+      {
+        item: "Clips",
+        qtyOnHand: 100,
+        unit: "pieces",
+        sourceOrder: "Buffer stock",
+        details: "Finishing clips",
+      },
+    ],
+  },
+  {
+    id: "emp-5",
+    name: "Rohan Sharma",
+    role: "Production Floor Supervisor",
+    department: "Production Operations",
+    workstation: "Floor Admin Console",
+    activeJobsCount: 1,
+    phone: "+91 98200 11002",
+    email: "rohan.sharma@adharshbhopal.in",
+    materialHoldings: [],
+  },
+];
+
+// External Piece-Rate Labour Contractors for Lanyard Production
 export const LABOUR_CONTRACTORS: LabourContractor[] = [
   {
     id: "lb-1",
@@ -62,112 +187,98 @@ export const LABOUR_CONTRACTORS: LabourContractor[] = [
     ratePerPiece: 2.50,
     materialHoldings: [
       {
-        productType: "Lanyard",
-        qtyOnHand: 200,
-        unit: "pcs",
+        item: "Dog Hook",
+        qtyOnHand: 500,
+        unit: "pieces",
         sourceOrder: "Previous Order #ORD-982 (Bansal Schools)",
-        details: "15mm Satin pre-cut ribbon & nickel dog hooks held in buffer credit"
-      }
+        details: "Standard nickel Dog Hooks held in contractor buffer",
+      },
+      {
+        item: "16mm Lanyard Rolls",
+        qtyOnHand: 3,
+        unit: "rolls",
+        sourceOrder: "Batch #LN-401",
+        details: "Satin ribbon rolls held in contractor storage",
+      },
     ],
     activeJobsCount: 2,
     phone: "+91 98260 11420",
   },
   {
     id: "lb-2",
-    name: "Suresh Badge Assembly Workshop",
-    specialty: "PVC Round & Magnetic Badge Pressing",
-    location: "Pin Press Table 01 (East Wing)",
-    ratePerPiece: 1.80,
-    materialHoldings: [
-      {
-        productType: "Badge",
-        qtyOnHand: 150,
-        unit: "pcs",
-        sourceOrder: "Previous Order #ORD-965 (Govt Engg)",
-        details: "58mm Metal badge tin shells, pin backs & mylar film rolls in buffer"
-      }
-    ],
-    activeJobsCount: 1,
-    phone: "+91 94250 88319",
-  },
-  {
-    id: "lb-3",
-    name: "Deepak Card Lamination Unit",
-    specialty: "PVC Smartcard Die-Cutting & NFC Foil",
-    location: "Lamination Room 3B",
-    ratePerPiece: 3.50,
-    materialHoldings: [
-      {
-        productType: "Card",
-        qtyOnHand: 80,
-        unit: "pcs",
-        sourceOrder: "Previous Order #ORD-974 (AIIMS)",
-        details: "Blank PVC CR-80 cards with RFID chip inlays & hologram laminate"
-      }
-    ],
-    activeJobsCount: 2,
-    phone: "+91 98272 55431",
-  },
-  {
-    id: "lb-4",
     name: "Kailash Heat Sublimation Lab",
     specialty: "Heat Transfer & Double-Sided Sublimation",
     location: "Sublimation Line B",
     ratePerPiece: 2.80,
     materialHoldings: [
       {
-        productType: "Lanyard",
-        qtyOnHand: 300,
-        unit: "pcs",
+        item: "20mm Lanyard Rolls",
+        qtyOnHand: 4,
+        unit: "rolls",
         sourceOrder: "Previous Order #ORD-979 (NIT Bhopal)",
-        details: "20mm Sublimation white satin rolls & heat release tape"
-      }
+        details: "20mm Sublimation white satin rolls in buffer credit",
+      },
+      {
+        item: "Plastic Hook",
+        qtyOnHand: 350,
+        unit: "pieces",
+        sourceOrder: "Batch #LN-309",
+        details: "Plastic snap hooks on hand",
+      },
     ],
     activeJobsCount: 1,
     phone: "+91 97551 22890",
   },
   {
-    id: "lb-5",
-    name: "Amit ID Finishing & Sleeves Unit",
-    specialty: "Transparent Vinyl Pouch & ID Clip Sealing",
-    location: "Finishing Floor West (Station 4)",
-    ratePerPiece: 1.50,
-    materialHoldings: [
-      {
-        productType: "Clear Sleeves",
-        qtyOnHand: 250,
-        unit: "pcs",
-        sourceOrder: "Previous Order #ORD-961 (Indraprastha)",
-        details: "Heavy vinyl sleeves & plastic strap clips in unconsumed buffer credit"
-      }
-    ],
-    activeJobsCount: 1,
-    phone: "+91 99814 33712",
-  },
-  {
-    id: "lb-6",
+    id: "lb-3",
     name: "Shyam Screen Print Workshop",
     specialty: "Screen Printing & Fabric Stamping",
     location: "Screen Table 04",
     ratePerPiece: 2.10,
     materialHoldings: [
       {
-        productType: "Lanyard",
-        qtyOnHand: 120,
-        unit: "pcs",
+        item: "12mm Lanyard Rolls",
+        qtyOnHand: 2,
+        unit: "rolls",
         sourceOrder: "Previous Order #ORD-953 (Maulana Azad)",
-        details: "12mm Navy blue tape & metallic screen print ink buffer"
-      }
+        details: "12mm Navy blue tape rolls in buffer",
+      },
+      {
+        item: "England Hook",
+        qtyOnHand: 250,
+        unit: "pieces",
+        sourceOrder: "Batch #LN-291",
+        details: "England type swivel hooks held",
+      },
     ],
     activeJobsCount: 0,
     phone: "+91 98263 77419",
+  },
+  {
+    id: "lb-4",
+    name: "Pooja Manual Pack & Clip Crew",
+    specialty: "Manual Assembly & Ring Fitting",
+    location: "Packing Table 04",
+    ratePerPiece: 1.50,
+    materialHoldings: [
+      {
+        item: "Dog Hook",
+        qtyOnHand: 200,
+        unit: "pieces",
+        sourceOrder: "Previous Order #ORD-944",
+        details: "Dog Hooks in assembly bin",
+      },
+    ],
+    activeJobsCount: 1,
+    phone: "+91 98200 44554",
   },
 ];
 
 export interface AssignedWorker {
   name: string;
   role: string;
-  type: "LABOUR" | "STAFF";
+  type: "STAFF" | "LABOUR";
+  id?: string;
   contractorId?: string;
 }
 
@@ -175,10 +286,10 @@ export interface OrderRecord {
   internalId: string;
   client: string;
   product: string; // Description (unified single text)
-  itemOrdered: string; // One single product per order
+  itemOrdered: string; // One single product per order ("Card" | "Lanyard")
   itemsOrdered?: string[];
   qty: number;
-  assignedTo?: AssignedWorker[]; // Assigned Labour Contractor
+  assignedTo?: AssignedWorker[]; // Assigned Employee (for Card) or Labour Contractor (for Lanyard)
   orderDate: string;
   deliveryDate: string;
   notes?: string;
@@ -233,7 +344,7 @@ export const INITIAL_ORDERS: OrderRecord[] = [
     itemsOrdered: ["Card"],
     qty: 350,
     assignedTo: [
-      { name: "Deepak Card Lamination Unit", role: "Card Lamination & Foil", type: "LABOUR", contractorId: "lb-3" },
+      { name: "Sneha Roy", role: "ID Card Print Specialist", type: "STAFF", id: "emp-1" },
     ],
     orderDate: "29 Aug 2026",
     deliveryDate: "04 Sep 2026",
@@ -246,7 +357,7 @@ export const INITIAL_ORDERS: OrderRecord[] = [
     itemsOrdered: ["Card"],
     qty: 800,
     assignedTo: [
-      { name: "Deepak Card Lamination Unit", role: "Card Lamination & Foil", type: "LABOUR", contractorId: "lb-3" },
+      { name: "Priya Nair", role: "Smart Card & Quality Operator", type: "STAFF", id: "emp-2" },
     ],
     orderDate: "25 Aug 2026",
     deliveryDate: "03 Sep 2026",
@@ -259,7 +370,7 @@ export const INITIAL_ORDERS: OrderRecord[] = [
     itemsOrdered: ["Card"],
     qty: 200,
     assignedTo: [
-      { name: "Deepak Card Lamination Unit", role: "Card Lamination & Foil", type: "LABOUR", contractorId: "lb-3" },
+      { name: "Dinesh Kumar", role: "Card Embossing & Encoding Worker", type: "STAFF", id: "emp-3" },
     ],
     orderDate: "01 Sep 2026",
     deliveryDate: "10 Sep 2026",
@@ -272,7 +383,7 @@ export const INITIAL_ORDERS: OrderRecord[] = [
     itemsOrdered: ["Lanyard"],
     qty: 1200,
     assignedTo: [
-      { name: "Kailash Heat Sublimation Lab", role: "Heat Transfer Contractor", type: "LABOUR", contractorId: "lb-4" },
+      { name: "Kailash Heat Sublimation Lab", role: "Heat Transfer Contractor", type: "LABOUR", contractorId: "lb-2" },
     ],
     orderDate: "31 Aug 2026",
     deliveryDate: "08 Sep 2026",
@@ -285,7 +396,7 @@ export const INITIAL_ORDERS: OrderRecord[] = [
     itemsOrdered: ["Lanyard"],
     qty: 600,
     assignedTo: [
-      { name: "Shyam Screen Print Workshop", role: "Screen Printing & Stamping", type: "LABOUR", contractorId: "lb-6" },
+      { name: "Shyam Screen Print Workshop", role: "Screen Printing & Stamping", type: "LABOUR", contractorId: "lb-3" },
     ],
     orderDate: "03 Sep 2026",
     deliveryDate: "12 Sep 2026",
@@ -298,7 +409,7 @@ export const INITIAL_ORDERS: OrderRecord[] = [
     itemsOrdered: ["Card"],
     qty: 450,
     assignedTo: [
-      { name: "Deepak Card Lamination Unit", role: "Card Lamination & Foil", type: "LABOUR", contractorId: "lb-3" },
+      { name: "Sneha Roy", role: "ID Card Print Specialist", type: "STAFF", id: "emp-1" },
     ],
     orderDate: "02 Sep 2026",
     deliveryDate: "06 Sep 2026",
@@ -324,7 +435,7 @@ export const INITIAL_ORDERS: OrderRecord[] = [
     itemsOrdered: ["Card"],
     qty: 150,
     assignedTo: [
-      { name: "Deepak Card Lamination Unit", role: "Card Lamination & Foil", type: "LABOUR", contractorId: "lb-3" },
+      { name: "Sunil Yadav", role: "ID Card Finishing & QC", type: "STAFF", id: "emp-4" },
     ],
     orderDate: "01 Sep 2026",
     deliveryDate: "09 Sep 2026",
@@ -454,51 +565,175 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
     return clientNames.filter((c) => c.toLowerCase().includes(q));
   }, [clientNames, newClient]);
 
-  // ─── Streamlined Labour Assignment Drawer States ────────────────────────────
+  // ─── Worker Assignment Drawer States (Employee for Card, Labour for Lanyard) ───
   const [assigningOrder, setAssigningOrder] = useState<OrderRecord | null>(null);
-  const [selectedLabourId, setSelectedLabourId] = useState<string | null>(null);
-  const [labourSearch, setLabourSearch] = useState("");
+  const [selectedWorkerId, setSelectedWorkerId] = useState<string | null>(null);
+  const [workerSearch, setWorkerSearch] = useState("");
 
-  // When opening assign drawer for an order, pre-select current labour contractor if present
+  const isAssigningCard = useMemo(() => {
+    return (assigningOrder?.itemOrdered || assigningOrder?.itemsOrdered?.[0] || "Lanyard") === "Card";
+  }, [assigningOrder]);
+
+  // When opening assign drawer for an order, pre-select current worker if present
   useEffect(() => {
     if (assigningOrder) {
-      setLabourSearch("");
+      setWorkerSearch("");
+      const isCard = (assigningOrder.itemOrdered || assigningOrder.itemsOrdered?.[0] || "Lanyard") === "Card";
       const currentName = assigningOrder.assignedTo?.[0]?.name;
-      const matched = LABOUR_CONTRACTORS.find((c) => c.name === currentName);
-      setSelectedLabourId(matched ? matched.id : LABOUR_CONTRACTORS[0].id);
+
+      if (isCard) {
+        const matched = INHOUSE_EMPLOYEES.find((e) => e.name === currentName);
+        setSelectedWorkerId(matched ? matched.id : INHOUSE_EMPLOYEES[0].id);
+      } else {
+        const matched = LABOUR_CONTRACTORS.find((c) => c.name === currentName);
+        setSelectedWorkerId(matched ? matched.id : LABOUR_CONTRACTORS[0].id);
+      }
     } else {
-      setSelectedLabourId(null);
-      setLabourSearch("");
+      setSelectedWorkerId(null);
+      setWorkerSearch("");
     }
   }, [assigningOrder]);
 
-  // Filtered Labour Contractors based on search
+  // Filtered In-house Employees (For Card Orders)
+  const filteredEmployees = useMemo(() => {
+    if (!workerSearch.trim()) return INHOUSE_EMPLOYEES;
+    const q = workerSearch.toLowerCase().trim();
+    return INHOUSE_EMPLOYEES.filter(
+      (e) =>
+        e.name.toLowerCase().includes(q) ||
+        e.role.toLowerCase().includes(q) ||
+        e.department.toLowerCase().includes(q) ||
+        e.workstation.toLowerCase().includes(q) ||
+        e.materialHoldings.some((m) => m.item.toLowerCase().includes(q) || (m.details && m.details.toLowerCase().includes(q)))
+    );
+  }, [workerSearch]);
+
+  // Filtered Labour Contractors (For Lanyard Orders)
   const filteredLabourContractors = useMemo(() => {
-    if (!labourSearch.trim()) return LABOUR_CONTRACTORS;
-    const q = labourSearch.toLowerCase().trim();
+    if (!workerSearch.trim()) return LABOUR_CONTRACTORS;
+    const q = workerSearch.toLowerCase().trim();
     return LABOUR_CONTRACTORS.filter(
       (c) =>
         c.name.toLowerCase().includes(q) ||
         c.specialty.toLowerCase().includes(q) ||
         c.location.toLowerCase().includes(q) ||
-        c.materialHoldings.some((m) => m.productType.toLowerCase().includes(q) || m.details.toLowerCase().includes(q))
+        c.materialHoldings.some((m) => m.item.toLowerCase().includes(q) || (m.details && m.details.toLowerCase().includes(q)))
     );
-  }, [labourSearch]);
+  }, [workerSearch]);
+
+  const selectedEmployee = useMemo(() => {
+    return INHOUSE_EMPLOYEES.find((e) => e.id === selectedWorkerId) || INHOUSE_EMPLOYEES[0];
+  }, [selectedWorkerId]);
 
   const selectedLabourContractor = useMemo(() => {
-    return LABOUR_CONTRACTORS.find((c) => c.id === selectedLabourId) || null;
-  }, [selectedLabourId]);
+    return LABOUR_CONTRACTORS.find((c) => c.id === selectedWorkerId) || LABOUR_CONTRACTORS[0];
+  }, [selectedWorkerId]);
 
-  const handleConfirmLabourAssignment = () => {
-    if (!assigningOrder || !selectedLabourContractor) return;
+  // Material reconciliation calculation (shows what is required, what worker holds, and net to give)
+  const materialReconciliation = useMemo(() => {
+    if (!assigningOrder) return [];
+    const isCard = (assigningOrder.itemOrdered || assigningOrder.itemsOrdered?.[0] || "Lanyard") === "Card";
+    const qty = assigningOrder.qty;
+
+    if (isCard) {
+      // ID Card requires: Card Holders and Clips
+      const holdings = selectedEmployee?.materialHoldings || [];
+      const holderHolding = holdings.find((h) => h.item.toLowerCase().includes("holder")) || holdings[0];
+      const clipHolding = holdings.find((h) => h.item.toLowerCase().includes("clip"));
+
+      const holderName = holderHolding ? holderHolding.item : "Plastic Holder-V";
+      const holderHeld = holderHolding ? holderHolding.qtyOnHand : 0;
+      const holderNet = Math.max(0, qty - holderHeld);
+
+      const clipName = clipHolding ? clipHolding.item : "Clips";
+      const clipHeld = clipHolding ? clipHolding.qtyOnHand : 0;
+      const clipNet = Math.max(0, qty - clipHeld);
+
+      return [
+        {
+          name: holderName,
+          category: "HOLDERS" as const,
+          unit: "pieces",
+          requiredQty: qty,
+          heldQty: holderHeld,
+          netToIssue: holderNet,
+          sourceNote: holderHolding?.sourceOrder
+            ? `${holderHolding.details} (${holderHolding.sourceOrder})`
+            : "Vertical PVC Card Holders held at employee workstation",
+        },
+        {
+          name: clipName,
+          category: "OTHERS" as const,
+          unit: "pieces",
+          requiredQty: qty,
+          heldQty: clipHeld,
+          netToIssue: clipNet,
+          sourceNote: clipHolding?.sourceOrder
+            ? `${clipHolding.details} (${clipHolding.sourceOrder})`
+            : "Metal crocodile badge clips on employee bench",
+        },
+      ];
+    } else {
+      // Lanyard requires: Hooks and Lanyard Ribbon Rolls
+      const holdings = selectedLabourContractor?.materialHoldings || [];
+      const hookHolding = holdings.find((h) => h.item.toLowerCase().includes("hook")) || holdings[0];
+      const rollHolding = holdings.find((h) => h.item.toLowerCase().includes("roll"));
+
+      const hookName = hookHolding ? hookHolding.item : "Dog Hook";
+      const hookHeld = hookHolding ? hookHolding.qtyOnHand : 0;
+      const hookNet = Math.max(0, qty - hookHeld);
+
+      const rollsNeeded = Math.max(1, Math.ceil(qty / 200));
+      const rollName = rollHolding ? rollHolding.item : "16mm Lanyard Rolls";
+      const rollHeld = rollHolding ? rollHolding.qtyOnHand : 0;
+      const rollNet = Math.max(0, rollsNeeded - rollHeld);
+
+      return [
+        {
+          name: hookName,
+          category: "HOOKS" as const,
+          unit: "pieces",
+          requiredQty: qty,
+          heldQty: hookHeld,
+          netToIssue: hookNet,
+          sourceNote: hookHolding?.sourceOrder
+            ? `${hookHolding.details} (${hookHolding.sourceOrder})`
+            : "Standard nickel dog hooks held in contractor buffer",
+        },
+        {
+          name: rollName,
+          category: "LANYARDS" as const,
+          unit: "rolls",
+          requiredQty: rollsNeeded,
+          heldQty: rollHeld,
+          netToIssue: rollNet,
+          sourceNote: rollHolding?.sourceOrder
+            ? `${rollHolding.details} (${rollHolding.sourceOrder})`
+            : "200m satin ribbon rolls held in contractor storage",
+        },
+      ];
+    }
+  }, [assigningOrder, selectedEmployee, selectedLabourContractor]);
+
+  const handleConfirmAssignment = () => {
+    if (!assigningOrder) return;
     const targetId = assigningOrder.internalId;
+    const isCard = (assigningOrder.itemOrdered || assigningOrder.itemsOrdered?.[0] || "Lanyard") === "Card";
 
-    const assignedWorker: AssignedWorker = {
-      name: selectedLabourContractor.name,
-      role: selectedLabourContractor.specialty,
-      type: "LABOUR",
-      contractorId: selectedLabourContractor.id,
-    };
+    const assignedWorker: AssignedWorker = isCard
+      ? {
+          name: selectedEmployee.name,
+          role: selectedEmployee.role,
+          type: "STAFF",
+          id: selectedEmployee.id,
+        }
+      : {
+          name: selectedLabourContractor.name,
+          role: selectedLabourContractor.specialty,
+          type: "LABOUR",
+          id: selectedLabourContractor.id,
+          contractorId: selectedLabourContractor.id,
+        };
 
     setOrders((prev) =>
       prev.map((o) => {
@@ -510,17 +745,18 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
       })
     );
 
-    const orderItem = assigningOrder.itemOrdered || assigningOrder.itemsOrdered?.[0] || "Lanyard";
-    const holding = selectedLabourContractor.materialHoldings.find(
-      (m) => m.productType.toLowerCase() === orderItem.toLowerCase()
-    );
-    const bufferHeld = holding ? holding.qtyOnHand : 0;
-    const netToIssue = Math.max(0, assigningOrder.qty - bufferHeld);
-
-    success(
-      "Labour Assigned",
-      `Assigned order to ${selectedLabourContractor.name}. Holds ${bufferHeld} ${orderItem} buffer units, net raw material issue: ${netToIssue.toLocaleString()} pcs.`
-    );
+    const netItems = materialReconciliation.map((m) => `${m.netToIssue.toLocaleString()} ${m.unit} ${m.name}`).join(", ");
+    if (isCard) {
+      success(
+        "Employee Assigned",
+        `Assigned order to ${selectedEmployee.name} (${selectedEmployee.role}). Net stock to issue: ${netItems}.`
+      );
+    } else {
+      success(
+        "Labour Contractor Assigned",
+        `Assigned order to ${selectedLabourContractor.name}. Net stock to issue: ${netItems}.`
+      );
+    }
     setAssigningOrder(null);
   };
 
@@ -659,7 +895,14 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
         }
         if (field === "itemOrdered") {
           const finalItem = editItem === "Card" ? "Card" : "Lanyard";
-          return { ...o, itemOrdered: finalItem, itemsOrdered: [finalItem] };
+          let newAssignedTo = o.assignedTo;
+          const currentType = o.assignedTo?.[0]?.type;
+          if (finalItem === "Card" && currentType !== "STAFF") {
+            newAssignedTo = [{ name: INHOUSE_EMPLOYEES[0].name, role: INHOUSE_EMPLOYEES[0].role, type: "STAFF", id: INHOUSE_EMPLOYEES[0].id }];
+          } else if (finalItem === "Lanyard" && currentType !== "LABOUR") {
+            newAssignedTo = [{ name: LABOUR_CONTRACTORS[0].name, role: LABOUR_CONTRACTORS[0].specialty, type: "LABOUR", id: LABOUR_CONTRACTORS[0].id, contractorId: LABOUR_CONTRACTORS[0].id }];
+          }
+          return { ...o, itemOrdered: finalItem, itemsOrdered: [finalItem], assignedTo: newAssignedTo };
         }
         return { ...o, [field]: editValue };
       })
@@ -1438,7 +1681,6 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
                               onChange={(e) => {
                                 const val = e.target.value;
                                 setEditItem(val);
-                                handleSaveDirectField(order.internalId, "itemOrdered", val);
                               }}
                               onBlur={handleSaveEdit}
                               autoFocus
@@ -1563,91 +1805,119 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
                         )}
                       </td>
 
-                      {/* 5. Assigned (Labour Contractor Avatar + Name + Specialty) */}
+                      {/* 5. Assigned (Employee for Card, Labour for Lanyard) */}
                       <td style={{ padding: "14px 18px", borderRight: "1px solid rgba(255, 255, 255, 0.06)" }}>
-                        {order.assignedTo && order.assignedTo.length > 0 ? (
-                          <div
-                            onClick={() => setAssigningOrder(order)}
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "8px",
-                              cursor: "pointer",
-                              padding: "5px 8px",
-                              borderRadius: "4px",
-                              backgroundColor: "rgba(249, 115, 22, 0.05)",
-                              border: "1px solid rgba(249, 115, 22, 0.2)",
-                              transition: "all 0.15s ease",
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor = "rgba(249, 115, 22, 0.14)";
-                              e.currentTarget.style.borderColor = "rgba(249, 115, 22, 0.45)";
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.backgroundColor = "rgba(249, 115, 22, 0.05)";
-                              e.currentTarget.style.borderColor = "rgba(249, 115, 22, 0.2)";
-                            }}
-                            title="Click to view Labour buffer & reassign"
-                          >
+                        {(() => {
+                          const isCard = (order.itemOrdered || order.itemsOrdered?.[0] || "Lanyard") === "Card";
+                          const hasWorker = order.assignedTo && order.assignedTo.length > 0;
+                          const worker = hasWorker ? order.assignedTo![0] : null;
+                          const isStaff = worker ? worker.type === "STAFF" : isCard;
+
+                          if (worker) {
+                            return (
+                              <div
+                                onClick={() => setAssigningOrder(order)}
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: "8px",
+                                  cursor: "pointer",
+                                  padding: "5px 8px",
+                                  borderRadius: "4px",
+                                  backgroundColor: isStaff ? "rgba(56, 189, 248, 0.08)" : "rgba(249, 115, 22, 0.06)",
+                                  border: isStaff ? "1px solid rgba(56, 189, 248, 0.28)" : "1px solid rgba(249, 115, 22, 0.22)",
+                                  transition: "all 0.15s ease",
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.backgroundColor = isStaff ? "rgba(56, 189, 248, 0.16)" : "rgba(249, 115, 22, 0.14)";
+                                  e.currentTarget.style.borderColor = isStaff ? "rgba(56, 189, 248, 0.5)" : "rgba(249, 115, 22, 0.45)";
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.backgroundColor = isStaff ? "rgba(56, 189, 248, 0.08)" : "rgba(249, 115, 22, 0.06)";
+                                  e.currentTarget.style.borderColor = isStaff ? "rgba(56, 189, 248, 0.28)" : "rgba(249, 115, 22, 0.22)";
+                                }}
+                                title={`Click to view stock buffer & reassign ${isStaff ? "Employee" : "Labour Contractor"}`}
+                              >
+                                <div
+                                  style={{
+                                    width: "26px",
+                                    height: "26px",
+                                    borderRadius: "50%",
+                                    backgroundColor: isStaff ? "#0284c7" : "#ea580c",
+                                    backgroundImage: isStaff
+                                      ? "linear-gradient(135deg, #38bdf8 0%, #0284c7 100%)"
+                                      : "linear-gradient(135deg, #f97316 0%, #c2410c 100%)",
+                                    color: "#ffffff",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    fontWeight: 800,
+                                    fontSize: isStaff ? "12px" : "11px",
+                                    flexShrink: 0,
+                                    boxShadow: isStaff ? "0 2px 6px rgba(2, 132, 199, 0.35)" : "0 2px 6px rgba(234, 88, 12, 0.35)",
+                                  }}
+                                >
+                                  {isStaff ? "👤" : worker.name.slice(0, 1).toUpperCase()}
+                                </div>
+                                <div style={{ display: "flex", flexDirection: "column", minWidth: 0, flex: 1 }}>
+                                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                    <span style={{ fontSize: "12.5px", fontWeight: 700, color: "#ffffff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "155px" }}>
+                                      {worker.name}
+                                    </span>
+                                    <span
+                                      style={{
+                                        fontSize: "9px",
+                                        fontWeight: 800,
+                                        padding: "1px 5px",
+                                        borderRadius: "2px",
+                                        backgroundColor: isStaff ? "rgba(56, 189, 248, 0.2)" : "rgba(249, 115, 22, 0.2)",
+                                        color: isStaff ? "#38bdf8" : "#fb923c",
+                                        letterSpacing: "0.4px",
+                                      }}
+                                    >
+                                      {isStaff ? "STAFF" : "LABOUR"}
+                                    </span>
+                                  </div>
+                                  <span style={{ fontSize: "10.5px", color: isStaff ? "#bae6fd" : "#fdba74", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "170px" }}>
+                                    {worker.role}
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          }
+
+                          return (
                             <div
+                              onClick={() => setAssigningOrder(order)}
                               style={{
-                                width: "26px",
-                                height: "26px",
-                                borderRadius: "50%",
-                                backgroundColor: "#ea580c",
-                                backgroundImage: "linear-gradient(135deg, #f97316 0%, #c2410c 100%)",
-                                color: "#ffffff",
-                                display: "flex",
+                                display: "inline-flex",
                                 alignItems: "center",
-                                justifyContent: "center",
-                                fontWeight: 800,
-                                fontSize: "11px",
-                                flexShrink: 0,
-                                boxShadow: "0 2px 6px rgba(234, 88, 12, 0.35)",
+                                gap: "6px",
+                                padding: "6px 12px",
+                                borderRadius: "4px",
+                                backgroundColor: "rgba(255, 255, 255, 0.02)",
+                                border: isCard ? "1px dashed rgba(56, 189, 248, 0.4)" : "1px dashed rgba(249, 115, 22, 0.3)",
+                                color: isCard ? "#38bdf8" : "#fdba74",
+                                fontSize: "11.5px",
+                                fontWeight: 600,
+                                cursor: "pointer",
+                                transition: "all 0.15s ease",
                               }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.borderColor = isCard ? "#38bdf8" : "var(--accent)";
+                                e.currentTarget.style.backgroundColor = isCard ? "rgba(56, 189, 248, 0.08)" : "rgba(249, 115, 22, 0.08)";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.borderColor = isCard ? "rgba(56, 189, 248, 0.4)" : "rgba(249, 115, 22, 0.3)";
+                                e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.02)";
+                              }}
+                              title={`Click to assign ${isCard ? "In-House Employee" : "Labour Contractor"}`}
                             >
-                              {order.assignedTo[0].name.slice(0, 1).toUpperCase()}
+                              <span style={{ fontSize: "13px" }}>+</span>
+                              <span>{isCard ? "Assign Employee" : "Assign Labour"}</span>
                             </div>
-                            <div style={{ display: "flex", flexDirection: "column", minWidth: 0, flex: 1 }}>
-                              <span style={{ fontSize: "12.5px", fontWeight: 700, color: "#ffffff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "165px" }}>
-                                {order.assignedTo[0].name}
-                              </span>
-                              <span style={{ fontSize: "10.5px", color: "#fdba74", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "170px" }}>
-                                {order.assignedTo[0].role}
-                              </span>
-                            </div>
-                          </div>
-                        ) : (
-                          <div
-                            onClick={() => setAssigningOrder(order)}
-                            style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: "6px",
-                              padding: "6px 12px",
-                              borderRadius: "4px",
-                              backgroundColor: "rgba(255, 255, 255, 0.02)",
-                              border: "1px dashed rgba(249, 115, 22, 0.3)",
-                              color: "#fdba74",
-                              fontSize: "11.5px",
-                              fontWeight: 500,
-                              cursor: "pointer",
-                              transition: "all 0.15s ease",
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.borderColor = "var(--accent)";
-                              e.currentTarget.style.backgroundColor = "rgba(249, 115, 22, 0.08)";
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.borderColor = "rgba(249, 115, 22, 0.3)";
-                              e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.02)";
-                            }}
-                            title="Click to assign Labour Contractor"
-                          >
-                            <span style={{ fontSize: "13px", color: "var(--accent-text)" }}>+</span>
-                            <span>Assign Labour</span>
-                          </div>
-                        )}
+                          );
+                        })()}
                       </td>
 
                       {/* 6. Order Date */}
@@ -1740,41 +2010,46 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
                         )}
                       </td>
 
-                      {/* 8. Action (Assign Labour Button - No Checkbox) */}
+                      {/* 8. Action (Assign Button: Employee for Card, Labour for Lanyard) */}
                       <td style={{ padding: "16px 16px", textAlign: "center" }}>
-                        <button
-                          type="button"
-                          onClick={() => setAssigningOrder(order)}
-                          style={{
-                            height: "30px",
-                            padding: "0 12px",
-                            borderRadius: "4px",
-                            backgroundColor: "rgba(249, 115, 22, 0.14)",
-                            border: "1px solid rgba(249, 115, 22, 0.4)",
-                            color: "#fdba74",
-                            fontSize: "11.5px",
-                            fontWeight: 700,
-                            cursor: "pointer",
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "5px",
-                            transition: "all 0.15s ease",
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = "rgba(249, 115, 22, 0.28)";
-                            e.currentTarget.style.borderColor = "#fb923c";
-                            e.currentTarget.style.color = "#ffffff";
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = "rgba(249, 115, 22, 0.14)";
-                            e.currentTarget.style.borderColor = "rgba(249, 115, 22, 0.4)";
-                            e.currentTarget.style.color = "#fdba74";
-                          }}
-                          title="Assign order to Labour Contractor"
-                        >
-                          <span>🤝</span>
-                          <span>Assign</span>
-                        </button>
+                        {(() => {
+                          const isCard = (order.itemOrdered || order.itemsOrdered?.[0] || "Lanyard") === "Card";
+                          return (
+                            <button
+                              type="button"
+                              onClick={() => setAssigningOrder(order)}
+                              style={{
+                                height: "30px",
+                                padding: "0 12px",
+                                borderRadius: "4px",
+                                backgroundColor: isCard ? "rgba(56, 189, 248, 0.14)" : "rgba(249, 115, 22, 0.14)",
+                                border: isCard ? "1px solid rgba(56, 189, 248, 0.4)" : "1px solid rgba(249, 115, 22, 0.4)",
+                                color: isCard ? "#38bdf8" : "#fdba74",
+                                fontSize: "11.5px",
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "5px",
+                                transition: "all 0.15s ease",
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor = isCard ? "rgba(56, 189, 248, 0.28)" : "rgba(249, 115, 22, 0.28)";
+                                e.currentTarget.style.borderColor = isCard ? "#7dd3fc" : "#fb923c";
+                                e.currentTarget.style.color = "#ffffff";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor = isCard ? "rgba(56, 189, 248, 0.14)" : "rgba(249, 115, 22, 0.14)";
+                                e.currentTarget.style.borderColor = isCard ? "rgba(56, 189, 248, 0.4)" : "rgba(249, 115, 22, 0.4)";
+                                e.currentTarget.style.color = isCard ? "#38bdf8" : "#fdba74";
+                              }}
+                              title={`Assign order to ${isCard ? "In-House Employee" : "Labour Contractor"}`}
+                            >
+                              <span>{isCard ? "👤" : "🤝"}</span>
+                              <span>{isCard ? "Assign Staff" : "Assign Labour"}</span>
+                            </button>
+                          );
+                        })()}
                       </td>
                     </tr>
                   );
@@ -1801,37 +2076,39 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
               </strong>
             </span>
             <span style={{ fontSize: "11.5px", color: "var(--text-muted)" }}>
-              Direct Order Entry panel above · Double-click any cell to edit · Click 'Assign' to delegate order as a task
+              Direct Order Entry panel above · Double-click any cell to edit · Assign Staff for Cards, Labour for Lanyards
             </span>
           </div>
         </div>
       </div>
 
-      {/* ─── STREAMLINED LABOUR ASSIGNMENT DRAWER ─────────────────────────── */}
+      {/* ─── WORKER ASSIGNMENT DRAWER (Employee for Card, Labour for Lanyard) ─── */}
       <Drawer
         isOpen={Boolean(assigningOrder)}
         onClose={() => setAssigningOrder(null)}
         title={
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <span style={{ fontSize: "18px" }}>🤝</span>
-            <span>Assign Labour Contractor</span>
+            <span style={{ fontSize: "18px" }}>{isAssigningCard ? "👤" : "🤝"}</span>
+            <span>{isAssigningCard ? "Assign In-House Employee" : "Assign Labour Contractor"}</span>
           </div>
         }
         subtitle={
           assigningOrder
-            ? `${assigningOrder.client} · ${assigningOrder.qty.toLocaleString()} pcs`
+            ? `${assigningOrder.client} · ${assigningOrder.qty.toLocaleString()} ${isAssigningCard ? "ID Cards" : "Lanyards"}`
             : undefined
         }
-        width={540}
+        width={560}
         footer={
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
             <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>
-              {selectedLabourContractor ? (
+              {isAssigningCard ? (
                 <span>
-                  Selected: <strong style={{ color: "#fff" }}>{selectedLabourContractor.name}</strong>
+                  Assignee: <strong style={{ color: "#38bdf8" }}>{selectedEmployee.name}</strong> (Staff)
                 </span>
               ) : (
-                "Select a labour contractor"
+                <span>
+                  Assignee: <strong style={{ color: "#fb923c" }}>{selectedLabourContractor.name}</strong> (Labour)
+                </span>
               )}
             </span>
             <div style={{ display: "flex", gap: "8px" }}>
@@ -1841,10 +2118,9 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
               <Button
                 variant="primary"
                 size="sm"
-                disabled={!selectedLabourContractor}
-                onClick={handleConfirmLabourAssignment}
+                onClick={handleConfirmAssignment}
               >
-                Confirm & Assign Labour
+                {isAssigningCard ? "Confirm & Assign Employee" : "Confirm & Assign Labour"}
               </Button>
             </div>
           </div>
@@ -1852,7 +2128,33 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
       >
         {assigningOrder && (
           <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-            {/* Card 1 (Top): Basic Order Details Only */}
+
+            {/* Workflow Banner: In-house Employee vs Labour Contractor */}
+            <div
+              style={{
+                padding: "10px 14px",
+                borderRadius: "5px",
+                backgroundColor: isAssigningCard ? "rgba(56, 189, 248, 0.1)" : "rgba(249, 115, 22, 0.1)",
+                border: `1px solid ${isAssigningCard ? "rgba(56, 189, 248, 0.35)" : "rgba(249, 115, 22, 0.35)"}`,
+                display: "flex",
+                alignItems: "flex-start",
+                gap: "10px",
+              }}
+            >
+              <span style={{ fontSize: "18px", lineHeight: 1 }}>{isAssigningCard ? "👤" : "🤝"}</span>
+              <div style={{ fontSize: "12px", lineHeight: 1.45 }}>
+                <div style={{ fontWeight: 800, color: isAssigningCard ? "#38bdf8" : "#fb923c", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                  {isAssigningCard ? "In-House Employee Assignment Required" : "External Labour Contractor Assignment"}
+                </div>
+                <div style={{ color: "#e2e8f0", marginTop: "2px" }}>
+                  {isAssigningCard
+                    ? "Orders of ID Card type must be assigned to internal staff operators (designers, digital printers, card encoders). Outside labour is not used for card printing."
+                    : "Orders of Lanyard type are delegated to certified piece-rate labour contractors for stitching, sublimation, and hook assembly."}
+                </div>
+              </div>
+            </div>
+
+            {/* Card 1 (Top): Order Details */}
             <div
               style={{
                 backgroundColor: "rgba(255, 255, 255, 0.03)",
@@ -1890,23 +2192,180 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
               </div>
             </div>
 
-            {/* Search Bar for Labour Contractors */}
+            {/* Card 2: Stock Holding & Net Issue Reconciliation */}
+            <div
+              style={{
+                backgroundColor: isAssigningCard ? "rgba(56, 189, 248, 0.06)" : "rgba(249, 115, 22, 0.08)",
+                border: `1px solid ${isAssigningCard ? "rgba(56, 189, 248, 0.35)" : "rgba(249, 115, 22, 0.35)"}`,
+                borderRadius: "6px",
+                padding: "14px 16px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "12px",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span
+                  style={{
+                    fontSize: "11px",
+                    fontWeight: 800,
+                    textTransform: "uppercase",
+                    color: isAssigningCard ? "#38bdf8" : "#fb923c",
+                    letterSpacing: "0.6px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                  }}
+                >
+                  <span>📦</span> Material Holding & Stock to Give
+                </span>
+                <span style={{ fontSize: "10.5px", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
+                  {isAssigningCard
+                    ? `Station: ${selectedEmployee.workstation}`
+                    : `Rate: ₹${selectedLabourContractor.ratePerPiece.toFixed(2)} / pc`}
+                </span>
+              </div>
+
+              {/* Itemized Materials Table */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                {materialReconciliation.map((mat, mIdx) => {
+                  const isFullyCovered = mat.netToIssue === 0;
+                  return (
+                    <div
+                      key={mIdx}
+                      style={{
+                        backgroundColor: "rgba(10, 14, 23, 0.85)",
+                        border: "1px solid rgba(255, 255, 255, 0.08)",
+                        borderRadius: "5px",
+                        padding: "10px 12px",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "6px",
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <span style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff" }}>
+                            {mat.name}
+                          </span>
+                          <span
+                            style={{
+                              fontSize: "9.5px",
+                              fontWeight: 700,
+                              padding: "1px 6px",
+                              borderRadius: "2px",
+                              backgroundColor: "rgba(255, 255, 255, 0.08)",
+                              color: "var(--text-muted)",
+                              textTransform: "uppercase",
+                            }}
+                          >
+                            {mat.category}
+                          </span>
+                        </div>
+
+                        {isFullyCovered ? (
+                          <span style={{ fontSize: "11px", fontWeight: 700, color: "#34d399", display: "flex", alignItems: "center", gap: "4px" }}>
+                            <span>✅</span> Covered by buffer
+                          </span>
+                        ) : (
+                          <span style={{ fontSize: "11px", fontWeight: 700, color: "#4ade80", display: "flex", alignItems: "center", gap: "4px" }}>
+                            <span>⚠️</span> Issue {mat.netToIssue.toLocaleString()} {mat.unit}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* 3-Column Metrics Comparison */}
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "1fr 1fr 1fr",
+                          gap: "6px",
+                          backgroundColor: "rgba(0, 0, 0, 0.4)",
+                          borderRadius: "4px",
+                          padding: "8px 10px",
+                          textAlign: "center",
+                          marginTop: "2px",
+                        }}
+                      >
+                        <div>
+                          <div style={{ fontSize: "9.5px", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700 }}>
+                            Order Needs
+                          </div>
+                          <div style={{ fontSize: "13.5px", fontWeight: 800, color: "#fff", fontFamily: "var(--font-mono)", marginTop: "2px" }}>
+                            {mat.requiredQty.toLocaleString()} <span style={{ fontSize: "10px", fontWeight: 500, color: "var(--text-muted)" }}>{mat.unit}</span>
+                          </div>
+                        </div>
+
+                        <div style={{ borderLeft: "1px solid rgba(255,255,255,0.06)", borderRight: "1px solid rgba(255,255,255,0.06)" }}>
+                          <div style={{ fontSize: "9.5px", color: "#fb923c", textTransform: "uppercase", fontWeight: 700 }}>
+                            Already With Worker
+                          </div>
+                          <div style={{ fontSize: "13.5px", fontWeight: 800, color: mat.heldQty > 0 ? "#fb923c" : "var(--text-muted)", fontFamily: "var(--font-mono)", marginTop: "2px" }}>
+                            {mat.heldQty.toLocaleString()} <span style={{ fontSize: "10px", fontWeight: 500, color: "var(--text-muted)" }}>{mat.unit}</span>
+                          </div>
+                        </div>
+
+                        <div>
+                          <div style={{ fontSize: "9.5px", color: "#4ade80", textTransform: "uppercase", fontWeight: 700 }}>
+                            Net To Give
+                          </div>
+                          <div style={{ fontSize: "13.5px", fontWeight: 800, color: mat.netToIssue > 0 ? "#4ade80" : "#38bdf8", fontFamily: "var(--font-mono)", marginTop: "2px" }}>
+                            {mat.netToIssue.toLocaleString()} <span style={{ fontSize: "10px", fontWeight: 500, color: "var(--text-muted)" }}>{mat.unit}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Source note */}
+                      {mat.sourceNote && (
+                        <div style={{ fontSize: "10.5px", color: "var(--text-muted)", marginTop: "2px", lineHeight: 1.35 }}>
+                          <span style={{ color: isAssigningCard ? "#38bdf8" : "#fb923c", fontWeight: 600 }}>Stock Source:</span> {mat.sourceNote}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Worker Financial / Station Note */}
+              {!isAssigningCard && (
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "11px", color: "var(--text-muted)", borderTop: "1px dashed rgba(255,255,255,0.08)", paddingTop: "8px" }}>
+                  <span>Estimated Labour Payable:</span>
+                  <strong style={{ color: "#fff", fontFamily: "var(--font-mono)" }}>
+                    ₹{(assigningOrder.qty * selectedLabourContractor.ratePerPiece).toFixed(2)} (strictly on accepted units Q_accepted)
+                  </strong>
+                </div>
+              )}
+              {isAssigningCard && (
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "11px", color: "var(--text-muted)", borderTop: "1px dashed rgba(255,255,255,0.08)", paddingTop: "8px" }}>
+                  <span>Employee Department:</span>
+                  <strong style={{ color: "#38bdf8" }}>
+                    {selectedEmployee.department}
+                  </strong>
+                </div>
+              )}
+            </div>
+
+            {/* Worker Search Bar */}
             <div>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
                 <span style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)", letterSpacing: "0.6px" }}>
-                  Search Labour Contractors
+                  {isAssigningCard ? "Select In-House Employee" : "Select Labour Contractor"}
                 </span>
                 <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>
-                  {filteredLabourContractors.length} available units
+                  {isAssigningCard ? `${filteredEmployees.length} staff available` : `${filteredLabourContractors.length} units available`}
                 </span>
               </div>
               <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
                 <Icon name="search" size={14} color="var(--text-muted)" style={{ position: "absolute", left: "12px" }} />
                 <input
                   type="text"
-                  placeholder="Search labour units by contractor name, specialty, or location..."
-                  value={labourSearch}
-                  onChange={(e) => setLabourSearch(e.target.value)}
+                  placeholder={
+                    isAssigningCard
+                      ? "Search employees by name, role, department, workstation..."
+                      : "Search labour units by contractor name, specialty, or location..."
+                  }
+                  value={workerSearch}
+                  onChange={(e) => setWorkerSearch(e.target.value)}
                   style={{
                     width: "100%",
                     height: "36px",
@@ -1923,189 +2382,196 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
               </div>
             </div>
 
-            {/* Selected Contractor Material Holding & Balance Calculation Card */}
-            {selectedLabourContractor && (() => {
-              const orderItem = assigningOrder.itemOrdered || assigningOrder.itemsOrdered?.[0] || "Lanyard";
-              const matchingHolding = selectedLabourContractor.materialHoldings.find(
-                (m) => m.productType.toLowerCase() === orderItem.toLowerCase()
-              );
-              const bufferUnits = matchingHolding ? matchingHolding.qtyOnHand : 0;
-              const netIssueUnits = Math.max(0, assigningOrder.qty - bufferUnits);
-              const estLabourPay = (assigningOrder.qty * selectedLabourContractor.ratePerPiece).toFixed(2);
-
-              return (
-                <div
-                  style={{
-                    backgroundColor: "rgba(249, 115, 22, 0.08)",
-                    border: "1px solid rgba(249, 115, 22, 0.35)",
-                    borderRadius: "6px",
-                    padding: "14px 16px",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "10px",
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <span style={{ fontSize: "11px", fontWeight: 800, textTransform: "uppercase", color: "#fb923c", letterSpacing: "0.6px", display: "flex", alignItems: "center", gap: "6px" }}>
-                      <span>📦</span> Raw Material Holding & Net Issue Calculation
-                    </span>
-                    <span style={{ fontSize: "10.5px", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
-                      Rate: ₹{selectedLabourContractor.ratePerPiece.toFixed(2)} / pc
-                    </span>
-                  </div>
-
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr 1fr 1fr",
-                      gap: "8px",
-                      backgroundColor: "rgba(10, 14, 23, 0.8)",
-                      border: "1px solid rgba(255, 255, 255, 0.08)",
-                      borderRadius: "5px",
-                      padding: "10px 12px",
-                      textAlign: "center",
-                    }}
-                  >
-                    <div>
-                      <div style={{ fontSize: "10px", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700 }}>Order Needs</div>
-                      <div style={{ fontSize: "14px", fontWeight: 800, color: "#fff", fontFamily: "var(--font-mono)", marginTop: "2px" }}>
-                        {assigningOrder.qty.toLocaleString()} <span style={{ fontSize: "10px", fontWeight: 500, color: "var(--text-muted)" }}>pcs</span>
-                      </div>
-                    </div>
-
-                    <div style={{ borderLeft: "1px solid rgba(255,255,255,0.06)", borderRight: "1px solid rgba(255,255,255,0.06)" }}>
-                      <div style={{ fontSize: "10px", color: "#fdba74", textTransform: "uppercase", fontWeight: 700 }}>Already With Labour</div>
-                      <div style={{ fontSize: "14px", fontWeight: 800, color: "#fb923c", fontFamily: "var(--font-mono)", marginTop: "2px" }}>
-                        {bufferUnits.toLocaleString()} <span style={{ fontSize: "10px", fontWeight: 500, color: "#fdba74" }}>pcs held</span>
-                      </div>
-                    </div>
-
-                    <div>
-                      <div style={{ fontSize: "10px", color: "#86efac", textTransform: "uppercase", fontWeight: 700 }}>Net Material To Issue</div>
-                      <div style={{ fontSize: "14px", fontWeight: 800, color: "#4ade80", fontFamily: "var(--font-mono)", marginTop: "2px" }}>
-                        {netIssueUnits.toLocaleString()} <span style={{ fontSize: "10px", fontWeight: 500, color: "#86efac" }}>pcs</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {matchingHolding ? (
-                    <div style={{ fontSize: "11px", color: "#e2e8f0", backgroundColor: "rgba(255,255,255,0.03)", padding: "8px 10px", borderRadius: "4px", border: "1px solid rgba(255,255,255,0.05)" }}>
-                      <span style={{ color: "#fb923c", fontWeight: 700 }}>Holding Credit:</span> {matchingHolding.qtyOnHand} {matchingHolding.unit} on hand from {matchingHolding.sourceOrder}.
-                      <div style={{ color: "var(--text-muted)", fontSize: "10.5px", marginTop: "2px" }}>{matchingHolding.details}</div>
-                    </div>
-                  ) : (
-                    <div style={{ fontSize: "11px", color: "var(--text-muted)", backgroundColor: "rgba(255,255,255,0.03)", padding: "8px 10px", borderRadius: "4px" }}>
-                      This contractor currently has 0 buffer stock of {orderItem}. Full {assigningOrder.qty.toLocaleString()} pcs raw material must be issued from warehouse.
-                    </div>
-                  )}
-
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "11px", color: "var(--text-muted)", borderTop: "1px dashed rgba(255,255,255,0.08)", paddingTop: "8px" }}>
-                    <span>Estimated Labour Payable:</span>
-                    <strong style={{ color: "#fff", fontFamily: "var(--font-mono)" }}>
-                      ₹{estLabourPay} (strictly on accepted units Q_accepted)
-                    </strong>
-                  </div>
-                </div>
-              );
-            })()}
-
-            {/* Labour Contractors List */}
+            {/* Worker Selection List: In-House Employees vs Labour Contractors */}
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-              <div style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)", letterSpacing: "0.6px" }}>
-                Available Labour Contractors
-              </div>
+              {isAssigningCard ? (
+                /* ─── Employees List ─── */
+                filteredEmployees.length === 0 ? (
+                  <div style={{ padding: "16px", textAlign: "center", color: "var(--text-muted)", fontSize: "12px", borderRadius: "4px", backgroundColor: "rgba(255,255,255,0.02)" }}>
+                    No employee matching "{workerSearch}".
+                  </div>
+                ) : (
+                  filteredEmployees.map((emp) => {
+                    const isSelected = selectedWorkerId === emp.id;
+                    return (
+                      <div
+                        key={emp.id}
+                        onClick={() => setSelectedWorkerId(emp.id)}
+                        style={{
+                          padding: "12px 14px",
+                          borderRadius: "5px",
+                          backgroundColor: isSelected ? "rgba(56, 189, 248, 0.14)" : "rgba(255, 255, 255, 0.025)",
+                          border: `1px solid ${isSelected ? "rgba(56, 189, 248, 0.55)" : "rgba(255, 255, 255, 0.08)"}`,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          cursor: "pointer",
+                          transition: "all 0.15s ease",
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!isSelected) e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.06)";
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!isSelected) e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.025)";
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", gap: "12px", minWidth: 0 }}>
+                          <div
+                            style={{
+                              width: "34px",
+                              height: "34px",
+                              borderRadius: "50%",
+                              backgroundColor: "#0284c7",
+                              backgroundImage: "linear-gradient(135deg, #38bdf8 0%, #0284c7 100%)",
+                              color: "#fff",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              fontWeight: 800,
+                              fontSize: "14px",
+                              flexShrink: 0,
+                            }}
+                          >
+                            👤
+                          </div>
 
-              {filteredLabourContractors.length === 0 ? (
-                <div style={{ padding: "16px", textAlign: "center", color: "var(--text-muted)", fontSize: "12px", borderRadius: "4px", backgroundColor: "rgba(255,255,255,0.02)" }}>
-                  No labour contractor matching "{labourSearch}". Try searching by another skill or name.
-                </div>
-              ) : (
-                filteredLabourContractors.map((contractor) => {
-                  const isSelected = selectedLabourId === contractor.id;
-                  const orderItem = assigningOrder.itemOrdered || "Lanyard";
-                  const holding = contractor.materialHoldings.find((m) => m.productType.toLowerCase() === orderItem.toLowerCase());
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                              <span style={{ fontSize: "13px", fontWeight: 700, color: "#fff", whiteSpace: "nowrap" }}>
+                                {emp.name}
+                              </span>
+                              <span style={{ fontSize: "9.5px", fontWeight: 800, padding: "1px 5px", borderRadius: "2px", backgroundColor: "rgba(56, 189, 248, 0.2)", color: "#38bdf8" }}>
+                                STAFF
+                              </span>
+                              {emp.materialHoldings.length > 0 && (
+                                <span style={{ fontSize: "10px", fontWeight: 700, padding: "1px 6px", borderRadius: "10px", backgroundColor: "rgba(56, 189, 248, 0.18)", color: "#7dd3fc" }}>
+                                  Holds {emp.materialHoldings[0].qtyOnHand} {emp.materialHoldings[0].item}
+                                </span>
+                              )}
+                            </div>
+                            <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "2px" }}>
+                              {emp.role} · {emp.department} · {emp.workstation} · {emp.activeJobsCount} active jobs
+                            </div>
+                          </div>
+                        </div>
 
-                  return (
-                    <div
-                      key={contractor.id}
-                      onClick={() => setSelectedLabourId(contractor.id)}
-                      style={{
-                        padding: "12px 14px",
-                        borderRadius: "5px",
-                        backgroundColor: isSelected ? "rgba(249, 115, 22, 0.14)" : "rgba(255, 255, 255, 0.025)",
-                        border: `1px solid ${isSelected ? "rgba(249, 115, 22, 0.5)" : "rgba(255, 255, 255, 0.08)"}`,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        cursor: "pointer",
-                        transition: "all 0.15s ease",
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!isSelected) e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.06)";
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!isSelected) e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.025)";
-                      }}
-                    >
-                      <div style={{ display: "flex", alignItems: "center", gap: "12px", minWidth: 0 }}>
                         <div
                           style={{
-                            width: "34px",
-                            height: "34px",
+                            width: "20px",
+                            height: "20px",
                             borderRadius: "50%",
-                            backgroundColor: "#ea580c",
-                            backgroundImage: "linear-gradient(135deg, #f97316 0%, #c2410c 100%)",
-                            color: "#fff",
+                            border: `2px solid ${isSelected ? "#38bdf8" : "rgba(255,255,255,0.25)"}`,
+                            backgroundColor: isSelected ? "#38bdf8" : "transparent",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
+                            color: "#0284c7",
+                            fontSize: "11px",
                             fontWeight: 800,
-                            fontSize: "13px",
                             flexShrink: 0,
+                            marginLeft: "12px",
                           }}
                         >
-                          {contractor.name.slice(0, 1).toUpperCase()}
-                        </div>
-
-                        <div style={{ minWidth: 0 }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                            <span style={{ fontSize: "13px", fontWeight: 700, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                              {contractor.name}
-                            </span>
-                            {holding && (
-                              <span style={{ fontSize: "10px", fontWeight: 700, padding: "1px 6px", borderRadius: "10px", backgroundColor: "rgba(249, 115, 22, 0.2)", color: "#fdba74" }}>
-                                Holds {holding.qtyOnHand} {holding.productType}
-                              </span>
-                            )}
-                          </div>
-                          <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "2px" }}>
-                            {contractor.specialty} · {contractor.location} · {contractor.activeJobsCount} active orders
-                          </div>
+                          {isSelected ? "●" : ""}
                         </div>
                       </div>
-
+                    );
+                  })
+                )
+              ) : (
+                /* ─── Labour Contractors List ─── */
+                filteredLabourContractors.length === 0 ? (
+                  <div style={{ padding: "16px", textAlign: "center", color: "var(--text-muted)", fontSize: "12px", borderRadius: "4px", backgroundColor: "rgba(255,255,255,0.02)" }}>
+                    No labour contractor matching "{workerSearch}".
+                  </div>
+                ) : (
+                  filteredLabourContractors.map((contractor) => {
+                    const isSelected = selectedWorkerId === contractor.id;
+                    return (
                       <div
+                        key={contractor.id}
+                        onClick={() => setSelectedWorkerId(contractor.id)}
                         style={{
-                          width: "20px",
-                          height: "20px",
-                          borderRadius: "50%",
-                          border: `2px solid ${isSelected ? "#f97316" : "rgba(255,255,255,0.25)"}`,
-                          backgroundColor: isSelected ? "#f97316" : "transparent",
+                          padding: "12px 14px",
+                          borderRadius: "5px",
+                          backgroundColor: isSelected ? "rgba(249, 115, 22, 0.14)" : "rgba(255, 255, 255, 0.025)",
+                          border: `1px solid ${isSelected ? "rgba(249, 115, 22, 0.5)" : "rgba(255, 255, 255, 0.08)"}`,
                           display: "flex",
                           alignItems: "center",
-                          justifyContent: "center",
-                          color: "#fff",
-                          fontSize: "11px",
-                          fontWeight: 800,
-                          flexShrink: 0,
-                          marginLeft: "12px",
+                          justifyContent: "space-between",
+                          cursor: "pointer",
+                          transition: "all 0.15s ease",
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!isSelected) e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.06)";
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!isSelected) e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.025)";
                         }}
                       >
-                        {isSelected ? "●" : ""}
+                        <div style={{ display: "flex", alignItems: "center", gap: "12px", minWidth: 0 }}>
+                          <div
+                            style={{
+                              width: "34px",
+                              height: "34px",
+                              borderRadius: "50%",
+                              backgroundColor: "#ea580c",
+                              backgroundImage: "linear-gradient(135deg, #f97316 0%, #c2410c 100%)",
+                              color: "#fff",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              fontWeight: 800,
+                              fontSize: "13px",
+                              flexShrink: 0,
+                            }}
+                          >
+                            {contractor.name.slice(0, 1).toUpperCase()}
+                          </div>
+
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                              <span style={{ fontSize: "13px", fontWeight: 700, color: "#fff", whiteSpace: "nowrap" }}>
+                                {contractor.name}
+                              </span>
+                              <span style={{ fontSize: "9.5px", fontWeight: 800, padding: "1px 5px", borderRadius: "2px", backgroundColor: "rgba(249, 115, 22, 0.2)", color: "#fb923c" }}>
+                                LABOUR
+                              </span>
+                              {contractor.materialHoldings.length > 0 && (
+                                <span style={{ fontSize: "10px", fontWeight: 700, padding: "1px 6px", borderRadius: "10px", backgroundColor: "rgba(249, 115, 22, 0.2)", color: "#fdba74" }}>
+                                  Holds {contractor.materialHoldings[0].qtyOnHand} {contractor.materialHoldings[0].item}
+                                </span>
+                              )}
+                            </div>
+                            <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "2px" }}>
+                              {contractor.specialty} · {contractor.location} · {contractor.activeJobsCount} active orders · ₹{contractor.ratePerPiece.toFixed(2)}/pc
+                            </div>
+                          </div>
+                        </div>
+
+                        <div
+                          style={{
+                            width: "20px",
+                            height: "20px",
+                            borderRadius: "50%",
+                            border: `2px solid ${isSelected ? "#f97316" : "rgba(255,255,255,0.25)"}`,
+                            backgroundColor: isSelected ? "#f97316" : "transparent",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: "#fff",
+                            fontSize: "11px",
+                            fontWeight: 800,
+                            flexShrink: 0,
+                            marginLeft: "12px",
+                          }}
+                        >
+                          {isSelected ? "●" : ""}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })
+                    );
+                  })
+                )
               )}
             </div>
           </div>
