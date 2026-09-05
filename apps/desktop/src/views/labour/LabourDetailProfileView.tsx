@@ -18,34 +18,8 @@ export interface LabourDetailProfileViewProps {
   onBack: () => void;
 }
 
-// ─── Small stat tile ──────────────────────────────────────────────────────────
-const StatTile: React.FC<{ label: string; value: string; sub?: string; color?: string }> = ({
-  label,
-  value,
-  sub,
-  color = "#fff",
-}) => (
-  <div
-    style={{
-      backgroundColor: "rgba(19, 23, 34, 0.85)",
-      backdropFilter: "blur(14px)",
-      border: "1px solid rgba(255,255,255,0.08)",
-      borderRadius: "4px",
-      padding: "12px 14px",
-      display: "flex",
-      flexDirection: "column",
-      gap: "3px",
-    }}
-  >
-    <span style={{ fontSize: "9.5px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-      {label}
-    </span>
-    <strong style={{ fontSize: "20px", fontWeight: 800, color, fontFamily: "var(--font-mono)", lineHeight: 1 }}>
-      {value}
-    </strong>
-    {sub && <span style={{ fontSize: "10px", color: "var(--text-secondary)" }}>{sub}</span>}
-  </div>
-);
+// ─── Max Active Capacity Constraint (2,500 Units) ────────────────────────────
+export const MAX_ACTIVE_LANYARD_CAPACITY = 2500;
 
 export const LabourDetailProfileView: React.FC<LabourDetailProfileViewProps> = ({
   contractor,
@@ -104,8 +78,11 @@ export const LabourDetailProfileView: React.FC<LabourDetailProfileViewProps> = (
     },
   ]);
 
-  // ─── Active Assigned Orders for this Contractor ──────────────────────────────
-  const assignedJobs = useMemo(() => {
+  // Active view tab: "OPERATIONS" | "HISTORY"
+  const [activeTab, setActiveTab] = useState<"OPERATIONS" | "HISTORY">("OPERATIONS");
+
+  // ─── Contractor Assigned Orders ──────────────────────────────────────────────
+  const contractorOrders = useMemo(() => {
     return sharedOrders.filter((o) =>
       o.assignedTo?.some(
         (w) =>
@@ -127,13 +104,52 @@ export const LabourDetailProfileView: React.FC<LabourDetailProfileViewProps> = (
     return match?.allocatedQty ?? order.qty;
   };
 
-  // Total units allocated across active orders
-  const totalAllocatedUnits = useMemo(() => {
-    return assignedJobs.reduce((sum, order) => sum + getContractorAllocatedQty(order), 0);
-  }, [assignedJobs]);
+  // Split into Delivered vs Undelivered
+  const { deliveredOrders, pendingOrders } = useMemo(() => {
+    const delivered: OrderRecord[] = [];
+    const pending: OrderRecord[] = [];
+    contractorOrders.forEach((o) => {
+      if (o.status === "DELIVERED" || o.status === "COMPLETED") {
+        delivered.push(o);
+      } else {
+        pending.push(o);
+      }
+    });
+    return { deliveredOrders: delivered, pendingOrders: pending };
+  }, [contractorOrders]);
 
-  // ─── Aggregated Material Requirements for Assigned Jobs ─────────────────────
-  // For each job, parse supporting items with the allocated quantity and aggregate
+  // ─── FIFO Capacity Scheduling (Max 2,500 Active Units) ───────────────────────
+  const { activeOrders, queuedOrders, activeAllocatedUnits } = useMemo(() => {
+    let runningTotal = 0;
+    const active: OrderRecord[] = [];
+    const queued: OrderRecord[] = [];
+
+    pendingOrders.forEach((order) => {
+      const allocatedQty = getContractorAllocatedQty(order);
+      if (runningTotal + allocatedQty <= MAX_ACTIVE_LANYARD_CAPACITY) {
+        active.push(order);
+        runningTotal += allocatedQty;
+      } else if (active.length === 0) {
+        // Even if a single order is slightly over, first order gets active slot
+        active.push(order);
+        runningTotal += allocatedQty;
+      } else {
+        queued.push(order);
+      }
+    });
+
+    return {
+      activeOrders: active,
+      queuedOrders: queued,
+      activeAllocatedUnits: runningTotal,
+    };
+  }, [pendingOrders]);
+
+  const availableCapacity = Math.max(0, MAX_ACTIVE_LANYARD_CAPACITY - activeAllocatedUnits);
+  const capacityPercent = Math.min(100, Math.round((activeAllocatedUnits / MAX_ACTIVE_LANYARD_CAPACITY) * 100));
+
+  // ─── Aggregated Material Requirements for ACTIVE Jobs ONLY ───────────────────
+  // We only require and dispense materials for what's currently in active production
   const aggregatedRequirements = useMemo(() => {
     const map = new Map<
       string,
@@ -153,7 +169,7 @@ export const LabourDetailProfileView: React.FC<LabourDetailProfileViewProps> = (
       }
     >();
 
-    assignedJobs.forEach((order) => {
+    activeOrders.forEach((order) => {
       const allocatedQty = getContractorAllocatedQty(order);
       const items = parseSupportingItemsFromDescription(
         order.product,
@@ -188,7 +204,7 @@ export const LabourDetailProfileView: React.FC<LabourDetailProfileViewProps> = (
     });
 
     return Array.from(map.values());
-  }, [assignedJobs]);
+  }, [activeOrders]);
 
   // ─── Live Handover Reconciliation (Requirements vs Contractor Buffer) ────────
   const handoverReconciliation = useMemo(() => {
@@ -244,16 +260,50 @@ export const LabourDetailProfileView: React.FC<LabourDetailProfileViewProps> = (
     });
   }, [aggregatedRequirements, bufferHoldings]);
 
-  // Handover action
-  const handleDispenseMaterials = () => {
+  // ─── VERIFY GIVEN (Transfers needed stock directly to contractor buffer) ─────
+  const handleVerifyGiven = () => {
     const pendingItems = handoverReconciliation.filter((m) => !m.isFullyCovered);
     if (pendingItems.length === 0) {
       success(
-        "Buffer Covers All Materials",
-        `All required materials for ${contractor.name} are 100% covered by their table buffer. 0 factory stock issue required.`
+        "Already Fully Supplied",
+        `All materials for active orders are 100% held by ${contractor.name}. No additional warehouse issue needed.`
       );
       return;
     }
+
+    const todayStr = new Date().toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+
+    // Transfer the net needed amounts directly to bufferHoldings
+    setBufferHoldings((prev) => {
+      const updated = [...prev];
+      pendingItems.forEach((p) => {
+        const norm = p.name.toLowerCase().trim();
+        const existingIdx = updated.findIndex((h) => {
+          const hNorm = h.item.toLowerCase().trim();
+          return hNorm === norm || hNorm.includes(norm) || norm.includes(hNorm);
+        });
+
+        if (existingIdx >= 0) {
+          updated[existingIdx] = {
+            ...updated[existingIdx],
+            qtyOnHand: updated[existingIdx].qtyOnHand + p.netPacksToIssue,
+            details: `Verified & issued on ${todayStr} (Order handover)`,
+          };
+        } else {
+          updated.push({
+            item: p.name,
+            qtyOnHand: p.netPacksToIssue,
+            unit: p.unitDisplay,
+            details: `Verified & issued on ${todayStr} (Order handover)`,
+          });
+        }
+      });
+      return updated;
+    });
 
     const summaryStr = pendingItems
       .map((m) => `${m.netPacksToIssue.toLocaleString()} ${m.unitDisplay} ${m.name}`)
@@ -262,19 +312,51 @@ export const LabourDetailProfileView: React.FC<LabourDetailProfileViewProps> = (
     setHandoverLogs((prev) => [
       {
         date: "Today, Just Now",
-        summary: `Dispensed: ${summaryStr}`,
+        summary: `Verified Handover: ${summaryStr}`,
         itemsCount: pendingItems.length,
       },
       ...prev,
     ]);
 
     success(
-      "Warehouse Stock Handover Recorded",
-      `Dispensed and handed over to ${contractor.name}: ${summaryStr}. Factory inventory updated.`
+      "Materials Verified & Handed Over",
+      `Verified and transferred to ${contractor.name}: ${summaryStr}. Contractor buffer updated.`
     );
   };
 
-  // Add / Adjust Buffer stock handler
+  // ─── MARK ORDER DELIVERED / COMPLETED ─────────────────────────────────────────
+  const handleMarkDelivered = (orderId: string, clientName: string, qty: number) => {
+    setSharedOrders((prev) =>
+      prev.map((o) =>
+        o.internalId === orderId
+          ? {
+              ...o,
+              status: "DELIVERED",
+              deliveryDate: new Date().toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+              }),
+            }
+          : o
+      )
+    );
+
+    success(
+      "Order Marked Delivered",
+      `${qty.toLocaleString()} units for ${clientName} delivered by ${contractor.name}. Moved to Completed History; next queued orders advanced.`
+    );
+  };
+
+  // ─── REOPEN / UNDO DELIVERY ──────────────────────────────────────────────────
+  const handleReopenOrder = (orderId: string) => {
+    setSharedOrders((prev) =>
+      prev.map((o) => (o.internalId === orderId ? { ...o, status: "IN_PROGRESS" } : o))
+    );
+    success("Order Reopened", `Order ${orderId} moved back to active queue.`);
+  };
+
+  // ─── ADD / ADJUST BUFFER STOCK SUBMISSION ────────────────────────────────────
   const handleAddBufferSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const qty = parseInt(newBufferQty, 10) || 100;
@@ -312,8 +394,43 @@ export const LabourDetailProfileView: React.FC<LabourDetailProfileViewProps> = (
     );
   };
 
+  // Combine historical batches with reactive delivered orders for full history
+  const allCompletedRecords = useMemo(() => {
+    const list: { id: string; client: string; qty: number; date: string; product: string; source: string }[] = [];
+
+    // Reactive delivered orders
+    deliveredOrders.forEach((o) => {
+      list.push({
+        id: o.internalId,
+        client: o.client,
+        qty: getContractorAllocatedQty(o),
+        date: o.deliveryDate || "Completed",
+        product: o.product,
+        source: "Orders Workspace",
+      });
+    });
+
+    // Historical batches attached to contractor
+    if (contractor.batches) {
+      contractor.batches
+        .filter((b) => b.status === "COMPLETED")
+        .forEach((b, idx) => {
+          list.push({
+            id: b.batchNumber || `hist-${idx}`,
+            client: b.clientName,
+            qty: b.quantityReturned || b.quantityGiven,
+            date: "Historical Batch",
+            product: "Custom Satin Lanyards Assembly",
+            source: "Archive",
+          });
+        });
+    }
+
+    return list;
+  }, [deliveredOrders, contractor]);
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", overflowY: "auto" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", overflowY: "auto", backgroundColor: "var(--bg-main)" }}>
 
       {/* ─── HEADER BAR ──────────────────────────────────────────────────────── */}
       <div
@@ -341,26 +458,71 @@ export const LabourDetailProfileView: React.FC<LabourDetailProfileViewProps> = (
             Back to Contract Labour
           </Button>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <span style={{ fontSize: "14px", fontWeight: 800, color: "#fff" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <span style={{ fontSize: "15px", fontWeight: 800, color: "#fff" }}>
               {contractor.name}
             </span>
             <span
               style={{
                 fontSize: "11px",
                 fontWeight: 700,
-                padding: "2px 7px",
-                borderRadius: "2px",
-                backgroundColor: "rgba(249, 115, 22, 0.15)",
-                color: "#fb923c",
+                padding: "2px 8px",
+                borderRadius: "3px",
+                backgroundColor: "rgba(255, 255, 255, 0.06)",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
+                color: "#cbd5e1",
               }}
             >
-              Labour Profile & Stock Buffer
+              {contractor.workstation}
             </span>
           </div>
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          {/* Tab Switcher */}
+          <div
+            style={{
+              display: "flex",
+              backgroundColor: "rgba(255, 255, 255, 0.04)",
+              borderRadius: "4px",
+              padding: "2px",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => setActiveTab("OPERATIONS")}
+              style={{
+                padding: "5px 12px",
+                fontSize: "11px",
+                fontWeight: 700,
+                borderRadius: "3px",
+                border: "none",
+                cursor: "pointer",
+                backgroundColor: activeTab === "OPERATIONS" ? "rgba(255, 255, 255, 0.12)" : "transparent",
+                color: activeTab === "OPERATIONS" ? "#fff" : "var(--text-muted)",
+              }}
+            >
+              Active Work & Staging
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("HISTORY")}
+              style={{
+                padding: "5px 12px",
+                fontSize: "11px",
+                fontWeight: 700,
+                borderRadius: "3px",
+                border: "none",
+                cursor: "pointer",
+                backgroundColor: activeTab === "HISTORY" ? "rgba(255, 255, 255, 0.12)" : "transparent",
+                color: activeTab === "HISTORY" ? "#fff" : "var(--text-muted)",
+              }}
+            >
+              Delivered History ({allCompletedRecords.length})
+            </button>
+          </div>
+
           <Button
             variant="secondary"
             size="sm"
@@ -370,9 +532,9 @@ export const LabourDetailProfileView: React.FC<LabourDetailProfileViewProps> = (
             Edit Workstation
           </Button>
           <Button
-            variant="primary"
+            variant="secondary"
             size="sm"
-            style={{ borderRadius: "3px", backgroundColor: "var(--accent)", border: "none" }}
+            style={{ borderRadius: "3px", backgroundColor: "rgba(255, 255, 255, 0.06)" }}
             onClick={() => setShowAddBufferModal(true)}
           >
             + Add Buffer Stock
@@ -380,163 +542,419 @@ export const LabourDetailProfileView: React.FC<LabourDetailProfileViewProps> = (
         </div>
       </div>
 
-      {/* =========================================================================
-          MAIN WORKSPACE LAYOUT (3-COLUMN DOSSIER / JOBS / BUFFER & HANDOVER)
-          ========================================================================= */}
+      {/* ─── CAPACITY & DOSSIER HERO BANNER (NO MONEY / PURE OPERATIONAL STATS) ─── */}
       <div
         style={{
+          margin: "16px 24px 0 24px",
+          padding: "16px 20px",
+          backgroundColor: "rgba(19, 23, 34, 0.85)",
+          backdropFilter: "blur(14px)",
+          border: "1px solid rgba(255,255,255,0.08)",
+          borderRadius: "6px",
           display: "grid",
-          gridTemplateColumns: "250px 1fr 340px",
-          gap: "20px",
-          padding: "20px 24px",
-          alignItems: "start",
+          gridTemplateColumns: "1.2fr 2fr 1fr",
+          gap: "24px",
+          alignItems: "center",
         }}
       >
-        {/* ── COL 1: Contractor Dossier ── */}
-        <div
-          style={{
-            backgroundColor: "rgba(19, 23, 34, 0.85)",
-            backdropFilter: "blur(14px)",
-            border: "1px solid rgba(255,255,255,0.08)",
-            borderRadius: "4px",
-            padding: "20px 16px",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            textAlign: "center",
-            gap: "12px",
-          }}
-        >
+        {/* Contractor Details */}
+        <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
           <div
             style={{
-              width: "64px",
-              height: "64px",
+              width: "48px",
+              height: "48px",
               borderRadius: "4px",
-              background: "linear-gradient(135deg, rgba(249,115,22,0.3) 0%, rgba(194,65,12,0.2) 100%)",
-              border: "1px solid rgba(249,115,22,0.4)",
+              backgroundColor: "rgba(255, 255, 255, 0.05)",
+              border: "1px solid rgba(255, 255, 255, 0.12)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontSize: "24px",
+              fontSize: "18px",
               fontWeight: 800,
-              color: "#fb923c",
+              color: "#e2e8f0",
               fontFamily: "var(--font-mono)",
             }}
           >
             {contractor.name.slice(0, 1).toUpperCase()}
           </div>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-            <h2 style={{ fontSize: "15px", fontWeight: 800, color: "#fff", margin: 0 }}>
+          <div>
+            <div style={{ fontSize: "14.5px", fontWeight: 800, color: "#fff" }}>
               {contractor.name}
-            </h2>
-            <span style={{ fontSize: "11.5px", color: "var(--text-muted)" }}>
-              {matchedDefault?.specialty || "Lanyard Stitching & Assembly"}
-            </span>
-          </div>
-
-          <div style={{ display: "flex", gap: "6px" }}>
-            <span
-              style={{
-                fontSize: "10px",
-                fontWeight: 700,
-                padding: "3px 7px",
-                borderRadius: "2px",
-                backgroundColor: "rgba(255,255,255,0.05)",
-                border: "1px solid rgba(255,255,255,0.1)",
-                color: "var(--text-secondary)",
-                fontFamily: "var(--font-mono)",
-              }}
-            >
-              {contractor.id.toUpperCase()}
-            </span>
-            <span
-              style={{
-                fontSize: "10px",
-                fontWeight: 700,
-                padding: "3px 7px",
-                borderRadius: "2px",
-                backgroundColor: "rgba(16,185,129,0.15)",
-                color: "#10b981",
-              }}
-            >
-              ● On Run
-            </span>
-          </div>
-
-          {/* Details list */}
-          <div
-            style={{
-              width: "100%",
-              borderTop: "1px solid rgba(255,255,255,0.06)",
-              paddingTop: "12px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "8px",
-              textAlign: "left",
-            }}
-          >
-            {[
-              { label: "Workstation", val: contractor.workstation, color: "#fb923c" },
-              { label: "Rate / Pc", val: `₹${(matchedDefault?.ratePerPiece || contractor.pieceRate || 1.5).toFixed(2)}`, color: "#10b981", mono: true },
-              { label: "Phone", val: contractor.phone || matchedDefault?.phone || "+91 98260 11420", mono: true },
-              { label: "Active Jobs", val: `${assignedJobs.length} orders`, color: "#fff" },
-              { label: "Total Volume", val: `${totalAllocatedUnits.toLocaleString()} units`, color: "#fff", mono: true },
-            ].map((r) => (
-              <div key={r.label} style={{ display: "flex", justifyContent: "space-between", fontSize: "11.5px" }}>
-                <span style={{ color: "var(--text-muted)" }}>{r.label}:</span>
-                <strong style={{ color: r.color || "#fff", fontFamily: r.mono ? "var(--font-mono)" : undefined }}>
-                  {r.val}
-                </strong>
-              </div>
-            ))}
-          </div>
-
-          {/* Compensation summary */}
-          <div
-            style={{
-              width: "100%",
-              marginTop: "6px",
-              padding: "10px 12px",
-              borderRadius: "4px",
-              backgroundColor: "rgba(16, 185, 129, 0.08)",
-              border: "1px solid rgba(16, 185, 129, 0.2)",
-              textAlign: "left",
-            }}
-          >
-            <div style={{ fontSize: "9.5px", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700 }}>
-              Estimated Labour Payable
             </div>
-            <div style={{ fontSize: "16px", fontWeight: 800, color: "#34d399", fontFamily: "var(--font-mono)", marginTop: "2px" }}>
-              ₹{(totalAllocatedUnits * (matchedDefault?.ratePerPiece || contractor.pieceRate || 1.5)).toFixed(2)}
-            </div>
-            <div style={{ fontSize: "9.5px", color: "var(--text-muted)", marginTop: "2px" }}>
-              Strictly Q_accepted @ piece-rate (material scrap mathematically excluded)
+            <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "2px" }}>
+              {matchedDefault?.specialty || "Lanyard Stitching & Assembly"} • {contractor.phone || matchedDefault?.phone || "+91 98200 44551"}
             </div>
           </div>
         </div>
 
-        {/* ── COL 2: Active Assigned Jobs + Warehouse Handover Calculator ── */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
-
-          {/* SECTION 1: Active Assigned Production Jobs */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <span style={{ fontSize: "14px" }}>📋</span>
-                <span style={{ fontSize: "13px", fontWeight: 800, color: "#fff" }}>
-                  Active Assigned Jobs ({assignedJobs.length})
-                </span>
-                <span style={{ fontSize: "10.5px", color: "var(--text-muted)" }}>
-                  (Synced reactively from Orders Workspace)
-                </span>
-              </div>
-              <span style={{ fontSize: "11px", color: "#fb923c", fontWeight: 700, fontFamily: "var(--font-mono)" }}>
-                {totalAllocatedUnits.toLocaleString()} units allocated
+        {/* 2,500 Lanyard Active Capacity Meter */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <span style={{ fontSize: "11px", fontWeight: 800, color: "#e2e8f0", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                Active Production Workload
+              </span>
+              <span
+                style={{
+                  fontSize: "9.5px",
+                  padding: "1px 6px",
+                  borderRadius: "2px",
+                  backgroundColor: "rgba(255, 255, 255, 0.05)",
+                  color: "var(--text-muted)",
+                }}
+              >
+                Limit: 2,500 units max
               </span>
             </div>
+            <div style={{ fontSize: "12px", fontWeight: 800, color: "#fff", fontFamily: "var(--font-mono)" }}>
+              {activeAllocatedUnits.toLocaleString()} / {MAX_ACTIVE_LANYARD_CAPACITY.toLocaleString()} units
+            </div>
+          </div>
 
-            {assignedJobs.length === 0 ? (
+          {/* Progress Bar */}
+          <div
+            style={{
+              height: "8px",
+              width: "100%",
+              backgroundColor: "rgba(255, 255, 255, 0.06)",
+              borderRadius: "4px",
+              overflow: "hidden",
+            }}
+          >
+            <div
+              style={{
+                height: "100%",
+                width: `${capacityPercent}%`,
+                backgroundColor: capacityPercent >= 100 ? "#f97316" : "#0ea5e9",
+                borderRadius: "4px",
+                transition: "width 0.3s ease",
+              }}
+            />
+          </div>
+
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "10.5px", color: "var(--text-muted)" }}>
+            <span>
+              {availableCapacity > 0 ? (
+                <span>{availableCapacity.toLocaleString()} units available capacity</span>
+              ) : (
+                <span style={{ color: "#fb923c" }}>Maximum workload reached (2,500 units)</span>
+              )}
+            </span>
+            {queuedOrders.length > 0 && (
+              <span style={{ color: "#f59e0b", fontWeight: 700 }}>
+                {queuedOrders.length} order(s) waiting in queue
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Operational Counts */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", borderLeft: "1px solid rgba(255,255,255,0.06)", paddingLeft: "16px" }}>
+          <div>
+            <div style={{ fontSize: "9px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase" }}>
+              Active Jobs
+            </div>
+            <div style={{ fontSize: "18px", fontWeight: 800, color: "#fff", fontFamily: "var(--font-mono)", lineHeight: 1.2 }}>
+              {activeOrders.length}
+            </div>
+          </div>
+          <div>
+            <div style={{ fontSize: "9px", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase" }}>
+              Delivered
+            </div>
+            <div style={{ fontSize: "18px", fontWeight: 800, color: "#10b981", fontFamily: "var(--font-mono)", lineHeight: 1.2 }}>
+              {allCompletedRecords.length}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* =========================================================================
+          MAIN BODY: TAB 1 (OPERATIONS & STAGING) OR TAB 2 (HISTORY)
+          ========================================================================= */}
+      {activeTab === "OPERATIONS" ? (
+        <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: "20px" }}>
+
+          {/* ───────────────────────────────────────────────────────────────────
+              SECTION 1: SIDE-BY-SIDE MATERIAL BALANCE
+              Left: What He Has  |  Right: What To Give (with Verify Given btn)
+              ─────────────────────────────────────────────────────────────────── */}
+          <div
+            style={{
+              backgroundColor: "rgba(19, 23, 34, 0.85)",
+              backdropFilter: "blur(14px)",
+              border: "1px solid rgba(255,255,255,0.08)",
+              borderRadius: "6px",
+              padding: "16px 20px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "14px",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div>
+                <span style={{ fontSize: "13px", fontWeight: 800, color: "#fff", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                  Workbench Stock Balance & Staging
+                </span>
+                <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "1px" }}>
+                  Side-by-side reconciliation between contractor buffer and active orders
+                </div>
+              </div>
+
+              {/* Verify Given Button */}
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleVerifyGiven}
+                style={{
+                  backgroundColor: "#0284c7",
+                  border: "none",
+                  fontWeight: 700,
+                  fontSize: "11.5px",
+                  borderRadius: "3px",
+                  boxShadow: "0 2px 8px rgba(2, 132, 199, 0.3)",
+                }}
+              >
+                ✓ Verify & Issue Materials
+              </Button>
+            </div>
+
+            {/* 2 Equal Columns: Left (Holdings) | Right (To Give) */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+
+              {/* ── LEFT COLUMN: Things Contractor Has ── */}
+              <div
+                style={{
+                  backgroundColor: "rgba(255, 255, 255, 0.02)",
+                  border: "1px solid rgba(255, 255, 255, 0.06)",
+                  borderRadius: "5px",
+                  padding: "14px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "10px",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <span style={{ fontSize: "11.5px", fontWeight: 800, color: "#cbd5e1", textTransform: "uppercase" }}>
+                      Things Contractor Has (Buffer On Hand)
+                    </span>
+                    <span
+                      style={{
+                        fontSize: "9.5px",
+                        padding: "1px 5px",
+                        borderRadius: "2px",
+                        backgroundColor: "rgba(255, 255, 255, 0.05)",
+                        color: "var(--text-muted)",
+                      }}
+                    >
+                      {bufferHoldings.length} items
+                    </span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowAddBufferModal(true)}
+                    style={{
+                      fontSize: "10px",
+                      padding: "2px 7px",
+                      borderRadius: "2px",
+                      border: "1px solid rgba(255, 255, 255, 0.12)",
+                      backgroundColor: "transparent",
+                      color: "#94a3b8",
+                      cursor: "pointer",
+                    }}
+                  >
+                    + Add Buffer
+                  </button>
+                </div>
+
+                {bufferHoldings.length === 0 ? (
+                  <div style={{ padding: "16px", textAlign: "center", color: "var(--text-muted)", fontSize: "11px" }}>
+                    0 buffer stock held with contractor.
+                  </div>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                    {bufferHoldings.map((h, idx) => (
+                      <div
+                        key={idx}
+                        style={{
+                          backgroundColor: "rgba(10, 14, 23, 0.8)",
+                          border: "1px solid rgba(255, 255, 255, 0.06)",
+                          borderRadius: "4px",
+                          padding: "8px 12px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        <div>
+                          <div style={{ fontSize: "12px", fontWeight: 700, color: "#f1f5f9" }}>
+                            {h.item}
+                          </div>
+                          <div style={{ fontSize: "10px", color: "var(--text-muted)", marginTop: "1px" }}>
+                            {h.details || "Staged at contractor workstation"}
+                          </div>
+                        </div>
+
+                        <div style={{ textAlign: "right" }}>
+                          <span style={{ fontSize: "13px", fontWeight: 800, color: "#e2e8f0", fontFamily: "var(--font-mono)" }}>
+                            {h.qtyOnHand.toLocaleString()}
+                          </span>{" "}
+                          <span style={{ fontSize: "10.5px", color: "var(--text-muted)" }}>{h.unit}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* ── RIGHT COLUMN: Things To Give (Handover for Active Jobs) ── */}
+              <div
+                style={{
+                  backgroundColor: "rgba(255, 255, 255, 0.02)",
+                  border: "1px solid rgba(255, 255, 255, 0.06)",
+                  borderRadius: "5px",
+                  padding: "14px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "10px",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <span style={{ fontSize: "11.5px", fontWeight: 800, color: "#cbd5e1", textTransform: "uppercase" }}>
+                      Things To Give (Required Handover)
+                    </span>
+                    <span
+                      style={{
+                        fontSize: "9.5px",
+                        padding: "1px 5px",
+                        borderRadius: "2px",
+                        backgroundColor: "rgba(255, 255, 255, 0.05)",
+                        color: "var(--text-muted)",
+                      }}
+                    >
+                      Active Jobs
+                    </span>
+                  </div>
+
+                  <span style={{ fontSize: "10px", color: "var(--text-muted)" }}>
+                    Deducts contractor buffer
+                  </span>
+                </div>
+
+                {handoverReconciliation.length === 0 ? (
+                  <div style={{ padding: "16px", textAlign: "center", color: "var(--text-muted)", fontSize: "11px" }}>
+                    No active orders requiring stock issue.
+                  </div>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                    {handoverReconciliation.map((mat, idx) => {
+                      const isCovered = mat.isFullyCovered;
+                      return (
+                        <div
+                          key={idx}
+                          style={{
+                            backgroundColor: "rgba(10, 14, 23, 0.8)",
+                            border: isCovered
+                              ? "1px solid rgba(255, 255, 255, 0.06)"
+                              : "1px solid rgba(2, 132, 199, 0.3)",
+                            borderRadius: "4px",
+                            padding: "8px 12px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                          }}
+                        >
+                          <div>
+                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                              <span style={{ fontSize: "12px", fontWeight: 700, color: "#f1f5f9" }}>
+                                {mat.icon} {mat.name}
+                              </span>
+                            </div>
+                            <div style={{ fontSize: "10px", color: "var(--text-muted)", marginTop: "1px" }}>
+                              {isCovered ? (
+                                <span style={{ color: "#94a3b8" }}>Covered by contractor buffer</span>
+                              ) : mat.heldPacks > 0 ? (
+                                <span>
+                                  Needs {mat.requiredPacks} {mat.unitDisplay} — holds {mat.heldPacks} = Issue{" "}
+                                  <strong style={{ color: "#38bdf8" }}>{mat.netPacksToIssue} {mat.unitDisplay}</strong>
+                                </span>
+                              ) : (
+                                <span>
+                                  Needs <strong style={{ color: "#38bdf8" }}>{mat.netPacksToIssue} {mat.unitDisplay}</strong> fresh issue
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          <div style={{ textAlign: "right" }}>
+                            {isCovered ? (
+                              <span
+                                style={{
+                                  fontSize: "9.5px",
+                                  fontWeight: 700,
+                                  padding: "2px 6px",
+                                  borderRadius: "2px",
+                                  backgroundColor: "rgba(255, 255, 255, 0.05)",
+                                  color: "#94a3b8",
+                                }}
+                              >
+                                0 Needed ✓
+                              </span>
+                            ) : (
+                              <div>
+                                <span style={{ fontSize: "13px", fontWeight: 800, color: "#38bdf8", fontFamily: "var(--font-mono)" }}>
+                                  {mat.netPacksToIssue.toLocaleString()}
+                                </span>{" "}
+                                <span style={{ fontSize: "10.5px", color: "var(--text-muted)" }}>{mat.unitDisplay}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Handover Log Strip */}
+            {handoverLogs.length > 0 && (
+              <div
+                style={{
+                  borderTop: "1px solid rgba(255, 255, 255, 0.06)",
+                  paddingTop: "10px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  fontSize: "11px",
+                  color: "var(--text-muted)",
+                }}
+              >
+                <span>Latest Handover: <strong style={{ color: "#e2e8f0" }}>{handoverLogs[0].summary}</strong></span>
+                <span style={{ fontSize: "10px" }}>{handoverLogs[0].date}</span>
+              </div>
+            )}
+          </div>
+
+          {/* ───────────────────────────────────────────────────────────────────
+              SECTION 2: ACTIVE ORDERS (IN PRODUCTION UNDER 2,500 LIMIT)
+              ─────────────────────────────────────────────────────────────────── */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <span style={{ fontSize: "13px", fontWeight: 800, color: "#fff", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                  Active Orders ({activeOrders.length})
+                </span>
+                <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>
+                  In production (Capacity: {activeAllocatedUnits.toLocaleString()} / 2,500 units)
+                </span>
+              </div>
+            </div>
+
+            {activeOrders.length === 0 ? (
               <div
                 style={{
                   padding: "24px",
@@ -545,13 +963,13 @@ export const LabourDetailProfileView: React.FC<LabourDetailProfileViewProps> = (
                   borderRadius: "4px",
                   textAlign: "center",
                   color: "var(--text-muted)",
-                  fontSize: "12.5px",
+                  fontSize: "12px",
                 }}
               >
-                No active orders currently assigned to {contractor.name}. Assign orders from the Orders workspace to view requirements here.
+                No active orders currently assigned to {contractor.name}.
               </div>
             ) : (
-              assignedJobs.map((order) => {
+              activeOrders.map((order) => {
                 const allocatedQty = getContractorAllocatedQty(order);
                 const isDivided = order.assignedTo && order.assignedTo.length > 1;
                 const itemsDetected = parseSupportingItemsFromDescription(
@@ -567,7 +985,7 @@ export const LabourDetailProfileView: React.FC<LabourDetailProfileViewProps> = (
                       backgroundColor: "rgba(19, 23, 34, 0.9)",
                       backdropFilter: "blur(14px)",
                       border: "1px solid rgba(255, 255, 255, 0.08)",
-                      borderRadius: "4px",
+                      borderRadius: "5px",
                       overflow: "hidden",
                     }}
                   >
@@ -588,22 +1006,23 @@ export const LabourDetailProfileView: React.FC<LabourDetailProfileViewProps> = (
                           <span
                             style={{
                               fontSize: "9.5px",
-                              fontWeight: 800,
+                              fontWeight: 700,
                               padding: "1px 6px",
                               borderRadius: "2px",
-                              backgroundColor: "rgba(168, 85, 247, 0.2)",
-                              color: "#c084fc",
+                              backgroundColor: "rgba(255, 255, 255, 0.05)",
+                              color: "#cbd5e1",
                             }}
                           >
-                            🔀 Divided Order
+                            Divided Order
                           </span>
                         )}
                       </div>
 
-                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
                         <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>
-                          Target Due: <strong style={{ color: "#f59e0b" }}>{order.deliveryDate}</strong>
+                          Delivery Due: <span style={{ color: "#e2e8f0" }}>{order.deliveryDate}</span>
                         </span>
+
                         <span
                           style={{
                             fontSize: "12.5px",
@@ -622,17 +1041,34 @@ export const LabourDetailProfileView: React.FC<LabourDetailProfileViewProps> = (
                             </span>
                           )}
                         </span>
+
+                        {/* Mark Delivered Action */}
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={() => handleMarkDelivered(order.internalId, order.client, allocatedQty)}
+                          style={{
+                            backgroundColor: "#059669",
+                            border: "none",
+                            fontWeight: 700,
+                            fontSize: "11px",
+                            borderRadius: "3px",
+                            padding: "4px 10px",
+                          }}
+                        >
+                          ✓ Mark Delivered
+                        </Button>
                       </div>
                     </div>
 
                     {/* Job Details & Recognized Badges */}
                     <div style={{ padding: "12px 16px", display: "flex", flexDirection: "column", gap: "8px" }}>
-                      <div style={{ fontSize: "12.5px", color: "#e2e8f0" }}>{order.product}</div>
+                      <div style={{ fontSize: "12.5px", color: "#cbd5e1" }}>{order.product}</div>
 
                       {itemsDetected.length > 0 && (
-                        <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", marginTop: "2px" }}>
-                          <span style={{ fontSize: "9.5px", color: "#94a3b8", textTransform: "uppercase", fontWeight: 800 }}>
-                            Req. Stock:
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                          <span style={{ fontSize: "9.5px", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700 }}>
+                            Stock Needed:
                           </span>
                           {itemsDetected.map((item, idx) => (
                             <span
@@ -645,9 +1081,9 @@ export const LabourDetailProfileView: React.FC<LabourDetailProfileViewProps> = (
                                 borderRadius: "3px",
                                 fontSize: "10.5px",
                                 fontWeight: 700,
-                                backgroundColor: item.badgeBg,
-                                color: item.badgeColor,
-                                border: `1px solid ${item.badgeBorder}`,
+                                backgroundColor: "rgba(255, 255, 255, 0.05)",
+                                color: "#e2e8f0",
+                                border: "1px solid rgba(255, 255, 255, 0.12)",
                               }}
                             >
                               <span>{item.icon}</span>
@@ -663,292 +1099,191 @@ export const LabourDetailProfileView: React.FC<LabourDetailProfileViewProps> = (
             )}
           </div>
 
-          {/* SECTION 2: 🟢 LIVE WAREHOUSE STOCK HANDOVER CALCULATOR */}
-          <div
-            style={{
-              backgroundColor: "rgba(16, 185, 129, 0.05)",
-              border: "1px solid rgba(16, 185, 129, 0.3)",
-              borderRadius: "6px",
-              padding: "16px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "12px",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          {/* ───────────────────────────────────────────────────────────────────
+              SECTION 3: QUEUED ORDERS (NEXT IN LINE BEYOND 2,500 LIMIT)
+              ─────────────────────────────────────────────────────────────────── */}
+          {queuedOrders.length > 0 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "4px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <span style={{ fontSize: "16px" }}>🟢</span>
-                <div>
-                  <div style={{ fontSize: "12px", fontWeight: 800, color: "#34d399", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                    Things We Need To Give Them (Warehouse Stock Handover)
-                  </div>
-                  <div style={{ fontSize: "10.5px", color: "var(--text-muted)", marginTop: "1px" }}>
-                    Calculates required stock for active jobs minus contractor's buffer holding
-                  </div>
-                </div>
+                <span style={{ fontSize: "12.5px", fontWeight: 800, color: "#f59e0b", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                  ⏳ Queued Orders — Next in Line ({queuedOrders.length})
+                </span>
+                <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>
+                  Holding in queue until current 2,500 active capacity is delivered
+                </span>
               </div>
 
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={handleDispenseMaterials}
-                style={{
-                  backgroundColor: "#059669",
-                  border: "none",
-                  fontWeight: 700,
-                  borderRadius: "3px",
-                  fontSize: "11.5px",
-                }}
-              >
-                📦 Dispense & Record Handover
-              </Button>
+              {queuedOrders.map((order) => {
+                const allocatedQty = getContractorAllocatedQty(order);
+                return (
+                  <div
+                    key={order.internalId}
+                    style={{
+                      backgroundColor: "rgba(19, 23, 34, 0.55)",
+                      border: "1px dashed rgba(245, 158, 11, 0.3)",
+                      borderRadius: "5px",
+                      padding: "10px 16px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <strong style={{ fontSize: "13px", color: "#f1f5f9" }}>{order.client}</strong>
+                        <span
+                          style={{
+                            fontSize: "9px",
+                            fontWeight: 700,
+                            padding: "1px 5px",
+                            borderRadius: "2px",
+                            backgroundColor: "rgba(245, 158, 11, 0.15)",
+                            color: "#fbbf24",
+                          }}
+                        >
+                          Queued Next
+                        </span>
+                      </div>
+                      <div style={{ fontSize: "11.5px", color: "var(--text-muted)", marginTop: "2px" }}>
+                        {order.product}
+                      </div>
+                    </div>
+
+                    <div style={{ textAlign: "right" }}>
+                      <div style={{ fontSize: "13px", fontWeight: 800, color: "#fff", fontFamily: "var(--font-mono)" }}>
+                        {allocatedQty.toLocaleString()} units
+                      </div>
+                      <div style={{ fontSize: "10px", color: "var(--text-muted)" }}>
+                        Delivery Due: {order.deliveryDate}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      ) : (
+        /* ───────────────────────────────────────────────────────────────────
+            TAB 2: DELIVERED ORDER HISTORY
+            ─────────────────────────────────────────────────────────────────── */
+        <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: "14px" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div>
+              <span style={{ fontSize: "13px", fontWeight: 800, color: "#fff", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                Delivered Orders & Completed Batches
+              </span>
+              <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "1px" }}>
+                Historical log of finished production runs delivered by {contractor.name}
+              </div>
             </div>
 
-            {/* Handover List */}
-            {handoverReconciliation.length === 0 ? (
-              <div style={{ padding: "12px", color: "var(--text-muted)", fontSize: "11.5px", textAlign: "center" }}>
-                No active requirements to calculate.
-              </div>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                {handoverReconciliation.map((mat, idx) => {
-                  const isFullyCovered = mat.isFullyCovered;
-                  return (
-                    <div
+            <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>
+              Total Finished: <strong style={{ color: "#10b981" }}>{allCompletedRecords.length} runs</strong>
+            </span>
+          </div>
+
+          {allCompletedRecords.length === 0 ? (
+            <div
+              style={{
+                padding: "32px",
+                backgroundColor: "rgba(19, 23, 34, 0.7)",
+                border: "1px dashed rgba(255, 255, 255, 0.12)",
+                borderRadius: "4px",
+                textAlign: "center",
+                color: "var(--text-muted)",
+                fontSize: "12px",
+              }}
+            >
+              No finished orders recorded yet. Mark active orders as delivered to view history here.
+            </div>
+          ) : (
+            <div
+              style={{
+                backgroundColor: "rgba(19, 23, 34, 0.85)",
+                border: "1px solid rgba(255, 255, 255, 0.08)",
+                borderRadius: "6px",
+                overflow: "hidden",
+              }}
+            >
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
+                <thead>
+                  <tr
+                    style={{
+                      borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+                      backgroundColor: "rgba(255, 255, 255, 0.02)",
+                      textAlign: "left",
+                    }}
+                  >
+                    <th style={{ padding: "10px 14px", color: "var(--text-muted)", fontWeight: 700 }}>Client</th>
+                    <th style={{ padding: "10px 14px", color: "var(--text-muted)", fontWeight: 700 }}>Description</th>
+                    <th style={{ padding: "10px 14px", color: "var(--text-muted)", fontWeight: 700 }}>Quantity</th>
+                    <th style={{ padding: "10px 14px", color: "var(--text-muted)", fontWeight: 700 }}>Delivered Date</th>
+                    <th style={{ padding: "10px 14px", color: "var(--text-muted)", fontWeight: 700 }}>Status</th>
+                    <th style={{ padding: "10px 14px", color: "var(--text-muted)", fontWeight: 700, textAlign: "right" }}>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {allCompletedRecords.map((rec, idx) => (
+                    <tr
                       key={idx}
                       style={{
-                        backgroundColor: "rgba(10, 14, 23, 0.85)",
-                        border: isFullyCovered ? "1px solid rgba(52, 211, 153, 0.25)" : "1px solid rgba(16, 185, 129, 0.4)",
-                        borderRadius: "5px",
-                        padding: "10px 14px",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        gap: "12px",
+                        borderBottom: "1px solid rgba(255, 255, 255, 0.04)",
                       }}
                     >
-                      <div style={{ display: "flex", flexDirection: "column", gap: "2px", minWidth: 0, flex: 1 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                          <span style={{ fontSize: "13px", fontWeight: 700, color: "#ffffff" }}>
-                            {mat.icon} {mat.name}
-                          </span>
-                          <span
+                      <td style={{ padding: "10px 14px", fontWeight: 700, color: "#fff" }}>
+                        {rec.client}
+                      </td>
+                      <td style={{ padding: "10px 14px", color: "#cbd5e1" }}>
+                        {rec.product}
+                      </td>
+                      <td style={{ padding: "10px 14px", fontFamily: "var(--font-mono)", fontWeight: 800, color: "#fff" }}>
+                        {rec.qty.toLocaleString()} units
+                      </td>
+                      <td style={{ padding: "10px 14px", color: "var(--text-muted)" }}>
+                        {rec.date}
+                      </td>
+                      <td style={{ padding: "10px 14px" }}>
+                        <span
+                          style={{
+                            fontSize: "10px",
+                            fontWeight: 700,
+                            padding: "2px 7px",
+                            borderRadius: "2px",
+                            backgroundColor: "rgba(16, 185, 129, 0.12)",
+                            color: "#34d399",
+                          }}
+                        >
+                          DELIVERED ✓
+                        </span>
+                      </td>
+                      <td style={{ padding: "10px 14px", textAlign: "right" }}>
+                        {rec.source === "Orders Workspace" && (
+                          <button
+                            type="button"
+                            onClick={() => handleReopenOrder(rec.id)}
                             style={{
-                              fontSize: "9px",
-                              fontWeight: 700,
-                              padding: "1px 6px",
+                              fontSize: "10px",
+                              padding: "2px 6px",
                               borderRadius: "2px",
-                              backgroundColor: mat.badgeBg,
-                              color: mat.badgeColor,
-                              border: `1px solid ${mat.badgeBorder}`,
-                              textTransform: "uppercase",
-                              letterSpacing: "0.4px",
+                              border: "1px solid rgba(255, 255, 255, 0.12)",
+                              backgroundColor: "transparent",
+                              color: "var(--text-muted)",
+                              cursor: "pointer",
                             }}
                           >
-                            {mat.canonicalUnit}
-                          </span>
-                        </div>
-
-                        <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "2px" }}>
-                          {isFullyCovered ? (
-                            <span style={{ color: "#34d399", fontWeight: 600 }}>
-                              Contractor holds {mat.heldPacks.toLocaleString()} {mat.unitDisplay} in table buffer ({mat.heldPieces.toLocaleString()} pcs). 0 needed from warehouse.
-                            </span>
-                          ) : mat.heldPacks > 0 ? (
-                            <span>
-                              Active orders need {mat.requiredPacks.toLocaleString()} {mat.unitDisplay} ({mat.totalPieces.toLocaleString()} pcs) — Table buffer holds {mat.heldPacks.toLocaleString()} {mat.unitDisplay} = Issue remaining <strong style={{ color: "#34d399" }}>{mat.netPacksToIssue.toLocaleString()} {mat.unitDisplay} ({mat.netPiecesToIssue.toLocaleString()} pcs)</strong>
-                            </span>
-                          ) : (
-                            <span>
-                              Active orders need {mat.requiredPacks.toLocaleString()} {mat.unitDisplay} ({mat.totalPieces.toLocaleString()} pcs fresh factory issue)
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Right Handover Badge */}
-                      <div
-                        style={{
-                          padding: "6px 14px",
-                          borderRadius: "4px",
-                          backgroundColor: isFullyCovered ? "rgba(52, 211, 153, 0.12)" : "rgba(16, 185, 129, 0.2)",
-                          border: isFullyCovered ? "1px solid rgba(52, 211, 153, 0.3)" : "1px solid rgba(52, 211, 153, 0.55)",
-                          textAlign: "right",
-                          flexShrink: 0,
-                        }}
-                      >
-                        <div style={{ fontSize: "8.5px", fontWeight: 800, textTransform: "uppercase", color: isFullyCovered ? "#34d399" : "#86efac" }}>
-                          {isFullyCovered ? "BUFFER COVERS ✅" : "HANDOVER TO LABOUR"}
-                        </div>
-                        <div style={{ fontSize: "15px", fontWeight: 900, fontFamily: "var(--font-mono)", color: isFullyCovered ? "#34d399" : "#4ade80" }}>
-                          {isFullyCovered ? "0" : mat.netPacksToIssue.toLocaleString()} <span style={{ fontSize: "10.5px", fontWeight: 600 }}>{mat.unitDisplay}</span>
-                        </div>
-                        {!isFullyCovered && mat.packSize > 1 && (
-                          <div style={{ fontSize: "10px", color: "#86efac", fontFamily: "var(--font-mono)" }}>
-                            ({mat.netPiecesToIssue.toLocaleString()} pcs)
-                          </div>
+                            Reopen
+                          </button>
                         )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
-
-        {/* ── COL 3: Contractor Stock Buffer ("Things Already With Contractor") + Activity Log ── */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-
-          {/* Quick Metrics */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
-            <StatTile label="Allocated" value={totalAllocatedUnits.toLocaleString()} sub="Units across orders" color="#fff" />
-            <StatTile label="Buffer Items" value={`${bufferHoldings.length}`} sub="Material categories" color="#fb923c" />
-          </div>
-
-          {/* SECTION 3: 🟠 Things Already With Contractor (Current Buffer) */}
-          <div
-            style={{
-              backgroundColor: "rgba(249, 115, 22, 0.05)",
-              border: "1px solid rgba(249, 115, 22, 0.28)",
-              borderRadius: "6px",
-              padding: "16px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "10px",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <span style={{ fontSize: "16px" }}>🟠</span>
-                <div>
-                  <span style={{ fontSize: "12px", fontWeight: 800, color: "#fb923c", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                    Things They Already Have
-                  </span>
-                  <div style={{ fontSize: "10px", color: "var(--text-muted)" }}>
-                    Contractor Table Buffer Holdings
-                  </div>
-                </div>
-              </div>
-
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setShowAddBufferModal(true)}
-                style={{ fontSize: "10.5px", padding: "2px 8px" }}
-              >
-                + Add
-              </Button>
-            </div>
-
-            {bufferHoldings.length === 0 ? (
-              <div style={{ padding: "14px", textAlign: "center", color: "var(--text-muted)", fontSize: "11.5px" }}>
-                Contractor has 0 buffer holdings on hand.
-              </div>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                {bufferHoldings.map((h, hIdx) => {
-                  const isDeductedInHandover = handoverReconciliation.some(
-                    (m) => m.name.toLowerCase().includes(h.item.toLowerCase()) || h.item.toLowerCase().includes(m.name.toLowerCase())
-                  );
-
-                  return (
-                    <div
-                      key={hIdx}
-                      style={{
-                        backgroundColor: "rgba(10, 14, 23, 0.8)",
-                        border: isDeductedInHandover ? "1px solid rgba(16, 185, 129, 0.35)" : "1px solid rgba(255, 255, 255, 0.06)",
-                        borderRadius: "4px",
-                        padding: "8px 12px",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                      }}
-                    >
-                      <div>
-                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                          <span style={{ fontSize: "12px", fontWeight: 700, color: "#f1f5f9" }}>{h.item}</span>
-                          {isDeductedInHandover && (
-                            <span
-                              style={{
-                                fontSize: "8.5px",
-                                fontWeight: 800,
-                                padding: "1px 5px",
-                                borderRadius: "2px",
-                                backgroundColor: "rgba(16, 185, 129, 0.2)",
-                                color: "#34d399",
-                              }}
-                            >
-                              DEDUCTED ✅
-                            </span>
-                          )}
-                        </div>
-                        <div style={{ fontSize: "10px", color: "var(--text-muted)", marginTop: "2px" }}>
-                          {h.details || "Staged at contractor workstation"}
-                        </div>
-                      </div>
-
-                      <div style={{ textAlign: "right" }}>
-                        <div style={{ fontSize: "14px", fontWeight: 800, color: "#fb923c", fontFamily: "var(--font-mono)" }}>
-                          {h.qtyOnHand.toLocaleString()}{" "}
-                          <span style={{ fontSize: "10px", color: "#fdba74" }}>{h.unit}</span>
-                        </div>
-                        <div style={{ fontSize: "8px", color: "var(--text-muted)", textTransform: "uppercase" }}>
-                          BUFFER ON HAND
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* Handover Activity Log */}
-          <div
-            style={{
-              backgroundColor: "rgba(19, 23, 34, 0.85)",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
-              borderRadius: "6px",
-              padding: "14px 16px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "8px",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <span style={{ fontSize: "11.5px", fontWeight: 800, color: "#fff" }}>
-                Recent Handover Log
-              </span>
-              <span style={{ fontSize: "10px", color: "var(--text-muted)" }}>
-                Factory → Workbench
-              </span>
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-              {handoverLogs.map((log, lIdx) => (
-                <div
-                  key={lIdx}
-                  style={{
-                    backgroundColor: "rgba(0, 0, 0, 0.3)",
-                    borderRadius: "3px",
-                    padding: "6px 10px",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "2px",
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <span style={{ fontSize: "9.5px", color: "#60a5fa", fontWeight: 700 }}>{log.date}</span>
-                    <span style={{ fontSize: "9px", color: "var(--text-muted)" }}>{log.itemsCount} items</span>
-                  </div>
-                  <span style={{ fontSize: "11px", color: "#e2e8f0" }}>{log.summary}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
+      )}
 
       {/* ─── ADD / ADJUST BUFFER STOCK MODAL ─────────────────────────────────── */}
       {showAddBufferModal && (
