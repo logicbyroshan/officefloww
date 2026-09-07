@@ -45,7 +45,7 @@ function formatClientTitle(name: string): string {
     .join(" ");
 }
 
-// Structured Student & Staff Breakdown Pills
+// Structured Student & Staff Breakdown Pills (calm, elegant tones)
 function renderBreakdownTags(workQtyDisplay: string) {
   if (!workQtyDisplay || !workQtyDisplay.trim()) {
     return <span style={{ color: "#64748b", fontSize: "12px" }}>Standard Batch</span>;
@@ -64,10 +64,10 @@ function renderBreakdownTags(workQtyDisplay: string) {
               style={{
                 fontSize: "12px",
                 fontWeight: 700,
-                padding: "2.5px 7px",
+                padding: "2px 7px",
                 borderRadius: "4px",
-                backgroundColor: isStaff ? "rgba(168, 85, 247, 0.12)" : "rgba(56, 189, 248, 0.12)",
-                border: `1px solid ${isStaff ? "rgba(168, 85, 247, 0.3)" : "rgba(56, 189, 248, 0.3)"}`,
+                backgroundColor: isStaff ? "rgba(168, 85, 247, 0.09)" : "rgba(56, 189, 248, 0.09)",
+                border: `1px solid ${isStaff ? "rgba(168, 85, 247, 0.25)" : "rgba(56, 189, 248, 0.25)"}`,
                 color: isStaff ? "#c084fc" : "#38bdf8",
                 whiteSpace: "nowrap",
               }}
@@ -86,10 +86,10 @@ function renderBreakdownTags(workQtyDisplay: string) {
       style={{
         fontSize: "12px",
         fontWeight: 700,
-        padding: "2.5px 8px",
+        padding: "2px 8px",
         borderRadius: "4px",
-        backgroundColor: isStaff ? "rgba(168, 85, 247, 0.1)" : "rgba(255, 255, 255, 0.05)",
-        border: `1px solid ${isStaff ? "rgba(168, 85, 247, 0.25)" : "rgba(255, 255, 255, 0.1)"}`,
+        backgroundColor: isStaff ? "rgba(168, 85, 247, 0.09)" : "rgba(255, 255, 255, 0.04)",
+        border: `1px solid ${isStaff ? "rgba(168, 85, 247, 0.22)" : "rgba(255, 255, 255, 0.09)"}`,
         color: isStaff ? "#c084fc" : "#cbd5e1",
         whiteSpace: "nowrap",
       }}
@@ -118,10 +118,10 @@ function renderLanyardStatus(status?: string) {
           gap: "5px",
           padding: "3px 8px",
           borderRadius: "4px",
-          backgroundColor: "rgba(56, 189, 248, 0.1)",
-          border: "1px solid rgba(56, 189, 248, 0.28)",
+          backgroundColor: "rgba(56, 189, 248, 0.08)",
+          border: "1px solid rgba(56, 189, 248, 0.25)",
           color: "#38bdf8",
-          fontSize: "12px",
+          fontSize: "11.5px",
           fontWeight: 700,
           whiteSpace: "nowrap",
         }}
@@ -140,10 +140,10 @@ function renderLanyardStatus(status?: string) {
           gap: "4px",
           padding: "3px 8px",
           borderRadius: "4px",
-          backgroundColor: "rgba(255, 255, 255, 0.05)",
-          border: "1px solid rgba(255, 255, 255, 0.1)",
+          backgroundColor: "rgba(255, 255, 255, 0.04)",
+          border: "1px solid rgba(255, 255, 255, 0.08)",
           color: "#94a3b8",
-          fontSize: "12px",
+          fontSize: "11.5px",
           fontWeight: 600,
         }}
       >
@@ -159,10 +159,10 @@ function renderLanyardStatus(status?: string) {
         gap: "4px",
         padding: "3px 8px",
         borderRadius: "4px",
-        backgroundColor: "rgba(245, 158, 11, 0.1)",
-        border: "1px solid rgba(245, 158, 11, 0.25)",
+        backgroundColor: "rgba(245, 158, 11, 0.08)",
+        border: "1px solid rgba(245, 158, 11, 0.22)",
         color: "#fbbf24",
-        fontSize: "12px",
+        fontSize: "11.5px",
         fontWeight: 600,
       }}
     >
@@ -175,12 +175,9 @@ export const IDCardWorkspaceView: React.FC = () => {
   const { success: toastSuccess, error: toastError } = useToast();
   const {
     orders,
-    setOrders,
     addOrder,
     updateOrder,
-    cycleStatus,
     updateOrderStatus,
-    toggleSentForPrint,
   } = useIDCardStore();
 
   const { getBlankPVCStats, items: stockItems } = useStockStore();
@@ -193,11 +190,11 @@ export const IDCardWorkspaceView: React.FC = () => {
   const [fileFilter, setFileFilter] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Smart Ingestion Console states
+  // Ingestion Console states
   const [newClient, setNewClient] = useState("");
   const [newQtyStr, setNewQtyStr] = useState("");
   const [newFileLocation, setNewFileLocation] = useState<
-    "doc" | "pdf" | "excel" | "doc + pdf" | "excel and doc"
+    "doc" | "pdf" | "excel" | "doc + pdf" | "excel and doc" | "hard copy"
   >("doc");
   const [newHolderLanyard, setNewHolderLanyard] = useState("available he");
   const [newRemark, setNewRemark] = useState("");
@@ -242,16 +239,23 @@ export const IDCardWorkspaceView: React.FC = () => {
 
   // Next SN calculation
   const nextSN = useMemo(() => {
-    if (!orders || orders.length === 0) return 1492;
+    if (!orders || orders.length === 0) return 1494;
     return Math.max(...orders.map((o) => o.sn || 0)) + 1;
   }, [orders]);
 
-  // Overall Blank PVC Card Stock status
+  // Overall Blank PVC Card & Ribbon Stock status
   const pvcCardItem = useMemo(() => {
     return stockItems.find((it) => it.code === "pvc-cards") || {
       availableStock: 15000,
       reservedStock: 2473,
       minThreshold: 3000,
+    };
+  }, [stockItems]);
+
+  const ymckoItem = useMemo(() => {
+    return stockItems.find((it) => it.code === "ymcko-ribbon") || {
+      availableStock: 12,
+      minThreshold: 5,
     };
   }, [stockItems]);
 
@@ -269,6 +273,10 @@ export const IDCardWorkspaceView: React.FC = () => {
     const totalOrders = orders.length;
     const totalPieces = orders.reduce((sum, o) => sum + (o.totalQty || 0), 0);
 
+    const activeOrders = orders.filter((o) => o.status !== "done");
+    const activeCount = activeOrders.length;
+    const activePieces = activeOrders.reduce((sum, o) => sum + (o.totalQty || 0), 0);
+
     const inKamalOrders = orders.filter((o) => o.status === "kamal");
     const inKamalPieces = inKamalOrders.reduce((sum, o) => sum + (o.totalQty || 0), 0);
 
@@ -285,6 +293,8 @@ export const IDCardWorkspaceView: React.FC = () => {
     return {
       totalOrders,
       totalPieces,
+      activeCount,
+      activePieces,
       inKamalCount: inKamalOrders.length,
       inKamalPieces,
       readyCount: readyOrders.length,
@@ -292,7 +302,6 @@ export const IDCardWorkspaceView: React.FC = () => {
       doneCount: doneOrders.length,
       donePieces,
       donePercentage,
-      activeCount: inKamalOrders.length + readyOrders.length,
     };
   }, [orders]);
 
@@ -338,13 +347,13 @@ export const IDCardWorkspaceView: React.FC = () => {
 
         return true;
       })
-      .sort((a, b) => b.sn - a.sn); // LATEST ON TOP!
+      .sort((a, b) => (b.sn || 0) - (a.sn || 0)); // LATEST ON TOP!
   }, [orders, viewTab, statusFilter, fileFilter, searchQuery]);
 
   // Ingestion Handler
   const handleIngestOrder = () => {
     if (!newClient.trim()) {
-      toastError("Required Field", "Please enter a Client / School Title.");
+      toastError("Required Field", "Please enter a School Name / Client Title.");
       return;
     }
 
@@ -370,32 +379,40 @@ export const IDCardWorkspaceView: React.FC = () => {
     setNewRemark("");
     toastSuccess(
       "Batch Ingested",
-      `Added #${nextSN}: ${newClient.trim()} (${computedTotal.toLocaleString()} cards) • In Queue for Kamal Sir.`
+      `Added #${nextSN}: ${newClient.trim()} (${computedTotal.toLocaleString()} cards) • Sent to Kamal Sir.`
     );
   };
 
-  // 1-Click Status Advance Handler
-  const handleCycleStatusClick = (order: IDCardOrderEntry, e: React.MouseEvent) => {
-    e.stopPropagation();
-    let nextStatus: "kamal" | "ready" | "done" = "kamal";
-    if (order.status === "kamal") {
-      nextStatus = "ready";
-    } else if (order.status === "ready" || order.status === "ready (1 pending he)") {
-      nextStatus = "done";
-    } else {
-      nextStatus = "kamal";
-    }
-
-    updateOrderStatus(order.id, nextStatus);
-    const labelMap = {
-      kamal: "With Kamal Sir (In Printing)",
-      ready: "Printed (Ready)",
-      done: "Completed & Dispatched",
-    };
-    toastSuccess("Status Advanced", `Order #${order.sn} is now: ${labelMap[nextStatus]}`);
+  // Step Action: Mark Dispatched (moves from Active Queue to Completed!)
+  const handleMarkDispatched = (order: IDCardOrderEntry, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    updateOrderStatus(order.id, "done");
+    toastSuccess(
+      "Batch Dispatched",
+      `Order #${order.sn}: ${formatClientTitle(order.client)} completed & moved to Completed tab.`
+    );
   };
 
-  // Quick navigation to Lanyard / Labour View
+  // Re-open Completed Order
+  const handleReopenOrder = (order: IDCardOrderEntry, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    updateOrderStatus(order.id, "ready");
+    toastSuccess("Order Re-opened", `Order #${order.sn} returned to Active Queue as Printed (Ready).`);
+  };
+
+  // 1-Click Thermal Printing Verification (With Kamal <-> Printed)
+  const handleTogglePrinted = (order: IDCardOrderEntry, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (order.status === "kamal") {
+      updateOrderStatus(order.id, "ready");
+      toastSuccess("Printed OK", `Order #${order.sn}: Thermal printing verified ✓ (Unlocked Dispatch).`);
+    } else if (order.status === "ready" || order.status === "ready (1 pending he)") {
+      updateOrderStatus(order.id, "kamal");
+      toastSuccess("Print Reset", `Order #${order.sn}: Returned to In Printing.`);
+    }
+  };
+
+  // Quick navigation to Lanyard Hub
   const handleJumpToLanyard = () => {
     window.dispatchEvent(
       new CustomEvent("officefloww:navigate", {
@@ -418,363 +435,572 @@ export const IDCardWorkspaceView: React.FC = () => {
       }}
     >
       {/* ══════════════════════════════════════════════════════════════════════════ */}
-      {/* 1. RESTRAINED 4-CARD KPI METRICS DECK                                      */}
+      {/* 1. EXECUTIVE 5-CARD KPI METRICS & INVENTORY DECK                          */}
       {/* ══════════════════════════════════════════════════════════════════════════ */}
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
           gap: "12px",
         }}
       >
-        {/* Card 1: Total Volume */}
+        {/* Card 1: Active Batches */}
         <div
           style={{
             padding: "12px 16px",
             borderRadius: "8px",
             backgroundColor: "#0e131f",
-            border: "1px solid rgba(255, 255, 255, 0.07)",
+            border: "1px solid rgba(255, 255, 255, 0.08)",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <span
               style={{
                 fontSize: "11px",
-                fontWeight: 600,
-                color: "#64748b",
+                fontWeight: 700,
+                color: "#94a3b8",
                 textTransform: "uppercase",
                 letterSpacing: "0.05em",
               }}
             >
-              Total Ingested
+              Active Batches
             </span>
-            <Icon name="credit-card" size={14} color="#64748b" />
+            <Icon name="credit-card" size={14} color="#38bdf8" />
           </div>
           <div
             style={{
               fontSize: "20px",
-              fontWeight: 700,
-              color: "#f8fafc",
+              fontWeight: 800,
+              color: "#f1f5f9",
               fontFamily: "var(--font-mono)",
               marginTop: "4px",
             }}
           >
-            {metrics.totalPieces.toLocaleString()}{" "}
-            <span style={{ fontSize: "12px", color: "#64748b", fontWeight: 500 }}>cards</span>
+            {metrics.activeCount}{" "}
+            <span style={{ fontSize: "12px", color: "#94a3b8", fontWeight: 500 }}>batches</span>
           </div>
           <div style={{ fontSize: "11px", color: "#64748b", marginTop: "2px" }}>
-            Across {metrics.totalOrders} school / client batches
+            {metrics.activePieces.toLocaleString()} cards in production
           </div>
         </div>
 
-        {/* Card 2: With Kamal Sir */}
+        {/* Card 2: Blank PVC Card Stock */}
         <div
           style={{
             padding: "12px 16px",
             borderRadius: "8px",
             backgroundColor: "#0e131f",
-            border: "1px solid rgba(255, 255, 255, 0.07)",
+            border: "1px solid rgba(255, 255, 255, 0.08)",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <span
               style={{
                 fontSize: "11px",
-                fontWeight: 600,
-                color: "#64748b",
+                fontWeight: 700,
+                color: "#94a3b8",
                 textTransform: "uppercase",
                 letterSpacing: "0.05em",
               }}
             >
-              With Kamal Sir
+              Blank PVC Cards
             </span>
-            <Icon name="printer" size={14} color="#38bdf8" />
+            <Icon name="layers" size={14} color="#34d399" />
           </div>
           <div
             style={{
               fontSize: "20px",
-              fontWeight: 700,
-              color: "#38bdf8",
+              fontWeight: 800,
+              color: "#f1f5f9",
               fontFamily: "var(--font-mono)",
               marginTop: "4px",
             }}
           >
-            {metrics.inKamalPieces.toLocaleString()}{" "}
-            <span style={{ fontSize: "12px", color: "rgba(56, 189, 248, 0.7)", fontWeight: 500 }}>
-              cards
-            </span>
+            {pvcCardItem.availableStock.toLocaleString()}{" "}
+            <span style={{ fontSize: "12px", color: "#94a3b8", fontWeight: 500 }}>cards</span>
           </div>
-          <div style={{ fontSize: "11px", color: "#64748b", marginTop: "2px" }}>
-            {metrics.inKamalCount} batches active in thermal printing
+          <div style={{ fontSize: "11px", color: "#94a3b8", marginTop: "2px", fontFamily: "var(--font-mono)" }}>
+            Kamal Sir Desk &bull; ~{(pvcCardItem.reservedStock ?? 2473).toLocaleString()} reserved
           </div>
         </div>
 
-        {/* Card 3: Printed (Ready) */}
+        {/* Card 3: YMCKO Ribbon Consumables */}
         <div
           style={{
             padding: "12px 16px",
             borderRadius: "8px",
             backgroundColor: "#0e131f",
-            border: "1px solid rgba(255, 255, 255, 0.07)",
+            border: "1px solid rgba(255, 255, 255, 0.08)",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <span
               style={{
                 fontSize: "11px",
-                fontWeight: 600,
-                color: "#64748b",
+                fontWeight: 700,
+                color: "#94a3b8",
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+              }}
+            >
+              YMCKO Ribbons
+            </span>
+            <Icon name="package" size={14} color="#c084fc" />
+          </div>
+          <div
+            style={{
+              fontSize: "20px",
+              fontWeight: 800,
+              color: "#f1f5f9",
+              fontFamily: "var(--font-mono)",
+              marginTop: "4px",
+            }}
+          >
+            {ymckoItem.availableStock}{" "}
+            <span style={{ fontSize: "12px", color: "#94a3b8", fontWeight: 500 }}>rolls</span>
+          </div>
+          <div style={{ fontSize: "11px", color: "#94a3b8", marginTop: "2px", fontFamily: "var(--font-mono)" }}>
+            Thermal Printing Consumables
+          </div>
+        </div>
+
+        {/* Card 4: Printed (Ready) */}
+        <div
+          style={{
+            padding: "12px 16px",
+            borderRadius: "8px",
+            backgroundColor: "#0e131f",
+            border: "1px solid rgba(255, 255, 255, 0.08)",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <span
+              style={{
+                fontSize: "11px",
+                fontWeight: 700,
+                color: "#94a3b8",
                 textTransform: "uppercase",
                 letterSpacing: "0.05em",
               }}
             >
               Printed (Ready)
             </span>
-            <Icon name="check" size={14} color="#c084fc" />
+            <Icon name="printer" size={14} color="#fbbf24" />
           </div>
           <div
             style={{
               fontSize: "20px",
-              fontWeight: 700,
-              color: "#c084fc",
+              fontWeight: 800,
+              color: "#f1f5f9",
               fontFamily: "var(--font-mono)",
               marginTop: "4px",
             }}
           >
             {metrics.readyPieces.toLocaleString()}{" "}
-            <span style={{ fontSize: "12px", color: "rgba(192, 132, 252, 0.7)", fontWeight: 500 }}>
-              cards
-            </span>
+            <span style={{ fontSize: "12px", color: "#94a3b8", fontWeight: 500 }}>cards</span>
           </div>
           <div style={{ fontSize: "11px", color: "#64748b", marginTop: "2px" }}>
-            {metrics.readyCount} batches ready for packaging / lanyard matching
+            {metrics.readyCount} batches ready for dispatch
           </div>
         </div>
 
-        {/* Card 4: Done */}
+        {/* Card 5: Completed */}
         <div
           style={{
             padding: "12px 16px",
             borderRadius: "8px",
             backgroundColor: "#0e131f",
-            border: "1px solid rgba(255, 255, 255, 0.07)",
+            border: "1px solid rgba(255, 255, 255, 0.08)",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <span
               style={{
                 fontSize: "11px",
-                fontWeight: 600,
-                color: "#64748b",
+                fontWeight: 700,
+                color: "#94a3b8",
                 textTransform: "uppercase",
                 letterSpacing: "0.05em",
               }}
             >
-              Done & Dispatched
+              Completed
             </span>
-            <Icon name="check-circle" size={14} color="#22c55e" />
+            <Icon name="check-circle" size={14} color="#34d399" />
           </div>
           <div
             style={{
               fontSize: "20px",
-              fontWeight: 700,
-              color: "#22c55e",
+              fontWeight: 800,
+              color: "#f1f5f9",
               fontFamily: "var(--font-mono)",
               marginTop: "4px",
             }}
           >
             {metrics.donePieces.toLocaleString()}{" "}
-            <span style={{ fontSize: "12px", color: "rgba(34, 197, 94, 0.7)", fontWeight: 500 }}>
-              cards
-            </span>
+            <span style={{ fontSize: "12px", color: "#94a3b8", fontWeight: 500 }}>cards</span>
           </div>
           <div style={{ fontSize: "11px", color: "#64748b", marginTop: "2px" }}>
-            {metrics.doneCount} batches completed ({metrics.donePercentage}% fulfilled)
+            {metrics.doneCount} batches completed ({metrics.donePercentage}%)
           </div>
         </div>
       </div>
 
       {/* ══════════════════════════════════════════════════════════════════════════ */}
-      {/* 3. COMPACT 34PX HIGH-DENSITY SMART INGESTION BAR                           */}
+      {/* 2. ORDER INTAKE DOCK (Top: Title & Qty | Bottom: Format, Lanyard & Stock)   */}
       {/* ══════════════════════════════════════════════════════════════════════════ */}
       <div
         style={{
           display: "flex",
-          alignItems: "center",
-          gap: "8px",
-          padding: "6px 10px",
-          backgroundColor: "#0e131f",
-          border: "1px solid rgba(255, 255, 255, 0.07)",
-          borderRadius: "6px",
-          flexWrap: "wrap",
+          flexDirection: "column",
+          gap: "16px",
+          padding: "18px 20px",
+          borderRadius: "10px",
+          backgroundColor: "#0d1322",
+          border: "1px solid rgba(255, 255, 255, 0.10)",
+          boxShadow: "0 4px 24px rgba(0, 0, 0, 0.3)",
         }}
       >
-        {/* SN Pill */}
-        <span
-          style={{
-            fontSize: "11px",
-            fontWeight: 700,
-            fontFamily: "var(--font-mono)",
-            color: "#38bdf8",
-            backgroundColor: "rgba(56, 189, 248, 0.1)",
-            border: "1px solid rgba(56, 189, 248, 0.2)",
-            padding: "3px 8px",
-            borderRadius: "4px",
-            whiteSpace: "nowrap",
-          }}
-        >
-          #{nextSN}
-        </span>
-
-        {/* Client / School Name Input */}
-        <input
-          type="text"
-          placeholder="Client / School Title (e.g. svm kotra, blue bird)..."
-          value={newClient}
-          onChange={(e) => setNewClient(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleIngestOrder()}
-          style={{
-            flex: 1.5,
-            minWidth: "200px",
-            height: "30px",
-            padding: "0 10px",
-            backgroundColor: "rgba(255, 255, 255, 0.04)",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
-            borderRadius: "4px",
-            color: "#f8fafc",
-            fontSize: "12.5px",
-            outline: "none",
-          }}
-        />
-
-        {/* Work / Breakdown Quantity Input */}
-        <input
-          type="text"
-          placeholder="Work / Qty (e.g. 14 stu + 21 staff)"
-          value={newQtyStr}
-          onChange={(e) => setNewQtyStr(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleIngestOrder()}
-          style={{
-            width: "180px",
-            height: "30px",
-            padding: "0 10px",
-            backgroundColor: "rgba(255, 255, 255, 0.04)",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
-            borderRadius: "4px",
-            color: "#38bdf8",
-            fontSize: "12px",
-            fontWeight: 600,
-            fontFamily: "var(--font-mono)",
-            outline: "none",
-          }}
-        />
-
-        {/* File Format Selector Segment */}
+        {/* Top Row: Next SN Badge + School/Client Input + Qty/Breakdown Input + Ingest Button */}
         <div
           style={{
-            display: "inline-flex",
+            display: "flex",
             alignItems: "center",
-            height: "30px",
-            backgroundColor: "rgba(255, 255, 255, 0.04)",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
-            borderRadius: "4px",
-            padding: "2px",
-            gap: "2px",
+            gap: "12px",
+            width: "100%",
           }}
         >
-          {(["doc", "pdf", "excel"] as const).map((fmt) => {
-            const isSel = newFileLocation === fmt;
-            return (
-              <button
-                key={fmt}
-                type="button"
-                onClick={() => setNewFileLocation(fmt)}
+          <div
+            style={{
+              height: "40px",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "0 14px",
+              borderRadius: "6px",
+              backgroundColor: "rgba(56, 189, 248, 0.08)",
+              border: "1px solid rgba(56, 189, 248, 0.25)",
+              color: "#38bdf8",
+              fontSize: "13.5px",
+              fontWeight: 700,
+              fontFamily: "var(--font-mono)",
+              whiteSpace: "nowrap",
+              flexShrink: 0,
+            }}
+          >
+            <span
+              style={{
+                width: "7px",
+                height: "7px",
+                borderRadius: "50%",
+                backgroundColor: "#38bdf8",
+                boxShadow: "0 0 6px #38bdf8",
+              }}
+            />
+            #{nextSN}
+          </div>
+
+          <input
+            type="text"
+            placeholder="School Name / Client Title (e.g. DPS Bhopal, St. Xavier High School, Blue Bird)"
+            value={newClient}
+            onChange={(e) => setNewClient(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleIngestOrder()}
+            style={{
+              flex: 1,
+              height: "40px",
+              padding: "0 15px",
+              backgroundColor: "#07090e",
+              border: "1px solid rgba(255, 255, 255, 0.16)",
+              borderRadius: "6px",
+              color: "#ffffff",
+              fontSize: "13.5px",
+              outline: "none",
+              transition: "all 0.15s ease",
+            }}
+            onFocus={(e) => {
+              e.currentTarget.style.borderColor = "#3b82f6";
+              e.currentTarget.style.boxShadow = "0 0 0 2px rgba(59, 130, 246, 0.25)";
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.16)";
+              e.currentTarget.style.boxShadow = "none";
+            }}
+          />
+
+          <input
+            type="text"
+            placeholder="Qty (e.g. 50 stu + 5 staff)"
+            value={newQtyStr}
+            onChange={(e) => setNewQtyStr(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleIngestOrder()}
+            style={{
+              width: "250px",
+              height: "40px",
+              padding: "0 14px",
+              backgroundColor: "#07090e",
+              border: "1px solid rgba(255, 255, 255, 0.16)",
+              borderRadius: "6px",
+              color: "#ffffff",
+              fontSize: "13.5px",
+              fontFamily: "var(--font-mono)",
+              fontWeight: 700,
+              textAlign: "center",
+              outline: "none",
+              transition: "all 0.15s ease",
+            }}
+            onFocus={(e) => {
+              e.currentTarget.style.borderColor = "#3b82f6";
+              e.currentTarget.style.boxShadow = "0 0 0 2px rgba(59, 130, 246, 0.25)";
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.16)";
+              e.currentTarget.style.boxShadow = "none";
+            }}
+          />
+
+          <button
+            type="button"
+            onClick={handleIngestOrder}
+            style={{
+              height: "40px",
+              padding: "0 24px",
+              borderRadius: "6px",
+              backgroundColor: "#2563eb",
+              border: "none",
+              color: "#ffffff",
+              fontSize: "13.5px",
+              fontWeight: 700,
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "7px",
+              whiteSpace: "nowrap",
+              transition: "all 0.15s ease",
+              boxShadow: "0 2px 10px rgba(37, 99, 235, 0.4)",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#1d4ed8")}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#2563eb")}
+          >
+            <Icon name="plus" size={16} />
+            <span>Ingest Batch</span>
+          </button>
+        </div>
+
+        {/* Bottom Row: Format + Lanyard Match + Remarks & Live Stock */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "flex-end",
+            gap: "24px",
+            paddingTop: "14px",
+            borderTop: "1px solid rgba(255, 255, 255, 0.07)",
+            flexWrap: "wrap",
+          }}
+        >
+          {/* 1. File Format Selector */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            <span style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+              File Format
+            </span>
+            <div
+              style={{
+                display: "flex",
+                backgroundColor: "#07090e",
+                borderRadius: "6px",
+                padding: "3px",
+                border: "1px solid rgba(255, 255, 255, 0.14)",
+                height: "36px",
+                boxSizing: "border-box",
+                alignItems: "center",
+                gap: "2px",
+              }}
+            >
+              {(["doc", "pdf", "excel", "doc + pdf", "hard copy"] as const).map((fmt) => {
+                const isSelected = newFileLocation === fmt;
+                return (
+                  <button
+                    key={fmt}
+                    type="button"
+                    onClick={() => setNewFileLocation(fmt)}
+                    style={{
+                      height: "28px",
+                      padding: "0 14px",
+                      borderRadius: "4px",
+                      border: "none",
+                      backgroundColor: isSelected ? "#2563eb" : "transparent",
+                      color: isSelected ? "#ffffff" : "#94a3b8",
+                      fontSize: "12px",
+                      fontWeight: isSelected ? 700 : 500,
+                      fontFamily: "var(--font-mono)",
+                      cursor: "pointer",
+                      transition: "all 0.12s ease",
+                      textTransform: "uppercase",
+                      whiteSpace: "nowrap",
+                      boxShadow: isSelected ? "0 1px 4px rgba(0, 0, 0, 0.35)" : "none",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isSelected) {
+                        e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.07)";
+                        e.currentTarget.style.color = "#f1f5f9";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isSelected) {
+                        e.currentTarget.style.backgroundColor = "transparent";
+                        e.currentTarget.style.color = "#94a3b8";
+                      }
+                    }}
+                  >
+                    {fmt}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 2. Lanyard / Holder Match */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            <span style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+              Lanyard & Holder Match
+            </span>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <input
+                type="text"
+                placeholder="e.g. available he"
+                value={newHolderLanyard}
+                onChange={(e) => setNewHolderLanyard(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleIngestOrder()}
                 style={{
-                  height: "24px",
-                  padding: "0 8px",
-                  fontSize: "11px",
-                  fontWeight: isSel ? 700 : 500,
-                  color: isSel ? "#38bdf8" : "#64748b",
-                  backgroundColor: isSel ? "rgba(56, 189, 248, 0.15)" : "transparent",
-                  border: "none",
-                  borderRadius: "3px",
-                  cursor: "pointer",
-                  textTransform: "uppercase",
-                  fontFamily: "var(--font-mono)",
+                  width: "135px",
+                  height: "36px",
+                  padding: "0 12px",
+                  backgroundColor: "#07090e",
+                  border: "1px solid rgba(255, 255, 255, 0.15)",
+                  borderRadius: "6px",
+                  color: "#ffffff",
+                  fontSize: "12.5px",
+                  outline: "none",
+                  transition: "all 0.15s ease",
                 }}
-              >
-                {fmt}
-              </button>
-            );
-          })}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = "#3b82f6";
+                  e.currentTarget.style.boxShadow = "0 0 0 2px rgba(59, 130, 246, 0.25)";
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.15)";
+                  e.currentTarget.style.boxShadow = "none";
+                }}
+              />
+              <div style={{ display: "flex", gap: "5px", alignItems: "center" }}>
+                {[
+                  { key: "available he", label: "Available he" },
+                  { key: "only card hi", label: "Cards Only" },
+                  { key: "with holder", label: "With Holder" },
+                ].map(({ key, label }) => {
+                  const isActive = newHolderLanyard.toLowerCase() === key.toLowerCase();
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setNewHolderLanyard(isActive ? "" : key)}
+                      style={{
+                        height: "36px",
+                        padding: "0 12px",
+                        borderRadius: "6px",
+                        border: isActive
+                          ? "1px solid #3b82f6"
+                          : "1px solid rgba(255, 255, 255, 0.12)",
+                        backgroundColor: isActive ? "#2563eb" : "#07090e",
+                        color: isActive ? "#ffffff" : "#94a3b8",
+                        fontSize: "12px",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        transition: "all 0.12s ease",
+                        whiteSpace: "nowrap",
+                        boxShadow: isActive ? "0 1px 4px rgba(37, 99, 235, 0.35)" : "none",
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isActive) {
+                          e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.08)";
+                          e.currentTarget.style.color = "#f1f5f9";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isActive) {
+                          e.currentTarget.style.backgroundColor = "#07090e";
+                          e.currentTarget.style.color = "#94a3b8";
+                        }
+                      }}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* 3. Remarks (Optional) */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            <span style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+              Remarks (Optional)
+            </span>
+            <input
+              type="text"
+              placeholder="e.g. 1 student pending"
+              value={newRemark}
+              onChange={(e) => setNewRemark(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleIngestOrder()}
+              style={{
+                width: "180px",
+                height: "36px",
+                padding: "0 12px",
+                backgroundColor: "#07090e",
+                border: "1px solid rgba(255, 255, 255, 0.15)",
+                borderRadius: "6px",
+                color: "#ffffff",
+                fontSize: "12.5px",
+                outline: "none",
+                transition: "all 0.15s ease",
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = "#3b82f6";
+                e.currentTarget.style.boxShadow = "0 0 0 2px rgba(59, 130, 246, 0.25)";
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.15)";
+                e.currentTarget.style.boxShadow = "none";
+              }}
+            />
+          </div>
+
+          {/* 4. Live Blank PVC Stock Status */}
+          <div
+            style={{
+              marginLeft: "auto",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "0 14px",
+              height: "36px",
+              borderRadius: "6px",
+              backgroundColor: "rgba(255, 255, 255, 0.03)",
+              border: "1px solid rgba(255, 255, 255, 0.09)",
+              fontSize: "12px",
+              color: intakeStockCheck.statusColor,
+              whiteSpace: "nowrap",
+            }}
+          >
+            <Icon name="layers" size={14} color={intakeStockCheck.statusColor} />
+            <span>
+              Blank PVC: {pvcCardItem.availableStock.toLocaleString()} in stock &bull; {parsedIntakeQty} req
+            </span>
+          </div>
         </div>
-
-        {/* Holder / Lanyard status */}
-        <input
-          type="text"
-          placeholder="Lanyard status (e.g. available he)"
-          value={newHolderLanyard}
-          onChange={(e) => setNewHolderLanyard(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleIngestOrder()}
-          style={{
-            width: "150px",
-            height: "30px",
-            padding: "0 10px",
-            backgroundColor: "rgba(255, 255, 255, 0.04)",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
-            borderRadius: "4px",
-            color: "#94a3b8",
-            fontSize: "11.5px",
-            outline: "none",
-          }}
-        />
-
-        {/* Live Stock Check Pill */}
-        <div
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "5px",
-            padding: "4px 8px",
-            borderRadius: "4px",
-            backgroundColor: "rgba(255, 255, 255, 0.03)",
-            border: "1px solid rgba(255, 255, 255, 0.06)",
-            fontSize: "11px",
-            color: intakeStockCheck.statusColor,
-            whiteSpace: "nowrap",
-          }}
-        >
-          <Icon name="layers" size={12} color={intakeStockCheck.statusColor} />
-          <span>{intakeStockCheck.statusText}</span>
-        </div>
-
-        {/* Ingest Action Button */}
-        <button
-          type="button"
-          onClick={handleIngestOrder}
-          style={{
-            height: "30px",
-            padding: "0 14px",
-            fontSize: "12px",
-            fontWeight: 600,
-            color: "#080b12",
-            backgroundColor: "#38bdf8",
-            border: "none",
-            borderRadius: "4px",
-            cursor: "pointer",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "5px",
-            whiteSpace: "nowrap",
-          }}
-        >
-          <Icon name="plus" size={13} color="#080b12" />
-          <span>Ingest & Send</span>
-        </button>
       </div>
 
       {/* ══════════════════════════════════════════════════════════════════════════ */}
-      {/* 4. UNIFIED TOOLBAR: SEGMENTED VIEW TABS, SEARCH, FILTERS                   */}
+      {/* 3. UNIFIED TOOLBAR: SEGMENTED VIEW TABS, SEARCH, FILTERS                   */}
       {/* ══════════════════════════════════════════════════════════════════════════ */}
       <div
         style={{
@@ -783,162 +1009,131 @@ export const IDCardWorkspaceView: React.FC = () => {
           justifyContent: "space-between",
           gap: "10px",
           flexWrap: "wrap",
+          padding: "8px 12px",
+          borderRadius: "8px",
+          backgroundColor: "#0e131f",
+          border: "1px solid rgba(255, 255, 255, 0.08)",
         }}
       >
-        {/* Left: Segmented View Tabs + Live Blank PVC Stock Pill */}
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              padding: "3px",
-              backgroundColor: "#0e131f",
-              border: "1px solid rgba(255, 255, 255, 0.07)",
-              borderRadius: "6px",
-              gap: "2px",
+        {/* Left: Segmented View Tabs (Active vs Completed vs All) */}
+        <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+          <button
+            type="button"
+            onClick={() => {
+              setViewTab("ACTIVE");
+              setStatusFilter("ALL");
             }}
-          >
-            <button
-              type="button"
-              onClick={() => {
-                setViewTab("ACTIVE");
-                setStatusFilter("ALL");
-              }}
-              style={{
-                padding: "4px 10px",
-                fontSize: "11.5px",
-                fontWeight: viewTab === "ACTIVE" ? 600 : 500,
-                color: viewTab === "ACTIVE" ? "#f8fafc" : "#64748b",
-                backgroundColor: viewTab === "ACTIVE" ? "rgba(255, 255, 255, 0.08)" : "transparent",
-                border: "none",
-                borderRadius: "4px",
-                cursor: "pointer",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
-              }}
-            >
-              <span>Active Queue</span>
-              <span
-                style={{
-                  fontSize: "10px",
-                  fontFamily: "var(--font-mono)",
-                  color: viewTab === "ACTIVE" ? "#38bdf8" : "#64748b",
-                  fontWeight: 700,
-                }}
-              >
-                {metrics.activeCount}
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setViewTab("COMPLETED");
-                setStatusFilter("ALL");
-              }}
-              style={{
-                padding: "4px 10px",
-                fontSize: "11.5px",
-                fontWeight: viewTab === "COMPLETED" ? 600 : 500,
-                color: viewTab === "COMPLETED" ? "#f8fafc" : "#64748b",
-                backgroundColor: viewTab === "COMPLETED" ? "rgba(255, 255, 255, 0.08)" : "transparent",
-                border: "none",
-                borderRadius: "4px",
-                cursor: "pointer",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
-              }}
-            >
-              <span>Completed</span>
-              <span
-                style={{
-                  fontSize: "10px",
-                  fontFamily: "var(--font-mono)",
-                  color: viewTab === "COMPLETED" ? "#22c55e" : "#64748b",
-                  fontWeight: 700,
-                }}
-              >
-                {metrics.doneCount}
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setViewTab("ALL");
-                setStatusFilter("ALL");
-              }}
-              style={{
-                padding: "4px 10px",
-                fontSize: "11.5px",
-                fontWeight: viewTab === "ALL" ? 600 : 500,
-                color: viewTab === "ALL" ? "#f8fafc" : "#64748b",
-                backgroundColor: viewTab === "ALL" ? "rgba(255, 255, 255, 0.08)" : "transparent",
-                border: "none",
-                borderRadius: "4px",
-                cursor: "pointer",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
-              }}
-            >
-              <span>All Records</span>
-              <span
-                style={{
-                  fontSize: "10px",
-                  fontFamily: "var(--font-mono)",
-                  color: "#64748b",
-                  fontWeight: 700,
-                }}
-              >
-                {metrics.totalOrders}
-              </span>
-            </button>
-          </div>
-
-          {/* Live PVC Stock Pill */}
-          <div
             style={{
               display: "inline-flex",
               alignItems: "center",
               gap: "6px",
-              padding: "4px 9px",
+              padding: "5px 12px",
               borderRadius: "5px",
-              backgroundColor: "rgba(34, 197, 94, 0.08)",
-              border: "1px solid rgba(34, 197, 94, 0.22)",
-              fontSize: "11px",
-              color: "#4ade80",
-              fontWeight: 600,
+              border: "none",
+              backgroundColor: viewTab === "ACTIVE" ? "rgba(255, 255, 255, 0.12)" : "transparent",
+              color: viewTab === "ACTIVE" ? "#ffffff" : "#94a3b8",
+              fontSize: "12px",
+              fontWeight: viewTab === "ACTIVE" ? 700 : 500,
+              cursor: "pointer",
+              transition: "all 0.12s ease",
             }}
           >
-            <div
+            <span>Active Queue</span>
+            <span
               style={{
-                width: "6px",
-                height: "6px",
-                borderRadius: "50%",
-                backgroundColor: "#22c55e",
+                fontSize: "10.5px",
+                fontFamily: "var(--font-mono)",
+                fontWeight: 700,
+                color: viewTab === "ACTIVE" ? "#38bdf8" : "#64748b",
               }}
-            />
-            <span>Blank PVC: {pvcCardItem.availableStock.toLocaleString()} cards in stock</span>
-          </div>
+            >
+              {metrics.activeCount}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setViewTab("COMPLETED");
+              setStatusFilter("ALL");
+            }}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "5px 12px",
+              borderRadius: "5px",
+              border: "none",
+              backgroundColor: viewTab === "COMPLETED" ? "rgba(255, 255, 255, 0.12)" : "transparent",
+              color: viewTab === "COMPLETED" ? "#ffffff" : "#94a3b8",
+              fontSize: "12px",
+              fontWeight: viewTab === "COMPLETED" ? 700 : 500,
+              cursor: "pointer",
+              transition: "all 0.12s ease",
+            }}
+          >
+            <span>Completed</span>
+            <span
+              style={{
+                fontSize: "10.5px",
+                fontFamily: "var(--font-mono)",
+                fontWeight: 700,
+                color: viewTab === "COMPLETED" ? "#34d399" : "#64748b",
+              }}
+            >
+              {metrics.doneCount}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setViewTab("ALL");
+              setStatusFilter("ALL");
+            }}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "5px 12px",
+              borderRadius: "5px",
+              border: "none",
+              backgroundColor: viewTab === "ALL" ? "rgba(255, 255, 255, 0.12)" : "transparent",
+              color: viewTab === "ALL" ? "#ffffff" : "#94a3b8",
+              fontSize: "12px",
+              fontWeight: viewTab === "ALL" ? 700 : 500,
+              cursor: "pointer",
+              transition: "all 0.12s ease",
+            }}
+          >
+            <span>All Records</span>
+            <span
+              style={{
+                fontSize: "10.5px",
+                fontFamily: "var(--font-mono)",
+                fontWeight: 700,
+                color: "#64748b",
+              }}
+            >
+              {metrics.totalOrders}
+            </span>
+          </button>
         </div>
 
-        {/* Right: Search, File Filter & Quick Link to Lanyard Desk */}
+        {/* Right: Search, Filters & Quick Link to Lanyard Hub */}
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           {/* File Format Filter */}
           <select
             value={fileFilter}
             onChange={(e) => setFileFilter(e.target.value)}
             style={{
-              height: "28px",
-              padding: "0 8px",
-              backgroundColor: "#0e131f",
-              border: "1px solid rgba(255, 255, 255, 0.07)",
-              borderRadius: "4px",
+              height: "30px",
+              padding: "0 10px",
+              backgroundColor: "#07090e",
+              border: "1px solid rgba(255, 255, 255, 0.12)",
+              borderRadius: "5px",
               color: "#94a3b8",
-              fontSize: "11.5px",
+              fontSize: "12px",
               outline: "none",
             }}
           >
@@ -949,25 +1144,25 @@ export const IDCardWorkspaceView: React.FC = () => {
             <option value="hard copy">Hard Copy</option>
           </select>
 
-          {/* Status Filter */}
+          {/* Stage Filter */}
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as any)}
             style={{
-              height: "28px",
-              padding: "0 8px",
-              backgroundColor: "#0e131f",
-              border: "1px solid rgba(255, 255, 255, 0.07)",
-              borderRadius: "4px",
+              height: "30px",
+              padding: "0 10px",
+              backgroundColor: "#07090e",
+              border: "1px solid rgba(255, 255, 255, 0.12)",
+              borderRadius: "5px",
               color: "#94a3b8",
-              fontSize: "11.5px",
+              fontSize: "12px",
               outline: "none",
             }}
           >
-            <option value="ALL">All Statuses</option>
+            <option value="ALL">All Stages</option>
             <option value="kamal">With Kamal Sir</option>
             <option value="ready">Printed (Ready)</option>
-            <option value="done">Done & Completed</option>
+            <option value="done">Completed & Dispatched</option>
           </select>
 
           {/* Search Input */}
@@ -978,28 +1173,28 @@ export const IDCardWorkspaceView: React.FC = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{
-                width: "180px",
-                height: "28px",
-                padding: "0 10px 0 26px",
-                backgroundColor: "#0e131f",
-                border: "1px solid rgba(255, 255, 255, 0.07)",
-                borderRadius: "4px",
+                width: "190px",
+                height: "30px",
+                padding: "0 10px 0 28px",
+                backgroundColor: "#07090e",
+                border: "1px solid rgba(255, 255, 255, 0.12)",
+                borderRadius: "5px",
                 color: "#f8fafc",
-                fontSize: "11.5px",
+                fontSize: "12px",
                 outline: "none",
               }}
             />
             <div
               style={{
                 position: "absolute",
-                left: "8px",
+                left: "9px",
                 top: "50%",
                 transform: "translateY(-50%)",
                 pointerEvents: "none",
-                opacity: 0.5,
+                opacity: 0.6,
               }}
             >
-              <Icon name="search" size={11} color="#94a3b8" />
+              <Icon name="search" size={12} color="#94a3b8" />
             </div>
           </div>
 
@@ -1008,33 +1203,42 @@ export const IDCardWorkspaceView: React.FC = () => {
             type="button"
             onClick={handleJumpToLanyard}
             style={{
-              height: "28px",
-              padding: "0 10px",
+              height: "30px",
+              padding: "0 12px",
               backgroundColor: "rgba(255, 255, 255, 0.04)",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
-              borderRadius: "4px",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
+              borderRadius: "5px",
               color: "#94a3b8",
-              fontSize: "11.5px",
+              fontSize: "12px",
               cursor: "pointer",
               display: "inline-flex",
               alignItems: "center",
-              gap: "5px",
+              gap: "6px",
+              transition: "all 0.12s ease",
             }}
             title="Switch to Lanyard Workspace"
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.08)";
+              e.currentTarget.style.color = "#f8fafc";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.04)";
+              e.currentTarget.style.color = "#94a3b8";
+            }}
           >
-            <Icon name="tag" size={12} color="#94a3b8" />
+            <Icon name="tag" size={13} color="#38bdf8" />
             <span>Lanyard Hub</span>
           </button>
         </div>
       </div>
 
       {/* ══════════════════════════════════════════════════════════════════════════ */}
-      {/* 5. HIGH-DENSITY ENTERPRISE PRODUCTION TABLE (LATEST ON TOP!)               */}
+      {/* 4. ENTERPRISE PRODUCTION TABLE (LATEST ON TOP!)                           */}
       {/* ══════════════════════════════════════════════════════════════════════════ */}
       <div
         style={{
           borderRadius: "8px",
-          border: "1px solid rgba(255, 255, 255, 0.07)",
+          border: "1px solid rgba(255, 255, 255, 0.08)",
           backgroundColor: "#0e131f",
           overflow: "hidden",
         }}
@@ -1057,14 +1261,14 @@ export const IDCardWorkspaceView: React.FC = () => {
               >
                 <th
                   style={{
-                    padding: "12px 12px",
+                    padding: "12px 14px",
                     textAlign: "left",
-                    fontSize: "12px",
+                    fontSize: "11.5px",
                     fontWeight: 700,
                     color: "#94a3b8",
                     textTransform: "uppercase",
                     letterSpacing: "0.06em",
-                    width: "65px",
+                    width: "70px",
                   }}
                 >
                   SN
@@ -1073,12 +1277,12 @@ export const IDCardWorkspaceView: React.FC = () => {
                   style={{
                     padding: "12px 10px",
                     textAlign: "left",
-                    fontSize: "12px",
+                    fontSize: "11.5px",
                     fontWeight: 700,
                     color: "#94a3b8",
                     textTransform: "uppercase",
                     letterSpacing: "0.06em",
-                    width: "80px",
+                    width: "85px",
                   }}
                 >
                   Date
@@ -1087,49 +1291,35 @@ export const IDCardWorkspaceView: React.FC = () => {
                   style={{
                     padding: "12px 14px",
                     textAlign: "left",
-                    fontSize: "12px",
+                    fontSize: "11.5px",
                     fontWeight: 700,
                     color: "#94a3b8",
                     textTransform: "uppercase",
                     letterSpacing: "0.06em",
-                    minWidth: "200px",
+                    minWidth: "220px",
                   }}
                 >
-                  Client / School Title
+                  School / Client Title
                 </th>
                 <th
                   style={{
                     padding: "12px 12px",
                     textAlign: "left",
-                    fontSize: "12px",
+                    fontSize: "11.5px",
                     fontWeight: 700,
                     color: "#94a3b8",
                     textTransform: "uppercase",
                     letterSpacing: "0.06em",
-                    width: "170px",
+                    width: "180px",
                   }}
                 >
-                  Student / Staff Breakdown
+                  Breakdown
                 </th>
                 <th
                   style={{
                     padding: "12px 14px",
                     textAlign: "right",
-                    fontSize: "12px",
-                    fontWeight: 700,
-                    color: "#94a3b8",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.06em",
-                    width: "95px",
-                  }}
-                >
-                  Cards Qty
-                </th>
-                <th
-                  style={{
-                    padding: "12px 10px",
-                    textAlign: "center",
-                    fontSize: "12px",
+                    fontSize: "11.5px",
                     fontWeight: 700,
                     color: "#94a3b8",
                     textTransform: "uppercase",
@@ -1137,41 +1327,41 @@ export const IDCardWorkspaceView: React.FC = () => {
                     width: "90px",
                   }}
                 >
-                  Format
-                </th>
-                <th
-                  style={{
-                    padding: "12px 12px",
-                    textAlign: "left",
-                    fontSize: "12px",
-                    fontWeight: 700,
-                    color: "#94a3b8",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.06em",
-                    width: "140px",
-                  }}
-                >
-                  Blank PVC Stock
+                  Qty
                 </th>
                 <th
                   style={{
                     padding: "12px 10px",
                     textAlign: "center",
-                    fontSize: "12px",
+                    fontSize: "11.5px",
                     fontWeight: 700,
                     color: "#94a3b8",
                     textTransform: "uppercase",
                     letterSpacing: "0.06em",
-                    width: "140px",
+                    width: "95px",
                   }}
                 >
-                  Stage (1-Click)
+                  Format
+                </th>
+                <th
+                  style={{
+                    padding: "12px 10px",
+                    textAlign: "center",
+                    fontSize: "11.5px",
+                    fontWeight: 700,
+                    color: "#94a3b8",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.06em",
+                    width: "145px",
+                  }}
+                >
+                  Thermal Printing
                 </th>
                 <th
                   style={{
                     padding: "12px 12px",
                     textAlign: "left",
-                    fontSize: "12px",
+                    fontSize: "11.5px",
                     fontWeight: 700,
                     color: "#94a3b8",
                     textTransform: "uppercase",
@@ -1183,17 +1373,31 @@ export const IDCardWorkspaceView: React.FC = () => {
                 </th>
                 <th
                   style={{
-                    padding: "12px 12px",
-                    textAlign: "left",
-                    fontSize: "12px",
+                    padding: "12px 10px",
+                    textAlign: "center",
+                    fontSize: "11.5px",
                     fontWeight: 700,
                     color: "#94a3b8",
                     textTransform: "uppercase",
                     letterSpacing: "0.06em",
-                    width: "140px",
+                    width: "155px",
                   }}
                 >
-                  Remarks & Link
+                  Status
+                </th>
+                <th
+                  style={{
+                    padding: "12px 14px",
+                    textAlign: "left",
+                    fontSize: "11.5px",
+                    fontWeight: 700,
+                    color: "#94a3b8",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.06em",
+                    minWidth: "120px",
+                  }}
+                >
+                  Remarks
                 </th>
               </tr>
             </thead>
@@ -1222,13 +1426,13 @@ export const IDCardWorkspaceView: React.FC = () => {
                     <tr
                       key={o.id}
                       style={{
-                        height: "48px",
+                        height: "46px",
                         borderBottom: "1px solid rgba(255, 255, 255, 0.05)",
                         backgroundColor: idx % 2 === 0 ? "transparent" : "rgba(255, 255, 255, 0.012)",
                         transition: "background 0.12s ease",
                       }}
                       onMouseEnter={(e) =>
-                        (e.currentTarget.style.backgroundColor = "rgba(56, 189, 248, 0.04)")
+                        (e.currentTarget.style.backgroundColor = "rgba(56, 189, 248, 0.03)")
                       }
                       onMouseLeave={(e) =>
                         (e.currentTarget.style.backgroundColor =
@@ -1238,7 +1442,7 @@ export const IDCardWorkspaceView: React.FC = () => {
                       {/* 1. SN */}
                       <td
                         style={{
-                          padding: "11px 12px",
+                          padding: "10px 14px",
                           fontFamily: "var(--font-mono)",
                           fontSize: "13px",
                           fontWeight: 700,
@@ -1251,24 +1455,23 @@ export const IDCardWorkspaceView: React.FC = () => {
                       {/* 2. Date */}
                       <td
                         style={{
-                          padding: "11px 10px",
+                          padding: "10px 10px",
                           fontFamily: "var(--font-mono)",
-                          fontSize: "12.5px",
+                          fontSize: "12px",
                           color: "#94a3b8",
                         }}
                       >
                         {o.date}
                       </td>
 
-                      {/* 3. Client / School */}
+                      {/* 3. School / Client Title */}
                       <td
                         style={{
-                          padding: "11px 14px",
-                          fontSize: "14.5px",
+                          padding: "10px 14px",
+                          fontSize: "14px",
                           fontWeight: 700,
                           color: "#ffffff",
                           cursor: "pointer",
-                          letterSpacing: "-0.01em",
                         }}
                         onDoubleClick={(e) => handleStartEdit(o.id, "client", o.client, e)}
                         title="Double-click to edit client"
@@ -1288,11 +1491,11 @@ export const IDCardWorkspaceView: React.FC = () => {
                               width: "100%",
                               height: "28px",
                               padding: "0 8px",
-                              backgroundColor: "#070a11",
-                              border: "1px solid #38bdf8",
+                              backgroundColor: "#07090e",
+                              border: "1px solid #3b82f6",
                               borderRadius: "4px",
                               color: "#fff",
-                              fontSize: "14px",
+                              fontSize: "13.5px",
                               outline: "none",
                             }}
                           />
@@ -1301,10 +1504,10 @@ export const IDCardWorkspaceView: React.FC = () => {
                         )}
                       </td>
 
-                      {/* 4. Breakdown */}
+                      {/* 4. Student / Staff Breakdown */}
                       <td
                         style={{
-                          padding: "10px 12px",
+                          padding: "9px 12px",
                           cursor: "pointer",
                         }}
                         onDoubleClick={(e) =>
@@ -1327,8 +1530,8 @@ export const IDCardWorkspaceView: React.FC = () => {
                               width: "100%",
                               height: "26px",
                               padding: "0 8px",
-                              backgroundColor: "#070a11",
-                              border: "1px solid #38bdf8",
+                              backgroundColor: "#07090e",
+                              border: "1px solid #3b82f6",
                               borderRadius: "4px",
                               color: "#38bdf8",
                               fontSize: "12px",
@@ -1344,45 +1547,42 @@ export const IDCardWorkspaceView: React.FC = () => {
                       {/* 5. Total Quantity */}
                       <td
                         style={{
-                          padding: "11px 14px",
+                          padding: "10px 14px",
                           textAlign: "right",
                           fontFamily: "var(--font-mono)",
-                          fontSize: "15px",
+                          fontSize: "14.5px",
                           fontWeight: 700,
                           color: "#ffffff",
                         }}
                       >
-                        {o.totalQty.toLocaleString()}{" "}
-                        <span style={{ fontSize: "12px", color: "#94a3b8", fontWeight: 500 }}>
-                          cards
-                        </span>
+                        {o.totalQty.toLocaleString()}
                       </td>
 
                       {/* 6. File Format */}
-                      <td style={{ padding: "11px 10px", textAlign: "center" }}>
+                      <td style={{ padding: "10px 10px", textAlign: "center" }}>
                         <span
                           style={{
-                            fontSize: "11.5px",
+                            fontSize: "11px",
                             fontFamily: "var(--font-mono)",
                             fontWeight: 700,
-                            padding: "3px 8px",
+                            padding: "2.5px 7px",
                             borderRadius: "4px",
                             backgroundColor:
                               o.fileLocation === "pdf"
-                                ? "rgba(239, 68, 68, 0.14)"
+                                ? "rgba(239, 68, 68, 0.1)"
                                 : o.fileLocation === "excel" || o.fileLocation === "excel and doc"
-                                ? "rgba(34, 197, 94, 0.14)"
+                                ? "rgba(34, 197, 94, 0.1)"
                                 : o.fileLocation === "hard copy"
-                                ? "rgba(245, 158, 11, 0.14)"
-                                : "rgba(56, 189, 248, 0.14)",
+                                ? "rgba(245, 158, 11, 0.1)"
+                                : "rgba(56, 189, 248, 0.1)",
                             border: `1px solid ${
                               o.fileLocation === "pdf"
-                                ? "rgba(239, 68, 68, 0.35)"
+                                ? "rgba(239, 68, 68, 0.25)"
                                 : o.fileLocation === "excel" || o.fileLocation === "excel and doc"
-                                ? "rgba(34, 197, 94, 0.35)"
+                                ? "rgba(34, 197, 94, 0.25)"
                                 : o.fileLocation === "hard copy"
-                                ? "rgba(245, 158, 11, 0.35)"
-                                : "rgba(56, 189, 248, 0.35)"
+                                ? "rgba(245, 158, 11, 0.25)"
+                                : "rgba(56, 189, 248, 0.25)"
                             }`,
                             color:
                               o.fileLocation === "pdf"
@@ -1400,83 +1600,83 @@ export const IDCardWorkspaceView: React.FC = () => {
                         </span>
                       </td>
 
-                      {/* 7. Blank PVC Stock Status */}
-                      <td style={{ padding: "11px 12px" }}>
-                        <div
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "5px",
-                            fontSize: "12px",
-                            fontFamily: "var(--font-mono)",
-                            fontWeight: 700,
-                            color: "#4ade80",
-                            backgroundColor: "rgba(34, 197, 94, 0.1)",
-                            border: "1px solid rgba(34, 197, 94, 0.28)",
-                            padding: "3px 9px",
-                            borderRadius: "4px",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          <Icon name="check" size={12} color="#22c55e" />
-                          <span>{o.totalQty} Reserved</span>
-                        </div>
-                      </td>
-
-                      {/* 8. 1-Click Status Advance */}
-                      <td style={{ padding: "11px 10px", textAlign: "center" }}>
-                        <button
-                          type="button"
-                          onClick={(e) => handleCycleStatusClick(o, e)}
-                          title="Click to advance status: Kamal -> Ready -> Done"
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "6px",
-                            padding: "4.5px 12px",
-                            borderRadius: "5px",
-                            border: `1px solid ${
-                              isDone
-                                ? "rgba(34, 197, 94, 0.4)"
-                                : isReady
-                                ? "rgba(192, 132, 252, 0.4)"
-                                : "rgba(56, 189, 248, 0.4)"
-                            }`,
-                            cursor: "pointer",
-                            fontSize: "12px",
-                            fontWeight: 700,
-                            backgroundColor: isDone
-                              ? "rgba(34, 197, 94, 0.15)"
-                              : isReady
-                              ? "rgba(192, 132, 252, 0.15)"
-                              : "rgba(56, 189, 248, 0.15)",
-                            color: isDone ? "#4ade80" : isReady ? "#c084fc" : "#38bdf8",
-                            transition: "all 0.15s ease",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          <div
+                      {/* 7. Thermal Printing (Kamal Sir) */}
+                      <td style={{ padding: "10px 10px", textAlign: "center" }}>
+                        {isDone ? (
+                          <span
                             style={{
-                              width: "6px",
-                              height: "6px",
-                              borderRadius: "50%",
-                              backgroundColor: isDone ? "#22c55e" : isReady ? "#c084fc" : "#38bdf8",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px",
+                              padding: "3px 9px",
+                              borderRadius: "4px",
+                              backgroundColor: "rgba(34, 197, 94, 0.08)",
+                              border: "1px solid rgba(34, 197, 94, 0.2)",
+                              color: "#4ade80",
+                              fontSize: "11px",
+                              fontWeight: 700,
                             }}
-                          />
-                          <span>
-                            {isDone
-                              ? "Dispatched ✓"
-                              : isReady
-                              ? "Printed (Ready)"
-                              : "With Kamal"}
+                          >
+                            <Icon name="check" size={11} color="#22c55e" />
+                            <span>Printed ✓</span>
                           </span>
-                        </button>
+                        ) : isReady ? (
+                          <button
+                            type="button"
+                            onClick={(e) => handleTogglePrinted(o, e)}
+                            title="Click to reset to With Kamal"
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "5px",
+                              padding: "3px 9px",
+                              borderRadius: "4px",
+                              backgroundColor: "rgba(34, 197, 94, 0.12)",
+                              border: "1px solid rgba(34, 197, 94, 0.3)",
+                              color: "#4ade80",
+                              fontSize: "11px",
+                              fontWeight: 700,
+                              cursor: "pointer",
+                              whiteSpace: "nowrap",
+                              transition: "all 0.15s ease",
+                            }}
+                          >
+                            <Icon name="check" size={11} color="#22c55e" />
+                            <span>Printed ✓</span>
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={(e) => handleTogglePrinted(o, e)}
+                            title="Click to mark printing complete"
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "5px",
+                              padding: "3px 9px",
+                              borderRadius: "4px",
+                              backgroundColor: "rgba(56, 189, 248, 0.1)",
+                              border: "1px solid rgba(56, 189, 248, 0.28)",
+                              color: "#38bdf8",
+                              fontSize: "11px",
+                              fontWeight: 700,
+                              cursor: "pointer",
+                              whiteSpace: "nowrap",
+                              transition: "all 0.15s ease",
+                            }}
+                            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(56, 189, 248, 0.18)")}
+                            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "rgba(56, 189, 248, 0.1)")}
+                          >
+                            <Icon name="printer" size={11} color="#38bdf8" />
+                            <span>With Kamal ⚡</span>
+                          </button>
+                        )}
                       </td>
 
-                      {/* 9. Lanyard / Holder */}
+                      {/* 8. Lanyard / Holder */}
                       <td
                         style={{
-                          padding: "11px 12px",
+                          padding: "10px 12px",
                           cursor: "pointer",
                         }}
                         onDoubleClick={(e) =>
@@ -1499,11 +1699,11 @@ export const IDCardWorkspaceView: React.FC = () => {
                               width: "100%",
                               height: "28px",
                               padding: "0 8px",
-                              backgroundColor: "#070a11",
-                              border: "1px solid #38bdf8",
+                              backgroundColor: "#07090e",
+                              border: "1px solid #3b82f6",
                               borderRadius: "4px",
                               color: "#38bdf8",
-                              fontSize: "13px",
+                              fontSize: "12.5px",
                               outline: "none",
                             }}
                           />
@@ -1512,12 +1712,107 @@ export const IDCardWorkspaceView: React.FC = () => {
                         )}
                       </td>
 
+                      {/* 9. Status & Dispatch Action */}
+                      <td style={{ padding: "10px 10px", textAlign: "center" }}>
+                        {isDone ? (
+                          <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                            <span
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "4px",
+                                padding: "3.5px 9px",
+                                borderRadius: "4px",
+                                backgroundColor: "rgba(34, 197, 94, 0.12)",
+                                border: "1px solid rgba(34, 197, 94, 0.3)",
+                                color: "#4ade80",
+                                fontSize: "11px",
+                                fontWeight: 700,
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              <Icon name="check-circle" size={12} color="#22c55e" />
+                              <span>Dispatched</span>
+                            </span>
+                            <button
+                              type="button"
+                              onClick={(e) => handleReopenOrder(o, e)}
+                              title="Re-open order to Active Queue"
+                              style={{
+                                height: "22px",
+                                width: "22px",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                backgroundColor: "rgba(255, 255, 255, 0.04)",
+                                border: "1px solid rgba(255, 255, 255, 0.09)",
+                                borderRadius: "3px",
+                                color: "#94a3b8",
+                                cursor: "pointer",
+                              }}
+                              onMouseEnter={(e) => (e.currentTarget.style.color = "#f8fafc")}
+                              onMouseLeave={(e) => (e.currentTarget.style.color = "#94a3b8")}
+                            >
+                              <Icon name="refresh-cw" size={11} color="#94a3b8" />
+                            </button>
+                          </div>
+                        ) : isReady ? (
+                          <button
+                            type="button"
+                            onClick={(e) => handleMarkDispatched(o, e)}
+                            style={{
+                              height: "28px",
+                              padding: "0 12px",
+                              borderRadius: "4px",
+                              backgroundColor: "rgba(34, 197, 94, 0.15)",
+                              border: "1px solid rgba(34, 197, 94, 0.4)",
+                              color: "#4ade80",
+                              fontSize: "11.5px",
+                              fontWeight: 700,
+                              cursor: "pointer",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "5px",
+                              whiteSpace: "nowrap",
+                              boxShadow: "0 1px 6px rgba(34, 197, 94, 0.15)",
+                              transition: "all 0.15s ease",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = "#15803d";
+                              e.currentTarget.style.color = "#ffffff";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = "rgba(34, 197, 94, 0.15)";
+                              e.currentTarget.style.color = "#4ade80";
+                            }}
+                          >
+                            <Icon name="check-circle" size={13} color="currentColor" />
+                            <span>Mark Dispatched ✓</span>
+                          </button>
+                        ) : (
+                          <span
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px",
+                              padding: "3.5px 8px",
+                              borderRadius: "4px",
+                              backgroundColor: "rgba(255, 255, 255, 0.04)",
+                              border: "1px solid rgba(255, 255, 255, 0.08)",
+                              color: "#64748b",
+                              fontSize: "11px",
+                              fontWeight: 600,
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            <Icon name="clock" size={11} color="#64748b" />
+                            <span>In Printing</span>
+                          </span>
+                        )}
+                      </td>
+
                       {/* 10. Remarks & Jump Link */}
-                      <td
-                        style={{
-                          padding: "10px 12px",
-                        }}
-                      >
+                      <td style={{ padding: "10px 14px" }}>
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
                           <span
                             onDoubleClick={(e) => handleStartEdit(o.id, "remarks", o.remarks, e)}
@@ -1529,7 +1824,7 @@ export const IDCardWorkspaceView: React.FC = () => {
                               overflow: "hidden",
                               textOverflow: "ellipsis",
                               whiteSpace: "nowrap",
-                              maxWidth: "100px",
+                              maxWidth: "110px",
                             }}
                           >
                             {editingCell?.id === o.id && editingCell?.field === "remarks" ? (
@@ -1547,8 +1842,8 @@ export const IDCardWorkspaceView: React.FC = () => {
                                   width: "100%",
                                   height: "24px",
                                   padding: "0 6px",
-                                  backgroundColor: "#070a11",
-                                  border: "1px solid #38bdf8",
+                                  backgroundColor: "#07090e",
+                                  border: "1px solid #3b82f6",
                                   borderRadius: "3px",
                                   color: "#fff",
                                   fontSize: "11.5px",
@@ -1563,7 +1858,7 @@ export const IDCardWorkspaceView: React.FC = () => {
                           <button
                             type="button"
                             onClick={handleJumpToLanyard}
-                            title="Jump to Lanyard Hub"
+                            title="Jump to Lanyard Workspace"
                             style={{
                               padding: "2px 6px",
                               borderRadius: "3px",
@@ -1575,6 +1870,7 @@ export const IDCardWorkspaceView: React.FC = () => {
                               display: "inline-flex",
                               alignItems: "center",
                               gap: "3px",
+                              flexShrink: 0,
                             }}
                           >
                             <Icon name="tag" size={10} color="#38bdf8" />
@@ -1606,8 +1902,8 @@ export const IDCardWorkspaceView: React.FC = () => {
             Showing {filteredOrders.length} of {orders.length} batches ({metrics.totalPieces.toLocaleString()} total cards)
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <span>• Double-click any text cell to edit inline</span>
-            <span>• 1-Click status button advances Kamal &rarr; Ready &rarr; Done</span>
+            <span>• Double-click any cell to edit inline</span>
+            <span>• Verify thermal printing with Kamal Sir, then click Mark Dispatched to complete</span>
           </div>
         </div>
       </div>
