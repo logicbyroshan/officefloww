@@ -208,7 +208,6 @@ export const IDCardWorkspaceView: React.FC = () => {
   const [newClient, setNewClient] = useState("");
   const [newCategory, setNewCategory] = useState<IDCardCategory>("Student");
   const [newQtyStr, setNewQtyStr] = useState("");
-  const [newFileLocation, setNewFileLocation] = useState<IDCardFileFormat>("doc");
   const [newHolderName, setNewHolderName] = useState("DST-V");
   const [newRemark, setNewRemark] = useState("");
 
@@ -399,7 +398,7 @@ export const IDCardWorkspaceView: React.FC = () => {
       designDone: false, // Strict Step 1: Starts pending
       sentForPrint: false,
       printOperator: "Kamal Sir",
-      fileLocation: newFileLocation,
+      fileLocation: "doc",
       status: "kamal",
       holderName: newHolderName.trim() || "DST-V",
       holderLanyardStatus: newHolderName.trim() || "DST-V",
@@ -900,67 +899,7 @@ export const IDCardWorkspaceView: React.FC = () => {
             </div>
           </div>
 
-          {/* 2. File Format Selector (Single format only, Strictly NO PDF) */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
-            <span style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-              File Format
-            </span>
-            <div
-              style={{
-                display: "flex",
-                backgroundColor: "#07090e",
-                borderRadius: "5px",
-                padding: "2px",
-                border: "1px solid rgba(255, 255, 255, 0.12)",
-                height: "32px",
-                boxSizing: "border-box",
-                alignItems: "center",
-                gap: "2px",
-              }}
-            >
-              {(["doc", "excel", "hard copy"] as const).map((fmt) => {
-                const isSelected = newFileLocation === fmt;
-                return (
-                  <button
-                    key={fmt}
-                    type="button"
-                    onClick={() => setNewFileLocation(fmt)}
-                    style={{
-                      height: "26px",
-                      padding: "0 14px",
-                      borderRadius: "3px",
-                      border: "none",
-                      backgroundColor: isSelected ? "#2563eb" : "transparent",
-                      color: isSelected ? "#ffffff" : "#94a3b8",
-                      fontSize: "11.5px",
-                      fontWeight: isSelected ? 700 : 500,
-                      fontFamily: "var(--font-mono)",
-                      cursor: "pointer",
-                      transition: "all 0.12s ease",
-                      textTransform: "uppercase",
-                      whiteSpace: "nowrap",
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isSelected) {
-                        e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.06)";
-                        e.currentTarget.style.color = "#f1f5f9";
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isSelected) {
-                        e.currentTarget.style.backgroundColor = "transparent";
-                        e.currentTarget.style.color = "#94a3b8";
-                      }
-                    }}
-                  >
-                    {fmt}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* 3. Card Holder (Optional) - Holder Name Only */}
+          {/* 2. Card Holder (Optional) - Holder Name Only */}
           <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
             <span style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em" }}>
               Card Holder (Optional)
@@ -1376,20 +1315,6 @@ export const IDCardWorkspaceView: React.FC = () => {
                     color: "#94a3b8",
                     textTransform: "uppercase",
                     letterSpacing: "0.06em",
-                    width: "85px",
-                  }}
-                >
-                  Format
-                </th>
-                <th
-                  style={{
-                    padding: "11px 8px",
-                    textAlign: "center",
-                    fontSize: "12px",
-                    fontWeight: 700,
-                    color: "#94a3b8",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.06em",
                     width: "130px",
                   }}
                 >
@@ -1408,6 +1333,21 @@ export const IDCardWorkspaceView: React.FC = () => {
                   }}
                 >
                   2. Send to Print
+                </th>
+                <th
+                  style={{
+                    padding: "11px 8px",
+                    textAlign: "center",
+                    fontSize: "12px",
+                    fontWeight: 700,
+                    color: "#94a3b8",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.06em",
+                    width: "115px",
+                  }}
+                  title="Format of data given to Kamal Sir for printing (DOC / EXCEL / HARD COPY)"
+                >
+                  Format Given
                 </th>
                 <th
                   style={{
@@ -1642,12 +1582,7 @@ export const IDCardWorkspaceView: React.FC = () => {
                         )}
                       </td>
 
-                      {/* 6. File Format (Strictly Single format: doc / excel / hard copy, NO PDF) */}
-                      <td style={{ padding: "11px 8px", textAlign: "center" }}>
-                        {renderFormatBadge(o.fileLocation)}
-                      </td>
-
-                      {/* 7. 1. Design (Artwork Verification & OK) */}
+                      {/* 6. 1. Design (Artwork Verification & OK) */}
                       <td style={{ padding: "11px 8px", textAlign: "center" }}>
                         <button
                           type="button"
@@ -1674,7 +1609,7 @@ export const IDCardWorkspaceView: React.FC = () => {
                         </button>
                       </td>
 
-                      {/* 8. 2. Send to Print (Kamal Sir Desk) */}
+                      {/* 7. 2. Send to Print (Kamal Sir Desk) */}
                       <td style={{ padding: "11px 8px", textAlign: "center" }}>
                         {isDone ? (
                           <span
@@ -1776,6 +1711,40 @@ export const IDCardWorkspaceView: React.FC = () => {
                             <span>With Kamal ⚡</span>
                           </button>
                         )}
+                      </td>
+
+                      {/* 8. Format Given (Format handed to Kamal Sir: DOC / EXCEL / HARD COPY) */}
+                      <td style={{ padding: "11px 8px", textAlign: "center" }}>
+                        <select
+                          value={(o.fileLocation || "doc").toLowerCase()}
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            const val = e.target.value as IDCardFileFormat;
+                            updateOrder(o.id, { fileLocation: val });
+                            toastSuccess("Format Updated", `Order #${o.sn}: Data format set to ${val.toUpperCase()}`);
+                          }}
+                          title="Format of data given to Kamal Sir for printing (DOC / EXCEL / HARD COPY)"
+                          style={{
+                            height: "26px",
+                            padding: "0 8px",
+                            borderRadius: "4px",
+                            backgroundColor: "rgba(255, 255, 255, 0.04)",
+                            border: "1px solid rgba(255, 255, 255, 0.12)",
+                            color: "#cbd5e1",
+                            fontSize: "11px",
+                            fontWeight: 700,
+                            fontFamily: "var(--font-mono)",
+                            letterSpacing: "0.04em",
+                            cursor: "pointer",
+                            outline: "none",
+                            textAlign: "center",
+                          }}
+                        >
+                          <option value="doc" style={{ backgroundColor: "#0e131f", color: "#f1f5f9" }}>DOC</option>
+                          <option value="excel" style={{ backgroundColor: "#0e131f", color: "#f1f5f9" }}>EXCEL</option>
+                          <option value="hard copy" style={{ backgroundColor: "#0e131f", color: "#f1f5f9" }}>HARD COPY</option>
+                        </select>
                       </td>
 
                       {/* 9. Card Holder (Strictly Holder Name Only: DST-V, DST-H, Cards Only, CCH, PV, PH) */}
