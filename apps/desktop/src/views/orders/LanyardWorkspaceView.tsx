@@ -57,6 +57,44 @@ function formatContractorLabel(name: string): string {
   return cName;
 }
 
+interface CheckboxBoxProps {
+  checked: boolean;
+  locked?: boolean;
+  color?: string;
+}
+
+const CheckboxBox: React.FC<CheckboxBoxProps> = ({
+  checked,
+  locked = false,
+  color = "#22c55e",
+}) => (
+  <div
+    style={{
+      width: "14px",
+      height: "14px",
+      borderRadius: "3px",
+      border: locked
+        ? "1px solid rgba(255, 255, 255, 0.2)"
+        : checked
+        ? `1.5px solid ${color}`
+        : "1.5px solid rgba(255, 255, 255, 0.35)",
+      backgroundColor: checked && !locked ? color : "rgba(255, 255, 255, 0.04)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      flexShrink: 0,
+      transition: "all 0.15s ease",
+    }}
+  >
+    {checked && !locked && (
+      <svg width="9" height="7" viewBox="0 0 10 8" fill="none">
+        <path d="M1 4L3.5 6.5L9 1" stroke="#080b12" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    )}
+    {locked && <Icon name="lock" size={8} color="#64748b" />}
+  </div>
+);
+
 export const LanyardWorkspaceView: React.FC = () => {
   const { success: toastSuccess, error: toastError } = useToast();
   const {
@@ -139,114 +177,194 @@ export const LanyardWorkspaceView: React.FC = () => {
     );
   };
 
-  // 1-Click Design Status Toggle: Design Pending <-> Design OK ✓
+  // Step 1: Checkbox Toggle Design (Pending <-> OK)
   const handleToggleDesign = (order: LanyardOrderEntry, e: React.MouseEvent) => {
     e.stopPropagation();
     const nextDesign = order.designDone === false ? true : false;
     setOrders((prev) =>
-      prev.map((o) => (o.id === order.id ? { ...o, designDone: nextDesign } : o))
+      prev.map((o) => {
+        if (o.id !== order.id) return o;
+        if (!nextDesign) {
+          // Unchecking Design locks subsequent print & fitting steps
+          return {
+            ...o,
+            designDone: false,
+            goneForPrint: false,
+            isPrinted: false,
+            printedQty: 0,
+            goneForFitting: false,
+            fittingStatus: "pending_assignment",
+            completedQty: 0,
+          };
+        }
+        return { ...o, designDone: true };
+      })
     );
     if (nextDesign) {
-      toastSuccess("Design Approved", `Order #${order.sn}: Artwork & proof approved ✓.`);
+      toastSuccess("Design Approved", `Order #${order.sn}: Artwork approved ✓ (Unlocked Step 2: Print).`);
     } else {
       toastSuccess("Design Pending", `Order #${order.sn}: Artwork marked pending proof.`);
     }
   };
 
-  // 1-Click Print Status Cycle: Pending Print -> In Print ⚡ -> Printed ✓ -> Pending Print
-  const handleCyclePrintStatus = (order: LanyardOrderEntry, e: React.MouseEvent) => {
+  // Step 2: Checkbox Toggle Gone to Print (Send to Print <-> In Print ⚡)
+  const handleToggleGoneForPrint = (order: LanyardOrderEntry, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const isStep1Done = order.designDone !== false;
+    if (!isStep1Done) {
+      toastError("Step Locked", "Please approve Design (Step 1) first before sending to print.");
+      return;
+    }
+    const nextGone = !order.goneForPrint;
+    setOrders((prev) =>
+      prev.map((o) => {
+        if (o.id !== order.id) return o;
+        if (!nextGone) {
+          // Unchecking Gone to Print locks Step 3 (Printed) & Step 4 (Fitting)
+          return {
+            ...o,
+            goneForPrint: false,
+            isPrinted: false,
+            printedQty: 0,
+            goneForFitting: false,
+            fittingStatus: "pending_assignment",
+            completedQty: 0,
+          };
+        }
+        return {
+          ...o,
+          goneForPrint: true,
+          printAllocations:
+            o.printAllocations && o.printAllocations.length > 0
+              ? o.printAllocations
+              : [{ contractorId: "pr-1", contractorName: "In-House Sublimation", qty: o.qty }],
+        };
+      })
+    );
+    if (nextGone) {
+      toastSuccess("Gone to Print", `Order #${order.sn}: Sent to sublimation floor ⚡ (Unlocked Step 3: Printed).`);
+    } else {
+      toastSuccess("Print Reset", `Order #${order.sn}: Returned to print queue.`);
+    }
+  };
+
+  // Step 3: Checkbox Toggle Printed (Mark Printed <-> Printed ✓)
+  const handleTogglePrinted = (order: LanyardOrderEntry, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!order.goneForPrint) {
-      setOrders((prev) =>
-        prev.map((o) =>
-          o.id === order.id
-            ? {
-                ...o,
-                goneForPrint: true,
-                isPrinted: false,
-                printAllocations: [{ contractorId: "pr-1", contractorName: "In-House Sublimation", qty: o.qty }],
-              }
-            : o
-        )
-      );
-      toastSuccess("Gone for Print", `Order #${order.sn} sent to Sublimation machine.`);
-    } else if (!order.isPrinted) {
-      setOrders((prev) =>
-        prev.map((o) =>
-          o.id === order.id
-            ? {
-                ...o,
-                isPrinted: true,
-                printedQty: o.qty,
-              }
-            : o
-        )
-      );
-      toastSuccess("Printed OK", `Order #${order.sn} sublimation verified (${order.qty.toLocaleString()} pcs).`);
+      toastError("Step Locked", "Order must be Sent to Print (Step 2) first before marking as printed.");
+      return;
+    }
+    const nextPrinted = !order.isPrinted;
+    setOrders((prev) =>
+      prev.map((o) => {
+        if (o.id !== order.id) return o;
+        if (!nextPrinted) {
+          // Unchecking Printed locks Step 4 (Fitting)
+          return {
+            ...o,
+            isPrinted: false,
+            printedQty: 0,
+            goneForFitting: false,
+            fittingStatus: "pending_assignment",
+            completedQty: 0,
+          };
+        }
+        return {
+          ...o,
+          isPrinted: true,
+          printedQty: o.qty,
+        };
+      })
+    );
+    if (nextPrinted) {
+      toastSuccess("Printed OK", `Order #${order.sn}: Sublimation verified (${order.qty.toLocaleString()} pcs) ✓ (Unlocked Step 4: Fitting).`);
     } else {
-      setOrders((prev) =>
-        prev.map((o) =>
-          o.id === order.id
-            ? {
-                ...o,
-                goneForPrint: false,
-                isPrinted: false,
-                printedQty: 0,
-              }
-            : o
-        )
-      );
-      toastSuccess("Print Reset", `Order #${order.sn} reset to Pending Print.`);
+      toastSuccess("Print Reset", `Order #${order.sn}: Sublimation marked incomplete.`);
     }
   };
 
-  // 1-Click Fitting Stage Cycle: Needs Fitting -> In Fitting ✂ -> Fitting Done ✓ -> In Fitting
-  const handleCycleFittingStage = (order: LanyardOrderEntry, e: React.MouseEvent) => {
+  // Step 4 Option A: Without Fitting (1-Click direct Done)
+  const handleSetWithoutFitting = (order: LanyardOrderEntry, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!order.goneForFitting || order.fittingStatus === "pending_assignment") {
-      setOrders((prev) =>
-        prev.map((o) =>
-          o.id === order.id
-            ? {
-                ...o,
-                goneForFitting: true,
-                fittingStatus: "in_fitting",
-                sentToLabourQty: o.qty,
-              }
-            : o
-        )
-      );
-      toastSuccess("Gone for Fitting", `Order #${order.sn} transferred to Fitting stage.`);
-    } else if (order.fittingStatus !== "ready") {
-      setOrders((prev) =>
-        prev.map((o) =>
-          o.id === order.id
-            ? {
-                ...o,
-                fittingStatus: "ready",
-                completedQty: o.qty,
-              }
-            : o
-        )
-      );
-      toastSuccess("Fitting Done", `Order #${order.sn} fitting completed & inspected.`);
+    if (!order.isPrinted) {
+      toastError("Step Locked", "Printing (Step 3) must be verified before completing order.");
+      return;
+    }
+    setOrders((prev) =>
+      prev.map((o) =>
+        o.id === order.id
+          ? {
+              ...o,
+              fittingContractorId: "wof",
+              fittingContractorName: "wof",
+              goneForFitting: true,
+              fittingStatus: "ready",
+              completedQty: o.qty,
+              fittingHardware: "None (Direct Supply)",
+              fittingRemarks: o.fittingRemarks || "Client requested without fitting",
+            }
+          : o
+      )
+    );
+    toastSuccess("Without Fitting (Done)", `Order #${order.sn}: Completed without fitting & marked Ready for dispatch ✓.`);
+  };
+
+  // Step 4 Option B: Toggle Fitting Done (for contractor assigned orders)
+  const handleToggleFittingDone = (order: LanyardOrderEntry, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!order.isPrinted) {
+      toastError("Step Locked", "Printing (Step 3) must be verified first.");
+      return;
+    }
+    const isDone = order.fittingStatus === "ready";
+    setOrders((prev) =>
+      prev.map((o) =>
+        o.id === order.id
+          ? {
+              ...o,
+              fittingStatus: isDone ? "in_fitting" : "ready",
+              completedQty: isDone ? 0 : o.qty,
+              goneForFitting: true,
+            }
+          : o
+      )
+    );
+    if (!isDone) {
+      toastSuccess("Fitting Done", `Order #${order.sn}: Fitting assembled & verified. Order is Ready ✓.`);
     } else {
-      setOrders((prev) =>
-        prev.map((o) =>
-          o.id === order.id
-            ? {
-                ...o,
-                fittingStatus: "in_fitting",
-                completedQty: 0,
-              }
-            : o
-        )
-      );
-      toastSuccess("Status Updated", `Order #${order.sn} returned to In Fitting.`);
+      toastSuccess("Status Updated", `Order #${order.sn}: Returned to In Fitting.`);
     }
   };
 
-  // 1-Click Overall Order Status Cycle: In Progress <-> Ready for Dispatch
+  // Step 4: Reset Fitting (to switch between Without Fitting and Labour Contractor)
+  const handleResetFitting = (order: LanyardOrderEntry, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setOrders((prev) =>
+      prev.map((o) =>
+        o.id === order.id
+          ? {
+              ...o,
+              fittingContractorId: undefined,
+              fittingContractorName: undefined,
+              goneForFitting: false,
+              fittingStatus: "pending_assignment",
+              completedQty: 0,
+              fittingAllocations: [],
+            }
+          : o
+      )
+    );
+    toastSuccess("Fitting Reset", `Order #${order.sn}: Cleared fitting choice. Select Labour or Without Fitting.`);
+  };
+
+  // Helper for clicking locked steps
+  const handleLockedStepClick = (stepName: string, requiredStep: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    toastError("Step Locked", `Please complete "${requiredStep}" before advancing to "${stepName}".`);
+  };
+
+  // Overall Order Status Toggle (Ready <-> Active)
   const handleCycleOrderStatus = (order: LanyardOrderEntry, e: React.MouseEvent) => {
     e.stopPropagation();
     const isReady = order.fittingStatus === "ready";
@@ -261,6 +379,8 @@ export const LanyardWorkspaceView: React.FC = () => {
                 isPrinted: true,
                 printedQty: o.qty,
                 goneForFitting: true,
+                fittingContractorId: o.fittingContractorId || "wof",
+                fittingContractorName: o.fittingContractorName || "wof",
                 fittingStatus: "ready",
                 completedQty: o.qty,
               }
@@ -274,7 +394,7 @@ export const LanyardWorkspaceView: React.FC = () => {
           o.id === order.id
             ? {
                 ...o,
-                fittingStatus: "in_fitting",
+                fittingStatus: o.fittingContractorId && o.fittingContractorId !== "wof" ? "in_fitting" : "pending_assignment",
                 completedQty: 0,
               }
             : o
@@ -1153,28 +1273,28 @@ export const LanyardWorkspaceView: React.FC = () => {
                 <th style={{ padding: "12px 10px", color: "#94a3b8", fontWeight: 700, fontSize: "12px", letterSpacing: "0.06em", width: "80px" }}>
                   DATE
                 </th>
-                <th style={{ padding: "12px 14px", color: "#94a3b8", fontWeight: 700, fontSize: "12px", letterSpacing: "0.06em", minWidth: "220px" }}>
+                <th style={{ padding: "12px 14px", color: "#94a3b8", fontWeight: 700, fontSize: "12px", letterSpacing: "0.06em", minWidth: "210px" }}>
                   ORDER / MPL CLIENT
                 </th>
-                <th style={{ padding: "12px 10px", color: "#94a3b8", fontWeight: 700, fontSize: "12px", letterSpacing: "0.06em", width: "95px" }}>
+                <th style={{ padding: "12px 10px", color: "#94a3b8", fontWeight: 700, fontSize: "12px", letterSpacing: "0.06em", width: "90px" }}>
                   QTY
                 </th>
-                <th style={{ padding: "12px 10px", color: "#94a3b8", fontWeight: 700, fontSize: "12px", letterSpacing: "0.06em", width: "125px" }}>
-                  DESIGN
-                </th>
-                <th style={{ padding: "12px 10px", color: "#94a3b8", fontWeight: 700, fontSize: "12px", letterSpacing: "0.06em", width: "135px" }}>
-                  PRINT STAGE
+                <th style={{ padding: "12px 10px", color: "#94a3b8", fontWeight: 700, fontSize: "12px", letterSpacing: "0.06em", width: "130px" }}>
+                  1. DESIGN
                 </th>
                 <th style={{ padding: "12px 10px", color: "#94a3b8", fontWeight: 700, fontSize: "12px", letterSpacing: "0.06em", width: "140px" }}>
-                  FITTING STAGE
+                  2. GONE TO PRINT
                 </th>
-                <th style={{ padding: "12px 10px", color: "#94a3b8", fontWeight: 700, fontSize: "12px", letterSpacing: "0.06em", width: "165px" }}>
-                  GIVEN TO (LABOUR)
+                <th style={{ padding: "12px 10px", color: "#94a3b8", fontWeight: 700, fontSize: "12px", letterSpacing: "0.06em", width: "130px" }}>
+                  3. PRINTED
+                </th>
+                <th style={{ padding: "12px 10px", color: "#94a3b8", fontWeight: 700, fontSize: "12px", letterSpacing: "0.06em", minWidth: "230px" }}>
+                  4. FITTING &amp; LABOUR
                 </th>
                 <th style={{ padding: "12px 10px", color: "#94a3b8", fontWeight: 700, fontSize: "12px", letterSpacing: "0.06em", width: "115px", textAlign: "center" }}>
                   STATUS
                 </th>
-                <th style={{ padding: "12px 12px", color: "#94a3b8", fontWeight: 700, fontSize: "12px", letterSpacing: "0.06em", textAlign: "right", width: "125px" }}>
+                <th style={{ padding: "12px 12px", color: "#94a3b8", fontWeight: 700, fontSize: "12px", letterSpacing: "0.06em", textAlign: "right", width: "110px" }}>
                   ACTIONS
                 </th>
               </tr>
@@ -1184,7 +1304,7 @@ export const LanyardWorkspaceView: React.FC = () => {
                 <tr>
                   <td colSpan={10} style={{ padding: "40px 16px", textAlign: "center", color: "#64748b" }}>
                     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}>
-                      <Icon name="inbox" size={28} color="#475569" />
+                      <Icon name="package" size={28} color="#475569" />
                       <div style={{ fontSize: "13px", fontWeight: 600, color: "#94a3b8" }}>
                         {viewTab === "ACTIVE" ? "Active queue is clear" : "No orders found"}
                       </div>
@@ -1207,6 +1327,15 @@ export const LanyardWorkspaceView: React.FC = () => {
                   const sQty = entry.sentToLabourQty ?? (entry.goneForFitting ? entry.qty : 0);
                   const rQty = entry.completedQty ?? (entry.fittingStatus === "ready" ? entry.qty : 0);
                   const leftQty = Math.max(0, entry.qty - rQty);
+
+                  // Sequential Unlocking Step Calculations
+                  const isStep1Done = entry.designDone !== false;
+                  const isStep2Unlocked = isStep1Done;
+                  const isStep2Done = entry.goneForPrint === true;
+                  const isStep3Unlocked = isStep2Done;
+                  const isStep3Done = entry.isPrinted === true;
+                  const isStep4Unlocked = isStep3Done;
+                  const isWithoutFitting = entry.fittingContractorId === "wof";
 
                   return (
                     <tr
@@ -1329,12 +1458,16 @@ export const LanyardWorkspaceView: React.FC = () => {
                         )}
                       </td>
 
-                      {/* 5. Design Status (1-Click Toggle) */}
+                      {/* 5. Step 1: Design Status (Checkbox Style) */}
                       <td style={{ padding: "11px 10px" }}>
                         <button
                           type="button"
                           onClick={(e) => handleToggleDesign(entry, e)}
-                          title="Click to toggle Artwork / Proof Approval"
+                          title={
+                            isStep1Done
+                              ? "Step 1: Design Approved ✓. Click to mark Pending."
+                              : "Step 1: Click to approve Design (Unlocks Step 2: Print)."
+                          }
                           style={{
                             display: "inline-flex",
                             alignItems: "center",
@@ -1342,135 +1475,208 @@ export const LanyardWorkspaceView: React.FC = () => {
                             height: "30px",
                             padding: "0 10px",
                             borderRadius: "15px",
-                            backgroundColor: entry.designDone !== false ? "rgba(34, 197, 94, 0.14)" : "rgba(255, 255, 255, 0.05)",
-                            border: entry.designDone !== false ? "1px solid rgba(34, 197, 94, 0.35)" : "1px solid rgba(255, 255, 255, 0.15)",
-                            color: entry.designDone !== false ? "#4ade80" : "#94a3b8",
-                            fontSize: "12px",
-                            fontWeight: 700,
-                            cursor: "pointer",
-                            transition: "all 0.15s ease",
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: "7px",
-                              height: "7px",
-                              borderRadius: "50%",
-                              backgroundColor: entry.designDone !== false ? "#22c55e" : "#64748b",
-                            }}
-                          />
-                          <span>{entry.designDone !== false ? "Design OK ✓" : "Pending Design"}</span>
-                        </button>
-                      </td>
-
-                      {/* 6. Print Floor Status (1-Click Advance) */}
-                      <td style={{ padding: "11px 10px" }}>
-                        <button
-                          type="button"
-                          onClick={(e) => handleCyclePrintStatus(entry, e)}
-                          title="Click to advance print stage (Pending -> In Print -> Printed OK)"
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "6px",
-                            height: "30px",
-                            padding: "0 10px",
-                            borderRadius: "15px",
-                            backgroundColor: entry.isPrinted
+                            backgroundColor: isStep1Done
                               ? "rgba(34, 197, 94, 0.14)"
-                              : entry.goneForPrint
-                              ? "rgba(56, 189, 248, 0.14)"
-                              : "rgba(255, 255, 255, 0.05)",
-                            border: entry.isPrinted
-                              ? "1px solid rgba(34, 197, 94, 0.35)"
-                              : entry.goneForPrint
-                              ? "1px solid rgba(56, 189, 248, 0.35)"
-                              : "1px solid rgba(255, 255, 255, 0.12)",
-                            color: entry.isPrinted ? "#4ade80" : entry.goneForPrint ? "#38bdf8" : "#94a3b8",
+                              : "rgba(255, 255, 255, 0.04)",
+                            border: isStep1Done
+                              ? "1px solid rgba(34, 197, 94, 0.4)"
+                              : "1px solid rgba(255, 255, 255, 0.15)",
+                            color: isStep1Done ? "#4ade80" : "#94a3b8",
                             fontSize: "12px",
                             fontWeight: 700,
                             cursor: "pointer",
                             transition: "all 0.15s ease",
                           }}
                         >
-                          <div
-                            style={{
-                              width: "7px",
-                              height: "7px",
-                              borderRadius: "50%",
-                              backgroundColor: entry.isPrinted ? "#22c55e" : entry.goneForPrint ? "#38bdf8" : "#64748b",
-                            }}
-                          />
-                          <span>
-                            {entry.isPrinted
-                              ? "Printed ✓"
-                              : entry.goneForPrint
-                              ? "In Print ⚡"
-                              : "Pending Print"}
-                          </span>
+                          <CheckboxBox checked={isStep1Done} color="#22c55e" />
+                          <span>{isStep1Done ? "Design OK" : "Design Pending"}</span>
                         </button>
                       </td>
 
-                      {/* 7. Fitting Stage Status (1-Click Advance) */}
+                      {/* 6. Step 2: Gone to Print (Checkbox Style - Unlocks on Step 1) */}
                       <td style={{ padding: "11px 10px" }}>
-                        <button
-                          type="button"
-                          onClick={(e) => handleCycleFittingStage(entry, e)}
-                          title="Click to advance fitting stage (Needs Fitting -> In Fitting -> Fitting Done)"
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "6px",
-                            height: "30px",
-                            padding: "0 10px",
-                            borderRadius: "15px",
-                            backgroundColor: isReady
-                              ? "rgba(34, 197, 94, 0.14)"
-                              : entry.goneForFitting || entry.fittingStatus === "in_fitting"
-                              ? "rgba(245, 158, 11, 0.14)"
-                              : "rgba(255, 255, 255, 0.05)",
-                            border: isReady
-                              ? "1px solid rgba(34, 197, 94, 0.35)"
-                              : entry.goneForFitting || entry.fittingStatus === "in_fitting"
-                              ? "1px solid rgba(245, 158, 11, 0.35)"
-                              : "1px solid rgba(255, 255, 255, 0.12)",
-                            color: isReady
-                              ? "#4ade80"
-                              : entry.goneForFitting || entry.fittingStatus === "in_fitting"
-                              ? "#fbbf24"
-                              : "#94a3b8",
-                            fontSize: "12px",
-                            fontWeight: 700,
-                            cursor: "pointer",
-                            transition: "all 0.15s ease",
-                          }}
-                        >
+                        {!isStep2Unlocked ? (
                           <div
+                            onClick={(e) => handleLockedStepClick("Print Stage", "Step 1: Design", e)}
+                            title="Locked: Approve Design (Step 1) first"
                             style={{
-                              width: "7px",
-                              height: "7px",
-                              borderRadius: "50%",
-                              backgroundColor: isReady
-                                ? "#22c55e"
-                                : entry.goneForFitting || entry.fittingStatus === "in_fitting"
-                                ? "#f59e0b"
-                                : "#64748b",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "6px",
+                              height: "30px",
+                              padding: "0 10px",
+                              borderRadius: "15px",
+                              backgroundColor: "rgba(255, 255, 255, 0.02)",
+                              border: "1px dashed rgba(255, 255, 255, 0.1)",
+                              color: "#64748b",
+                              fontSize: "11.5px",
+                              cursor: "not-allowed",
+                              opacity: 0.5,
                             }}
-                          />
-                          <span>
-                            {isReady
-                              ? "Fitting Done ✓"
-                              : entry.goneForFitting || entry.fittingStatus === "in_fitting"
-                              ? "In Fitting ✂"
-                              : "Needs Fitting"}
-                          </span>
-                        </button>
+                          >
+                            <CheckboxBox checked={false} locked={true} />
+                            <span>Locked</span>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={(e) => handleToggleGoneForPrint(entry, e)}
+                            title={
+                              isStep2Done
+                                ? "Step 2: In Print ⚡. Click to return to pending."
+                                : "Step 2: Click to send to Print floor (Unlocks Step 3: Printed)."
+                            }
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "6px",
+                              height: "30px",
+                              padding: "0 10px",
+                              borderRadius: "15px",
+                              backgroundColor: isStep2Done
+                                ? "rgba(56, 189, 248, 0.16)"
+                                : "rgba(56, 189, 248, 0.05)",
+                              border: isStep2Done
+                                ? "1px solid rgba(56, 189, 248, 0.45)"
+                                : "1px solid rgba(56, 189, 248, 0.25)",
+                              color: isStep2Done ? "#38bdf8" : "#7dd3fc",
+                              fontSize: "12px",
+                              fontWeight: 700,
+                              cursor: "pointer",
+                              transition: "all 0.15s ease",
+                            }}
+                          >
+                            <CheckboxBox checked={isStep2Done} color="#38bdf8" />
+                            <span>{isStep2Done ? "In Print ⚡" : "Send to Print"}</span>
+                          </button>
+                        )}
                       </td>
 
-                      {/* 8. Given To (Labour Contractor) */}
+                      {/* 7. Step 3: Printed (Checkbox Style - Unlocks on Step 2) */}
                       <td style={{ padding: "11px 10px" }}>
-                        {entry.fittingContractorName ? (
+                        {!isStep3Unlocked ? (
+                          <div
+                            onClick={(e) => handleLockedStepClick("Printed Stage", "Step 2: Gone to Print", e)}
+                            title="Locked: Order must be Sent to Print (Step 2) first"
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "6px",
+                              height: "30px",
+                              padding: "0 10px",
+                              borderRadius: "15px",
+                              backgroundColor: "rgba(255, 255, 255, 0.02)",
+                              border: "1px dashed rgba(255, 255, 255, 0.1)",
+                              color: "#64748b",
+                              fontSize: "11.5px",
+                              cursor: "not-allowed",
+                              opacity: 0.5,
+                            }}
+                          >
+                            <CheckboxBox checked={false} locked={true} />
+                            <span>Locked</span>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={(e) => handleTogglePrinted(entry, e)}
+                            title={
+                              isStep3Done
+                                ? "Step 3: Printed verified ✓. Click to mark incomplete."
+                                : "Step 3: Click to verify sublimation printing (Unlocks Step 4: Fitting)."
+                            }
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "6px",
+                              height: "30px",
+                              padding: "0 10px",
+                              borderRadius: "15px",
+                              backgroundColor: isStep3Done
+                                ? "rgba(34, 197, 94, 0.16)"
+                                : "rgba(255, 255, 255, 0.04)",
+                              border: isStep3Done
+                                ? "1px solid rgba(34, 197, 94, 0.45)"
+                                : "1px solid rgba(255, 255, 255, 0.15)",
+                              color: isStep3Done ? "#4ade80" : "#94a3b8",
+                              fontSize: "12px",
+                              fontWeight: 700,
+                              cursor: "pointer",
+                              transition: "all 0.15s ease",
+                            }}
+                          >
+                            <CheckboxBox checked={isStep3Done} color="#22c55e" />
+                            <span>{isStep3Done ? "Printed ✓" : "Mark Printed"}</span>
+                          </button>
+                        )}
+                      </td>
+
+                      {/* 8. Step 4: Fitting / Labour Assignment (Final Step - Unlocks on Step 3) */}
+                      <td style={{ padding: "11px 10px" }}>
+                        {!isStep4Unlocked ? (
+                          <div
+                            onClick={(e) => handleLockedStepClick("Fitting Stage", "Step 3: Printed", e)}
+                            title="Locked: Sublimation printing must be completed first"
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "6px",
+                              height: "30px",
+                              padding: "0 10px",
+                              borderRadius: "15px",
+                              backgroundColor: "rgba(255, 255, 255, 0.02)",
+                              border: "1px dashed rgba(255, 255, 255, 0.1)",
+                              color: "#64748b",
+                              fontSize: "11.5px",
+                              cursor: "not-allowed",
+                              opacity: 0.5,
+                            }}
+                          >
+                            <CheckboxBox checked={false} locked={true} />
+                            <span>Locked (Print first)</span>
+                          </div>
+                        ) : isWithoutFitting ? (
                           <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                            <div
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "6px",
+                                height: "30px",
+                                padding: "0 10px",
+                                borderRadius: "15px",
+                                backgroundColor: "rgba(34, 197, 94, 0.15)",
+                                border: "1px solid rgba(34, 197, 94, 0.4)",
+                                color: "#4ade80",
+                                fontSize: "12px",
+                                fontWeight: 700,
+                              }}
+                            >
+                              <CheckboxBox checked={true} color="#22c55e" />
+                              <span>Without Fitting (Done)</span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={(e) => handleResetFitting(entry, e)}
+                              title="Reset fitting option (Assign Labour instead)"
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                width: "24px",
+                                height: "24px",
+                                borderRadius: "4px",
+                                backgroundColor: "rgba(255, 255, 255, 0.04)",
+                                border: "1px solid rgba(255, 255, 255, 0.1)",
+                                color: "#94a3b8",
+                                cursor: "pointer",
+                              }}
+                            >
+                              <Icon name="refresh" size={11} color="#94a3b8" />
+                            </button>
+                          </div>
+                        ) : entry.fittingContractorId ? (
+                          <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
                             <button
                               type="button"
                               onClick={(e) => openLabourAssignmentModal(entry, e)}
@@ -1478,22 +1684,59 @@ export const LanyardWorkspaceView: React.FC = () => {
                               style={{
                                 display: "inline-flex",
                                 alignItems: "center",
-                                gap: "6px",
-                                padding: "4.5px 11px",
+                                gap: "5px",
+                                height: "28px",
+                                padding: "0 9px",
                                 borderRadius: "5px",
                                 backgroundColor: contractor?.bgColor || "rgba(255, 255, 255, 0.05)",
                                 border: `1px solid ${contractor?.borderColor || "rgba(255, 255, 255, 0.16)"}`,
                                 color: contractor?.color || "#f8fafc",
-                                fontSize: "12.5px",
+                                fontSize: "12px",
                                 fontWeight: 700,
                                 cursor: "pointer",
                               }}
                             >
-                              <Icon name="user" size={12} color={contractor?.color || "#94a3b8"} />
-                              <span>{formatContractorLabel(entry.fittingContractorName)}</span>
+                              <Icon name="user" size={11} color={contractor?.color || "#94a3b8"} />
+                              <span>{formatContractorLabel(entry.fittingContractorName || "")}</span>
                             </button>
 
-                            {entry.fittingContractorId && entry.fittingContractorId !== "mix" && entry.fittingContractorId !== "wof" && (
+                            <button
+                              type="button"
+                              onClick={(e) => handleToggleFittingDone(entry, e)}
+                              title={
+                                entry.fittingStatus === "ready"
+                                  ? "Fitting completed & verified. Click to uncheck."
+                                  : "Click to mark Fitting Done (Order completes)"
+                              }
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "6px",
+                                height: "28px",
+                                padding: "0 9px",
+                                borderRadius: "14px",
+                                backgroundColor:
+                                  entry.fittingStatus === "ready"
+                                    ? "rgba(34, 197, 94, 0.15)"
+                                    : "rgba(245, 158, 11, 0.12)",
+                                border:
+                                  entry.fittingStatus === "ready"
+                                    ? "1px solid rgba(34, 197, 94, 0.4)"
+                                    : "1px solid rgba(245, 158, 11, 0.35)",
+                                color: entry.fittingStatus === "ready" ? "#4ade80" : "#fbbf24",
+                                fontSize: "11.5px",
+                                fontWeight: 700,
+                                cursor: "pointer",
+                              }}
+                            >
+                              <CheckboxBox
+                                checked={entry.fittingStatus === "ready"}
+                                color={entry.fittingStatus === "ready" ? "#22c55e" : "#f59e0b"}
+                              />
+                              <span>{entry.fittingStatus === "ready" ? "Fitting Done ✓" : "In Fitting"}</span>
+                            </button>
+
+                            {entry.fittingContractorId !== "mix" && (
                               <button
                                 type="button"
                                 onClick={() => handleJumpToLabourPage(entry.fittingContractorId)}
@@ -1502,8 +1745,8 @@ export const LanyardWorkspaceView: React.FC = () => {
                                   display: "inline-flex",
                                   alignItems: "center",
                                   justifyContent: "center",
-                                  width: "24px",
-                                  height: "24px",
+                                  width: "22px",
+                                  height: "22px",
                                   borderRadius: "4px",
                                   backgroundColor: "rgba(255, 255, 255, 0.04)",
                                   border: "1px solid rgba(255, 255, 255, 0.1)",
@@ -1511,32 +1754,69 @@ export const LanyardWorkspaceView: React.FC = () => {
                                   cursor: "pointer",
                                 }}
                               >
-                                <Icon name="external-link" size={11} color="#94a3b8" />
+                                <Icon name="external-link" size={10} color="#94a3b8" />
                               </button>
                             )}
                           </div>
                         ) : (
-                          <button
-                            type="button"
-                            onClick={(e) => openLabourAssignmentModal(entry, e)}
-                            title="Assign to outside contractor"
-                            style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: "5px",
-                              padding: "4.5px 11px",
-                              borderRadius: "5px",
-                              backgroundColor: "rgba(245, 158, 11, 0.12)",
-                              border: "1px dashed rgba(245, 158, 11, 0.45)",
-                              color: "#fbbf24",
-                              fontSize: "12px",
-                              fontWeight: 700,
-                              cursor: "pointer",
-                            }}
-                          >
-                            <Icon name="plus" size={12} color="#fbbf24" />
-                            <span>+ Assign Labour</span>
-                          </button>
+                          <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                            <button
+                              type="button"
+                              onClick={(e) => openLabourAssignmentModal(entry, e)}
+                              title="Assign to outside contractor (Rupa, Ajay, Arti, Golu, Shop...)"
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "5px",
+                                height: "28px",
+                                padding: "0 9px",
+                                borderRadius: "5px",
+                                backgroundColor: "rgba(245, 158, 11, 0.12)",
+                                border: "1px dashed rgba(245, 158, 11, 0.45)",
+                                color: "#fbbf24",
+                                fontSize: "11.5px",
+                                fontWeight: 700,
+                                cursor: "pointer",
+                              }}
+                            >
+                              <Icon name="plus" size={11} color="#fbbf24" />
+                              <span>+ Assign Labour</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={(e) => handleSetWithoutFitting(entry, e)}
+                              title="Fitting not needed. Complete order as Without Fitting (Done) and mark Ready."
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "5px",
+                                height: "28px",
+                                padding: "0 9px",
+                                borderRadius: "5px",
+                                backgroundColor: "rgba(255, 255, 255, 0.05)",
+                                border: "1px solid rgba(255, 255, 255, 0.16)",
+                                color: "#cbd5e1",
+                                fontSize: "11.5px",
+                                fontWeight: 600,
+                                cursor: "pointer",
+                                transition: "all 0.15s ease",
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor = "rgba(34, 197, 94, 0.16)";
+                                e.currentTarget.style.borderColor = "rgba(34, 197, 94, 0.4)";
+                                e.currentTarget.style.color = "#4ade80";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
+                                e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.16)";
+                                e.currentTarget.style.color = "#cbd5e1";
+                              }}
+                            >
+                              <Icon name="check" size={11} />
+                              <span>Without Fitting</span>
+                            </button>
+                          </div>
                         )}
                       </td>
 
@@ -1563,23 +1843,27 @@ export const LanyardWorkspaceView: React.FC = () => {
                               ? "1px solid rgba(34, 197, 94, 0.4)"
                               : entry.fittingStatus === "in_fitting"
                               ? "1px solid rgba(245, 158, 11, 0.4)"
-                              : entry.goneForPrint
+                              : entry.isPrinted
                               ? "1px solid rgba(56, 189, 248, 0.4)"
+                              : entry.goneForPrint
+                              ? "1px solid rgba(56, 189, 248, 0.3)"
                               : "1px solid rgba(255, 255, 255, 0.14)",
                             backgroundColor: isReady
                               ? "rgba(34, 197, 94, 0.16)"
                               : entry.fittingStatus === "in_fitting"
                               ? "rgba(245, 158, 11, 0.16)"
-                              : entry.goneForPrint
+                              : entry.isPrinted
                               ? "rgba(56, 189, 248, 0.16)"
+                              : entry.goneForPrint
+                              ? "rgba(56, 189, 248, 0.1)"
                               : "rgba(255, 255, 255, 0.04)",
                             color: isReady
                               ? "#4ade80"
                               : entry.fittingStatus === "in_fitting"
                               ? "#fbbf24"
-                              : entry.goneForPrint
+                              : entry.isPrinted || entry.goneForPrint
                               ? "#38bdf8"
-                              : "#cbd5e1",
+                              : "#94a3b8",
                           }}
                         >
                           <Icon
@@ -1588,7 +1872,7 @@ export const LanyardWorkspaceView: React.FC = () => {
                                 ? "check-circle"
                                 : entry.fittingStatus === "in_fitting"
                                 ? "tool"
-                                : entry.goneForPrint
+                                : entry.goneForPrint || entry.isPrinted
                                 ? "printer"
                                 : "clock"
                             }
@@ -1599,6 +1883,8 @@ export const LanyardWorkspaceView: React.FC = () => {
                               ? "Ready ✓"
                               : entry.fittingStatus === "in_fitting"
                               ? "In Fitting"
+                              : entry.isPrinted
+                              ? "Printed"
                               : entry.goneForPrint
                               ? "In Print"
                               : "Pending"}
@@ -1645,7 +1931,7 @@ export const LanyardWorkspaceView: React.FC = () => {
                               cursor: "pointer",
                             }}
                           >
-                            <Icon name="user-check" size={12} />
+                            <Icon name="user" size={12} />
                           </button>
 
                           <button
@@ -2032,25 +2318,25 @@ export const LanyardWorkspaceView: React.FC = () => {
                   justifyContent: "space-between",
                   padding: "7px 10px",
                   borderRadius: "6px",
-                  backgroundColor: rollInfo.isShortage ? "rgba(239, 68, 68, 0.08)" : "rgba(16, 185, 129, 0.08)",
-                  border: `1px solid ${rollInfo.isShortage ? "rgba(239, 68, 68, 0.25)" : "rgba(16, 185, 129, 0.2)"}`,
+                  backgroundColor: !rollInfo.isSufficient ? "rgba(239, 68, 68, 0.08)" : "rgba(16, 185, 129, 0.08)",
+                  border: `1px solid ${!rollInfo.isSufficient ? "rgba(239, 68, 68, 0.25)" : "rgba(16, 185, 129, 0.2)"}`,
                   fontSize: "11px",
                   marginBottom: "14px",
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                  <Icon name="package" size={13} style={{ color: rollInfo.isShortage ? "#ef4444" : "#10b981" }} />
+                  <Icon name="package" size={13} color={!rollInfo.isSufficient ? "#ef4444" : "#10b981"} />
                   <span style={{ color: "#cbd5e1" }}>
-                    Stock check: Need <strong>{rollInfo.requiredRolls}</strong> roll(s) of {floorModalOrder.size}
+                    Stock check: Need <strong>{rollInfo.rollsNeeded}</strong> roll(s) of {floorModalOrder.size}
                   </span>
                 </div>
                 <span
                   style={{
                     fontWeight: 700,
-                    color: rollInfo.isShortage ? "#ef4444" : "#10b981",
+                    color: !rollInfo.isSufficient ? "#ef4444" : "#10b981",
                   }}
                 >
-                  {rollInfo.stockRolls} rolls available {rollInfo.isShortage ? "(DEFICIT)" : "✓"}
+                  {rollInfo.availableRolls} rolls available {!rollInfo.isSufficient ? "(DEFICIT)" : "✓"}
                 </span>
               </div>
 
