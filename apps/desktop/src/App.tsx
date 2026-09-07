@@ -12,6 +12,7 @@ import { StockDashboardView } from "./views/stock/StockDashboardView";
 import { OrdersWorkspaceView } from "./views/orders/OrdersWorkspaceView";
 import { IDCardWorkspaceView } from "./views/orders/IDCardWorkspaceView";
 import { LanyardWorkspaceView } from "./views/orders/LanyardWorkspaceView";
+import { LabourLanyardWorkspaceView } from "./views/orders/LabourLanyardWorkspaceView";
 import { GlobalSearchModal } from "./views/search/GlobalSearchModal";
 import { LoadingState } from "./design-system/components/FeedbackStates";
 
@@ -20,12 +21,23 @@ const MainApp: React.FC = () => {
   const [activeSection, setActiveSection] = useState<AppNavSection>("lanyard_orders");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
-  // Initialize theme and global search shortcut
+  // Initialize theme, global search shortcut, and cross-workspace navigation
   useEffect(() => {
     initAccentTheme();
     const handleOpenSearch = () => setIsSearchOpen(true);
     window.addEventListener("officefloww:open-search", handleOpenSearch);
-    return () => window.removeEventListener("officefloww:open-search", handleOpenSearch);
+
+    const handleNavigate = (e: any) => {
+      if (e.detail?.section) {
+        setActiveSection(e.detail.section);
+      }
+    };
+    window.addEventListener("officefloww:navigate", handleNavigate as EventListener);
+
+    return () => {
+      window.removeEventListener("officefloww:open-search", handleOpenSearch);
+      window.removeEventListener("officefloww:navigate", handleNavigate as EventListener);
+    };
   }, []);
 
 
@@ -46,7 +58,7 @@ const MainApp: React.FC = () => {
         return <IDCardWorkspaceView />;
 
       case "labour_lanyard":
-        return <OrdersWorkspaceView mode="LABOUR_LANYARD" />;
+        return <LabourLanyardWorkspaceView />;
 
       case "stock":
         return <StockDashboardView />;

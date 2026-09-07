@@ -2,6 +2,8 @@ import React from "react";
 import { useAuth } from "../auth/AuthContext";
 import { AppNavSection } from "../auth/permissions";
 import { Icon, IconName } from "../design-system/components/Icon";
+import { useLanyardStore } from "../views/orders/lanyardOrdersStore";
+import { useIDCardStore } from "../views/orders/idCardOrdersStore";
 
 export interface SidebarProps {
   activeSection: AppNavSection;
@@ -29,11 +31,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onToggleCollapse,
 }) => {
   const { canNav } = useAuth();
+  const { orders: lanyardOrders, vouchersMap } = useLanyardStore();
+  const { orders: idCardOrders } = useIDCardStore();
+
+  const lanyardActiveCount = lanyardOrders.filter((o) => o.fittingStatus !== "ready").length;
+  const idCardActiveCount = idCardOrders.filter((o) => o.status !== "done").length;
+  const labourActiveCount = Object.values(vouchersMap).reduce((acc, list) => {
+    return acc + list.filter((v) => v.status === "in_fitting").length;
+  }, 0);
 
   const primaryNav: NavItemDef[] = [
-    { id: "lanyard_orders", label: "Lanyard Order", icon: "tag" },
-    { id: "card_orders", label: "ID Card Order", icon: "credit-card" },
-    { id: "labour_lanyard", label: "Labour Lanyard", icon: "labour" },
+    { id: "lanyard_orders", label: "Lanyard Order", icon: "tag", badge: lanyardActiveCount },
+    { id: "card_orders", label: "ID Card Order", icon: "credit-card", badge: idCardActiveCount },
+    { id: "labour_lanyard", label: "Labour Lanyard", icon: "labour", badge: labourActiveCount },
     { id: "stock", label: "Stock", icon: "stock" },
   ];
 

@@ -5,217 +5,15 @@ import { Modal, Drawer } from "../../design-system/components/Modal";
 import { Input, Select } from "../../design-system/components/Input";
 import { Tabs } from "../../design-system/components/Tabs";
 import { useToast } from "../../design-system/components/Toast";
+import {
+  useStockStore,
+  StockCategory,
+  StockItem,
+  INITIAL_STOCK_ITEMS,
+  StockMovementLog,
+} from "./stockStore";
 
-// ─── Stock Item Interface (NO PRICING) ─────────────────────────────────────────
-export type StockCategory = "HOOKS" | "HOLDERS" | "LANYARDS" | "OTHERS";
-
-export interface StockItem {
-  id: string;
-  name: string;
-  category: StockCategory;
-  unit: string;
-  availableStock: number;
-  usedStock: number;
-  reservedStock: number;
-  minThreshold: number;
-  workstation: string;
-  iconName: "tool" | "layers" | "package" | "tag";
-  iconColor: string;
-}
-
-// ─── The Fixed 14 Items ───────────────────────────────────────────────────────
-export const INITIAL_STOCK_ITEMS: StockItem[] = [
-  // 3 Hooks (Unit: pieces)
-  {
-    id: "stk-hook-1",
-    name: "Dog Hook",
-    category: "HOOKS",
-    unit: "pieces",
-    availableStock: 8500,
-    usedStock: 7500,
-    reservedStock: 1500,
-    minThreshold: 2000,
-    workstation: "Lanyard Stitching Bench 2",
-    iconName: "tool",
-    iconColor: "#c084fc",
-  },
-  {
-    id: "stk-hook-2",
-    name: "England Hook",
-    category: "HOOKS",
-    unit: "pieces",
-    availableStock: 6200,
-    usedStock: 4800,
-    reservedStock: 1000,
-    minThreshold: 1500,
-    workstation: "Lanyard Stitching Bench 1",
-    iconName: "tool",
-    iconColor: "#a855f7",
-  },
-  {
-    id: "stk-hook-3",
-    name: "Plastic Hook",
-    category: "HOOKS",
-    unit: "pieces",
-    availableStock: 11400,
-    usedStock: 9200,
-    reservedStock: 2000,
-    minThreshold: 3000,
-    workstation: "Assembly Table 03",
-    iconName: "tool",
-    iconColor: "#38bdf8",
-  },
-
-  // 5 Holders (Unit: pieces)
-  {
-    id: "stk-holder-1",
-    name: "Plastic Holder-V",
-    category: "HOLDERS",
-    unit: "pieces",
-    availableStock: 9500,
-    usedStock: 6800,
-    reservedStock: 2500,
-    minThreshold: 2000,
-    workstation: "Card Packaging Station A",
-    iconName: "layers",
-    iconColor: "#34d399",
-  },
-  {
-    id: "stk-holder-2",
-    name: "Plastic Holder-H",
-    category: "HOLDERS",
-    unit: "pieces",
-    availableStock: 8200,
-    usedStock: 5400,
-    reservedStock: 1800,
-    minThreshold: 2000,
-    workstation: "Card Packaging Station B",
-    iconName: "layers",
-    iconColor: "#10b981",
-  },
-  {
-    id: "stk-holder-3",
-    name: "DST-V",
-    category: "HOLDERS",
-    unit: "pieces",
-    availableStock: 4500,
-    usedStock: 3200,
-    reservedStock: 1200,
-    minThreshold: 1000,
-    workstation: "Specialty Mounting Line",
-    iconName: "layers",
-    iconColor: "#f59e0b",
-  },
-  {
-    id: "stk-holder-4",
-    name: "DST-H",
-    category: "HOLDERS",
-    unit: "pieces",
-    availableStock: 3800,
-    usedStock: 2900,
-    reservedStock: 800,
-    minThreshold: 1000,
-    workstation: "Specialty Mounting Line",
-    iconName: "layers",
-    iconColor: "#fbbf24",
-  },
-  {
-    id: "stk-holder-5",
-    name: "Crystal Holder",
-    category: "HOLDERS",
-    unit: "pieces",
-    availableStock: 5200,
-    usedStock: 4100,
-    reservedStock: 1500,
-    minThreshold: 1200,
-    workstation: "VIP Badge Assembly Line",
-    iconName: "layers",
-    iconColor: "#60a5fa",
-  },
-
-  // 3 Lanyard Types (Unit: rolls - tracked in roll units like 1 roll, 2 rolls)
-  {
-    id: "stk-lanyard-1",
-    name: "12mm Lanyard Rolls",
-    category: "LANYARDS",
-    unit: "rolls",
-    availableStock: 45,
-    usedStock: 28,
-    reservedStock: 8,
-    minThreshold: 10,
-    workstation: "Sublimation Press Line 1",
-    iconName: "package",
-    iconColor: "#ff8a73",
-  },
-  {
-    id: "stk-lanyard-2",
-    name: "16mm Lanyard Rolls",
-    category: "LANYARDS",
-    unit: "rolls",
-    availableStock: 6, // Low Stock Alert (< 8 minThreshold)
-    usedStock: 45,
-    reservedStock: 6,
-    minThreshold: 8,
-    workstation: "Sublimation Press Line 2",
-    iconName: "package",
-    iconColor: "#ea580c",
-  },
-  {
-    id: "stk-lanyard-3",
-    name: "20mm Lanyard Rolls",
-    category: "LANYARDS",
-    unit: "rolls",
-    availableStock: 58,
-    usedStock: 42,
-    reservedStock: 12,
-    minThreshold: 15,
-    workstation: "Sublimation Press Line 1",
-    iconName: "package",
-    iconColor: "#f97316",
-  },
-
-  // Others (Clips in packet of 1000, Rings in pieces, Pins in packets)
-  {
-    id: "stk-other-1",
-    name: "Clips",
-    category: "OTHERS",
-    unit: "packets of 1000",
-    availableStock: 18, // 18 packets = 18,000 clips
-    usedStock: 12,
-    reservedStock: 4,
-    minThreshold: 5,
-    workstation: "Lanyard Ring & Clip Table",
-    iconName: "tag",
-    iconColor: "#ec4899",
-  },
-  {
-    id: "stk-other-2",
-    name: "Rings",
-    category: "OTHERS",
-    unit: "pieces",
-    availableStock: 14500,
-    usedStock: 11200,
-    reservedStock: 3000,
-    minThreshold: 4000,
-    workstation: "Metal Ring Press Bench",
-    iconName: "tag",
-    iconColor: "#d946ef",
-  },
-  {
-    id: "stk-other-3",
-    name: "Pins",
-    category: "OTHERS",
-    unit: "packets of 1000",
-    availableStock: 4, // Low Stock Alert (< 6 minThreshold)
-    usedStock: 37,
-    reservedStock: 5,
-    minThreshold: 6,
-    workstation: "Badge Pinning Bench",
-    iconName: "tag",
-    iconColor: "#a855f7",
-  },
-];
-
+export type { StockCategory, StockItem, StockMovementLog };
 // ─── Unit Options for Dropdown ────────────────────────────────────────────────
 export const STOCK_UNIT_OPTIONS = [
   "pieces",
@@ -225,47 +23,20 @@ export const STOCK_UNIT_OPTIONS = [
   "boxes",
   "sets",
   "packets",
-];
-
-// ─── Movement / Usage Log Record ──────────────────────────────────────────────
-interface StockMovementLog {
-  id: string;
-  timestamp: string;
-  itemName: string;
-  type: "ADDITION" | "USAGE";
-  quantity: number;
-  unit: string;
-  destinationOrSource: string;
-  reportedBy: string;
-  notes: string;
-}
-
-const SEED_MOVEMENTS: StockMovementLog[] = [
-  { id: "mov-1", timestamp: "Today, 02:45 PM", itemName: "12mm Lanyard Rolls", type: "USAGE", quantity: 3, unit: "rolls", destinationOrSource: "Sublimation Line 1", reportedBy: "Vikram Singh", notes: "St. Xavier's High School Order batch" },
-  { id: "mov-2", timestamp: "Today, 11:15 AM", itemName: "Dog Hook", type: "USAGE", quantity: 500, unit: "pieces", destinationOrSource: "Lanyard Stitching Table 2", reportedBy: "Ramesh Labour", notes: "Northwind Coffee lanyards assembly" },
-  { id: "mov-3", timestamp: "Today, 09:30 AM", itemName: "Rings", type: "USAGE", quantity: 1200, unit: "pieces", destinationOrSource: "Metal Ring Press Bench", reportedBy: "Suresh Workshop", notes: "BHEL badges fitting batch" },
-  { id: "mov-4", timestamp: "Yesterday, 05:10 PM", itemName: "16mm Lanyard Rolls", type: "USAGE", quantity: 4, unit: "rolls", destinationOrSource: "Sublimation Press Line 2", reportedBy: "Kailash Sublimation", notes: "AIIMS Staff Lanyards run" },
-  { id: "mov-5", timestamp: "Yesterday, 04:30 PM", itemName: "Clips", type: "ADDITION", quantity: 5, unit: "packets of 1000", destinationOrSource: "Supplier Receipt Bay", reportedBy: "Amit Patel", notes: "Vendor delivery receipt" },
-  { id: "mov-6", timestamp: "Yesterday, 02:00 PM", itemName: "Pins", type: "USAGE", quantity: 6, unit: "packets of 1000", destinationOrSource: "Badge Pinning Bench", reportedBy: "Dinesh Labour", notes: "Symbiosis Event Badges" },
-  { id: "mov-7", timestamp: "01 Sep 2026", itemName: "Plastic Holder-V", type: "USAGE", quantity: 800, unit: "pieces", destinationOrSource: "Packaging Bench A", reportedBy: "Priya Sharma", notes: "Govt Engineering College order" },
-  { id: "mov-8", timestamp: "01 Sep 2026", itemName: "Plastic Hook", type: "USAGE", quantity: 1500, unit: "pieces", destinationOrSource: "Assembly Table 03", reportedBy: "Ramesh Labour", notes: "Delhi Public School lanyards assembly" },
-  { id: "mov-9", timestamp: "31 Aug 2026", itemName: "Crystal Holder", type: "USAGE", quantity: 400, unit: "pieces", destinationOrSource: "VIP Badge Assembly Line", reportedBy: "Sunita Printing", notes: "Executive summit badges" },
-  { id: "mov-10", timestamp: "30 Aug 2026", itemName: "Plastic Holder-H", type: "USAGE", quantity: 600, unit: "pieces", destinationOrSource: "Assembly Line 02", reportedBy: "Suresh Workshop", notes: "HCL conference badge inserts" },
-  { id: "mov-11", timestamp: "30 Aug 2026", itemName: "England Hook", type: "USAGE", quantity: 800, unit: "pieces", destinationOrSource: "Lanyard Stitching Table 1", reportedBy: "Ramesh Labour", notes: "Rotary Club annual badges" },
-  { id: "mov-12", timestamp: "29 Aug 2026", itemName: "DST-V", type: "USAGE", quantity: 500, unit: "pieces", destinationOrSource: "Stitching Bench 3", reportedBy: "Dinesh Labour", notes: "Metro Railway personnel ID cards" },
-  { id: "mov-13", timestamp: "28 Aug 2026", itemName: "DST-H", type: "USAGE", quantity: 450, unit: "pieces", destinationOrSource: "Card Assembly Line", reportedBy: "Priya Sharma", notes: "Bank of Baroda staff passes" },
-  { id: "mov-14", timestamp: "28 Aug 2026", itemName: "20mm Lanyard Rolls", type: "USAGE", quantity: 5, unit: "rolls", destinationOrSource: "Wide Sublimation Press", reportedBy: "Vikram Singh", notes: "Tech Mahindra VIP neckbands" },
-  { id: "mov-15", timestamp: "27 Aug 2026", itemName: "Dog Hook", type: "USAGE", quantity: 1000, unit: "pieces", destinationOrSource: "Assembly Table 01", reportedBy: "Dinesh Labour", notes: "Apex Hospitals lanyards issue" },
-  { id: "mov-16", timestamp: "26 Aug 2026", itemName: "Rings", type: "USAGE", quantity: 2000, unit: "pieces", destinationOrSource: "Metal Ring Press Bench", reportedBy: "Ramesh Labour", notes: "Tata Motors badge rings" },
+  "cards",
 ];
 
 export const StockDashboardView: React.FC = () => {
   const { success } = useToast();
+  const {
+    items: stockItems,
+    movements,
+    updateStockItems: setStockItems,
+    adjustStock,
+  } = useStockStore();
 
   // Navigation: Inventory Table or Movement Log
   const [activeTab, setActiveTab] = useState<"inventory" | "log">("inventory");
-  const [stockItems, setStockItems] = useState<StockItem[]>(INITIAL_STOCK_ITEMS);
-  const [movements, setMovements] = useState<StockMovementLog[]>(SEED_MOVEMENTS);
 
   // Search & Column Header Sorting (Like Orders Workspace)
   const [search, setSearch] = useState("");

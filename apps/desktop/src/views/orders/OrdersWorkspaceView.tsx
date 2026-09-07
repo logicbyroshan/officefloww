@@ -2521,17 +2521,6 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
                     Gone for Fitting
                   </th>
 
-                  {/* 7. Action */}
-                  <th
-                    style={{
-                      padding: "16px 14px",
-                      textAlign: "center",
-                      width: "70px",
-                      borderBottom: "2px solid rgba(249, 115, 22, 0.5)",
-                    }}
-                  >
-                    Action
-                  </th>
                 </tr>
               ) : (
                 <tr
@@ -2662,7 +2651,7 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
               {/* ─── ORDERS ROWS (Spacious 68px Row Height, Double-Click Editable) ─ */}
               {filteredOrders.length === 0 ? (
                 <tr>
-                  <td colSpan={mode === "LABOUR_LANYARD" ? 7 : 8} style={{ padding: "50px 0", textAlign: "center", color: "var(--text-muted)" }}>
+                  <td colSpan={mode === "LABOUR_LANYARD" ? 6 : 8} style={{ padding: "50px 0", textAlign: "center", color: "var(--text-muted)" }}>
                     {filterClientName
                       ? `No orders found for ${filterClientName}. Use the Direct Order Entry panel above to create one.`
                       : "No orders match your search criteria. Use the Direct Order Entry panel above to create one."}
@@ -3016,39 +3005,6 @@ export const OrdersWorkspaceView: React.FC<OrdersWorkspaceViewProps> = ({
                               </span>
                             </label>
                           )}
-                        </td>
-
-                        {/* 7. Action: Delete Button only (NO profile button!) */}
-                        <td style={{ padding: "14px 12px", textAlign: "center" }}>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (window.confirm(`Delete order "${order.mplName || order.client}"?`)) {
-                                setOrders((prev) => prev.filter((o) => o.internalId !== order.internalId));
-                                success("Order Deleted", `Removed ${order.mplName || order.client}`);
-                              }
-                            }}
-                            style={{
-                              width: "28px",
-                              height: "28px",
-                              borderRadius: "4px",
-                              backgroundColor: "rgba(239, 68, 68, 0.12)",
-                              border: "1px solid rgba(239, 68, 68, 0.25)",
-                              color: "#f87171",
-                              fontSize: "14px",
-                              fontWeight: 700,
-                              cursor: "pointer",
-                              display: "inline-flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              transition: "all 0.15s ease",
-                            }}
-                            title="Delete Order"
-                            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(239, 68, 68, 0.25)")}
-                            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "rgba(239, 68, 68, 0.12)")}
-                          >
-                            ✕
-                          </button>
                         </td>
                       </tr>
                     );
