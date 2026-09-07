@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from apps.api.app.core.database import get_db
 from apps.api.app.core.schemas import SuccessResponse
-from apps.api.app.auth.dependencies import get_current_user, require_permission
+from apps.api.app.auth.dependencies import require_permission
 from apps.api.app.users.models import User
 from apps.api.app.quantities.schemas import (
     QuantityTransactionCreate,

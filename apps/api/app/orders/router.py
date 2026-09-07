@@ -7,10 +7,10 @@ from sqlalchemy.orm import selectinload
 
 from apps.api.app.core.database import get_db
 from apps.api.app.core.schemas import SuccessResponse, PaginatedResponse, PaginationMeta
-from apps.api.app.auth.dependencies import get_current_user, require_permission
+from apps.api.app.auth.dependencies import require_permission
 from apps.api.app.users.models import User
-from apps.api.app.orders.models import Order, OrderItem, OrderStatus
-from apps.api.app.orders.schemas import OrderCreate, OrderRead, OrderUpdate, OrderItemCreate, OrderItemRead
+from apps.api.app.orders.models import OrderStatus
+from apps.api.app.orders.schemas import OrderCreate, OrderRead, OrderUpdate, OrderItemRead
 from apps.api.app.orders.service import OrderService
 from apps.api.app.workflows.models import WorkflowInstance
 from apps.api.app.workflows.schemas import WorkflowInstanceRead

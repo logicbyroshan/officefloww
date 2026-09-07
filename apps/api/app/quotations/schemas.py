@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from decimal import Decimal
 from typing import Any, Dict, List, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from apps.api.app.quotations.models import QuotationStatus, FeasibilityStatus
 
@@ -18,8 +18,7 @@ class PricingTierRead(PricingTierCreate):
     id: uuid.UUID
     pricing_rule_id: uuid.UUID
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class PricingRuleCreate(BaseModel):
@@ -37,8 +36,7 @@ class PricingRuleRead(BaseModel):
     is_active: bool
     tiers: List[PricingTierRead] = []
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class QuotationItemCreate(BaseModel):
@@ -56,8 +54,7 @@ class QuotationItemRead(BaseModel):
     subtotal: Decimal
     specifications_json: Optional[Dict[str, Any]] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class QuotationCreate(BaseModel):
@@ -83,8 +80,7 @@ class QuotationRead(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CostCalculationRequest(BaseModel):

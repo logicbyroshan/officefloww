@@ -7940,7 +7940,7 @@
             "type": "string",
             "format": "date",
             "title": "Effective Date",
-            "default": "2026-09-02"
+            "default": "2026-09-07"
           },
           "is_active": {
             "type": "boolean",
@@ -7981,7 +7981,7 @@
             "type": "string",
             "format": "date",
             "title": "Effective Date",
-            "default": "2026-09-02"
+            "default": "2026-09-07"
           },
           "is_active": {
             "type": "boolean",
@@ -8041,7 +8041,7 @@
         "properties": {
           "file": {
             "type": "string",
-            "format": "binary",
+            "contentMediaType": "application/octet-stream",
             "title": "File"
           },
           "order_id": {
@@ -19277,7 +19277,7 @@
           },
           "role": {
             "$ref": "#/components/schemas/UserRole",
-            "default": "DATA_OPERATOR"
+            "default": "OPERATOR"
           },
           "is_active": {
             "type": "boolean",
@@ -19321,7 +19321,7 @@
           },
           "role": {
             "$ref": "#/components/schemas/UserRole",
-            "default": "DATA_OPERATOR"
+            "default": "OPERATOR"
           },
           "is_active": {
             "type": "boolean",
@@ -19369,8 +19369,11 @@
       "UserRole": {
         "type": "string",
         "enum": [
-          "OWNER",
           "ADMIN",
+          "OPERATOR",
+          "WORKER",
+          "LABOUR",
+          "OWNER",
           "MANAGER",
           "SALES",
           "DESIGNER",
@@ -19379,7 +19382,6 @@
           "MACHINE_OPERATOR",
           "PACKING_OPERATOR",
           "ACCOUNTS",
-          "LABOUR",
           "DELIVERY_PARTNER",
           "DISPATCH_OPERATOR",
           "PURCHASE_MANAGER",
@@ -19470,6 +19472,13 @@
           "type": {
             "type": "string",
             "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
           }
         },
         "type": "object",

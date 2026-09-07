@@ -1,18 +1,18 @@
 from typing import List, Optional
 import uuid
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from apps.api.app.auth.dependencies import get_current_user, require_role
+from apps.api.app.auth.dependencies import get_current_user
 from apps.api.app.core.database import get_db
-from apps.api.app.core.exceptions import BusinessRuleViolationError, EntityNotFoundError
+from apps.api.app.core.exceptions import EntityNotFoundError
 from apps.api.app.core.schemas import SuccessResponse
 from apps.api.app.quantities.models import QuantityTransaction, QuantityTransactionType
 from apps.api.app.tasks.models import Task, TaskStatus
 from apps.api.app.tasks.service import TaskService
-from apps.api.app.users.models import User, UserRole
+from apps.api.app.users.models import User
 
 router = APIRouter(prefix="/worker", tags=["In-House Worker Mobile APIs"])
 

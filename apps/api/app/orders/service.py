@@ -6,8 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from apps.api.app.core.exceptions import EntityNotFoundError, BusinessRuleViolationError
-from apps.api.app.orders.models import Order, OrderItem, OrderStatus, OrderPriority, OrderItemStatus
-from apps.api.app.orders.schemas import OrderCreate, OrderUpdate, OrderItemCreate
+from apps.api.app.orders.models import Order, OrderItem, OrderStatus, OrderItemStatus
+from apps.api.app.orders.schemas import OrderCreate, OrderUpdate
 from apps.api.app.products.models import Product
 from apps.api.app.workflows.models import WorkflowTemplate
 from apps.api.app.workflows.service import WorkflowService

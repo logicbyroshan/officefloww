@@ -7,7 +7,7 @@ from apps.api.app.core.database import get_db
 from apps.api.app.core.schemas import SuccessResponse, PaginatedResponse, PaginationMeta
 from apps.api.app.auth.dependencies import get_current_user, require_permission
 from apps.api.app.users.models import User, UserRole
-from apps.api.app.tasks.models import Task, TaskStatus
+from apps.api.app.tasks.models import TaskStatus
 from apps.api.app.tasks.schemas import (
     TaskRead,
     TaskUpdate,

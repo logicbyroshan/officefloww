@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional
 import uuid
 from pydantic import BaseModel, ConfigDict, Field
 
-from apps.api.app.stock.models import StockLocationType, StockMovementType, ReservationStatus
+from apps.api.app.stock.models import StockLocationType, StockMovementType
 
 
 class StockLocationBase(BaseModel):
