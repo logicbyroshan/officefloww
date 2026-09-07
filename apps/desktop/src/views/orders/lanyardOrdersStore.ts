@@ -21,6 +21,9 @@ export interface LanyardOrderEntry {
   qty: number;
   qtyDisplay?: string;
 
+  // 0. Design Stage
+  designDone?: boolean;
+
   // 1. Sent to Print
   goneForPrint: boolean;
   printAllocations?: PrintAllocation[];

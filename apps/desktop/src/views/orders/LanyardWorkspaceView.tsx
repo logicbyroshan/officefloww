@@ -139,7 +139,21 @@ export const LanyardWorkspaceView: React.FC = () => {
     );
   };
 
-  // 1-Click Print Status Cycle: Needs Print -> In Print -> Printed OK -> Reset
+  // 1-Click Design Status Toggle: Design Pending <-> Design OK ✓
+  const handleToggleDesign = (order: LanyardOrderEntry, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const nextDesign = order.designDone === false ? true : false;
+    setOrders((prev) =>
+      prev.map((o) => (o.id === order.id ? { ...o, designDone: nextDesign } : o))
+    );
+    if (nextDesign) {
+      toastSuccess("Design Approved", `Order #${order.sn}: Artwork & proof approved ✓.`);
+    } else {
+      toastSuccess("Design Pending", `Order #${order.sn}: Artwork marked pending proof.`);
+    }
+  };
+
+  // 1-Click Print Status Cycle: Pending Print -> In Print ⚡ -> Printed ✓ -> Pending Print
   const handleCyclePrintStatus = (order: LanyardOrderEntry, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!order.goneForPrint) {
@@ -155,7 +169,7 @@ export const LanyardWorkspaceView: React.FC = () => {
             : o
         )
       );
-      toastSuccess("Print Scheduled", `Order #${order.sn} marked In Print.`);
+      toastSuccess("Gone for Print", `Order #${order.sn} sent to Sublimation machine.`);
     } else if (!order.isPrinted) {
       setOrders((prev) =>
         prev.map((o) =>
@@ -163,11 +177,12 @@ export const LanyardWorkspaceView: React.FC = () => {
             ? {
                 ...o,
                 isPrinted: true,
+                printedQty: o.qty,
               }
             : o
         )
       );
-      toastSuccess("Print Verified", `Order #${order.sn} verified printed.`);
+      toastSuccess("Printed OK", `Order #${order.sn} sublimation verified (${order.qty.toLocaleString()} pcs).`);
     } else {
       setOrders((prev) =>
         prev.map((o) =>
@@ -176,45 +191,96 @@ export const LanyardWorkspaceView: React.FC = () => {
                 ...o,
                 goneForPrint: false,
                 isPrinted: false,
+                printedQty: 0,
               }
             : o
         )
       );
-      toastSuccess("Print Reset", `Order #${order.sn} reset to intake.`);
+      toastSuccess("Print Reset", `Order #${order.sn} reset to Pending Print.`);
     }
   };
 
-  // 1-Click Fitting Status Cycle: Pending -> In Fitting -> Ready
-  const handleCycleFittingStatus = (order: LanyardOrderEntry, e: React.MouseEvent) => {
+  // 1-Click Fitting Stage Cycle: Needs Fitting -> In Fitting ✂ -> Fitting Done ✓ -> In Fitting
+  const handleCycleFittingStage = (order: LanyardOrderEntry, e: React.MouseEvent) => {
     e.stopPropagation();
-    let nextStatus: "pending_assignment" | "in_fitting" | "ready";
-    let completedQty = 0;
-
-    if (order.fittingStatus === "pending_assignment") {
-      nextStatus = "in_fitting";
-    } else if (order.fittingStatus === "in_fitting") {
-      nextStatus = "ready";
-      completedQty = order.qty;
+    if (!order.goneForFitting || order.fittingStatus === "pending_assignment") {
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === order.id
+            ? {
+                ...o,
+                goneForFitting: true,
+                fittingStatus: "in_fitting",
+                sentToLabourQty: o.qty,
+              }
+            : o
+        )
+      );
+      toastSuccess("Gone for Fitting", `Order #${order.sn} transferred to Fitting stage.`);
+    } else if (order.fittingStatus !== "ready") {
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === order.id
+            ? {
+                ...o,
+                fittingStatus: "ready",
+                completedQty: o.qty,
+              }
+            : o
+        )
+      );
+      toastSuccess("Fitting Done", `Order #${order.sn} fitting completed & inspected.`);
     } else {
-      nextStatus = "in_fitting";
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === order.id
+            ? {
+                ...o,
+                fittingStatus: "in_fitting",
+                completedQty: 0,
+              }
+            : o
+        )
+      );
+      toastSuccess("Status Updated", `Order #${order.sn} returned to In Fitting.`);
     }
+  };
 
-    setOrders((prev) =>
-      prev.map((o) =>
-        o.id === order.id
-          ? {
-              ...o,
-              fittingStatus: nextStatus,
-              completedQty: nextStatus === "ready" ? o.qty : completedQty,
-            }
-          : o
-      )
-    );
-
-    if (nextStatus === "ready") {
-      toastSuccess("Order Completed", `Order #${order.sn} marked Ready.`);
+  // 1-Click Overall Order Status Cycle: In Progress <-> Ready for Dispatch
+  const handleCycleOrderStatus = (order: LanyardOrderEntry, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const isReady = order.fittingStatus === "ready";
+    if (!isReady) {
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === order.id
+            ? {
+                ...o,
+                designDone: true,
+                goneForPrint: true,
+                isPrinted: true,
+                printedQty: o.qty,
+                goneForFitting: true,
+                fittingStatus: "ready",
+                completedQty: o.qty,
+              }
+            : o
+        )
+      );
+      toastSuccess("Order Ready", `Order #${order.sn} marked Ready for Dispatch.`);
     } else {
-      toastSuccess("Status Updated", `Order #${order.sn} is now in fitting.`);
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === order.id
+            ? {
+                ...o,
+                fittingStatus: "in_fitting",
+                completedQty: 0,
+              }
+            : o
+        )
+      );
+      toastSuccess("Order In Production", `Order #${order.sn} returned to active queue.`);
     }
   };
 
@@ -245,6 +311,7 @@ export const LanyardWorkspaceView: React.FC = () => {
       size: newSize,
       qty: parsedQty,
       qtyDisplay: newQtyStr.trim() || String(parsedQty),
+      designDone: false,
       goneForPrint: false,
       isPrinted: false,
       goneForFitting: false,
@@ -489,7 +556,7 @@ export const LanyardWorkspaceView: React.FC = () => {
       }}
     >
       {/* ══════════════════════════════════════════════════════════════════════════ */}
-      {/* 1. RESTRAINED 4-CARD KPI METRICS DECK                                      */}
+      {/* 1. EXECUTIVE 5-CARD KPI METRICS & LIVE INVENTORY DECK                      */}
       {/* ══════════════════════════════════════════════════════════════════════════ */}
       <div
         style={{
@@ -498,47 +565,95 @@ export const LanyardWorkspaceView: React.FC = () => {
           gap: "12px",
         }}
       >
-        {/* Card 1: Total Volume */}
+        {/* Card 1: Active Pipeline */}
         <div
           style={{
             padding: "12px 16px",
             borderRadius: "8px",
             backgroundColor: "#0e131f",
-            border: "1px solid rgba(255, 255, 255, 0.07)",
+            border: "1px solid rgba(56, 189, 248, 0.25)",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <span
               style={{
                 fontSize: "11px",
-                fontWeight: 600,
-                color: "#64748b",
+                fontWeight: 700,
+                color: "#38bdf8",
                 textTransform: "uppercase",
-                letterSpacing: "0.05em",
+                letterSpacing: "0.06em",
               }}
             >
-              Total Volume
+              Active Pipeline
             </span>
-            <Icon name="layers" size={14} color="#64748b" />
+            <Icon name="layers" size={14} color="#38bdf8" />
           </div>
           <div
             style={{
               fontSize: "20px",
-              fontWeight: 700,
-              color: "#f8fafc",
+              fontWeight: 800,
+              color: "#ffffff",
               fontFamily: "var(--font-mono)",
               marginTop: "4px",
             }}
           >
-            {metrics.totalVolume.toLocaleString()}{" "}
-            <span style={{ fontSize: "12px", color: "#64748b", fontWeight: 500 }}>pcs</span>
+            {metrics.activeCount}{" "}
+            <span style={{ fontSize: "12px", color: "#94a3b8", fontWeight: 500 }}>orders</span>{" "}
+            <span style={{ fontSize: "12px", color: "#38bdf8", fontWeight: 700 }}>
+              ({metrics.activeVolume.toLocaleString()} pcs)
+            </span>
           </div>
           <div style={{ fontSize: "11px", color: "#64748b", marginTop: "2px" }}>
-            {metrics.totalCount} batches across all sizes
+            Total volume: {metrics.totalVolume.toLocaleString()} pcs ({metrics.totalCount} batches)
           </div>
         </div>
 
-        {/* Card 2: In Print */}
+        {/* Card 2: Lanyard Roll Stock Inventory */}
+        <div
+          style={{
+            padding: "12px 16px",
+            borderRadius: "8px",
+            backgroundColor: "#0e131f",
+            border: "1px solid rgba(52, 211, 153, 0.25)",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <span
+              style={{
+                fontSize: "11px",
+                fontWeight: 700,
+                color: "#34d399",
+                textTransform: "uppercase",
+                letterSpacing: "0.06em",
+              }}
+            >
+              Tape Roll Stock
+            </span>
+            <Icon name="package" size={14} color="#34d399" />
+          </div>
+          <div
+            style={{
+              fontSize: "20px",
+              fontWeight: 800,
+              color: "#34d399",
+              fontFamily: "var(--font-mono)",
+              marginTop: "4px",
+            }}
+          >
+            63{" "}
+            <span style={{ fontSize: "12px", color: "rgba(52, 211, 153, 0.8)", fontWeight: 500 }}>rolls</span>{" "}
+            <span style={{ fontSize: "11.5px", color: "#94a3b8", fontWeight: 500 }}>
+              (~28,350 cap)
+            </span>
+          </div>
+          <div style={{ fontSize: "11px", color: "#94a3b8", marginTop: "2px", fontFamily: "var(--font-mono)" }}>
+            <span style={{ color: "#38bdf8", fontWeight: 700 }}>16mm: 6r</span> •{" "}
+            <span style={{ color: "#34d399", fontWeight: 700 }}>12mm: 45r</span> •{" "}
+            <span style={{ color: "#c084fc", fontWeight: 700 }}>20mm: 12r</span>
+          </div>
+        </div>
+
+        {/* Card 3: In Print */}
         <div
           style={{
             padding: "12px 16px",
@@ -578,7 +693,7 @@ export const LanyardWorkspaceView: React.FC = () => {
           </div>
         </div>
 
-        {/* Card 3: In Labour Fitting */}
+        {/* Card 4: In Labour Fitting */}
         <div
           style={{
             padding: "12px 16px",
@@ -618,7 +733,7 @@ export const LanyardWorkspaceView: React.FC = () => {
           </div>
         </div>
 
-        {/* Card 4: Completed & Ready */}
+        {/* Card 5: Completed & Ready */}
         <div
           style={{
             padding: "12px 16px",
@@ -1044,14 +1159,17 @@ export const LanyardWorkspaceView: React.FC = () => {
                 <th style={{ padding: "12px 10px", color: "#94a3b8", fontWeight: 700, fontSize: "12px", letterSpacing: "0.06em", width: "95px" }}>
                   QTY
                 </th>
-                <th style={{ padding: "12px 10px", color: "#94a3b8", fontWeight: 700, fontSize: "12px", letterSpacing: "0.06em", width: "145px" }}>
-                  ROLL STOCK
+                <th style={{ padding: "12px 10px", color: "#94a3b8", fontWeight: 700, fontSize: "12px", letterSpacing: "0.06em", width: "125px" }}>
+                  DESIGN
                 </th>
-                <th style={{ padding: "12px 10px", color: "#94a3b8", fontWeight: 700, fontSize: "12px", letterSpacing: "0.06em", width: "185px" }}>
-                  FLOOR PROGRESS
+                <th style={{ padding: "12px 10px", color: "#94a3b8", fontWeight: 700, fontSize: "12px", letterSpacing: "0.06em", width: "135px" }}>
+                  PRINT STAGE
                 </th>
-                <th style={{ padding: "12px 10px", color: "#94a3b8", fontWeight: 700, fontSize: "12px", letterSpacing: "0.06em", width: "145px" }}>
-                  FITTING LABOUR
+                <th style={{ padding: "12px 10px", color: "#94a3b8", fontWeight: 700, fontSize: "12px", letterSpacing: "0.06em", width: "140px" }}>
+                  FITTING STAGE
+                </th>
+                <th style={{ padding: "12px 10px", color: "#94a3b8", fontWeight: 700, fontSize: "12px", letterSpacing: "0.06em", width: "165px" }}>
+                  GIVEN TO (LABOUR)
                 </th>
                 <th style={{ padding: "12px 10px", color: "#94a3b8", fontWeight: 700, fontSize: "12px", letterSpacing: "0.06em", width: "115px", textAlign: "center" }}>
                   STATUS
@@ -1064,7 +1182,7 @@ export const LanyardWorkspaceView: React.FC = () => {
             <tbody>
               {filteredOrders.length === 0 ? (
                 <tr>
-                  <td colSpan={9} style={{ padding: "40px 16px", textAlign: "center", color: "#64748b" }}>
+                  <td colSpan={10} style={{ padding: "40px 16px", textAlign: "center", color: "#64748b" }}>
                     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}>
                       <Icon name="inbox" size={28} color="#475569" />
                       <div style={{ fontSize: "13px", fontWeight: 600, color: "#94a3b8" }}>
@@ -1211,208 +1329,278 @@ export const LanyardWorkspaceView: React.FC = () => {
                         )}
                       </td>
 
-                      {/* 5. Roll Stock Readiness */}
-                      <td style={{ padding: "10px 10px" }}>
-                        <div
-                          style={{ display: "inline-flex", flexDirection: "column", gap: "2px" }}
-                          title={rollReport.statusText}
-                        >
-                          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                            <div
-                              style={{
-                                width: "7px",
-                                height: "7px",
-                                borderRadius: "50%",
-                                backgroundColor: rollReport.statusColor,
-                              }}
-                            />
-                            <span
-                              style={{
-                                fontSize: "12px",
-                                fontFamily: "var(--font-mono)",
-                                fontWeight: 700,
-                                color: rollReport.statusColor,
-                              }}
-                            >
-                              {rollReport.exactRolls} roll{parseFloat(rollReport.exactRolls) === 1 ? "" : "s"}
-                            </span>
-                          </div>
-                          <span style={{ fontSize: "12px", color: "#94a3b8" }}>
-                            {rollReport.availableRolls} in stock ({entry.size})
-                          </span>
-                        </div>
-                      </td>
-
-                      {/* 6. Floor Progress: Print • Labour • Ready */}
+                      {/* 5. Design Status (1-Click Toggle) */}
                       <td style={{ padding: "11px 10px" }}>
-                        <div
-                          onClick={(e) => openFloorUpdateModal(entry, e)}
-                          title="Click to update floor quantities (Print, Fitting, Ready)"
-                          style={{ cursor: "pointer", display: "inline-flex", flexDirection: "column", gap: "4px" }}
+                        <button
+                          type="button"
+                          onClick={(e) => handleToggleDesign(entry, e)}
+                          title="Click to toggle Artwork / Proof Approval"
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            height: "30px",
+                            padding: "0 10px",
+                            borderRadius: "15px",
+                            backgroundColor: entry.designDone !== false ? "rgba(34, 197, 94, 0.14)" : "rgba(255, 255, 255, 0.05)",
+                            border: entry.designDone !== false ? "1px solid rgba(34, 197, 94, 0.35)" : "1px solid rgba(255, 255, 255, 0.15)",
+                            color: entry.designDone !== false ? "#4ade80" : "#94a3b8",
+                            fontSize: "12px",
+                            fontWeight: 700,
+                            cursor: "pointer",
+                            transition: "all 0.15s ease",
+                          }}
                         >
-                          <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                            <span
-                              title={`Sublimation Print: ${pQty} / ${entry.qty}`}
-                              style={{
-                                fontSize: "11.5px",
-                                fontFamily: "var(--font-mono)",
-                                fontWeight: 700,
-                                padding: "2px 6px",
-                                borderRadius: "3px",
-                                backgroundColor: pQty >= entry.qty ? "rgba(34, 197, 94, 0.16)" : pQty > 0 ? "rgba(56, 189, 248, 0.14)" : "rgba(255, 255, 255, 0.04)",
-                                color: pQty >= entry.qty ? "#4ade80" : pQty > 0 ? "#38bdf8" : "#64748b",
-                                border: pQty >= entry.qty ? "1px solid rgba(34, 197, 94, 0.35)" : "1px solid rgba(255, 255, 255, 0.07)",
-                              }}
-                            >
-                              P:{pQty}
-                            </span>
-                            <span
-                              title={`Labour Fitting: ${sQty} / ${entry.qty}`}
-                              style={{
-                                fontSize: "11.5px",
-                                fontFamily: "var(--font-mono)",
-                                fontWeight: 700,
-                                padding: "2px 6px",
-                                borderRadius: "3px",
-                                backgroundColor: sQty >= entry.qty ? "rgba(34, 197, 94, 0.16)" : sQty > 0 ? "rgba(245, 158, 11, 0.14)" : "rgba(255, 255, 255, 0.04)",
-                                color: sQty >= entry.qty ? "#4ade80" : sQty > 0 ? "#fbbf24" : "#64748b",
-                                border: sQty >= entry.qty ? "1px solid rgba(34, 197, 94, 0.35)" : "1px solid rgba(255, 255, 255, 0.07)",
-                              }}
-                            >
-                              F:{sQty}
-                            </span>
-                            <span
-                              title={`Ready / Inspected: ${rQty} / ${entry.qty}`}
-                              style={{
-                                fontSize: "11.5px",
-                                fontFamily: "var(--font-mono)",
-                                fontWeight: 700,
-                                padding: "2px 6px",
-                                borderRadius: "3px",
-                                backgroundColor: rQty >= entry.qty ? "rgba(34, 197, 94, 0.2)" : "rgba(255, 255, 255, 0.04)",
-                                color: rQty >= entry.qty ? "#4ade80" : "#64748b",
-                                border: rQty >= entry.qty ? "1px solid rgba(34, 197, 94, 0.35)" : "1px solid rgba(255, 255, 255, 0.07)",
-                              }}
-                            >
-                              R:{rQty}
-                            </span>
-                          </div>
-                          {leftQty > 0 ? (
-                            <span style={{ fontSize: "11.5px", color: "#fbbf24", fontWeight: 600 }}>
-                              {leftQty.toLocaleString()} pcs remaining
-                            </span>
-                          ) : (
-                            <span style={{ fontSize: "11.5px", color: "#4ade80", fontWeight: 700 }}>
-                              100% finished ✓
-                            </span>
-                          )}
-                        </div>
+                          <div
+                            style={{
+                              width: "7px",
+                              height: "7px",
+                              borderRadius: "50%",
+                              backgroundColor: entry.designDone !== false ? "#22c55e" : "#64748b",
+                            }}
+                          />
+                          <span>{entry.designDone !== false ? "Design OK ✓" : "Pending Design"}</span>
+                        </button>
                       </td>
 
-                      {/* 7. Fitting Labour */}
+                      {/* 6. Print Floor Status (1-Click Advance) */}
+                      <td style={{ padding: "11px 10px" }}>
+                        <button
+                          type="button"
+                          onClick={(e) => handleCyclePrintStatus(entry, e)}
+                          title="Click to advance print stage (Pending -> In Print -> Printed OK)"
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            height: "30px",
+                            padding: "0 10px",
+                            borderRadius: "15px",
+                            backgroundColor: entry.isPrinted
+                              ? "rgba(34, 197, 94, 0.14)"
+                              : entry.goneForPrint
+                              ? "rgba(56, 189, 248, 0.14)"
+                              : "rgba(255, 255, 255, 0.05)",
+                            border: entry.isPrinted
+                              ? "1px solid rgba(34, 197, 94, 0.35)"
+                              : entry.goneForPrint
+                              ? "1px solid rgba(56, 189, 248, 0.35)"
+                              : "1px solid rgba(255, 255, 255, 0.12)",
+                            color: entry.isPrinted ? "#4ade80" : entry.goneForPrint ? "#38bdf8" : "#94a3b8",
+                            fontSize: "12px",
+                            fontWeight: 700,
+                            cursor: "pointer",
+                            transition: "all 0.15s ease",
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: "7px",
+                              height: "7px",
+                              borderRadius: "50%",
+                              backgroundColor: entry.isPrinted ? "#22c55e" : entry.goneForPrint ? "#38bdf8" : "#64748b",
+                            }}
+                          />
+                          <span>
+                            {entry.isPrinted
+                              ? "Printed ✓"
+                              : entry.goneForPrint
+                              ? "In Print ⚡"
+                              : "Pending Print"}
+                          </span>
+                        </button>
+                      </td>
+
+                      {/* 7. Fitting Stage Status (1-Click Advance) */}
+                      <td style={{ padding: "11px 10px" }}>
+                        <button
+                          type="button"
+                          onClick={(e) => handleCycleFittingStage(entry, e)}
+                          title="Click to advance fitting stage (Needs Fitting -> In Fitting -> Fitting Done)"
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            height: "30px",
+                            padding: "0 10px",
+                            borderRadius: "15px",
+                            backgroundColor: isReady
+                              ? "rgba(34, 197, 94, 0.14)"
+                              : entry.goneForFitting || entry.fittingStatus === "in_fitting"
+                              ? "rgba(245, 158, 11, 0.14)"
+                              : "rgba(255, 255, 255, 0.05)",
+                            border: isReady
+                              ? "1px solid rgba(34, 197, 94, 0.35)"
+                              : entry.goneForFitting || entry.fittingStatus === "in_fitting"
+                              ? "1px solid rgba(245, 158, 11, 0.35)"
+                              : "1px solid rgba(255, 255, 255, 0.12)",
+                            color: isReady
+                              ? "#4ade80"
+                              : entry.goneForFitting || entry.fittingStatus === "in_fitting"
+                              ? "#fbbf24"
+                              : "#94a3b8",
+                            fontSize: "12px",
+                            fontWeight: 700,
+                            cursor: "pointer",
+                            transition: "all 0.15s ease",
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: "7px",
+                              height: "7px",
+                              borderRadius: "50%",
+                              backgroundColor: isReady
+                                ? "#22c55e"
+                                : entry.goneForFitting || entry.fittingStatus === "in_fitting"
+                                ? "#f59e0b"
+                                : "#64748b",
+                            }}
+                          />
+                          <span>
+                            {isReady
+                              ? "Fitting Done ✓"
+                              : entry.goneForFitting || entry.fittingStatus === "in_fitting"
+                              ? "In Fitting ✂"
+                              : "Needs Fitting"}
+                          </span>
+                        </button>
+                      </td>
+
+                      {/* 8. Given To (Labour Contractor) */}
                       <td style={{ padding: "11px 10px" }}>
                         {entry.fittingContractorName ? (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (entry.fittingContractorId && entry.fittingContractorId !== "mix") {
-                                handleJumpToLabourPage(entry.fittingContractorId);
-                              } else {
-                                handleJumpToLabourPage();
-                              }
-                            }}
-                            title={`Click to view ${entry.fittingContractorName} ledger in Labour Workspace`}
-                            style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: "6px",
-                              padding: "4.5px 11px",
-                              borderRadius: "5px",
-                              backgroundColor: "rgba(255, 255, 255, 0.05)",
-                              border: "1px solid rgba(255, 255, 255, 0.16)",
-                              color: "#f8fafc",
-                              fontSize: "12.5px",
-                              fontWeight: 600,
-                              cursor: "pointer",
-                            }}
-                          >
-                            <span>{formatContractorLabel(entry.fittingContractorName)}</span>
-                            <Icon name="external-link" size={12} color="#94a3b8" />
-                          </button>
+                          <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                            <button
+                              type="button"
+                              onClick={(e) => openLabourAssignmentModal(entry, e)}
+                              title={`Assigned to ${entry.fittingContractorName}. Click to reassign.`}
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "6px",
+                                padding: "4.5px 11px",
+                                borderRadius: "5px",
+                                backgroundColor: contractor?.bgColor || "rgba(255, 255, 255, 0.05)",
+                                border: `1px solid ${contractor?.borderColor || "rgba(255, 255, 255, 0.16)"}`,
+                                color: contractor?.color || "#f8fafc",
+                                fontSize: "12.5px",
+                                fontWeight: 700,
+                                cursor: "pointer",
+                              }}
+                            >
+                              <Icon name="user" size={12} color={contractor?.color || "#94a3b8"} />
+                              <span>{formatContractorLabel(entry.fittingContractorName)}</span>
+                            </button>
+
+                            {entry.fittingContractorId && entry.fittingContractorId !== "mix" && entry.fittingContractorId !== "wof" && (
+                              <button
+                                type="button"
+                                onClick={() => handleJumpToLabourPage(entry.fittingContractorId)}
+                                title={`Open ${entry.fittingContractorName}'s ledger in Labour Workspace`}
+                                style={{
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  width: "24px",
+                                  height: "24px",
+                                  borderRadius: "4px",
+                                  backgroundColor: "rgba(255, 255, 255, 0.04)",
+                                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                                  color: "#94a3b8",
+                                  cursor: "pointer",
+                                }}
+                              >
+                                <Icon name="external-link" size={11} color="#94a3b8" />
+                              </button>
+                            )}
+                          </div>
                         ) : (
                           <button
                             type="button"
                             onClick={(e) => openLabourAssignmentModal(entry, e)}
+                            title="Assign to outside contractor"
                             style={{
                               display: "inline-flex",
                               alignItems: "center",
                               gap: "5px",
                               padding: "4.5px 11px",
                               borderRadius: "5px",
-                              backgroundColor: "transparent",
-                              border: "1px dashed rgba(255, 255, 255, 0.28)",
-                              color: "#94a3b8",
+                              backgroundColor: "rgba(245, 158, 11, 0.12)",
+                              border: "1px dashed rgba(245, 158, 11, 0.45)",
+                              color: "#fbbf24",
                               fontSize: "12px",
-                              fontWeight: 600,
+                              fontWeight: 700,
                               cursor: "pointer",
                             }}
                           >
-                            <Icon name="plus" size={12} />
-                            <span>Assign</span>
+                            <Icon name="plus" size={12} color="#fbbf24" />
+                            <span>+ Assign Labour</span>
                           </button>
                         )}
                       </td>
 
-                      {/* 8. Status Toggle */}
+                      {/* 9. Overall Order Status */}
                       <td style={{ padding: "11px 10px", textAlign: "center" }}>
                         <button
                           type="button"
-                          onClick={(e) => handleCycleFittingStatus(entry, e)}
-                          title="Click to advance status"
+                          onClick={(e) => handleCycleOrderStatus(entry, e)}
+                          title="Click to toggle Order Status (In Progress <-> Ready)"
                           style={{
                             display: "inline-flex",
                             alignItems: "center",
+                            justifyContent: "center",
                             gap: "6px",
-                            padding: "4.5px 12px",
-                            borderRadius: "5px",
+                            width: "100%",
+                            maxWidth: "125px",
+                            height: "30px",
+                            padding: "0 10px",
+                            borderRadius: "6px",
                             fontSize: "12px",
                             fontWeight: 700,
                             cursor: "pointer",
-                            border:
-                              entry.fittingStatus === "ready"
-                                ? "1px solid rgba(34, 197, 94, 0.4)"
-                                : entry.fittingStatus === "in_fitting"
-                                ? "1px solid rgba(56, 189, 248, 0.4)"
-                                : "1px solid rgba(255, 255, 255, 0.14)",
-                            backgroundColor:
-                              entry.fittingStatus === "ready"
-                                ? "rgba(34, 197, 94, 0.16)"
-                                : entry.fittingStatus === "in_fitting"
-                                ? "rgba(56, 189, 248, 0.16)"
-                                : "rgba(255, 255, 255, 0.04)",
-                            color:
-                              entry.fittingStatus === "ready"
-                                ? "#4ade80"
-                                : entry.fittingStatus === "in_fitting"
-                                ? "#38bdf8"
-                                : "#cbd5e1",
+                            border: isReady
+                              ? "1px solid rgba(34, 197, 94, 0.4)"
+                              : entry.fittingStatus === "in_fitting"
+                              ? "1px solid rgba(245, 158, 11, 0.4)"
+                              : entry.goneForPrint
+                              ? "1px solid rgba(56, 189, 248, 0.4)"
+                              : "1px solid rgba(255, 255, 255, 0.14)",
+                            backgroundColor: isReady
+                              ? "rgba(34, 197, 94, 0.16)"
+                              : entry.fittingStatus === "in_fitting"
+                              ? "rgba(245, 158, 11, 0.16)"
+                              : entry.goneForPrint
+                              ? "rgba(56, 189, 248, 0.16)"
+                              : "rgba(255, 255, 255, 0.04)",
+                            color: isReady
+                              ? "#4ade80"
+                              : entry.fittingStatus === "in_fitting"
+                              ? "#fbbf24"
+                              : entry.goneForPrint
+                              ? "#38bdf8"
+                              : "#cbd5e1",
                           }}
                         >
                           <Icon
                             name={
-                              entry.fittingStatus === "ready"
+                              isReady
                                 ? "check-circle"
                                 : entry.fittingStatus === "in_fitting"
                                 ? "tool"
+                                : entry.goneForPrint
+                                ? "printer"
                                 : "clock"
                             }
                             size={12}
                           />
                           <span>
-                            {entry.fittingStatus === "ready"
-                              ? "Ready"
+                            {isReady
+                              ? "Ready ✓"
                               : entry.fittingStatus === "in_fitting"
                               ? "In Fitting"
+                              : entry.goneForPrint
+                              ? "In Print"
                               : "Pending"}
                           </span>
                         </button>
