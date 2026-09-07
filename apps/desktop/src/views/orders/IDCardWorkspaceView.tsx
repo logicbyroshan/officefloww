@@ -4,6 +4,8 @@ import { useToast } from "../../design-system/components/Toast";
 import {
   useIDCardStore,
   IDCardOrderEntry,
+  IDCardCategory,
+  IDCardFileFormat,
   parseIDCQuantity,
 } from "./idCardOrdersStore";
 import { useStockStore } from "../stock/stockStore";
@@ -45,56 +47,71 @@ function formatClientTitle(name: string): string {
     .join(" ");
 }
 
-// Structured Student & Staff Breakdown Pills (calm, elegant tones)
-function renderBreakdownTags(workQtyDisplay: string) {
-  if (!workQtyDisplay || !workQtyDisplay.trim()) {
-    return <span style={{ color: "#64748b", fontSize: "12px" }}>Standard Batch</span>;
-  }
-  const str = workQtyDisplay.trim();
-
-  if (str.includes("+")) {
-    const parts = str.split("+").map((p) => p.trim());
+// Category Badge (Student vs Staff vs Other)
+function renderCategoryBadge(category: IDCardCategory) {
+  if (category === "Staff") {
     return (
-      <div style={{ display: "inline-flex", alignItems: "center", gap: "5px", flexWrap: "wrap" }}>
-        {parts.map((p, idx) => {
-          const isStaff = p.toLowerCase().includes("staff");
-          return (
-            <span
-              key={idx}
-              style={{
-                fontSize: "12px",
-                fontWeight: 700,
-                padding: "2px 7px",
-                borderRadius: "4px",
-                backgroundColor: isStaff ? "rgba(168, 85, 247, 0.09)" : "rgba(56, 189, 248, 0.09)",
-                border: `1px solid ${isStaff ? "rgba(168, 85, 247, 0.25)" : "rgba(56, 189, 248, 0.25)"}`,
-                color: isStaff ? "#c084fc" : "#38bdf8",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {p}
-            </span>
-          );
-        })}
-      </div>
+      <span
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "4px",
+          padding: "2.5px 8px",
+          borderRadius: "4px",
+          backgroundColor: "rgba(168, 85, 247, 0.12)",
+          border: "1px solid rgba(168, 85, 247, 0.28)",
+          color: "#c084fc",
+          fontSize: "11.5px",
+          fontWeight: 700,
+          whiteSpace: "nowrap",
+        }}
+      >
+        <span style={{ width: "5px", height: "5px", borderRadius: "50%", backgroundColor: "#c084fc" }} />
+        Staff
+      </span>
     );
   }
 
-  const isStaff = str.toLowerCase().includes("staff");
+  if (category === "Other") {
+    return (
+      <span
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "4px",
+          padding: "2.5px 8px",
+          borderRadius: "4px",
+          backgroundColor: "rgba(255, 255, 255, 0.05)",
+          border: "1px solid rgba(255, 255, 255, 0.12)",
+          color: "#cbd5e1",
+          fontSize: "11.5px",
+          fontWeight: 600,
+          whiteSpace: "nowrap",
+        }}
+      >
+        Other
+      </span>
+    );
+  }
+
   return (
     <span
       style={{
-        fontSize: "12px",
-        fontWeight: 700,
-        padding: "2px 8px",
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "4px",
+        padding: "2.5px 8px",
         borderRadius: "4px",
-        backgroundColor: isStaff ? "rgba(168, 85, 247, 0.09)" : "rgba(255, 255, 255, 0.04)",
-        border: `1px solid ${isStaff ? "rgba(168, 85, 247, 0.22)" : "rgba(255, 255, 255, 0.09)"}`,
-        color: isStaff ? "#c084fc" : "#cbd5e1",
+        backgroundColor: "rgba(56, 189, 248, 0.1)",
+        border: "1px solid rgba(56, 189, 248, 0.25)",
+        color: "#38bdf8",
+        fontSize: "11.5px",
+        fontWeight: 700,
         whiteSpace: "nowrap",
       }}
     >
-      {str}
+      <span style={{ width: "5px", height: "5px", borderRadius: "50%", backgroundColor: "#38bdf8" }} />
+      Student
     </span>
   );
 }
@@ -187,15 +204,15 @@ export const IDCardWorkspaceView: React.FC = () => {
 
   // Filter and search states
   const [statusFilter, setStatusFilter] = useState<"ALL" | "kamal" | "ready" | "done">("ALL");
+  const [categoryFilter, setCategoryFilter] = useState<string>("ALL");
   const [fileFilter, setFileFilter] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState("");
 
   // Ingestion Console states
   const [newClient, setNewClient] = useState("");
+  const [newCategory, setNewCategory] = useState<IDCardCategory>("Student");
   const [newQtyStr, setNewQtyStr] = useState("");
-  const [newFileLocation, setNewFileLocation] = useState<
-    "doc" | "pdf" | "excel" | "doc + pdf" | "excel and doc" | "hard copy"
-  >("doc");
+  const [newFileLocation, setNewFileLocation] = useState<IDCardFileFormat>("doc");
   const [newHolderLanyard, setNewHolderLanyard] = useState("available he");
   const [newRemark, setNewRemark] = useState("");
 
@@ -222,9 +239,9 @@ export const IDCardWorkspaceView: React.FC = () => {
     const { id, field } = editingCell;
     const val = editValue.trim();
 
-    if (field === "workQtyDisplay") {
+    if (field === "totalQty") {
       const computed = parseIDCQuantity(val);
-      updateOrder(id, { workQtyDisplay: val, totalQty: computed });
+      updateOrder(id, { totalQty: computed, workQtyDisplay: `${computed} cards` });
       toastSuccess("Updated", "Quantity updated.");
     } else if (field === "sn") {
       const num = parseInt(val, 10);
@@ -239,7 +256,7 @@ export const IDCardWorkspaceView: React.FC = () => {
 
   // Next SN calculation
   const nextSN = useMemo(() => {
-    if (!orders || orders.length === 0) return 1494;
+    if (!orders || orders.length === 0) return 1497;
     return Math.max(...orders.map((o) => o.sn || 0)) + 1;
   }, [orders]);
 
@@ -261,7 +278,7 @@ export const IDCardWorkspaceView: React.FC = () => {
 
   // Intake prospective qty check
   const parsedIntakeQty = useMemo(() => {
-    return parseIDCQuantity(newQtyStr) || 1;
+    return parseIDCQuantity(newQtyStr) || 100;
   }, [newQtyStr]);
 
   const intakeStockCheck = useMemo(() => {
@@ -319,23 +336,30 @@ export const IDCardWorkspaceView: React.FC = () => {
           return false;
         if (statusFilter === "done" && o.status !== "done") return false;
 
-        // 3. File filter
-        if (fileFilter !== "ALL" && !o.fileLocation?.toLowerCase().includes(fileFilter.toLowerCase())) {
+        // 3. Category filter
+        if (categoryFilter !== "ALL" && o.cardCategory !== categoryFilter) {
           return false;
         }
 
-        // 4. Search query
+        // 4. File filter
+        if (fileFilter !== "ALL" && o.fileLocation !== fileFilter) {
+          return false;
+        }
+
+        // 5. Search query
         if (searchQuery.trim()) {
           const q = searchQuery.toLowerCase();
           const matchesClient = o.client?.toLowerCase().includes(q);
           const matchesSn = String(o.sn).includes(q);
-          const matchesQty = o.workQtyDisplay?.toLowerCase().includes(q);
+          const matchesCat = o.cardCategory?.toLowerCase().includes(q);
+          const matchesQty = String(o.totalQty).includes(q) || o.workQtyDisplay?.toLowerCase().includes(q);
           const matchesLanyard = o.holderLanyardStatus?.toLowerCase().includes(q);
           const matchesRemark = o.remarks?.toLowerCase().includes(q);
           const matchesFile = o.fileLocation?.toLowerCase().includes(q);
           if (
             !matchesClient &&
             !matchesSn &&
+            !matchesCat &&
             !matchesQty &&
             !matchesLanyard &&
             !matchesRemark &&
@@ -348,23 +372,28 @@ export const IDCardWorkspaceView: React.FC = () => {
         return true;
       })
       .sort((a, b) => (b.sn || 0) - (a.sn || 0)); // LATEST ON TOP!
-  }, [orders, viewTab, statusFilter, fileFilter, searchQuery]);
+  }, [orders, viewTab, statusFilter, categoryFilter, fileFilter, searchQuery]);
 
-  // Ingestion Handler
+  // Ingestion Handler: Strictly separate orders for Student vs Staff
   const handleIngestOrder = () => {
     if (!newClient.trim()) {
       toastError("Required Field", "Please enter a School Name / Client Title.");
       return;
     }
 
-    const qtyDisplay = newQtyStr.trim() || "1 card";
-    const computedTotal = parseIDCQuantity(qtyDisplay);
+    const computedTotal = parseIDCQuantity(newQtyStr) || 100;
+
+    let title = newClient.trim();
+    if (newCategory === "Staff" && !title.toLowerCase().includes("staff")) {
+      title = `${title} (Staff)`;
+    }
 
     addOrder({
       sn: nextSN,
       date: getFormattedDateToday(),
-      client: newClient.trim(),
-      workQtyDisplay: qtyDisplay,
+      client: title,
+      cardCategory: newCategory,
+      workQtyDisplay: `${computedTotal} ${newCategory.toLowerCase()}`,
       totalQty: computedTotal,
       sentForPrint: true,
       printOperator: "Kamal Sir",
@@ -379,7 +408,7 @@ export const IDCardWorkspaceView: React.FC = () => {
     setNewRemark("");
     toastSuccess(
       "Batch Ingested",
-      `Added #${nextSN}: ${newClient.trim()} (${computedTotal.toLocaleString()} cards) • Sent to Kamal Sir.`
+      `Added #${nextSN}: ${title} [${newCategory}] (${computedTotal.toLocaleString()} cards) • Sent to Kamal Sir.`
     );
   };
 
@@ -646,7 +675,7 @@ export const IDCardWorkspaceView: React.FC = () => {
       </div>
 
       {/* ══════════════════════════════════════════════════════════════════════════ */}
-      {/* 2. ORDER INTAKE DOCK (Top: Title & Qty | Bottom: Format, Lanyard & Stock)   */}
+      {/* 2. ORDER INTAKE DOCK (Top: Title & Qty | Bottom: Category, Format & Stock)  */}
       {/* ══════════════════════════════════════════════════════════════════════════ */}
       <div
         style={{
@@ -660,7 +689,7 @@ export const IDCardWorkspaceView: React.FC = () => {
           boxShadow: "0 4px 24px rgba(0, 0, 0, 0.3)",
         }}
       >
-        {/* Top Row: Next SN Badge + School/Client Input + Qty/Breakdown Input + Ingest Button */}
+        {/* Top Row: Next SN Badge + School/Client Input + Qty Input + Ingest Button */}
         <div
           style={{
             display: "flex",
@@ -701,7 +730,7 @@ export const IDCardWorkspaceView: React.FC = () => {
 
           <input
             type="text"
-            placeholder="School Name / Client Title (e.g. DPS Bhopal, St. Xavier High School, Blue Bird)"
+            placeholder="School Name / Client Title (e.g. DPS Bhopal, St. Xavier High School)"
             value={newClient}
             onChange={(e) => setNewClient(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleIngestOrder()}
@@ -729,12 +758,12 @@ export const IDCardWorkspaceView: React.FC = () => {
 
           <input
             type="text"
-            placeholder="Qty (e.g. 50 stu + 5 staff)"
+            placeholder="Quantity (e.g. 500)"
             value={newQtyStr}
             onChange={(e) => setNewQtyStr(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleIngestOrder()}
             style={{
-              width: "250px",
+              width: "180px",
               height: "40px",
               padding: "0 14px",
               backgroundColor: "#07090e",
@@ -786,7 +815,7 @@ export const IDCardWorkspaceView: React.FC = () => {
           </button>
         </div>
 
-        {/* Bottom Row: Format + Lanyard Match + Remarks & Live Stock */}
+        {/* Bottom Row: Card Category + Single Format (No PDF) + Lanyard Match & Live Stock */}
         <div
           style={{
             display: "flex",
@@ -797,7 +826,65 @@ export const IDCardWorkspaceView: React.FC = () => {
             flexWrap: "wrap",
           }}
         >
-          {/* 1. File Format Selector */}
+          {/* 1. Card Category Selector (Separate Order Counts for Student vs Staff) */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            <span style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+              Card Category
+            </span>
+            <div
+              style={{
+                display: "flex",
+                backgroundColor: "#07090e",
+                borderRadius: "6px",
+                padding: "3px",
+                border: "1px solid rgba(255, 255, 255, 0.14)",
+                height: "36px",
+                boxSizing: "border-box",
+                alignItems: "center",
+                gap: "2px",
+              }}
+            >
+              {(["Student", "Staff", "Other"] as const).map((cat) => {
+                const isSelected = newCategory === cat;
+                return (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setNewCategory(cat)}
+                    style={{
+                      height: "28px",
+                      padding: "0 16px",
+                      borderRadius: "4px",
+                      border: "none",
+                      backgroundColor: isSelected ? "#2563eb" : "transparent",
+                      color: isSelected ? "#ffffff" : "#94a3b8",
+                      fontSize: "12.5px",
+                      fontWeight: isSelected ? 700 : 500,
+                      cursor: "pointer",
+                      transition: "all 0.12s ease",
+                      boxShadow: isSelected ? "0 1px 4px rgba(0, 0, 0, 0.35)" : "none",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isSelected) {
+                        e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.07)";
+                        e.currentTarget.style.color = "#f1f5f9";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isSelected) {
+                        e.currentTarget.style.backgroundColor = "transparent";
+                        e.currentTarget.style.color = "#94a3b8";
+                      }
+                    }}
+                  >
+                    {cat}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 2. File Format Selector (Single format only, Strictly NO PDF) */}
           <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
             <span style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.06em" }}>
               File Format
@@ -815,7 +902,7 @@ export const IDCardWorkspaceView: React.FC = () => {
                 gap: "2px",
               }}
             >
-              {(["doc", "pdf", "excel", "doc + pdf", "hard copy"] as const).map((fmt) => {
+              {(["doc", "excel", "hard copy"] as const).map((fmt) => {
                 const isSelected = newFileLocation === fmt;
                 return (
                   <button
@@ -824,7 +911,7 @@ export const IDCardWorkspaceView: React.FC = () => {
                     onClick={() => setNewFileLocation(fmt)}
                     style={{
                       height: "28px",
-                      padding: "0 14px",
+                      padding: "0 16px",
                       borderRadius: "4px",
                       border: "none",
                       backgroundColor: isSelected ? "#2563eb" : "transparent",
@@ -858,7 +945,7 @@ export const IDCardWorkspaceView: React.FC = () => {
             </div>
           </div>
 
-          {/* 2. Lanyard / Holder Match */}
+          {/* 3. Lanyard / Holder Match */}
           <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
             <span style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.06em" }}>
               Lanyard & Holder Match
@@ -940,7 +1027,7 @@ export const IDCardWorkspaceView: React.FC = () => {
             </div>
           </div>
 
-          {/* 3. Remarks (Optional) */}
+          {/* 4. Remarks (Optional) */}
           <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
             <span style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.06em" }}>
               Remarks (Optional)
@@ -952,7 +1039,7 @@ export const IDCardWorkspaceView: React.FC = () => {
               onChange={(e) => setNewRemark(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleIngestOrder()}
               style={{
-                width: "180px",
+                width: "160px",
                 height: "36px",
                 padding: "0 12px",
                 backgroundColor: "#07090e",
@@ -974,7 +1061,7 @@ export const IDCardWorkspaceView: React.FC = () => {
             />
           </div>
 
-          {/* 4. Live Blank PVC Stock Status */}
+          {/* 5. Live Blank PVC Stock Status */}
           <div
             style={{
               marginLeft: "auto",
@@ -1122,7 +1209,28 @@ export const IDCardWorkspaceView: React.FC = () => {
 
         {/* Right: Search, Filters & Quick Link to Lanyard Hub */}
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          {/* File Format Filter */}
+          {/* Card Category Filter */}
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            style={{
+              height: "30px",
+              padding: "0 10px",
+              backgroundColor: "#07090e",
+              border: "1px solid rgba(255, 255, 255, 0.12)",
+              borderRadius: "5px",
+              color: "#94a3b8",
+              fontSize: "12px",
+              outline: "none",
+            }}
+          >
+            <option value="ALL">All Categories</option>
+            <option value="Student">Students Only</option>
+            <option value="Staff">Staff Only</option>
+            <option value="Other">Other</option>
+          </select>
+
+          {/* File Format Filter (No PDF, Single formats only) */}
           <select
             value={fileFilter}
             onChange={(e) => setFileFilter(e.target.value)}
@@ -1137,9 +1245,8 @@ export const IDCardWorkspaceView: React.FC = () => {
               outline: "none",
             }}
           >
-            <option value="ALL">All File Types</option>
+            <option value="ALL">All Formats</option>
             <option value="doc">DOC</option>
-            <option value="pdf">PDF</option>
             <option value="excel">Excel</option>
             <option value="hard copy">Hard Copy</option>
           </select>
@@ -1173,7 +1280,7 @@ export const IDCardWorkspaceView: React.FC = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{
-                width: "190px",
+                width: "180px",
                 height: "30px",
                 padding: "0 10px 0 28px",
                 backgroundColor: "#07090e",
@@ -1310,10 +1417,10 @@ export const IDCardWorkspaceView: React.FC = () => {
                     color: "#94a3b8",
                     textTransform: "uppercase",
                     letterSpacing: "0.06em",
-                    width: "180px",
+                    width: "110px",
                   }}
                 >
-                  Breakdown
+                  Category
                 </th>
                 <th
                   style={{
@@ -1504,44 +1611,21 @@ export const IDCardWorkspaceView: React.FC = () => {
                         )}
                       </td>
 
-                      {/* 4. Student / Staff Breakdown */}
+                      {/* 4. Card Category (Student vs Staff - Strictly Separate) */}
                       <td
                         style={{
                           padding: "9px 12px",
                           cursor: "pointer",
                         }}
-                        onDoubleClick={(e) =>
-                          handleStartEdit(o.id, "workQtyDisplay", o.workQtyDisplay, e)
-                        }
-                        title="Double-click to edit breakdown"
+                        onDoubleClick={() => {
+                          const nextCat: IDCardCategory =
+                            o.cardCategory === "Student" ? "Staff" : o.cardCategory === "Staff" ? "Other" : "Student";
+                          updateOrder(o.id, { cardCategory: nextCat });
+                          toastSuccess("Category Updated", `Order #${o.sn} is now marked as ${nextCat}.`);
+                        }}
+                        title="Double-click to toggle Student / Staff"
                       >
-                        {editingCell?.id === o.id && editingCell?.field === "workQtyDisplay" ? (
-                          <input
-                            ref={editInputRef}
-                            type="text"
-                            value={editValue}
-                            onChange={(e) => setEditValue(e.target.value)}
-                            onBlur={handleSaveEdit}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") handleSaveEdit();
-                              if (e.key === "Escape") setEditingCell(null);
-                            }}
-                            style={{
-                              width: "100%",
-                              height: "26px",
-                              padding: "0 8px",
-                              backgroundColor: "#07090e",
-                              border: "1px solid #3b82f6",
-                              borderRadius: "4px",
-                              color: "#38bdf8",
-                              fontSize: "12px",
-                              fontFamily: "var(--font-mono)",
-                              outline: "none",
-                            }}
-                          />
-                        ) : (
-                          renderBreakdownTags(o.workQtyDisplay)
-                        )}
+                        {renderCategoryBadge(o.cardCategory || "Student")}
                       </td>
 
                       {/* 5. Total Quantity */}
@@ -1553,12 +1637,42 @@ export const IDCardWorkspaceView: React.FC = () => {
                           fontSize: "14.5px",
                           fontWeight: 700,
                           color: "#ffffff",
+                          cursor: "pointer",
                         }}
+                        onDoubleClick={(e) => handleStartEdit(o.id, "totalQty", o.totalQty, e)}
+                        title="Double-click to edit quantity"
                       >
-                        {o.totalQty.toLocaleString()}
+                        {editingCell?.id === o.id && editingCell?.field === "totalQty" ? (
+                          <input
+                            ref={editInputRef}
+                            type="text"
+                            value={editValue}
+                            onChange={(e) => setEditValue(e.target.value)}
+                            onBlur={handleSaveEdit}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") handleSaveEdit();
+                              if (e.key === "Escape") setEditingCell(null);
+                            }}
+                            style={{
+                              width: "70px",
+                              height: "26px",
+                              padding: "0 6px",
+                              backgroundColor: "#07090e",
+                              border: "1px solid #3b82f6",
+                              borderRadius: "4px",
+                              color: "#fff",
+                              fontSize: "13px",
+                              textAlign: "right",
+                              fontFamily: "var(--font-mono)",
+                              outline: "none",
+                            }}
+                          />
+                        ) : (
+                          <span>{o.totalQty.toLocaleString()}</span>
+                        )}
                       </td>
 
-                      {/* 6. File Format */}
+                      {/* 6. File Format (Strictly Single format: doc / excel / hard copy, NO PDF) */}
                       <td style={{ padding: "10px 10px", textAlign: "center" }}>
                         <span
                           style={{
@@ -1568,26 +1682,20 @@ export const IDCardWorkspaceView: React.FC = () => {
                             padding: "2.5px 7px",
                             borderRadius: "4px",
                             backgroundColor:
-                              o.fileLocation === "pdf"
-                                ? "rgba(239, 68, 68, 0.1)"
-                                : o.fileLocation === "excel" || o.fileLocation === "excel and doc"
+                              o.fileLocation === "excel"
                                 ? "rgba(34, 197, 94, 0.1)"
                                 : o.fileLocation === "hard copy"
                                 ? "rgba(245, 158, 11, 0.1)"
                                 : "rgba(56, 189, 248, 0.1)",
                             border: `1px solid ${
-                              o.fileLocation === "pdf"
-                                ? "rgba(239, 68, 68, 0.25)"
-                                : o.fileLocation === "excel" || o.fileLocation === "excel and doc"
+                              o.fileLocation === "excel"
                                 ? "rgba(34, 197, 94, 0.25)"
                                 : o.fileLocation === "hard copy"
                                 ? "rgba(245, 158, 11, 0.25)"
                                 : "rgba(56, 189, 248, 0.25)"
                             }`,
                             color:
-                              o.fileLocation === "pdf"
-                                ? "#f87171"
-                                : o.fileLocation === "excel" || o.fileLocation === "excel and doc"
+                              o.fileLocation === "excel"
                                 ? "#4ade80"
                                 : o.fileLocation === "hard copy"
                                 ? "#fbbf24"
@@ -1902,8 +2010,8 @@ export const IDCardWorkspaceView: React.FC = () => {
             Showing {filteredOrders.length} of {orders.length} batches ({metrics.totalPieces.toLocaleString()} total cards)
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <span>• Double-click any cell to edit inline</span>
-            <span>• Verify thermal printing with Kamal Sir, then click Mark Dispatched to complete</span>
+            <span>• Staff and student batches are tracked as separate order counts</span>
+            <span>• Single format: DOC, Excel, or Hard Copy (PDF excluded)</span>
           </div>
         </div>
       </div>
