@@ -48,86 +48,40 @@ function formatClientTitle(name: string): string {
     .join(" ");
 }
 
-// Category Badge (Student vs Staff vs Other) — Crisp, restrained industrial badge
+// Category Badge (Student vs Staff vs Other) — Crisp, restrained industrial tag inline with Client Name
 function renderCategoryBadge(category: IDCardCategory) {
-  if (category === "Staff") {
-    return (
-      <span
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: "6px",
-          padding: "3.5px 9px",
-          borderRadius: "4px",
-          backgroundColor: "rgba(255, 255, 255, 0.07)",
-          border: "1px solid rgba(255, 255, 255, 0.18)",
-          color: "#f8fafc",
-          fontSize: "12px",
-          fontWeight: 700,
-          whiteSpace: "nowrap",
-        }}
-      >
-        <span
-          style={{
-            width: "6px",
-            height: "6px",
-            borderRadius: "50%",
-            backgroundColor: "#cbd5e1",
-          }}
-        />
-        Staff
-      </span>
-    );
-  }
-
-  if (category === "Other") {
-    return (
-      <span
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: "6px",
-          padding: "3.5px 9px",
-          borderRadius: "4px",
-          backgroundColor: "transparent",
-          border: "1px solid rgba(255, 255, 255, 0.08)",
-          color: "#94a3b8",
-          fontSize: "12px",
-          fontWeight: 500,
-          whiteSpace: "nowrap",
-        }}
-      >
-        <span style={{ width: "6px", height: "6px", borderRadius: "50%", backgroundColor: "#64748b" }} />
-        Other
-      </span>
-    );
-  }
+  const isStaff = category === "Staff";
+  const isOther = category === "Other";
+  const label = isStaff ? "Staff" : isOther ? "Other" : "Student";
 
   return (
     <span
       style={{
         display: "inline-flex",
         alignItems: "center",
-        gap: "6px",
-        padding: "3.5px 9px",
+        gap: "5px",
+        padding: "2px 7px",
         borderRadius: "4px",
-        backgroundColor: "rgba(255, 255, 255, 0.04)",
-        border: "1px solid rgba(255, 255, 255, 0.12)",
-        color: "#cbd5e1",
-        fontSize: "12px",
-        fontWeight: 600,
+        backgroundColor: isStaff ? "rgba(255, 255, 255, 0.09)" : isOther ? "transparent" : "rgba(255, 255, 255, 0.05)",
+        border: isStaff ? "1px solid rgba(255, 255, 255, 0.2)" : "1px solid rgba(255, 255, 255, 0.12)",
+        color: isStaff ? "#f8fafc" : isOther ? "#94a3b8" : "#cbd5e1",
+        fontSize: "11px",
+        fontWeight: isStaff ? 700 : 600,
+        fontFamily: "var(--font-mono)",
         whiteSpace: "nowrap",
+        flexShrink: 0,
+        lineHeight: 1.3,
       }}
     >
       <span
         style={{
-          width: "6px",
-          height: "6px",
+          width: "5px",
+          height: "5px",
           borderRadius: "50%",
-          backgroundColor: "#94a3b8",
+          backgroundColor: isStaff ? "#cbd5e1" : isOther ? "#64748b" : "#94a3b8",
         }}
       />
-      Student
+      {label}
     </span>
   );
 }
@@ -1274,23 +1228,10 @@ export const IDCardWorkspaceView: React.FC = () => {
                     color: "#94a3b8",
                     textTransform: "uppercase",
                     letterSpacing: "0.06em",
-                    minWidth: "200px",
+                    minWidth: "220px",
                   }}
                 >
-                  School / Client Title
-                </th>
-                <th
-                  style={{
-                    padding: "11px 8px",
-                    fontSize: "12px",
-                    fontWeight: 700,
-                    color: "#94a3b8",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.06em",
-                    width: "95px",
-                  }}
-                >
-                  Category
+                  Order / Client Title
                 </th>
                 <th
                   style={{
@@ -1382,7 +1323,7 @@ export const IDCardWorkspaceView: React.FC = () => {
               {filteredOrders.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={10}
+                    colSpan={9}
                     style={{
                       padding: "40px 16px",
                       textAlign: "center",
@@ -1457,7 +1398,7 @@ export const IDCardWorkspaceView: React.FC = () => {
                         {o.date}
                       </td>
 
-                      {/* 3. School / Client Title + Optional Remark Subline */}
+                      {/* 3. Order / Client Title & Inline Category Tag */}
                       <td
                         style={{
                           padding: "11px 14px",
@@ -1467,70 +1408,79 @@ export const IDCardWorkspaceView: React.FC = () => {
                         title="Double-click to edit client"
                       >
                         {editingCell?.id === o.id && editingCell?.field === "client" ? (
-                          <input
-                            ref={editInputRef}
-                            type="text"
-                            value={editValue}
-                            onChange={(e) => setEditValue(e.target.value)}
-                            onBlur={handleSaveEdit}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") handleSaveEdit();
-                              if (e.key === "Escape") setEditingCell(null);
-                            }}
-                            style={{
-                              width: "100%",
-                              height: "26px",
-                              padding: "0 8px",
-                              backgroundColor: "#07090e",
-                              border: "1px solid #3b82f6",
-                              borderRadius: "4px",
-                              color: "#fff",
-                              fontSize: "13px",
-                              outline: "none",
-                            }}
-                          />
-                        ) : (
-                          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                            <span
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                            {renderCategoryBadge(o.cardCategory || "Student")}
+                            <input
+                              ref={editInputRef}
+                              type="text"
+                              value={editValue}
+                              onChange={(e) => setEditValue(e.target.value)}
+                              onBlur={handleSaveEdit}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") handleSaveEdit();
+                                if (e.key === "Escape") setEditingCell(null);
+                              }}
                               style={{
-                                fontSize: "13.5px",
-                                fontWeight: 600,
-                                color: isDone ? "#94a3b8" : "#f1f5f9",
-                                letterSpacing: "-0.01em",
+                                width: "100%",
+                                height: "26px",
+                                padding: "0 8px",
+                                backgroundColor: "#07090e",
+                                border: "1px solid #3b82f6",
+                                borderRadius: "4px",
+                                color: "#fff",
+                                fontSize: "13px",
+                                outline: "none",
+                              }}
+                            />
+                          </div>
+                        ) : (
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const nextCat: IDCardCategory =
+                                  o.cardCategory === "Student" ? "Staff" : o.cardCategory === "Staff" ? "Other" : "Student";
+                                updateOrder(o.id, { cardCategory: nextCat });
+                                toastSuccess("Category Updated", `Order #${o.sn}: Category set to ${nextCat}.`);
+                              }}
+                              title="Click to toggle Student / Staff / Other"
+                              style={{
+                                background: "none",
+                                border: "none",
+                                padding: 0,
+                                cursor: "pointer",
+                                display: "inline-flex",
                               }}
                             >
-                              {formatClientTitle(o.client)}
-                            </span>
-                            {o.remarks && o.remarks !== "—" && (
+                              {renderCategoryBadge(o.cardCategory || "Student")}
+                            </button>
+
+                            <div style={{ display: "flex", flexDirection: "column", gap: "2px", minWidth: 0 }}>
                               <span
                                 style={{
-                                  fontSize: "11px",
-                                  color: "#64748b",
-                                  fontStyle: "italic",
+                                  fontSize: "13.5px",
+                                  fontWeight: 600,
+                                  color: isDone ? "#94a3b8" : "#f1f5f9",
+                                  letterSpacing: "-0.01em",
                                 }}
                               >
-                                {o.remarks}
+                                {formatClientTitle(o.client)}
                               </span>
-                            )}
+                              {o.remarks && o.remarks !== "—" && (
+                                <span
+                                  style={{
+                                    fontSize: "11px",
+                                    color: "#64748b",
+                                    fontStyle: "italic",
+                                  }}
+                                >
+                                  {o.remarks}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         )}
-                      </td>
-
-                      {/* 4. Card Category (Student vs Staff - Strictly Separate) */}
-                      <td
-                        style={{
-                          padding: "11px 8px",
-                          cursor: "pointer",
-                        }}
-                        onDoubleClick={() => {
-                          const nextCat: IDCardCategory =
-                            o.cardCategory === "Student" ? "Staff" : o.cardCategory === "Staff" ? "Other" : "Student";
-                          updateOrder(o.id, { cardCategory: nextCat });
-                          toastSuccess("Category Updated", `Order #${o.sn} is now marked as ${nextCat}.`);
-                        }}
-                        title="Double-click to toggle Student / Staff"
-                      >
-                        {renderCategoryBadge(o.cardCategory || "Student")}
                       </td>
 
                       {/* 5. Total Quantity */}
