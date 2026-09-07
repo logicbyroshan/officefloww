@@ -97,7 +97,6 @@ const CheckboxBox: React.FC<CheckboxBoxProps> = ({
 
 const HOOK_OPTIONS = ["Dog Hook", "Eagle Hook", "Plastic Hook", "None"] as const;
 const HOLDER_PRESETS = ["DST-V", "DST-H", "CCH", "PH", "PV"] as const;
-const JOINTER_OPTIONS = ["No Jointer", "With Jointer"] as const;
 
 export const LanyardWorkspaceView: React.FC = () => {
   const { success: toastSuccess, error: toastError } = useToast();
@@ -126,7 +125,6 @@ export const LanyardWorkspaceView: React.FC = () => {
   const [newQtyStr, setNewQtyStr] = useState("");
   const [newHook, setNewHook] = useState<string>("Dog Hook");
   const [newFittingItem, setNewFittingItem] = useState<string>("");
-  const [newJointer, setNewJointer] = useState<"No Jointer" | "With Jointer">("No Jointer");
 
   // Prospective Intake Stock Calculation
   const parsedIntakeQty = useMemo(() => {
@@ -450,7 +448,16 @@ export const LanyardWorkspaceView: React.FC = () => {
     if (holderUpper) {
       hardwareParts.push(holderUpper);
     }
-    if (newJointer === "With Jointer") {
+    
+    // Auto-detect jointer: size automatically dictates jointer size (e.g. 20mm -> 20mm jointer)
+    const hasJointer =
+      title.toLowerCase().includes("jointer") ||
+      title.toLowerCase().includes("buckle") ||
+      title.toLowerCase().includes("-j") ||
+      holderUpper.includes("-J") ||
+      holderUpper.includes("JOINTER");
+
+    if (hasJointer) {
       hardwareParts.push("Safety Jointer");
     }
     const fittingHardware = hardwareParts.join(" + ");
@@ -472,7 +479,7 @@ export const LanyardWorkspaceView: React.FC = () => {
       orderReady: false,
       fittingItem: holderUpper || undefined,
       hookType: newHook,
-      jointerType: newJointer === "With Jointer" ? `${newSize}-j` : undefined,
+      jointerType: hasJointer ? `${newSize}-j` : undefined,
     });
 
     setNewMplName("");
@@ -1214,52 +1221,7 @@ export const LanyardWorkspaceView: React.FC = () => {
             </div>
           </div>
 
-          {/* 4. Jointer Option */}
-          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <span style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase" }}>
-              Jointer:
-            </span>
-            <div
-              style={{
-                display: "flex",
-                backgroundColor: "#090c13",
-                borderRadius: "5px",
-                padding: "2px",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
-                height: "28px",
-                boxSizing: "border-box",
-                alignItems: "center",
-              }}
-            >
-              {JOINTER_OPTIONS.map((jOpt) => {
-                const isSelected = newJointer === jOpt;
-                return (
-                  <button
-                    key={jOpt}
-                    type="button"
-                    onClick={() => setNewJointer(jOpt)}
-                    style={{
-                      height: "22px",
-                      padding: "0 8px",
-                      borderRadius: "3px",
-                      border: "none",
-                      backgroundColor: isSelected ? "rgba(255, 255, 255, 0.14)" : "transparent",
-                      color: isSelected ? "#fff" : "#64748b",
-                      fontSize: "11px",
-                      fontWeight: isSelected ? 700 : 500,
-                      cursor: "pointer",
-                      transition: "all 0.12s ease",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {jOpt}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* 5. Live Roll Stock Status Indicator */}
+          {/* Live Roll Stock Status Indicator */}
           <div
             style={{
               marginLeft: "auto",
