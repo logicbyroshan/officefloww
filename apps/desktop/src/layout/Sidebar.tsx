@@ -41,9 +41,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   }, 0);
 
   const primaryNav: NavItemDef[] = [
-    { id: "lanyard_orders", label: "Lanyard Order", icon: "tag", badge: lanyardActiveCount },
-    { id: "card_orders", label: "ID Card Order", icon: "credit-card", badge: idCardActiveCount },
-    { id: "labour_lanyard", label: "Labour Lanyard", icon: "labour", badge: labourActiveCount },
+    { id: "lanyard_orders", label: "Lanyard Order", icon: "tag" },
+    { id: "card_orders", label: "ID Card Order", icon: "credit-card" },
+    { id: "labour_lanyard", label: "Labour Lanyard", icon: "labour" },
     { id: "stock", label: "Stock", icon: "stock" },
   ];
 

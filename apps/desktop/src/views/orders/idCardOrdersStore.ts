@@ -771,7 +771,14 @@ export function useIDCardStore() {
   };
 
   const updateOrderStatus = (id: string, newStatus: IDCardOrderEntry["status"]) => {
-    globalIDCardOrders = globalIDCardOrders.map((o) => (o.id === id ? { ...o, status: newStatus } : o));
+    globalIDCardOrders = globalIDCardOrders.map((o) => {
+      if (o.id !== id) return o;
+      // Invariant: cannot advance to ready (printed) or done unless design is done
+      if ((newStatus === "ready" || newStatus === "ready (1 pending he)" || newStatus === "done") && !o.designDone) {
+        return o;
+      }
+      return { ...o, status: newStatus };
+    });
     notifyAll();
   };
 
@@ -779,7 +786,7 @@ export function useIDCardStore() {
     globalIDCardOrders = globalIDCardOrders.map((o) => {
       if (o.id !== id) return o;
       let nextStatus: IDCardOrderEntry["status"] = "kamal";
-      if (o.status === "kamal") nextStatus = "ready";
+      if (o.status === "kamal" && o.designDone) nextStatus = "ready";
       else if (o.status === "ready" || o.status === "ready (1 pending he)") nextStatus = "done";
       else if (o.status === "done") nextStatus = "kamal";
       return { ...o, status: nextStatus };
@@ -808,7 +815,17 @@ export function useIDCardStore() {
   const toggleDesignDone = (id: string) => {
     globalIDCardOrders = globalIDCardOrders.map((o) => {
       if (o.id !== id) return o;
-      return { ...o, designDone: !o.designDone };
+      const nextDesign = !o.designDone;
+      let nextStatus = o.status;
+      // If revoking design approval, revert from printed (ready) back to with kamal
+      if (!nextDesign && (o.status === "ready" || o.status === "ready (1 pending he)")) {
+        nextStatus = "kamal";
+      }
+      return {
+        ...o,
+        designDone: nextDesign,
+        status: nextStatus,
+      };
     });
     notifyAll();
   };

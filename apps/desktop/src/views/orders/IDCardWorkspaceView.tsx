@@ -48,7 +48,7 @@ function formatClientTitle(name: string): string {
     .join(" ");
 }
 
-// Category Badge (Student vs Staff vs Other) — Bold, prominent, highly readable industrial badge
+// Category Badge (Student vs Staff vs Other) — Crisp, restrained industrial badge
 function renderCategoryBadge(category: IDCardCategory) {
   if (category === "Staff") {
     return (
@@ -57,23 +57,22 @@ function renderCategoryBadge(category: IDCardCategory) {
           display: "inline-flex",
           alignItems: "center",
           gap: "6px",
-          padding: "4px 10px",
-          borderRadius: "5px",
-          backgroundColor: "rgba(192, 132, 252, 0.12)",
-          border: "1px solid rgba(192, 132, 252, 0.35)",
-          color: "#c084fc",
-          fontSize: "12.5px",
+          padding: "3.5px 9px",
+          borderRadius: "4px",
+          backgroundColor: "rgba(255, 255, 255, 0.07)",
+          border: "1px solid rgba(255, 255, 255, 0.18)",
+          color: "#f8fafc",
+          fontSize: "12px",
           fontWeight: 700,
           whiteSpace: "nowrap",
         }}
       >
         <span
           style={{
-            width: "7px",
-            height: "7px",
+            width: "6px",
+            height: "6px",
             borderRadius: "50%",
-            backgroundColor: "#c084fc",
-            boxShadow: "0 0 6px rgba(192, 132, 252, 0.6)",
+            backgroundColor: "#cbd5e1",
           }}
         />
         Staff
@@ -88,17 +87,17 @@ function renderCategoryBadge(category: IDCardCategory) {
           display: "inline-flex",
           alignItems: "center",
           gap: "6px",
-          padding: "4px 10px",
-          borderRadius: "5px",
-          backgroundColor: "rgba(148, 163, 184, 0.12)",
-          border: "1px solid rgba(148, 163, 184, 0.3)",
-          color: "#cbd5e1",
-          fontSize: "12.5px",
-          fontWeight: 700,
+          padding: "3.5px 9px",
+          borderRadius: "4px",
+          backgroundColor: "transparent",
+          border: "1px solid rgba(255, 255, 255, 0.08)",
+          color: "#94a3b8",
+          fontSize: "12px",
+          fontWeight: 500,
           whiteSpace: "nowrap",
         }}
       >
-        <span style={{ width: "7px", height: "7px", borderRadius: "50%", backgroundColor: "#94a3b8" }} />
+        <span style={{ width: "6px", height: "6px", borderRadius: "50%", backgroundColor: "#64748b" }} />
         Other
       </span>
     );
@@ -110,23 +109,22 @@ function renderCategoryBadge(category: IDCardCategory) {
         display: "inline-flex",
         alignItems: "center",
         gap: "6px",
-        padding: "4px 10px",
-        borderRadius: "5px",
-        backgroundColor: "rgba(56, 189, 248, 0.12)",
-        border: "1px solid rgba(56, 189, 248, 0.35)",
-        color: "#38bdf8",
-        fontSize: "12.5px",
-        fontWeight: 700,
+        padding: "3.5px 9px",
+        borderRadius: "4px",
+        backgroundColor: "rgba(255, 255, 255, 0.04)",
+        border: "1px solid rgba(255, 255, 255, 0.12)",
+        color: "#cbd5e1",
+        fontSize: "12px",
+        fontWeight: 600,
         whiteSpace: "nowrap",
       }}
     >
       <span
         style={{
-          width: "7px",
-          height: "7px",
+          width: "6px",
+          height: "6px",
           borderRadius: "50%",
-          backgroundColor: "#38bdf8",
-          boxShadow: "0 0 6px rgba(56, 189, 248, 0.6)",
+          backgroundColor: "#94a3b8",
         }}
       />
       Student
@@ -134,71 +132,26 @@ function renderCategoryBadge(category: IDCardCategory) {
   );
 }
 
-// File Format Badge (DOC / EXCEL / HARD COPY)
+// File Format Badge (DOC / EXCEL / HARD COPY) — Clean, unified technical monospace tag
 function renderFormatBadge(format: IDCardFileFormat) {
-  const fmt = (format || "doc").toLowerCase();
-  if (fmt === "excel") {
-    return (
-      <span
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          padding: "3.5px 9px",
-          borderRadius: "5px",
-          backgroundColor: "rgba(16, 185, 129, 0.12)",
-          border: "1px solid rgba(16, 185, 129, 0.32)",
-          color: "#34d399",
-          fontSize: "11.5px",
-          fontWeight: 700,
-          fontFamily: "var(--font-mono)",
-          letterSpacing: "0.04em",
-          textTransform: "uppercase",
-        }}
-      >
-        EXCEL
-      </span>
-    );
-  }
-  if (fmt === "hard copy") {
-    return (
-      <span
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          padding: "3.5px 9px",
-          borderRadius: "5px",
-          backgroundColor: "rgba(245, 158, 11, 0.12)",
-          border: "1px solid rgba(245, 158, 11, 0.32)",
-          color: "#fbbf24",
-          fontSize: "11.5px",
-          fontWeight: 700,
-          fontFamily: "var(--font-mono)",
-          letterSpacing: "0.04em",
-          textTransform: "uppercase",
-        }}
-      >
-        HARD COPY
-      </span>
-    );
-  }
+  const fmt = (format || "doc").toUpperCase();
   return (
     <span
       style={{
         display: "inline-flex",
         alignItems: "center",
-        padding: "3.5px 9px",
-        borderRadius: "5px",
-        backgroundColor: "rgba(59, 130, 246, 0.12)",
-        border: "1px solid rgba(59, 130, 246, 0.32)",
-        color: "#60a5fa",
-        fontSize: "11.5px",
-        fontWeight: 700,
+        padding: "3px 8px",
+        borderRadius: "4px",
+        backgroundColor: "rgba(255, 255, 255, 0.04)",
+        border: "1px solid rgba(255, 255, 255, 0.1)",
+        color: "#cbd5e1",
+        fontSize: "11px",
+        fontWeight: 600,
         fontFamily: "var(--font-mono)",
         letterSpacing: "0.04em",
-        textTransform: "uppercase",
       }}
     >
-      DOC
+      {fmt}
     </span>
   );
 }
@@ -208,53 +161,24 @@ function renderHolderBadge(holderName?: string) {
   const name = holderName && holderName.trim() ? holderName.trim() : "DST-V";
   const isOnlyCard = name.toLowerCase().includes("only") || name.toLowerCase().includes("card");
 
-  if (isOnlyCard) {
-    return (
-      <span
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          padding: "4px 10px",
-          borderRadius: "5px",
-          backgroundColor: "rgba(100, 116, 139, 0.15)",
-          border: "1px solid rgba(100, 116, 139, 0.3)",
-          color: "#94a3b8",
-          fontSize: "12px",
-          fontWeight: 700,
-          whiteSpace: "nowrap",
-        }}
-      >
-        Cards Only
-      </span>
-    );
-  }
-
   return (
     <span
       style={{
         display: "inline-flex",
         alignItems: "center",
-        gap: "6px",
-        padding: "4px 10px",
-        borderRadius: "5px",
-        backgroundColor: "rgba(14, 165, 233, 0.12)",
-        border: "1px solid rgba(14, 165, 233, 0.35)",
-        color: "#38bdf8",
-        fontSize: "12.5px",
-        fontWeight: 700,
+        gap: "5px",
+        padding: "3px 9px",
+        borderRadius: "4px",
+        backgroundColor: "rgba(255, 255, 255, 0.04)",
+        border: "1px solid rgba(255, 255, 255, 0.1)",
+        color: isOnlyCard ? "#64748b" : "#cbd5e1",
+        fontSize: "12px",
+        fontWeight: 600,
         fontFamily: "var(--font-mono)",
         whiteSpace: "nowrap",
       }}
     >
-      <span
-        style={{
-          width: "6px",
-          height: "6px",
-          borderRadius: "50%",
-          backgroundColor: "#38bdf8",
-        }}
-      />
-      <span>{name}</span>
+      <span>{isOnlyCard ? "Cards Only" : name}</span>
     </span>
   );
 }
@@ -472,8 +396,8 @@ export const IDCardWorkspaceView: React.FC = () => {
       cardCategory: newCategory,
       workQtyDisplay: `${computedTotal} ${newCategory.toLowerCase()}`,
       totalQty: computedTotal,
-      designDone: true,
-      sentForPrint: true,
+      designDone: false, // Strict Step 1: Starts pending
+      sentForPrint: false,
       printOperator: "Kamal Sir",
       fileLocation: newFileLocation,
       status: "kamal",
@@ -487,7 +411,7 @@ export const IDCardWorkspaceView: React.FC = () => {
     setNewRemark("");
     toastSuccess(
       "Batch Ingested",
-      `Added #${nextSN}: ${title} [${newCategory}] (${computedTotal.toLocaleString()} cards) • Sent to Kamal Sir.`
+      `Added #${nextSN}: ${title} [${newCategory}] (${computedTotal.toLocaleString()} cards) • Step 1 Design Pending.`
     );
   };
 
@@ -508,9 +432,28 @@ export const IDCardWorkspaceView: React.FC = () => {
     toastSuccess("Order Re-opened", `Order #${order.sn} returned to Active Queue as Printed (Ready).`);
   };
 
-  // 1-Click Print Verification (With Kamal <-> Printed)
+  // Step 1: Toggle Design OK / Pending
+  const handleToggleDesign = (order: IDCardOrderEntry, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const willBeDone = !order.designDone;
+    toggleDesignDone(order.id);
+    if (willBeDone) {
+      toastSuccess("Design Approved", `Order #${order.sn}: Step 1 (Design OK) approved ✓ (Unlocked Step 2: Send to Print).`);
+    } else {
+      toastSuccess("Design Pending", `Order #${order.sn}: Step 1 reset to Pending. Step 2 print locked.`);
+    }
+  };
+
+  // Step 2: 1-Click Print Verification (Strict Stage-Gate: Step 1 Design must be OK!)
   const handleTogglePrinted = (order: IDCardOrderEntry, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
+    if (!order.designDone) {
+      toastError(
+        "Step 1 Required",
+        `Order #${order.sn}: Step 1 (Design OK) must be checked before sending to print.`
+      );
+      return;
+    }
     if (order.status === "kamal") {
       updateOrderStatus(order.id, "ready");
       toastSuccess("Printed OK", `Order #${order.sn}: Printing verified ✓ (Unlocked Dispatch).`);
@@ -613,7 +556,7 @@ export const IDCardWorkspaceView: React.FC = () => {
             >
               Blank PVC Cards
             </span>
-            <Icon name="layers" size={14} color="#38bdf8" />
+            <Icon name="layers" size={14} color="#94a3b8" />
           </div>
           <div
             style={{
@@ -653,7 +596,7 @@ export const IDCardWorkspaceView: React.FC = () => {
             >
               YMCKO Ribbons
             </span>
-            <Icon name="package" size={14} color="#c084fc" />
+            <Icon name="package" size={14} color="#94a3b8" />
           </div>
           <div
             style={{
@@ -693,7 +636,7 @@ export const IDCardWorkspaceView: React.FC = () => {
             >
               Printed (Ready)
             </span>
-            <Icon name="printer" size={14} color="#fbbf24" />
+            <Icon name="printer" size={14} color="#94a3b8" />
           </div>
           <div
             style={{
@@ -733,7 +676,7 @@ export const IDCardWorkspaceView: React.FC = () => {
             >
               Completed
             </span>
-            <Icon name="check-circle" size={14} color="#34d399" />
+            <Icon name="check-circle" size={14} color="#94a3b8" />
           </div>
           <div
             style={{
@@ -785,9 +728,9 @@ export const IDCardWorkspaceView: React.FC = () => {
               gap: "7px",
               padding: "0 12px",
               borderRadius: "5px",
-              backgroundColor: "rgba(56, 189, 248, 0.08)",
-              border: "1px solid rgba(56, 189, 248, 0.25)",
-              color: "#38bdf8",
+              backgroundColor: "rgba(255, 255, 255, 0.05)",
+              border: "1px solid rgba(255, 255, 255, 0.14)",
+              color: "#f1f5f9",
               fontSize: "13px",
               fontWeight: 700,
               fontFamily: "var(--font-mono)",
@@ -800,8 +743,7 @@ export const IDCardWorkspaceView: React.FC = () => {
                 width: "6px",
                 height: "6px",
                 borderRadius: "50%",
-                backgroundColor: "#38bdf8",
-                boxShadow: "0 0 6px #38bdf8",
+                backgroundColor: "#94a3b8",
               }}
             />
             #{nextSN}
@@ -1709,11 +1651,7 @@ export const IDCardWorkspaceView: React.FC = () => {
                       <td style={{ padding: "11px 8px", textAlign: "center" }}>
                         <button
                           type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleDesignDone(o.id);
-                            toastSuccess("Design Updated", `Order #${o.sn}: Design marked as ${!o.designDone ? "Done ✓" : "Pending"}`);
-                          }}
+                          onClick={(e) => handleToggleDesign(o, e)}
                           title="Click to toggle Design status"
                           style={{
                             display: "inline-flex",
@@ -1721,17 +1659,17 @@ export const IDCardWorkspaceView: React.FC = () => {
                             gap: "5px",
                             padding: "4px 10px",
                             borderRadius: "5px",
-                            backgroundColor: o.designDone ? "rgba(34, 197, 94, 0.12)" : "rgba(245, 158, 11, 0.1)",
-                            border: o.designDone ? "1px solid rgba(34, 197, 94, 0.32)" : "1px solid rgba(245, 158, 11, 0.28)",
-                            color: o.designDone ? "#4ade80" : "#fbbf24",
+                            backgroundColor: o.designDone ? "rgba(34, 197, 94, 0.12)" : "rgba(255, 255, 255, 0.04)",
+                            border: o.designDone ? "1px solid rgba(34, 197, 94, 0.32)" : "1px solid rgba(255, 255, 255, 0.14)",
+                            color: o.designDone ? "#4ade80" : "#cbd5e1",
                             fontSize: "12px",
-                            fontWeight: 700,
+                            fontWeight: 600,
                             cursor: "pointer",
                             whiteSpace: "nowrap",
                             transition: "all 0.12s ease",
                           }}
                         >
-                          <Icon name={o.designDone ? "check" : "clock"} size={11} color="currentColor" />
+                          <Icon name={o.designDone ? "check" : "clock"} size={11} color={o.designDone ? "#22c55e" : "#94a3b8"} />
                           <span>{o.designDone ? "Design OK ✓" : "Design Pending"}</span>
                         </button>
                       </td>
@@ -1756,6 +1694,31 @@ export const IDCardWorkspaceView: React.FC = () => {
                             <Icon name="check" size={11} color="#22c55e" />
                             <span>Printed ✓</span>
                           </span>
+                        ) : !o.designDone ? (
+                          <button
+                            type="button"
+                            onClick={(e) => handleTogglePrinted(o, e)}
+                            title="Step 1 (Design OK) must be checked before sending to print"
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "5px",
+                              padding: "4px 10px",
+                              borderRadius: "5px",
+                              backgroundColor: "rgba(255, 255, 255, 0.02)",
+                              border: "1px dashed rgba(255, 255, 255, 0.12)",
+                              color: "#64748b",
+                              fontSize: "12px",
+                              fontWeight: 600,
+                              cursor: "not-allowed",
+                              opacity: 0.55,
+                              whiteSpace: "nowrap",
+                              transition: "all 0.12s ease",
+                            }}
+                          >
+                            <Icon name="lock" size={11} color="#64748b" />
+                            <span>With Kamal ⚡</span>
+                          </button>
                         ) : isReady ? (
                           <button
                             type="button"
@@ -1784,7 +1747,7 @@ export const IDCardWorkspaceView: React.FC = () => {
                           <button
                             type="button"
                             onClick={(e) => handleTogglePrinted(o, e)}
-                            title="Click to mark printing complete"
+                            title="Click to mark printing complete (Unlocks Dispatch)"
                             style={{
                               display: "inline-flex",
                               alignItems: "center",
@@ -1809,7 +1772,7 @@ export const IDCardWorkspaceView: React.FC = () => {
                               e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.16)";
                             }}
                           >
-                            <Icon name="printer" size={11} color="#94a3b8" />
+                            <Icon name="printer" size={11} color="#cbd5e1" />
                             <span>With Kamal ⚡</span>
                           </button>
                         )}
