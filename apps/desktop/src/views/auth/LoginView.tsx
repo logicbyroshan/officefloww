@@ -580,7 +580,7 @@ export const LoginView: React.FC = () => {
             <div className="auth-brand-logo">
               <img
                 src="./assets/logo.png"
-                alt="PrintFlow"
+                alt="OfficeFloww"
                 style={{
                   width: "42px",
                   height: "42px",
@@ -590,7 +590,7 @@ export const LoginView: React.FC = () => {
                 }}
               />
               <div>
-                <div className="auth-firm-name">PrintFlow</div>
+                <div className="auth-firm-name">OfficeFloww</div>
                 <div className="auth-firm-sub">Adharsh Bhopal • Production OS</div>
               </div>
             </div>

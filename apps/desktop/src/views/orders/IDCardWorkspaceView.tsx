@@ -1196,47 +1196,7 @@ export const IDCardWorkspaceView: React.FC = () => {
               >
                 <th
                   style={{
-                    padding: "11px 12px",
-                    fontSize: "12px",
-                    fontWeight: 700,
-                    color: "#94a3b8",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.06em",
-                    width: "65px",
-                  }}
-                >
-                  SN
-                </th>
-                <th
-                  style={{
-                    padding: "11px 10px",
-                    fontSize: "12px",
-                    fontWeight: 700,
-                    color: "#94a3b8",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.06em",
-                    width: "75px",
-                  }}
-                >
-                  Date
-                </th>
-                <th
-                  style={{
-                    padding: "11px 14px",
-                    fontSize: "12px",
-                    fontWeight: 700,
-                    color: "#94a3b8",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.06em",
-                    minWidth: "220px",
-                  }}
-                >
-                  Order / Client Title
-                </th>
-                <th
-                  style={{
-                    padding: "11px 12px",
-                    textAlign: "right",
+                    padding: "13px 14px",
                     fontSize: "12px",
                     fontWeight: 700,
                     color: "#94a3b8",
@@ -1245,25 +1205,95 @@ export const IDCardWorkspaceView: React.FC = () => {
                     width: "80px",
                   }}
                 >
+                  SN
+                </th>
+                <th
+                  style={{
+                    padding: "13px 14px",
+                    fontSize: "12px",
+                    fontWeight: 700,
+                    color: "#94a3b8",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.06em",
+                    width: "95px",
+                  }}
+                >
+                  Date
+                </th>
+                <th
+                  style={{
+                    padding: "13px 20px",
+                    fontSize: "12px",
+                    fontWeight: 700,
+                    color: "#94a3b8",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.06em",
+                    minWidth: "260px",
+                    width: "28%",
+                  }}
+                >
+                  Order / Client Title
+                </th>
+                <th
+                  style={{
+                    padding: "13px 20px",
+                    textAlign: "right",
+                    fontSize: "12px",
+                    fontWeight: 700,
+                    color: "#94a3b8",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.06em",
+                    width: "105px",
+                  }}
+                >
                   Qty
                 </th>
                 <th
                   style={{
-                    padding: "11px 8px",
+                    padding: "13px 16px",
                     textAlign: "center",
                     fontSize: "12px",
                     fontWeight: 700,
                     color: "#94a3b8",
                     textTransform: "uppercase",
                     letterSpacing: "0.06em",
-                    width: "130px",
+                    width: "160px",
                   }}
                 >
                   1. Design
                 </th>
                 <th
                   style={{
-                    padding: "11px 8px",
+                    padding: "13px 16px",
+                    textAlign: "center",
+                    fontSize: "12px",
+                    fontWeight: 700,
+                    color: "#94a3b8",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.06em",
+                    width: "170px",
+                  }}
+                >
+                  2. Send to Print
+                </th>
+                <th
+                  style={{
+                    padding: "13px 16px",
+                    textAlign: "center",
+                    fontSize: "12px",
+                    fontWeight: 700,
+                    color: "#94a3b8",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.06em",
+                    width: "140px",
+                  }}
+                  title="Format of data given to Kamal Sir for printing (DOC / EXCEL / HARD COPY)"
+                >
+                  Format Given
+                </th>
+                <th
+                  style={{
+                    padding: "13px 16px",
                     textAlign: "center",
                     fontSize: "12px",
                     fontWeight: 700,
@@ -1273,46 +1303,18 @@ export const IDCardWorkspaceView: React.FC = () => {
                     width: "135px",
                   }}
                 >
-                  2. Send to Print
-                </th>
-                <th
-                  style={{
-                    padding: "11px 8px",
-                    textAlign: "center",
-                    fontSize: "12px",
-                    fontWeight: 700,
-                    color: "#94a3b8",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.06em",
-                    width: "115px",
-                  }}
-                  title="Format of data given to Kamal Sir for printing (DOC / EXCEL / HARD COPY)"
-                >
-                  Format Given
-                </th>
-                <th
-                  style={{
-                    padding: "11px 10px",
-                    fontSize: "12px",
-                    fontWeight: 700,
-                    color: "#94a3b8",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.06em",
-                    width: "115px",
-                  }}
-                >
                   Holder
                 </th>
                 <th
                   style={{
-                    padding: "11px 10px",
+                    padding: "13px 20px",
                     textAlign: "center",
                     fontSize: "12px",
                     fontWeight: 700,
                     color: "#94a3b8",
                     textTransform: "uppercase",
                     letterSpacing: "0.06em",
-                    width: "155px",
+                    width: "185px",
                   }}
                 >
                   Status / Dispatch
@@ -1353,7 +1355,7 @@ export const IDCardWorkspaceView: React.FC = () => {
                     <tr
                       key={o.id}
                       style={{
-                        height: "46px",
+                        height: "52px",
                         borderBottom: "1px solid rgba(255, 255, 255, 0.05)",
                         backgroundColor: isDone
                           ? "rgba(255, 255, 255, 0.015)"
@@ -1376,7 +1378,7 @@ export const IDCardWorkspaceView: React.FC = () => {
                       {/* 1. SN */}
                       <td
                         style={{
-                          padding: "11px 12px",
+                          padding: "13px 14px",
                           fontFamily: "var(--font-mono)",
                           fontSize: "12.5px",
                           fontWeight: 600,
@@ -1389,7 +1391,7 @@ export const IDCardWorkspaceView: React.FC = () => {
                       {/* 2. Date */}
                       <td
                         style={{
-                          padding: "11px 10px",
+                          padding: "13px 14px",
                           fontFamily: "var(--font-mono)",
                           fontSize: "12.5px",
                           color: "#94a3b8",
@@ -1401,7 +1403,7 @@ export const IDCardWorkspaceView: React.FC = () => {
                       {/* 3. Order / Client Title & Inline Category Tag */}
                       <td
                         style={{
-                          padding: "11px 14px",
+                          padding: "13px 20px",
                           cursor: "pointer",
                         }}
                         onDoubleClick={(e) => handleStartEdit(o.id, "client", o.client, e)}
@@ -1483,10 +1485,10 @@ export const IDCardWorkspaceView: React.FC = () => {
                         )}
                       </td>
 
-                      {/* 5. Total Quantity */}
+                      {/* 4. Total Quantity */}
                       <td
                         style={{
-                          padding: "11px 12px",
+                          padding: "13px 20px",
                           textAlign: "right",
                           cursor: "pointer",
                         }}
@@ -1532,8 +1534,8 @@ export const IDCardWorkspaceView: React.FC = () => {
                         )}
                       </td>
 
-                      {/* 6. 1. Design (Artwork Verification & OK) */}
-                      <td style={{ padding: "11px 8px", textAlign: "center" }}>
+                      {/* 5. 1. Design (Artwork Verification & OK) */}
+                      <td style={{ padding: "13px 16px", textAlign: "center" }}>
                         <button
                           type="button"
                           onClick={(e) => handleToggleDesign(o, e)}
@@ -1559,8 +1561,8 @@ export const IDCardWorkspaceView: React.FC = () => {
                         </button>
                       </td>
 
-                      {/* 7. 2. Send to Print (Kamal Sir Desk) */}
-                      <td style={{ padding: "11px 8px", textAlign: "center" }}>
+                      {/* 6. 2. Send to Print (Kamal Sir Desk) */}
+                      <td style={{ padding: "13px 16px", textAlign: "center" }}>
                         {isDone ? (
                           <span
                             style={{
@@ -1663,8 +1665,8 @@ export const IDCardWorkspaceView: React.FC = () => {
                         )}
                       </td>
 
-                      {/* 8. Format Given (Format handed to Kamal Sir: DOC / EXCEL / HARD COPY) */}
-                      <td style={{ padding: "11px 8px", textAlign: "center" }}>
+                      {/* 7. Format Given (Format handed to Kamal Sir: DOC / EXCEL / HARD COPY) */}
+                      <td style={{ padding: "13px 16px", textAlign: "center" }}>
                         <select
                           value={(o.fileLocation || "doc").toLowerCase()}
                           onClick={(e) => e.stopPropagation()}
@@ -1697,10 +1699,11 @@ export const IDCardWorkspaceView: React.FC = () => {
                         </select>
                       </td>
 
-                      {/* 9. Card Holder (Strictly Holder Name Only: DST-V, DST-H, Cards Only, CCH, PV, PH) */}
+                      {/* 8. Card Holder (Strictly Holder Name Only: DST-V, DST-H, Cards Only, CCH, PV, PH) */}
                       <td
                         style={{
-                          padding: "11px 10px",
+                          padding: "13px 16px",
+                          textAlign: "center",
                           cursor: "pointer",
                         }}
                         onDoubleClick={(e) =>
@@ -1736,8 +1739,8 @@ export const IDCardWorkspaceView: React.FC = () => {
                         )}
                       </td>
 
-                      {/* 10. Status / Dispatch */}
-                      <td style={{ padding: "11px 10px", textAlign: "center" }}>
+                      {/* 9. Status / Dispatch */}
+                      <td style={{ padding: "13px 20px", textAlign: "center" }}>
                         {isDone ? (
                           <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
                             <span

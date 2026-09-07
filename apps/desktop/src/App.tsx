@@ -42,7 +42,7 @@ const MainApp: React.FC = () => {
 
 
   if (authLoading) {
-    return <LoadingState message="Initializing PrintFlow workstation..." />;
+    return <LoadingState message="Initializing OfficeFloww workstation..." />;
   }
 
   if (!user) {

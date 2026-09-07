@@ -70,61 +70,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
       }}
     >
       <div>
-        {/* Brand Header */}
-        <div
-          style={{
-            padding: isCollapsed ? "2px 0 14px 0" : "2px 6px 14px 6px",
-            borderBottom: "1px solid rgba(255, 255, 255, 0.07)",
-            marginBottom: "14px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: isCollapsed ? "center" : "flex-start",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "9px" }}>
-            <img
-              src="./assets/logo.png"
-              alt="PrintFlow"
-              title="PrintFlow — Adharsh Bhopal OS"
-              style={{
-                width: 30,
-                height: 30,
-                borderRadius: "5px",
-                objectFit: "contain",
-                filter: "drop-shadow(0 2px 8px rgba(124, 58, 237, 0.45))",
-                flexShrink: 0,
-              }}
-            />
-            {!isCollapsed && (
-              <div>
-                <div
-                  style={{
-                    fontSize: "14px",
-                    fontWeight: 700,
-                    color: "var(--text-primary)",
-                    letterSpacing: "-0.2px",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  PrintFlow
-                </div>
-                <div
-                  style={{
-                    fontSize: "9.5px",
-                    color: "var(--accent-text)",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.5px",
-                    fontWeight: 700,
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  Adharsh OS
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
         {/* Primary Navigation Section */}
         <div style={{ marginBottom: "20px" }}>
           {!isCollapsed && (

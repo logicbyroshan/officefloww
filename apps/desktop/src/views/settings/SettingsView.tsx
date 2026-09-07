@@ -217,7 +217,7 @@ export const SettingsView: React.FC = () => {
                 <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12.5px" }}>
                     <span style={{ color: "var(--text-muted)" }}>Enterprise System:</span>
-                    <strong style={{ color: "#fff" }}>PrintFlow — Adharsh Bhopal OS</strong>
+                    <strong style={{ color: "#fff" }}>OfficeFloww — Adharsh Bhopal OS</strong>
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12.5px" }}>
                     <span style={{ color: "var(--text-muted)" }}>Institutional Domain:</span>

@@ -227,7 +227,7 @@ export const VoiceAssistantBar: React.FC<VoiceAssistantBarProps> = ({
             placeholder={
               isListening
                 ? "Listening... speak now"
-                : `Ask PrintFlow Voice in ${activeSection.toUpperCase()} context...`
+                : `Ask OfficeFloww Voice in ${activeSection.toUpperCase()} context...`
             }
             value={query}
             onChange={(e) => setQuery(e.target.value)}

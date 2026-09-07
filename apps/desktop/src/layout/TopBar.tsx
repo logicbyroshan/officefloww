@@ -65,6 +65,60 @@ export const TopBar: React.FC<TopBarProps> = ({
         zIndex: 50,
       }}
     >
+      {/* Brand Header: OfficeFloww Logo & Title */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "10px",
+          flexShrink: 0,
+          cursor: "pointer",
+          paddingRight: "6px",
+        }}
+        onClick={() => onNavigate && onNavigate("lanyard_orders")}
+        title="OfficeFloww — Industrial Production OS"
+      >
+        <img
+          src="./assets/logo.png"
+          alt="OfficeFloww"
+          style={{
+            width: 28,
+            height: 28,
+            borderRadius: "6px",
+            objectFit: "contain",
+            filter: "drop-shadow(0 2px 8px rgba(124, 58, 237, 0.45))",
+            flexShrink: 0,
+          }}
+        />
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          <div
+            style={{
+              fontSize: "14.5px",
+              fontWeight: 800,
+              color: "#ffffff",
+              letterSpacing: "-0.3px",
+              whiteSpace: "nowrap",
+              lineHeight: 1.15,
+            }}
+          >
+            OfficeFloww
+          </div>
+          <div
+            style={{
+              fontSize: "9px",
+              color: "var(--accent-text, #a78bfa)",
+              textTransform: "uppercase",
+              letterSpacing: "0.6px",
+              fontWeight: 700,
+              whiteSpace: "nowrap",
+              lineHeight: 1,
+            }}
+          >
+            Adharsh OS
+          </div>
+        </div>
+      </div>
+
       {/* Left Context / Global Search Shortcut - Expanded Full Width */}
       <div style={{ display: "flex", alignItems: "center", gap: "14px", flex: 1, maxWidth: "680px" }}>
         <button
