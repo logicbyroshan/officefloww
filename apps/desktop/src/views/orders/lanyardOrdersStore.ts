@@ -47,7 +47,12 @@ export interface LanyardOrderEntry {
   completedQty?: number;
   receivedDate?: string;
 
-  // 5. Remarks
+  // 5. Fitting Item & Hardware Customization
+  fittingItem?: string; // e.g. "DST-V", "DST-H", "CCH", "PH", "PV"
+  hookType?: string; // e.g. "Dog Hook", "Eagle Hook", "Plastic Hook", "None"
+  jointerType?: string; // e.g. "16mm-j", "12mm-j", "none"
+
+  // 6. Remarks
   fittingRemarks?: string;
 }
 

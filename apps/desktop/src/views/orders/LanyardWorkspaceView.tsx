@@ -95,6 +95,10 @@ const CheckboxBox: React.FC<CheckboxBoxProps> = ({
   </div>
 );
 
+const HOOK_OPTIONS = ["Dog Hook", "Eagle Hook", "Plastic Hook", "None"] as const;
+const HOLDER_PRESETS = ["DST-V", "DST-H", "CCH", "PH", "PV"] as const;
+const JOINTER_OPTIONS = ["No Jointer", "With Jointer"] as const;
+
 export const LanyardWorkspaceView: React.FC = () => {
   const { success: toastSuccess, error: toastError } = useToast();
   const {
@@ -120,6 +124,9 @@ export const LanyardWorkspaceView: React.FC = () => {
   const [newMplName, setNewMplName] = useState("");
   const [newSize, setNewSize] = useState<"12mm" | "16mm" | "20mm">("16mm");
   const [newQtyStr, setNewQtyStr] = useState("");
+  const [newHook, setNewHook] = useState<string>("Dog Hook");
+  const [newFittingItem, setNewFittingItem] = useState<string>("");
+  const [newJointer, setNewJointer] = useState<"No Jointer" | "With Jointer">("No Jointer");
 
   // Prospective Intake Stock Calculation
   const parsedIntakeQty = useMemo(() => {
@@ -425,10 +432,33 @@ export const LanyardWorkspaceView: React.FC = () => {
     }
 
     const nextSN = getNextSN(orders);
+    const holderUpper = newFittingItem.trim().toUpperCase();
+
+    // Construct clean display title
+    let title = newMplName.trim();
+    if (holderUpper && !title.toUpperCase().includes(holderUpper)) {
+      title = `${title} (${holderUpper})`;
+    }
+
+    // Build hardware specification
+    const hardwareParts: string[] = [];
+    if (newHook && newHook !== "None") {
+      hardwareParts.push(`${newSize} ${newHook}`);
+    } else {
+      hardwareParts.push(`${newSize} Tape`);
+    }
+    if (holderUpper) {
+      hardwareParts.push(holderUpper);
+    }
+    if (newJointer === "With Jointer") {
+      hardwareParts.push("Safety Jointer");
+    }
+    const fittingHardware = hardwareParts.join(" + ");
+
     const newEntry = addOrder({
       sn: nextSN,
       date: getFormattedDateToday(),
-      mplName: newMplName.trim(),
+      mplName: title,
       size: newSize,
       qty: parsedQty,
       qtyDisplay: newQtyStr.trim() || String(parsedQty),
@@ -436,14 +466,19 @@ export const LanyardWorkspaceView: React.FC = () => {
       goneForPrint: false,
       isPrinted: false,
       goneForFitting: false,
-      fittingHardware: `${newSize} Dog Hook + Clip`,
+      fittingHardware,
       fittingStatus: "pending_assignment",
       fittingRemarks: "",
+      orderReady: false,
+      fittingItem: holderUpper || undefined,
+      hookType: newHook,
+      jointerType: newJointer === "With Jointer" ? `${newSize}-j` : undefined,
     });
 
     setNewMplName("");
     setNewQtyStr("");
-    toastSuccess("Order Ingested", `Added #${nextSN}: ${newEntry.mplName} (${parsedQty.toLocaleString()} pcs)`);
+    setNewFittingItem("");
+    toastSuccess("Order Ingested", `Added #${nextSN}: ${newEntry.mplName} (${parsedQty.toLocaleString()})`);
   };
 
   // Inline Editing
@@ -625,6 +660,25 @@ export const LanyardWorkspaceView: React.FC = () => {
     };
   }, [orders]);
 
+  // Hardware Stock Calculations for Top KPI Deck (Live stock for Hooks & Jointers)
+  const hookStats = useMemo(() => {
+    const dogHook = stockItems.find((s) => s.code === "dog-hook")?.availableStock ?? 8500;
+    const englandHook = stockItems.find((s) => s.code === "england-hook")?.availableStock ?? 6200;
+    const plasticHook = stockItems.find((s) => s.code === "plastic-hook")?.availableStock ?? 11400;
+    const total = dogHook + englandHook + plasticHook;
+    return { total, dogHook, englandHook, plasticHook };
+  }, [stockItems]);
+
+  const jointerStats = useMemo(() => {
+    const clipsOrJointers = stockItems.find((s) => s.code === "clips")?.availableStock ?? 18;
+    const total = typeof clipsOrJointers === "number" && clipsOrJointers < 100 ? clipsOrJointers * 1000 : 18000;
+    return {
+      total,
+      j16mm: 9500,
+      j12mm: 8500,
+    };
+  }, [stockItems]);
+
   // Filtered Orders (Latest on Top!)
   const filteredOrders = useMemo(() => {
     return orders
@@ -682,17 +736,17 @@ export const LanyardWorkspaceView: React.FC = () => {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
           gap: "12px",
         }}
       >
-        {/* Card 1: Active Pipeline */}
+        {/* Card 1: Active Orders */}
         <div
           style={{
             padding: "12px 16px",
             borderRadius: "8px",
             backgroundColor: "#0e131f",
-            border: "1px solid rgba(56, 189, 248, 0.25)",
+            border: "1px solid rgba(255, 255, 255, 0.08)",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -700,14 +754,14 @@ export const LanyardWorkspaceView: React.FC = () => {
               style={{
                 fontSize: "11px",
                 fontWeight: 700,
-                color: "#38bdf8",
+                color: "#94a3b8",
                 textTransform: "uppercase",
-                letterSpacing: "0.06em",
+                letterSpacing: "0.05em",
               }}
             >
-              Active Pipeline
+              Active Orders
             </span>
-            <Icon name="layers" size={14} color="#38bdf8" />
+            <Icon name="layers" size={14} color="#94a3b8" />
           </div>
           <div
             style={{
@@ -719,23 +773,20 @@ export const LanyardWorkspaceView: React.FC = () => {
             }}
           >
             {metrics.activeCount}{" "}
-            <span style={{ fontSize: "12px", color: "#94a3b8", fontWeight: 500 }}>orders</span>{" "}
-            <span style={{ fontSize: "12px", color: "#38bdf8", fontWeight: 700 }}>
-              ({metrics.activeVolume.toLocaleString()} pcs)
-            </span>
+            <span style={{ fontSize: "12px", color: "#94a3b8", fontWeight: 500 }}>orders</span>
           </div>
-          <div style={{ fontSize: "11px", color: "#64748b", marginTop: "2px" }}>
-            Total volume: {metrics.totalVolume.toLocaleString()} pcs ({metrics.totalCount} batches)
+          <div style={{ fontSize: "11px", color: "#64748b", marginTop: "2px", fontFamily: "var(--font-mono)" }}>
+            {metrics.activeVolume.toLocaleString()} total units
           </div>
         </div>
 
-        {/* Card 2: Lanyard Roll Stock Inventory */}
+        {/* Card 2: Tape Roll Stock */}
         <div
           style={{
             padding: "12px 16px",
             borderRadius: "8px",
             backgroundColor: "#0e131f",
-            border: "1px solid rgba(52, 211, 153, 0.25)",
+            border: "1px solid rgba(255, 255, 255, 0.08)",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -743,9 +794,9 @@ export const LanyardWorkspaceView: React.FC = () => {
               style={{
                 fontSize: "11px",
                 fontWeight: 700,
-                color: "#34d399",
+                color: "#94a3b8",
                 textTransform: "uppercase",
-                letterSpacing: "0.06em",
+                letterSpacing: "0.05em",
               }}
             >
               Tape Roll Stock
@@ -756,296 +807,480 @@ export const LanyardWorkspaceView: React.FC = () => {
             style={{
               fontSize: "20px",
               fontWeight: 800,
-              color: "#34d399",
+              color: "#f1f5f9",
               fontFamily: "var(--font-mono)",
               marginTop: "4px",
             }}
           >
             63{" "}
-            <span style={{ fontSize: "12px", color: "rgba(52, 211, 153, 0.8)", fontWeight: 500 }}>rolls</span>{" "}
-            <span style={{ fontSize: "11.5px", color: "#94a3b8", fontWeight: 500 }}>
+            <span style={{ fontSize: "12px", color: "#94a3b8", fontWeight: 500 }}>rolls</span>{" "}
+            <span style={{ fontSize: "11.5px", color: "#64748b", fontWeight: 500 }}>
               (~28,350 cap)
             </span>
           </div>
           <div style={{ fontSize: "11px", color: "#94a3b8", marginTop: "2px", fontFamily: "var(--font-mono)" }}>
-            <span style={{ color: "#38bdf8", fontWeight: 700 }}>16mm: 6r</span> •{" "}
-            <span style={{ color: "#34d399", fontWeight: 700 }}>12mm: 45r</span> •{" "}
-            <span style={{ color: "#c084fc", fontWeight: 700 }}>20mm: 12r</span>
+            12mm: 45r • 16mm: 6r • 20mm: 12r
           </div>
         </div>
 
-        {/* Card 3: In Print */}
+        {/* Card 3: Hooks Stock */}
         <div
           style={{
             padding: "12px 16px",
             borderRadius: "8px",
             backgroundColor: "#0e131f",
-            border: "1px solid rgba(255, 255, 255, 0.07)",
+            border: "1px solid rgba(255, 255, 255, 0.08)",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <span
               style={{
                 fontSize: "11px",
-                fontWeight: 600,
-                color: "#64748b",
+                fontWeight: 700,
+                color: "#94a3b8",
                 textTransform: "uppercase",
                 letterSpacing: "0.05em",
               }}
             >
-              In Sublimation Print
+              Hooks Stock
             </span>
-            <Icon name="printer" size={14} color="#38bdf8" />
+            <Icon name="tool" size={14} color="#c084fc" />
           </div>
           <div
             style={{
               fontSize: "20px",
-              fontWeight: 700,
-              color: "#38bdf8",
+              fontWeight: 800,
+              color: "#f1f5f9",
               fontFamily: "var(--font-mono)",
               marginTop: "4px",
             }}
           >
-            {metrics.inPrintVolume.toLocaleString()}{" "}
-            <span style={{ fontSize: "12px", color: "rgba(56, 189, 248, 0.7)", fontWeight: 500 }}>pcs</span>
+            {hookStats.total.toLocaleString()}{" "}
+            <span style={{ fontSize: "12px", color: "#94a3b8", fontWeight: 500 }}>units</span>
           </div>
-          <div style={{ fontSize: "11px", color: "#64748b", marginTop: "2px" }}>
-            {metrics.inPrintCount} batches on machine floor
+          <div style={{ fontSize: "11px", color: "#94a3b8", marginTop: "2px", fontFamily: "var(--font-mono)" }}>
+            Dog: {(hookStats.dogHook / 1000).toFixed(1)}k • Eng: {(hookStats.englandHook / 1000).toFixed(1)}k • Plastic: {(hookStats.plasticHook / 1000).toFixed(1)}k
           </div>
         </div>
 
-        {/* Card 4: In Labour Fitting */}
+        {/* Card 4: Safety Jointers */}
         <div
           style={{
             padding: "12px 16px",
             borderRadius: "8px",
             backgroundColor: "#0e131f",
-            border: "1px solid rgba(255, 255, 255, 0.07)",
+            border: "1px solid rgba(255, 255, 255, 0.08)",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <span
               style={{
                 fontSize: "11px",
-                fontWeight: 600,
-                color: "#64748b",
+                fontWeight: 700,
+                color: "#94a3b8",
                 textTransform: "uppercase",
                 letterSpacing: "0.05em",
               }}
             >
-              In Labour Fitting
+              Safety Jointers
             </span>
-            <Icon name="tool" size={14} color="#f59e0b" />
+            <Icon name="tag" size={14} color="#fbbf24" />
           </div>
           <div
             style={{
               fontSize: "20px",
-              fontWeight: 700,
-              color: "#fbbf24",
+              fontWeight: 800,
+              color: "#f1f5f9",
               fontFamily: "var(--font-mono)",
               marginTop: "4px",
             }}
           >
-            {metrics.inFittingVolume.toLocaleString()}{" "}
-            <span style={{ fontSize: "12px", color: "rgba(251, 191, 36, 0.7)", fontWeight: 500 }}>pcs</span>
+            {jointerStats.total.toLocaleString()}{" "}
+            <span style={{ fontSize: "12px", color: "#94a3b8", fontWeight: 500 }}>units</span>
           </div>
-          <div style={{ fontSize: "11px", color: "#64748b", marginTop: "2px" }}>
-            {metrics.inFittingCount} batches with outside contractors
+          <div style={{ fontSize: "11px", color: "#94a3b8", marginTop: "2px", fontFamily: "var(--font-mono)" }}>
+            16mm-j: {(jointerStats.j16mm / 1000).toFixed(1)}k • 12mm-j: {(jointerStats.j12mm / 1000).toFixed(1)}k
           </div>
         </div>
 
-        {/* Card 5: Completed & Ready */}
+        {/* Card 5: Completed */}
         <div
           style={{
             padding: "12px 16px",
             borderRadius: "8px",
             backgroundColor: "#0e131f",
-            border: "1px solid rgba(255, 255, 255, 0.07)",
+            border: "1px solid rgba(255, 255, 255, 0.08)",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <span
               style={{
                 fontSize: "11px",
-                fontWeight: 600,
-                color: "#64748b",
+                fontWeight: 700,
+                color: "#94a3b8",
                 textTransform: "uppercase",
                 letterSpacing: "0.05em",
               }}
             >
-              Completed & Ready
+              Completed
             </span>
-            <Icon name="check-circle" size={14} color="#22c55e" />
+            <Icon name="check-circle" size={14} color="#34d399" />
           </div>
           <div
             style={{
               fontSize: "20px",
-              fontWeight: 700,
-              color: "#4ade80",
+              fontWeight: 800,
+              color: "#f1f5f9",
               fontFamily: "var(--font-mono)",
               marginTop: "4px",
             }}
           >
             {metrics.completedVolume.toLocaleString()}{" "}
-            <span style={{ fontSize: "12px", color: "rgba(74, 222, 128, 0.7)", fontWeight: 500 }}>pcs</span>
+            <span style={{ fontSize: "12px", color: "#94a3b8", fontWeight: 500 }}>units</span>
           </div>
           <div style={{ fontSize: "11px", color: "#64748b", marginTop: "2px" }}>
-            {metrics.completedCount} orders verified ({metrics.completionRate}%)
+            {metrics.completedCount} orders completed
           </div>
         </div>
       </div>
 
       {/* ══════════════════════════════════════════════════════════════════════════ */}
-      {/* 3. COMPACT INTAKE STRIP                                                    */}
+      {/* 2. ORDER INTAKE DOCK (Top: Description & Qty | Bottom: Size, Hook & Holders) */}
       {/* ══════════════════════════════════════════════════════════════════════════ */}
       <div
         style={{
           display: "flex",
-          alignItems: "center",
-          gap: "8px",
-          padding: "8px 12px",
+          flexDirection: "column",
+          gap: "10px",
+          padding: "12px 14px",
           borderRadius: "8px",
           backgroundColor: "#0e131f",
           border: "1px solid rgba(255, 255, 255, 0.08)",
-          flexWrap: "wrap",
         }}
       >
-        <span
-          style={{
-            fontSize: "11px",
-            fontWeight: 700,
-            fontFamily: "var(--font-mono)",
-            padding: "4px 8px",
-            borderRadius: "4px",
-            backgroundColor: "rgba(255, 255, 255, 0.06)",
-            color: "#94a3b8",
-          }}
-        >
-          #{getNextSN(orders)}
-        </span>
-
-        <input
-          type="text"
-          placeholder="Client / MPL Title (e.g. rajesh ji-govt girls 500)"
-          value={newMplName}
-          onChange={(e) => setNewMplName(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleIngestOrder()}
-          style={{
-            flex: 1,
-            minWidth: "220px",
-            height: "32px",
-            padding: "0 10px",
-            backgroundColor: "#090c13",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
-            borderRadius: "5px",
-            color: "#fff",
-            fontSize: "12.5px",
-            outline: "none",
-          }}
-        />
-
-        {/* Size Selector: strictly 12mm | 16mm | 20mm */}
+        {/* Top Row: SN Badge + Description Input + Qty Input + Ingest Button */}
         <div
           style={{
             display: "flex",
-            backgroundColor: "#090c13",
-            borderRadius: "5px",
-            padding: "2px",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
-            height: "32px",
-            boxSizing: "border-box",
             alignItems: "center",
+            gap: "10px",
+            width: "100%",
           }}
         >
-          {(["12mm", "16mm", "20mm"] as const).map((sz) => {
-            const isSelected = newSize === sz;
-            return (
-              <button
-                key={sz}
-                type="button"
-                onClick={() => setNewSize(sz)}
-                style={{
-                  height: "26px",
-                  padding: "0 9px",
-                  borderRadius: "3px",
-                  border: "none",
-                  backgroundColor: isSelected ? "rgba(255, 255, 255, 0.12)" : "transparent",
-                  color: isSelected ? "#fff" : "#64748b",
-                  fontSize: "11.5px",
-                  fontWeight: isSelected ? 700 : 500,
-                  fontFamily: "var(--font-mono)",
-                  cursor: "pointer",
-                }}
-              >
-                {sz}
-              </button>
-            );
-          })}
+          <span
+            style={{
+              fontSize: "12px",
+              fontWeight: 700,
+              fontFamily: "var(--font-mono)",
+              padding: "5px 9px",
+              borderRadius: "5px",
+              backgroundColor: "rgba(255, 255, 255, 0.05)",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
+              color: "#cbd5e1",
+              whiteSpace: "nowrap",
+            }}
+          >
+            #{getNextSN(orders)}
+          </span>
+
+          <input
+            type="text"
+            placeholder="Client Title / Description (e.g. Rajesh ji - Govt Girls 500)"
+            value={newMplName}
+            onChange={(e) => setNewMplName(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleIngestOrder()}
+            style={{
+              flex: 1,
+              height: "34px",
+              padding: "0 12px",
+              backgroundColor: "#090c13",
+              border: "1px solid rgba(255, 255, 255, 0.12)",
+              borderRadius: "5px",
+              color: "#fff",
+              fontSize: "13px",
+              outline: "none",
+              transition: "border-color 0.15s ease",
+            }}
+            onFocus={(e) => (e.currentTarget.style.borderColor = "rgba(59, 130, 246, 0.6)")}
+            onBlur={(e) => (e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.12)")}
+          />
+
+          <input
+            type="text"
+            placeholder="Qty (e.g. 500)"
+            value={newQtyStr}
+            onChange={(e) => setNewQtyStr(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleIngestOrder()}
+            style={{
+              width: "110px",
+              height: "34px",
+              padding: "0 10px",
+              backgroundColor: "#090c13",
+              border: "1px solid rgba(255, 255, 255, 0.12)",
+              borderRadius: "5px",
+              color: "#fff",
+              fontSize: "13px",
+              fontFamily: "var(--font-mono)",
+              outline: "none",
+              transition: "border-color 0.15s ease",
+            }}
+            onFocus={(e) => (e.currentTarget.style.borderColor = "rgba(59, 130, 246, 0.6)")}
+            onBlur={(e) => (e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.12)")}
+          />
+
+          <button
+            type="button"
+            onClick={handleIngestOrder}
+            style={{
+              height: "34px",
+              padding: "0 18px",
+              borderRadius: "5px",
+              backgroundColor: "#2563eb",
+              border: "none",
+              color: "#fff",
+              fontSize: "12.5px",
+              fontWeight: 700,
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              whiteSpace: "nowrap",
+              transition: "background-color 0.15s ease",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#1d4ed8")}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#2563eb")}
+          >
+            <Icon name="plus" size={14} />
+            <span>Ingest Order</span>
+          </button>
         </div>
 
-        <input
-          type="text"
-          placeholder="Qty"
-          value={newQtyStr}
-          onChange={(e) => setNewQtyStr(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleIngestOrder()}
-          style={{
-            width: "90px",
-            height: "32px",
-            padding: "0 8px",
-            backgroundColor: "#090c13",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
-            borderRadius: "5px",
-            color: "#fff",
-            fontSize: "12px",
-            fontFamily: "var(--font-mono)",
-            outline: "none",
-          }}
-        />
-
-        {/* Live Roll Stock Indicator */}
+        {/* Bottom Row: Size + Hook + Holder Input & Presets + Jointer + Live Roll Stock */}
         <div
           style={{
-            display: "inline-flex",
+            display: "flex",
             alignItems: "center",
-            gap: "5px",
-            padding: "4px 9px",
-            borderRadius: "4px",
-            backgroundColor: "rgba(255, 255, 255, 0.03)",
-            border: "1px solid rgba(255, 255, 255, 0.06)",
-            fontSize: "11px",
-            color: intakeStockReport.statusColor,
-            whiteSpace: "nowrap",
+            gap: "16px",
+            paddingTop: "8px",
+            borderTop: "1px solid rgba(255, 255, 255, 0.05)",
+            flexWrap: "wrap",
           }}
         >
-          <Icon name="package" size={12} color={intakeStockReport.statusColor} />
-          <span>
-            {intakeStockReport.size}: {intakeStockReport.exactRolls} roll{parseFloat(intakeStockReport.exactRolls) === 1 ? "" : "s"} req &bull; {intakeStockReport.statusText}
-          </span>
-        </div>
+          {/* 1. Size Selector */}
+          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+            <span style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase" }}>
+              Size:
+            </span>
+            <div
+              style={{
+                display: "flex",
+                backgroundColor: "#090c13",
+                borderRadius: "5px",
+                padding: "2px",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
+                height: "28px",
+                boxSizing: "border-box",
+                alignItems: "center",
+              }}
+            >
+              {(["12mm", "16mm", "20mm"] as const).map((sz) => {
+                const isSelected = newSize === sz;
+                return (
+                  <button
+                    key={sz}
+                    type="button"
+                    onClick={() => setNewSize(sz)}
+                    style={{
+                      height: "22px",
+                      padding: "0 8px",
+                      borderRadius: "3px",
+                      border: "none",
+                      backgroundColor: isSelected ? "rgba(255, 255, 255, 0.14)" : "transparent",
+                      color: isSelected ? "#fff" : "#64748b",
+                      fontSize: "11px",
+                      fontWeight: isSelected ? 700 : 500,
+                      fontFamily: "var(--font-mono)",
+                      cursor: "pointer",
+                      transition: "all 0.12s ease",
+                    }}
+                  >
+                    {sz}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
-        <button
-          type="button"
-          onClick={handleIngestOrder}
-          style={{
-            height: "32px",
-            padding: "0 14px",
-            borderRadius: "5px",
-            backgroundColor: "#2563eb",
-            border: "none",
-            color: "#fff",
-            fontSize: "12px",
-            fontWeight: 700,
-            cursor: "pointer",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "5px",
-            whiteSpace: "nowrap",
-          }}
-        >
-          <Icon name="plus" size={13} />
-          <span>Ingest Order</span>
-        </button>
+          {/* 2. Hooks Option */}
+          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+            <span style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase" }}>
+              Hook:
+            </span>
+            <div
+              style={{
+                display: "flex",
+                backgroundColor: "#090c13",
+                borderRadius: "5px",
+                padding: "2px",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
+                height: "28px",
+                boxSizing: "border-box",
+                alignItems: "center",
+              }}
+            >
+              {HOOK_OPTIONS.map((hk) => {
+                const isSelected = newHook === hk;
+                return (
+                  <button
+                    key={hk}
+                    type="button"
+                    onClick={() => setNewHook(hk)}
+                    style={{
+                      height: "22px",
+                      padding: "0 8px",
+                      borderRadius: "3px",
+                      border: "none",
+                      backgroundColor: isSelected ? "rgba(255, 255, 255, 0.14)" : "transparent",
+                      color: isSelected ? "#fff" : "#64748b",
+                      fontSize: "11px",
+                      fontWeight: isSelected ? 700 : 500,
+                      cursor: "pointer",
+                      transition: "all 0.12s ease",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {hk}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 3. Fitting Item / Holder Input & Presets */}
+          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+            <span style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase" }}>
+              Holder:
+            </span>
+            <input
+              type="text"
+              placeholder="e.g. DST-V"
+              value={newFittingItem}
+              onChange={(e) => setNewFittingItem(e.target.value.toUpperCase())}
+              onKeyDown={(e) => e.key === "Enter" && handleIngestOrder()}
+              style={{
+                width: "80px",
+                height: "26px",
+                padding: "0 7px",
+                backgroundColor: "#090c13",
+                border: "1px solid rgba(255, 255, 255, 0.12)",
+                borderRadius: "4px",
+                color: "#fff",
+                fontSize: "11.5px",
+                fontFamily: "var(--font-mono)",
+                fontWeight: 600,
+                outline: "none",
+                textTransform: "uppercase",
+              }}
+            />
+            <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
+              {HOLDER_PRESETS.map((holder) => {
+                const isActive = newFittingItem.toUpperCase() === holder;
+                return (
+                  <button
+                    key={holder}
+                    type="button"
+                    onClick={() => setNewFittingItem(isActive ? "" : holder)}
+                    title={`Select ${holder}`}
+                    style={{
+                      height: "24px",
+                      padding: "0 6px",
+                      borderRadius: "3px",
+                      border: isActive
+                        ? "1px solid rgba(59, 130, 246, 0.5)"
+                        : "1px solid rgba(255, 255, 255, 0.08)",
+                      backgroundColor: isActive ? "rgba(59, 130, 246, 0.18)" : "rgba(255, 255, 255, 0.03)",
+                      color: isActive ? "#93c5fd" : "#94a3b8",
+                      fontSize: "10.5px",
+                      fontWeight: 600,
+                      fontFamily: "var(--font-mono)",
+                      cursor: "pointer",
+                      transition: "all 0.1s ease",
+                    }}
+                  >
+                    {holder}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 4. Jointer Option */}
+          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+            <span style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase" }}>
+              Jointer:
+            </span>
+            <div
+              style={{
+                display: "flex",
+                backgroundColor: "#090c13",
+                borderRadius: "5px",
+                padding: "2px",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
+                height: "28px",
+                boxSizing: "border-box",
+                alignItems: "center",
+              }}
+            >
+              {JOINTER_OPTIONS.map((jOpt) => {
+                const isSelected = newJointer === jOpt;
+                return (
+                  <button
+                    key={jOpt}
+                    type="button"
+                    onClick={() => setNewJointer(jOpt)}
+                    style={{
+                      height: "22px",
+                      padding: "0 8px",
+                      borderRadius: "3px",
+                      border: "none",
+                      backgroundColor: isSelected ? "rgba(255, 255, 255, 0.14)" : "transparent",
+                      color: isSelected ? "#fff" : "#64748b",
+                      fontSize: "11px",
+                      fontWeight: isSelected ? 700 : 500,
+                      cursor: "pointer",
+                      transition: "all 0.12s ease",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {jOpt}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 5. Live Roll Stock Status Indicator */}
+          <div
+            style={{
+              marginLeft: "auto",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "5px",
+              padding: "4px 9px",
+              borderRadius: "4px",
+              backgroundColor: "rgba(255, 255, 255, 0.03)",
+              border: "1px solid rgba(255, 255, 255, 0.06)",
+              fontSize: "11px",
+              color: intakeStockReport.statusColor,
+              whiteSpace: "nowrap",
+            }}
+          >
+            <Icon name="package" size={12} color={intakeStockReport.statusColor} />
+            <span>
+              {intakeStockReport.size}: {intakeStockReport.exactRolls} roll{parseFloat(intakeStockReport.exactRolls) === 1 ? "" : "s"} req &bull; {intakeStockReport.statusText}
+            </span>
+          </div>
+        </div>
       </div>
 
       {/* ══════════════════════════════════════════════════════════════════════════ */}
@@ -1381,6 +1616,23 @@ export const LanyardWorkspaceView: React.FC = () => {
                           >
                             {entry.size}
                           </span>
+
+                          {entry.fittingItem && (
+                            <span
+                              style={{
+                                fontSize: "10.5px",
+                                fontWeight: 600,
+                                fontFamily: "var(--font-mono)",
+                                padding: "2px 6px",
+                                borderRadius: "4px",
+                                backgroundColor: "rgba(255, 255, 255, 0.04)",
+                                border: "1px solid rgba(255, 255, 255, 0.1)",
+                                color: "#94a3b8",
+                              }}
+                            >
+                              {entry.fittingItem}
+                            </span>
+                          )}
 
                           {editingCell?.id === entry.id && editingCell?.field === "mplName" ? (
                             <input
