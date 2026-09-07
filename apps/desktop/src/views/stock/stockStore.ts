@@ -469,10 +469,10 @@ export function useStockStore() {
       statusText = `Short ${deficitRolls} roll${deficitRolls > 1 ? "s" : ""} (Need ${exactRolls} rolls, have ${availableRolls})`;
       statusColor = "#f59e0b";
     } else if (isLow) {
-      statusText = `Only ${availableRolls} rolls left (~${totalCapacityPcs.toLocaleString()} pcs cap.)`;
+      statusText = `Only ${availableRolls} rolls left (~${totalCapacityPcs.toLocaleString()} cap)`;
       statusColor = "#f59e0b";
     } else {
-      statusText = `${availableRolls} rolls avail (~${totalCapacityPcs.toLocaleString()} pcs cap.) ✓ Sufficient`;
+      statusText = `${availableRolls} rolls avail (~${totalCapacityPcs.toLocaleString()} cap) ✓ Sufficient`;
       statusColor = "#22c55e";
     }
 

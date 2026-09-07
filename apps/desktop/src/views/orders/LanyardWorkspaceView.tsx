@@ -959,11 +959,12 @@ export const LanyardWorkspaceView: React.FC = () => {
         style={{
           display: "flex",
           flexDirection: "column",
-          gap: "10px",
-          padding: "12px 14px",
-          borderRadius: "8px",
-          backgroundColor: "#0e131f",
-          border: "1px solid rgba(255, 255, 255, 0.08)",
+          gap: "16px",
+          padding: "18px 20px",
+          borderRadius: "10px",
+          backgroundColor: "#0d1322",
+          border: "1px solid rgba(255, 255, 255, 0.10)",
+          boxShadow: "0 4px 24px rgba(0, 0, 0, 0.3)",
         }}
       >
         {/* Top Row: SN Badge + Description Input + Qty Input + Ingest Button */}
@@ -971,46 +972,66 @@ export const LanyardWorkspaceView: React.FC = () => {
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "10px",
+            gap: "12px",
             width: "100%",
           }}
         >
-          <span
+          <div
             style={{
-              fontSize: "12px",
+              height: "40px",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "0 14px",
+              borderRadius: "6px",
+              backgroundColor: "rgba(56, 189, 248, 0.08)",
+              border: "1px solid rgba(56, 189, 248, 0.25)",
+              color: "#38bdf8",
+              fontSize: "13.5px",
               fontWeight: 700,
               fontFamily: "var(--font-mono)",
-              padding: "5px 9px",
-              borderRadius: "5px",
-              backgroundColor: "rgba(255, 255, 255, 0.05)",
-              border: "1px solid rgba(255, 255, 255, 0.1)",
-              color: "#cbd5e1",
               whiteSpace: "nowrap",
+              flexShrink: 0,
             }}
           >
+            <span
+              style={{
+                width: "7px",
+                height: "7px",
+                borderRadius: "50%",
+                backgroundColor: "#38bdf8",
+                boxShadow: "0 0 6px #38bdf8",
+              }}
+            />
             #{getNextSN(orders)}
-          </span>
+          </div>
 
           <input
             type="text"
-            placeholder="Client Title / Description (e.g. Rajesh ji - Govt Girls 500)"
+            placeholder="Client Name / Job Title (e.g. St. Xavier High School, Rajesh ji - Govt Girls)"
             value={newMplName}
             onChange={(e) => setNewMplName(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleIngestOrder()}
             style={{
               flex: 1,
-              height: "34px",
-              padding: "0 12px",
-              backgroundColor: "#090c13",
-              border: "1px solid rgba(255, 255, 255, 0.12)",
-              borderRadius: "5px",
-              color: "#fff",
-              fontSize: "13px",
+              height: "40px",
+              padding: "0 15px",
+              backgroundColor: "#07090e",
+              border: "1px solid rgba(255, 255, 255, 0.16)",
+              borderRadius: "6px",
+              color: "#ffffff",
+              fontSize: "13.5px",
               outline: "none",
-              transition: "border-color 0.15s ease",
+              transition: "all 0.15s ease",
             }}
-            onFocus={(e) => (e.currentTarget.style.borderColor = "rgba(59, 130, 246, 0.6)")}
-            onBlur={(e) => (e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.12)")}
+            onFocus={(e) => {
+              e.currentTarget.style.borderColor = "#3b82f6";
+              e.currentTarget.style.boxShadow = "0 0 0 2px rgba(59, 130, 246, 0.25)";
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.16)";
+              e.currentTarget.style.boxShadow = "none";
+            }}
           />
 
           <input
@@ -1020,75 +1041,85 @@ export const LanyardWorkspaceView: React.FC = () => {
             onChange={(e) => setNewQtyStr(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleIngestOrder()}
             style={{
-              width: "110px",
-              height: "34px",
-              padding: "0 10px",
-              backgroundColor: "#090c13",
-              border: "1px solid rgba(255, 255, 255, 0.12)",
-              borderRadius: "5px",
-              color: "#fff",
-              fontSize: "13px",
+              width: "170px",
+              height: "40px",
+              padding: "0 14px",
+              backgroundColor: "#07090e",
+              border: "1px solid rgba(255, 255, 255, 0.16)",
+              borderRadius: "6px",
+              color: "#ffffff",
+              fontSize: "13.5px",
               fontFamily: "var(--font-mono)",
+              fontWeight: 700,
+              textAlign: "center",
               outline: "none",
-              transition: "border-color 0.15s ease",
+              transition: "all 0.15s ease",
             }}
-            onFocus={(e) => (e.currentTarget.style.borderColor = "rgba(59, 130, 246, 0.6)")}
-            onBlur={(e) => (e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.12)")}
+            onFocus={(e) => {
+              e.currentTarget.style.borderColor = "#3b82f6";
+              e.currentTarget.style.boxShadow = "0 0 0 2px rgba(59, 130, 246, 0.25)";
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.16)";
+              e.currentTarget.style.boxShadow = "none";
+            }}
           />
 
           <button
             type="button"
             onClick={handleIngestOrder}
             style={{
-              height: "34px",
-              padding: "0 18px",
-              borderRadius: "5px",
+              height: "40px",
+              padding: "0 24px",
+              borderRadius: "6px",
               backgroundColor: "#2563eb",
               border: "none",
-              color: "#fff",
-              fontSize: "12.5px",
+              color: "#ffffff",
+              fontSize: "13.5px",
               fontWeight: 700,
               cursor: "pointer",
               display: "inline-flex",
               alignItems: "center",
-              gap: "6px",
+              gap: "7px",
               whiteSpace: "nowrap",
-              transition: "background-color 0.15s ease",
+              transition: "all 0.15s ease",
+              boxShadow: "0 2px 10px rgba(37, 99, 235, 0.4)",
             }}
             onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#1d4ed8")}
             onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#2563eb")}
           >
-            <Icon name="plus" size={14} />
+            <Icon name="plus" size={16} />
             <span>Ingest Order</span>
           </button>
         </div>
 
-        {/* Bottom Row: Size + Hook + Holder Input & Presets + Jointer + Live Roll Stock */}
+        {/* Bottom Row: Specifications (Size + Hook + Holder & Live Stock) */}
         <div
           style={{
             display: "flex",
-            alignItems: "center",
-            gap: "16px",
-            paddingTop: "8px",
-            borderTop: "1px solid rgba(255, 255, 255, 0.05)",
+            alignItems: "flex-end",
+            gap: "24px",
+            paddingTop: "14px",
+            borderTop: "1px solid rgba(255, 255, 255, 0.07)",
             flexWrap: "wrap",
           }}
         >
-          {/* 1. Size Selector */}
-          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <span style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase" }}>
-              Size:
+          {/* 1. Ribbon Width / Size Selector */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            <span style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+              Ribbon Width
             </span>
             <div
               style={{
                 display: "flex",
-                backgroundColor: "#090c13",
-                borderRadius: "5px",
-                padding: "2px",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
-                height: "28px",
+                backgroundColor: "#07090e",
+                borderRadius: "6px",
+                padding: "3px",
+                border: "1px solid rgba(255, 255, 255, 0.14)",
+                height: "36px",
                 boxSizing: "border-box",
                 alignItems: "center",
+                gap: "2px",
               }}
             >
               {(["12mm", "16mm", "20mm"] as const).map((sz) => {
@@ -1099,17 +1130,30 @@ export const LanyardWorkspaceView: React.FC = () => {
                     type="button"
                     onClick={() => setNewSize(sz)}
                     style={{
-                      height: "22px",
-                      padding: "0 8px",
-                      borderRadius: "3px",
+                      height: "28px",
+                      padding: "0 18px",
+                      borderRadius: "4px",
                       border: "none",
-                      backgroundColor: isSelected ? "rgba(255, 255, 255, 0.14)" : "transparent",
-                      color: isSelected ? "#fff" : "#64748b",
-                      fontSize: "11px",
+                      backgroundColor: isSelected ? "#2563eb" : "transparent",
+                      color: isSelected ? "#ffffff" : "#94a3b8",
+                      fontSize: "12.5px",
                       fontWeight: isSelected ? 700 : 500,
                       fontFamily: "var(--font-mono)",
                       cursor: "pointer",
                       transition: "all 0.12s ease",
+                      boxShadow: isSelected ? "0 1px 4px rgba(0, 0, 0, 0.35)" : "none",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isSelected) {
+                        e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.07)";
+                        e.currentTarget.style.color = "#f1f5f9";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isSelected) {
+                        e.currentTarget.style.backgroundColor = "transparent";
+                        e.currentTarget.style.color = "#94a3b8";
+                      }
                     }}
                   >
                     {sz}
@@ -1119,21 +1163,22 @@ export const LanyardWorkspaceView: React.FC = () => {
             </div>
           </div>
 
-          {/* 2. Hooks Option */}
-          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <span style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase" }}>
-              Hook:
+          {/* 2. Hook Attachment Option */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            <span style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+              Hook Attachment
             </span>
             <div
               style={{
                 display: "flex",
-                backgroundColor: "#090c13",
-                borderRadius: "5px",
-                padding: "2px",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
-                height: "28px",
+                backgroundColor: "#07090e",
+                borderRadius: "6px",
+                padding: "3px",
+                border: "1px solid rgba(255, 255, 255, 0.14)",
+                height: "36px",
                 boxSizing: "border-box",
                 alignItems: "center",
+                gap: "2px",
               }}
             >
               {HOOK_OPTIONS.map((hk) => {
@@ -1144,17 +1189,30 @@ export const LanyardWorkspaceView: React.FC = () => {
                     type="button"
                     onClick={() => setNewHook(hk)}
                     style={{
-                      height: "22px",
-                      padding: "0 8px",
-                      borderRadius: "3px",
+                      height: "28px",
+                      padding: "0 16px",
+                      borderRadius: "4px",
                       border: "none",
-                      backgroundColor: isSelected ? "rgba(255, 255, 255, 0.14)" : "transparent",
-                      color: isSelected ? "#fff" : "#64748b",
-                      fontSize: "11px",
+                      backgroundColor: isSelected ? "#2563eb" : "transparent",
+                      color: isSelected ? "#ffffff" : "#94a3b8",
+                      fontSize: "12.5px",
                       fontWeight: isSelected ? 700 : 500,
                       cursor: "pointer",
                       transition: "all 0.12s ease",
                       whiteSpace: "nowrap",
+                      boxShadow: isSelected ? "0 1px 4px rgba(0, 0, 0, 0.35)" : "none",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isSelected) {
+                        e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.07)";
+                        e.currentTarget.style.color = "#f1f5f9";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isSelected) {
+                        e.currentTarget.style.backgroundColor = "transparent";
+                        e.currentTarget.style.color = "#94a3b8";
+                      }
                     }}
                   >
                     {hk}
@@ -1165,60 +1223,84 @@ export const LanyardWorkspaceView: React.FC = () => {
           </div>
 
           {/* 3. Fitting Item / Holder Input & Presets */}
-          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <span style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase" }}>
-              Holder:
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            <span style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+              Card Holder (Optional)
             </span>
-            <input
-              type="text"
-              placeholder="e.g. DST-V"
-              value={newFittingItem}
-              onChange={(e) => setNewFittingItem(e.target.value.toUpperCase())}
-              onKeyDown={(e) => e.key === "Enter" && handleIngestOrder()}
-              style={{
-                width: "80px",
-                height: "26px",
-                padding: "0 7px",
-                backgroundColor: "#090c13",
-                border: "1px solid rgba(255, 255, 255, 0.12)",
-                borderRadius: "4px",
-                color: "#fff",
-                fontSize: "11.5px",
-                fontFamily: "var(--font-mono)",
-                fontWeight: 600,
-                outline: "none",
-                textTransform: "uppercase",
-              }}
-            />
-            <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
-              {HOLDER_PRESETS.map((holder) => {
-                const isActive = newFittingItem.toUpperCase() === holder;
-                return (
-                  <button
-                    key={holder}
-                    type="button"
-                    onClick={() => setNewFittingItem(isActive ? "" : holder)}
-                    title={`Select ${holder}`}
-                    style={{
-                      height: "24px",
-                      padding: "0 6px",
-                      borderRadius: "3px",
-                      border: isActive
-                        ? "1px solid rgba(59, 130, 246, 0.5)"
-                        : "1px solid rgba(255, 255, 255, 0.08)",
-                      backgroundColor: isActive ? "rgba(59, 130, 246, 0.18)" : "rgba(255, 255, 255, 0.03)",
-                      color: isActive ? "#93c5fd" : "#94a3b8",
-                      fontSize: "10.5px",
-                      fontWeight: 600,
-                      fontFamily: "var(--font-mono)",
-                      cursor: "pointer",
-                      transition: "all 0.1s ease",
-                    }}
-                  >
-                    {holder}
-                  </button>
-                );
-              })}
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <input
+                type="text"
+                placeholder="e.g. DST-V"
+                value={newFittingItem}
+                onChange={(e) => setNewFittingItem(e.target.value.toUpperCase())}
+                onKeyDown={(e) => e.key === "Enter" && handleIngestOrder()}
+                style={{
+                  width: "120px",
+                  height: "36px",
+                  padding: "0 12px",
+                  backgroundColor: "#07090e",
+                  border: "1px solid rgba(255, 255, 255, 0.15)",
+                  borderRadius: "6px",
+                  color: "#ffffff",
+                  fontSize: "13px",
+                  fontFamily: "var(--font-mono)",
+                  fontWeight: 700,
+                  outline: "none",
+                  textTransform: "uppercase",
+                  transition: "all 0.15s ease",
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = "#3b82f6";
+                  e.currentTarget.style.boxShadow = "0 0 0 2px rgba(59, 130, 246, 0.25)";
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.15)";
+                  e.currentTarget.style.boxShadow = "none";
+                }}
+              />
+              <div style={{ display: "flex", gap: "5px", alignItems: "center" }}>
+                {HOLDER_PRESETS.map((holder) => {
+                  const isActive = newFittingItem.toUpperCase() === holder;
+                  return (
+                    <button
+                      key={holder}
+                      type="button"
+                      onClick={() => setNewFittingItem(isActive ? "" : holder)}
+                      title={`Select ${holder}`}
+                      style={{
+                        height: "36px",
+                        padding: "0 13px",
+                        borderRadius: "6px",
+                        border: isActive
+                          ? "1px solid #3b82f6"
+                          : "1px solid rgba(255, 255, 255, 0.12)",
+                        backgroundColor: isActive ? "#2563eb" : "#07090e",
+                        color: isActive ? "#ffffff" : "#94a3b8",
+                        fontSize: "12px",
+                        fontWeight: 700,
+                        fontFamily: "var(--font-mono)",
+                        cursor: "pointer",
+                        transition: "all 0.12s ease",
+                        boxShadow: isActive ? "0 1px 4px rgba(37, 99, 235, 0.35)" : "none",
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isActive) {
+                          e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.08)";
+                          e.currentTarget.style.color = "#f1f5f9";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isActive) {
+                          e.currentTarget.style.backgroundColor = "#07090e";
+                          e.currentTarget.style.color = "#94a3b8";
+                        }
+                      }}
+                    >
+                      {holder}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
@@ -1228,19 +1310,20 @@ export const LanyardWorkspaceView: React.FC = () => {
               marginLeft: "auto",
               display: "inline-flex",
               alignItems: "center",
-              gap: "5px",
-              padding: "4px 9px",
-              borderRadius: "4px",
+              gap: "8px",
+              padding: "0 14px",
+              height: "36px",
+              borderRadius: "6px",
               backgroundColor: "rgba(255, 255, 255, 0.03)",
-              border: "1px solid rgba(255, 255, 255, 0.06)",
-              fontSize: "11px",
+              border: "1px solid rgba(255, 255, 255, 0.09)",
+              fontSize: "12px",
               color: intakeStockReport.statusColor,
               whiteSpace: "nowrap",
             }}
           >
-            <Icon name="package" size={12} color={intakeStockReport.statusColor} />
+            <Icon name="package" size={14} color={intakeStockReport.statusColor} />
             <span>
-              {intakeStockReport.size}: {intakeStockReport.exactRolls} roll{parseFloat(intakeStockReport.exactRolls) === 1 ? "" : "s"} req &bull; {intakeStockReport.statusText}
+              {intakeStockReport.size}: {intakeStockReport.exactRolls} roll{parseFloat(intakeStockReport.exactRolls) === 1 ? "" : "s"} req &bull; {intakeStockReport.statusText.replace(/\s*pcs\b/gi, "")}
             </span>
           </div>
         </div>
