@@ -47,7 +47,7 @@ function formatClientTitle(name: string): string {
     .join(" ");
 }
 
-// Category Badge (Student vs Staff vs Other)
+// Category Badge (Student vs Staff vs Other) — Crisp, professional industrial pill
 function renderCategoryBadge(category: IDCardCategory) {
   if (category === "Staff") {
     return (
@@ -55,18 +55,18 @@ function renderCategoryBadge(category: IDCardCategory) {
         style={{
           display: "inline-flex",
           alignItems: "center",
-          gap: "4px",
-          padding: "2.5px 8px",
-          borderRadius: "4px",
-          backgroundColor: "rgba(168, 85, 247, 0.12)",
-          border: "1px solid rgba(168, 85, 247, 0.28)",
-          color: "#c084fc",
-          fontSize: "11.5px",
-          fontWeight: 700,
+          gap: "5px",
+          padding: "2px 7px",
+          borderRadius: "3px",
+          backgroundColor: "rgba(255, 255, 255, 0.04)",
+          border: "1px solid rgba(255, 255, 255, 0.12)",
+          color: "#e2e8f0",
+          fontSize: "11px",
+          fontWeight: 600,
           whiteSpace: "nowrap",
         }}
       >
-        <span style={{ width: "5px", height: "5px", borderRadius: "50%", backgroundColor: "#c084fc" }} />
+        <span style={{ width: "5px", height: "5px", borderRadius: "50%", backgroundColor: "#a78bfa" }} />
         Staff
       </span>
     );
@@ -78,17 +78,18 @@ function renderCategoryBadge(category: IDCardCategory) {
         style={{
           display: "inline-flex",
           alignItems: "center",
-          gap: "4px",
-          padding: "2.5px 8px",
-          borderRadius: "4px",
-          backgroundColor: "rgba(255, 255, 255, 0.05)",
-          border: "1px solid rgba(255, 255, 255, 0.12)",
-          color: "#cbd5e1",
-          fontSize: "11.5px",
-          fontWeight: 600,
+          gap: "5px",
+          padding: "2px 7px",
+          borderRadius: "3px",
+          backgroundColor: "rgba(255, 255, 255, 0.02)",
+          border: "1px solid rgba(255, 255, 255, 0.07)",
+          color: "#94a3b8",
+          fontSize: "11px",
+          fontWeight: 500,
           whiteSpace: "nowrap",
         }}
       >
+        <span style={{ width: "5px", height: "5px", borderRadius: "50%", backgroundColor: "#64748b" }} />
         Other
       </span>
     );
@@ -99,14 +100,14 @@ function renderCategoryBadge(category: IDCardCategory) {
       style={{
         display: "inline-flex",
         alignItems: "center",
-        gap: "4px",
-        padding: "2.5px 8px",
-        borderRadius: "4px",
-        backgroundColor: "rgba(56, 189, 248, 0.1)",
-        border: "1px solid rgba(56, 189, 248, 0.25)",
-        color: "#38bdf8",
-        fontSize: "11.5px",
-        fontWeight: 700,
+        gap: "5px",
+        padding: "2px 7px",
+        borderRadius: "3px",
+        backgroundColor: "rgba(255, 255, 255, 0.04)",
+        border: "1px solid rgba(255, 255, 255, 0.12)",
+        color: "#e2e8f0",
+        fontSize: "11px",
+        fontWeight: 600,
         whiteSpace: "nowrap",
       }}
     >
@@ -120,7 +121,7 @@ function renderCategoryBadge(category: IDCardCategory) {
 function renderLanyardStatus(status?: string) {
   if (!status || !status.trim() || status === "—") {
     return (
-      <span style={{ fontSize: "12px", color: "#64748b", fontWeight: 500 }}>
+      <span style={{ fontSize: "11.5px", color: "#64748b", fontWeight: 500 }}>
         Cards Only
       </span>
     );
@@ -132,39 +133,26 @@ function renderLanyardStatus(status?: string) {
         style={{
           display: "inline-flex",
           alignItems: "center",
-          gap: "5px",
-          padding: "3px 8px",
-          borderRadius: "4px",
-          backgroundColor: "rgba(56, 189, 248, 0.08)",
-          border: "1px solid rgba(56, 189, 248, 0.25)",
-          color: "#38bdf8",
-          fontSize: "11.5px",
-          fontWeight: 700,
+          gap: "4px",
+          padding: "2px 6px",
+          borderRadius: "3px",
+          backgroundColor: "rgba(255, 255, 255, 0.04)",
+          border: "1px solid rgba(255, 255, 255, 0.09)",
+          color: "#cbd5e1",
+          fontSize: "11px",
+          fontWeight: 500,
           whiteSpace: "nowrap",
         }}
       >
-        <Icon name="tag" size={11} color="#38bdf8" />
+        <Icon name="tag" size={10} color="#94a3b8" />
         <span>Lanyard Ready ✓</span>
       </span>
     );
   }
   if (s.includes("only") || s.includes("card")) {
     return (
-      <span
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: "4px",
-          padding: "3px 8px",
-          borderRadius: "4px",
-          backgroundColor: "rgba(255, 255, 255, 0.04)",
-          border: "1px solid rgba(255, 255, 255, 0.08)",
-          color: "#94a3b8",
-          fontSize: "11.5px",
-          fontWeight: 600,
-        }}
-      >
-        <span>Cards Only</span>
+      <span style={{ fontSize: "11.5px", color: "#64748b", fontWeight: 500 }}>
+        Cards Only
       </span>
     );
   }
@@ -174,13 +162,12 @@ function renderLanyardStatus(status?: string) {
         display: "inline-flex",
         alignItems: "center",
         gap: "4px",
-        padding: "3px 8px",
-        borderRadius: "4px",
-        backgroundColor: "rgba(245, 158, 11, 0.08)",
-        border: "1px solid rgba(245, 158, 11, 0.22)",
-        color: "#fbbf24",
-        fontSize: "11.5px",
-        fontWeight: 600,
+        padding: "2px 6px",
+        borderRadius: "3px",
+        backgroundColor: "rgba(255, 255, 255, 0.03)",
+        border: "1px solid rgba(255, 255, 255, 0.08)",
+        color: "#cbd5e1",
+        fontSize: "11px",
       }}
     >
       <span>{status}</span>
@@ -470,22 +457,22 @@ export const IDCardWorkspaceView: React.FC = () => {
         style={{
           display: "grid",
           gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-          gap: "12px",
+          gap: "10px",
         }}
       >
         {/* Card 1: Active Batches */}
         <div
           style={{
-            padding: "12px 16px",
-            borderRadius: "8px",
+            padding: "10px 14px",
+            borderRadius: "4px",
             backgroundColor: "#0e131f",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
+            border: "1px solid rgba(255, 255, 255, 0.07)",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <span
               style={{
-                fontSize: "11px",
+                fontSize: "10.5px",
                 fontWeight: 700,
                 color: "#94a3b8",
                 textTransform: "uppercase",
@@ -494,21 +481,21 @@ export const IDCardWorkspaceView: React.FC = () => {
             >
               Active Batches
             </span>
-            <Icon name="credit-card" size={14} color="#38bdf8" />
+            <Icon name="credit-card" size={13} color="#94a3b8" />
           </div>
           <div
             style={{
-              fontSize: "20px",
+              fontSize: "18px",
               fontWeight: 800,
-              color: "#f1f5f9",
+              color: "#f8fafc",
               fontFamily: "var(--font-mono)",
-              marginTop: "4px",
+              marginTop: "2px",
             }}
           >
             {metrics.activeCount}{" "}
-            <span style={{ fontSize: "12px", color: "#94a3b8", fontWeight: 500 }}>batches</span>
+            <span style={{ fontSize: "11px", color: "#64748b", fontWeight: 500 }}>batches</span>
           </div>
-          <div style={{ fontSize: "11px", color: "#64748b", marginTop: "2px" }}>
+          <div style={{ fontSize: "10.5px", color: "#64748b", marginTop: "2px" }}>
             {metrics.activePieces.toLocaleString()} cards in production
           </div>
         </div>
@@ -516,16 +503,16 @@ export const IDCardWorkspaceView: React.FC = () => {
         {/* Card 2: Blank PVC Card Stock */}
         <div
           style={{
-            padding: "12px 16px",
-            borderRadius: "8px",
+            padding: "10px 14px",
+            borderRadius: "4px",
             backgroundColor: "#0e131f",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
+            border: "1px solid rgba(255, 255, 255, 0.07)",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <span
               style={{
-                fontSize: "11px",
+                fontSize: "10.5px",
                 fontWeight: 700,
                 color: "#94a3b8",
                 textTransform: "uppercase",
@@ -534,21 +521,21 @@ export const IDCardWorkspaceView: React.FC = () => {
             >
               Blank PVC Cards
             </span>
-            <Icon name="layers" size={14} color="#34d399" />
+            <Icon name="layers" size={13} color="#94a3b8" />
           </div>
           <div
             style={{
-              fontSize: "20px",
+              fontSize: "18px",
               fontWeight: 800,
-              color: "#f1f5f9",
+              color: "#f8fafc",
               fontFamily: "var(--font-mono)",
-              marginTop: "4px",
+              marginTop: "2px",
             }}
           >
             {pvcCardItem.availableStock.toLocaleString()}{" "}
-            <span style={{ fontSize: "12px", color: "#94a3b8", fontWeight: 500 }}>cards</span>
+            <span style={{ fontSize: "11px", color: "#64748b", fontWeight: 500 }}>cards</span>
           </div>
-          <div style={{ fontSize: "11px", color: "#94a3b8", marginTop: "2px", fontFamily: "var(--font-mono)" }}>
+          <div style={{ fontSize: "10.5px", color: "#64748b", marginTop: "2px", fontFamily: "var(--font-mono)" }}>
             Kamal Sir Desk &bull; ~{(pvcCardItem.reservedStock ?? 2473).toLocaleString()} reserved
           </div>
         </div>
@@ -556,16 +543,16 @@ export const IDCardWorkspaceView: React.FC = () => {
         {/* Card 3: YMCKO Ribbon Consumables */}
         <div
           style={{
-            padding: "12px 16px",
-            borderRadius: "8px",
+            padding: "10px 14px",
+            borderRadius: "4px",
             backgroundColor: "#0e131f",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
+            border: "1px solid rgba(255, 255, 255, 0.07)",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <span
               style={{
-                fontSize: "11px",
+                fontSize: "10.5px",
                 fontWeight: 700,
                 color: "#94a3b8",
                 textTransform: "uppercase",
@@ -574,21 +561,21 @@ export const IDCardWorkspaceView: React.FC = () => {
             >
               YMCKO Ribbons
             </span>
-            <Icon name="package" size={14} color="#c084fc" />
+            <Icon name="package" size={13} color="#94a3b8" />
           </div>
           <div
             style={{
-              fontSize: "20px",
+              fontSize: "18px",
               fontWeight: 800,
-              color: "#f1f5f9",
+              color: "#f8fafc",
               fontFamily: "var(--font-mono)",
-              marginTop: "4px",
+              marginTop: "2px",
             }}
           >
             {ymckoItem.availableStock}{" "}
-            <span style={{ fontSize: "12px", color: "#94a3b8", fontWeight: 500 }}>rolls</span>
+            <span style={{ fontSize: "11px", color: "#64748b", fontWeight: 500 }}>rolls</span>
           </div>
-          <div style={{ fontSize: "11px", color: "#94a3b8", marginTop: "2px", fontFamily: "var(--font-mono)" }}>
+          <div style={{ fontSize: "10.5px", color: "#64748b", marginTop: "2px", fontFamily: "var(--font-mono)" }}>
             Thermal Printing Consumables
           </div>
         </div>
@@ -596,16 +583,16 @@ export const IDCardWorkspaceView: React.FC = () => {
         {/* Card 4: Printed (Ready) */}
         <div
           style={{
-            padding: "12px 16px",
-            borderRadius: "8px",
+            padding: "10px 14px",
+            borderRadius: "4px",
             backgroundColor: "#0e131f",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
+            border: "1px solid rgba(255, 255, 255, 0.07)",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <span
               style={{
-                fontSize: "11px",
+                fontSize: "10.5px",
                 fontWeight: 700,
                 color: "#94a3b8",
                 textTransform: "uppercase",
@@ -614,21 +601,21 @@ export const IDCardWorkspaceView: React.FC = () => {
             >
               Printed (Ready)
             </span>
-            <Icon name="printer" size={14} color="#fbbf24" />
+            <Icon name="printer" size={13} color="#94a3b8" />
           </div>
           <div
             style={{
-              fontSize: "20px",
+              fontSize: "18px",
               fontWeight: 800,
-              color: "#f1f5f9",
+              color: "#f8fafc",
               fontFamily: "var(--font-mono)",
-              marginTop: "4px",
+              marginTop: "2px",
             }}
           >
             {metrics.readyPieces.toLocaleString()}{" "}
-            <span style={{ fontSize: "12px", color: "#94a3b8", fontWeight: 500 }}>cards</span>
+            <span style={{ fontSize: "11px", color: "#64748b", fontWeight: 500 }}>cards</span>
           </div>
-          <div style={{ fontSize: "11px", color: "#64748b", marginTop: "2px" }}>
+          <div style={{ fontSize: "10.5px", color: "#64748b", marginTop: "2px" }}>
             {metrics.readyCount} batches ready for dispatch
           </div>
         </div>
@@ -636,16 +623,16 @@ export const IDCardWorkspaceView: React.FC = () => {
         {/* Card 5: Completed */}
         <div
           style={{
-            padding: "12px 16px",
-            borderRadius: "8px",
+            padding: "10px 14px",
+            borderRadius: "4px",
             backgroundColor: "#0e131f",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
+            border: "1px solid rgba(255, 255, 255, 0.07)",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <span
               style={{
-                fontSize: "11px",
+                fontSize: "10.5px",
                 fontWeight: 700,
                 color: "#94a3b8",
                 textTransform: "uppercase",
@@ -654,21 +641,21 @@ export const IDCardWorkspaceView: React.FC = () => {
             >
               Completed
             </span>
-            <Icon name="check-circle" size={14} color="#34d399" />
+            <Icon name="check-circle" size={13} color="#34d399" />
           </div>
           <div
             style={{
-              fontSize: "20px",
+              fontSize: "18px",
               fontWeight: 800,
-              color: "#f1f5f9",
+              color: "#f8fafc",
               fontFamily: "var(--font-mono)",
-              marginTop: "4px",
+              marginTop: "2px",
             }}
           >
             {metrics.donePieces.toLocaleString()}{" "}
-            <span style={{ fontSize: "12px", color: "#94a3b8", fontWeight: 500 }}>cards</span>
+            <span style={{ fontSize: "11px", color: "#64748b", fontWeight: 500 }}>cards</span>
           </div>
-          <div style={{ fontSize: "11px", color: "#64748b", marginTop: "2px" }}>
+          <div style={{ fontSize: "10.5px", color: "#64748b", marginTop: "2px" }}>
             {metrics.doneCount} batches completed ({metrics.donePercentage}%)
           </div>
         </div>
@@ -681,12 +668,12 @@ export const IDCardWorkspaceView: React.FC = () => {
         style={{
           display: "flex",
           flexDirection: "column",
-          gap: "16px",
-          padding: "18px 20px",
-          borderRadius: "10px",
+          gap: "10px",
+          padding: "12px 14px",
+          borderRadius: "4px",
           backgroundColor: "#0d1322",
-          border: "1px solid rgba(255, 255, 255, 0.10)",
-          boxShadow: "0 4px 24px rgba(0, 0, 0, 0.3)",
+          border: "1px solid rgba(255, 255, 255, 0.08)",
+          boxShadow: "0 2px 12px rgba(0, 0, 0, 0.2)",
         }}
       >
         {/* Top Row: Next SN Badge + School/Client Input + Qty Input + Ingest Button */}
@@ -694,22 +681,22 @@ export const IDCardWorkspaceView: React.FC = () => {
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "12px",
+            gap: "8px",
             width: "100%",
           }}
         >
           <div
             style={{
-              height: "40px",
+              height: "34px",
               display: "inline-flex",
               alignItems: "center",
-              gap: "8px",
-              padding: "0 14px",
-              borderRadius: "6px",
-              backgroundColor: "rgba(56, 189, 248, 0.08)",
-              border: "1px solid rgba(56, 189, 248, 0.25)",
-              color: "#38bdf8",
-              fontSize: "13.5px",
+              gap: "7px",
+              padding: "0 10px",
+              borderRadius: "3px",
+              backgroundColor: "rgba(255, 255, 255, 0.04)",
+              border: "1px solid rgba(255, 255, 255, 0.12)",
+              color: "#e2e8f0",
+              fontSize: "12.5px",
               fontWeight: 700,
               fontFamily: "var(--font-mono)",
               whiteSpace: "nowrap",
@@ -718,11 +705,10 @@ export const IDCardWorkspaceView: React.FC = () => {
           >
             <span
               style={{
-                width: "7px",
-                height: "7px",
+                width: "5px",
+                height: "5px",
                 borderRadius: "50%",
-                backgroundColor: "#38bdf8",
-                boxShadow: "0 0 6px #38bdf8",
+                backgroundColor: "#3b82f6",
               }}
             />
             #{nextSN}
@@ -736,23 +722,21 @@ export const IDCardWorkspaceView: React.FC = () => {
             onKeyDown={(e) => e.key === "Enter" && handleIngestOrder()}
             style={{
               flex: 1,
-              height: "40px",
-              padding: "0 15px",
+              height: "34px",
+              padding: "0 12px",
               backgroundColor: "#07090e",
-              border: "1px solid rgba(255, 255, 255, 0.16)",
-              borderRadius: "6px",
+              border: "1px solid rgba(255, 255, 255, 0.12)",
+              borderRadius: "3px",
               color: "#ffffff",
-              fontSize: "13.5px",
+              fontSize: "13px",
               outline: "none",
-              transition: "all 0.15s ease",
+              transition: "border-color 0.12s ease",
             }}
             onFocus={(e) => {
               e.currentTarget.style.borderColor = "#3b82f6";
-              e.currentTarget.style.boxShadow = "0 0 0 2px rgba(59, 130, 246, 0.25)";
             }}
             onBlur={(e) => {
-              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.16)";
-              e.currentTarget.style.boxShadow = "none";
+              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.12)";
             }}
           />
 
@@ -763,27 +747,25 @@ export const IDCardWorkspaceView: React.FC = () => {
             onChange={(e) => setNewQtyStr(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleIngestOrder()}
             style={{
-              width: "180px",
-              height: "40px",
-              padding: "0 14px",
+              width: "125px",
+              height: "34px",
+              padding: "0 10px",
               backgroundColor: "#07090e",
-              border: "1px solid rgba(255, 255, 255, 0.16)",
-              borderRadius: "6px",
+              border: "1px solid rgba(255, 255, 255, 0.12)",
+              borderRadius: "3px",
               color: "#ffffff",
-              fontSize: "13.5px",
+              fontSize: "13px",
               fontFamily: "var(--font-mono)",
               fontWeight: 700,
               textAlign: "center",
               outline: "none",
-              transition: "all 0.15s ease",
+              transition: "border-color 0.12s ease",
             }}
             onFocus={(e) => {
               e.currentTarget.style.borderColor = "#3b82f6";
-              e.currentTarget.style.boxShadow = "0 0 0 2px rgba(59, 130, 246, 0.25)";
             }}
             onBlur={(e) => {
-              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.16)";
-              e.currentTarget.style.boxShadow = "none";
+              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.12)";
             }}
           />
 
@@ -791,26 +773,26 @@ export const IDCardWorkspaceView: React.FC = () => {
             type="button"
             onClick={handleIngestOrder}
             style={{
-              height: "40px",
-              padding: "0 24px",
-              borderRadius: "6px",
+              height: "34px",
+              padding: "0 18px",
+              borderRadius: "3px",
               backgroundColor: "#2563eb",
               border: "none",
               color: "#ffffff",
-              fontSize: "13.5px",
+              fontSize: "13px",
               fontWeight: 700,
               cursor: "pointer",
               display: "inline-flex",
               alignItems: "center",
-              gap: "7px",
+              gap: "6px",
               whiteSpace: "nowrap",
-              transition: "all 0.15s ease",
-              boxShadow: "0 2px 10px rgba(37, 99, 235, 0.4)",
+              transition: "all 0.12s ease",
+              boxShadow: "0 1px 6px rgba(37, 99, 235, 0.3)",
             }}
             onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#1d4ed8")}
             onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#2563eb")}
           >
-            <Icon name="plus" size={16} />
+            <Icon name="plus" size={14} />
             <span>Ingest Batch</span>
           </button>
         </div>
@@ -820,25 +802,25 @@ export const IDCardWorkspaceView: React.FC = () => {
           style={{
             display: "flex",
             alignItems: "flex-end",
-            gap: "24px",
-            paddingTop: "14px",
-            borderTop: "1px solid rgba(255, 255, 255, 0.07)",
+            gap: "16px",
+            paddingTop: "10px",
+            borderTop: "1px solid rgba(255, 255, 255, 0.06)",
             flexWrap: "wrap",
           }}
         >
           {/* 1. Card Category Selector (Separate Order Counts for Student vs Staff) */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-            <span style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+            <span style={{ fontSize: "10.5px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em" }}>
               Card Category
             </span>
             <div
               style={{
                 display: "flex",
                 backgroundColor: "#07090e",
-                borderRadius: "6px",
-                padding: "3px",
-                border: "1px solid rgba(255, 255, 255, 0.14)",
-                height: "36px",
+                borderRadius: "4px",
+                padding: "2px",
+                border: "1px solid rgba(255, 255, 255, 0.12)",
+                height: "30px",
                 boxSizing: "border-box",
                 alignItems: "center",
                 gap: "2px",
@@ -852,21 +834,20 @@ export const IDCardWorkspaceView: React.FC = () => {
                     type="button"
                     onClick={() => setNewCategory(cat)}
                     style={{
-                      height: "28px",
-                      padding: "0 16px",
-                      borderRadius: "4px",
+                      height: "24px",
+                      padding: "0 12px",
+                      borderRadius: "3px",
                       border: "none",
                       backgroundColor: isSelected ? "#2563eb" : "transparent",
                       color: isSelected ? "#ffffff" : "#94a3b8",
-                      fontSize: "12.5px",
+                      fontSize: "11.5px",
                       fontWeight: isSelected ? 700 : 500,
                       cursor: "pointer",
                       transition: "all 0.12s ease",
-                      boxShadow: isSelected ? "0 1px 4px rgba(0, 0, 0, 0.35)" : "none",
                     }}
                     onMouseEnter={(e) => {
                       if (!isSelected) {
-                        e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.07)";
+                        e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.06)";
                         e.currentTarget.style.color = "#f1f5f9";
                       }
                     }}
@@ -885,18 +866,18 @@ export const IDCardWorkspaceView: React.FC = () => {
           </div>
 
           {/* 2. File Format Selector (Single format only, Strictly NO PDF) */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-            <span style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+            <span style={{ fontSize: "10.5px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em" }}>
               File Format
             </span>
             <div
               style={{
                 display: "flex",
                 backgroundColor: "#07090e",
-                borderRadius: "6px",
-                padding: "3px",
-                border: "1px solid rgba(255, 255, 255, 0.14)",
-                height: "36px",
+                borderRadius: "4px",
+                padding: "2px",
+                border: "1px solid rgba(255, 255, 255, 0.12)",
+                height: "30px",
                 boxSizing: "border-box",
                 alignItems: "center",
                 gap: "2px",
@@ -910,24 +891,23 @@ export const IDCardWorkspaceView: React.FC = () => {
                     type="button"
                     onClick={() => setNewFileLocation(fmt)}
                     style={{
-                      height: "28px",
-                      padding: "0 16px",
-                      borderRadius: "4px",
+                      height: "24px",
+                      padding: "0 12px",
+                      borderRadius: "3px",
                       border: "none",
                       backgroundColor: isSelected ? "#2563eb" : "transparent",
                       color: isSelected ? "#ffffff" : "#94a3b8",
-                      fontSize: "12px",
+                      fontSize: "11px",
                       fontWeight: isSelected ? 700 : 500,
                       fontFamily: "var(--font-mono)",
                       cursor: "pointer",
                       transition: "all 0.12s ease",
                       textTransform: "uppercase",
                       whiteSpace: "nowrap",
-                      boxShadow: isSelected ? "0 1px 4px rgba(0, 0, 0, 0.35)" : "none",
                     }}
                     onMouseEnter={(e) => {
                       if (!isSelected) {
-                        e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.07)";
+                        e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.06)";
                         e.currentTarget.style.color = "#f1f5f9";
                       }
                     }}
@@ -946,11 +926,11 @@ export const IDCardWorkspaceView: React.FC = () => {
           </div>
 
           {/* 3. Lanyard / Holder Match */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-            <span style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+            <span style={{ fontSize: "10.5px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em" }}>
               Lanyard & Holder Match
             </span>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
               <input
                 type="text"
                 placeholder="e.g. available he"
@@ -958,27 +938,24 @@ export const IDCardWorkspaceView: React.FC = () => {
                 onChange={(e) => setNewHolderLanyard(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleIngestOrder()}
                 style={{
-                  width: "135px",
-                  height: "36px",
-                  padding: "0 12px",
+                  width: "120px",
+                  height: "30px",
+                  padding: "0 10px",
                   backgroundColor: "#07090e",
-                  border: "1px solid rgba(255, 255, 255, 0.15)",
-                  borderRadius: "6px",
+                  border: "1px solid rgba(255, 255, 255, 0.12)",
+                  borderRadius: "3px",
                   color: "#ffffff",
-                  fontSize: "12.5px",
+                  fontSize: "12px",
                   outline: "none",
-                  transition: "all 0.15s ease",
                 }}
                 onFocus={(e) => {
                   e.currentTarget.style.borderColor = "#3b82f6";
-                  e.currentTarget.style.boxShadow = "0 0 0 2px rgba(59, 130, 246, 0.25)";
                 }}
                 onBlur={(e) => {
-                  e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.15)";
-                  e.currentTarget.style.boxShadow = "none";
+                  e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.12)";
                 }}
               />
-              <div style={{ display: "flex", gap: "5px", alignItems: "center" }}>
+              <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
                 {[
                   { key: "available he", label: "Available he" },
                   { key: "only card hi", label: "Cards Only" },
@@ -991,24 +968,23 @@ export const IDCardWorkspaceView: React.FC = () => {
                       type="button"
                       onClick={() => setNewHolderLanyard(isActive ? "" : key)}
                       style={{
-                        height: "36px",
-                        padding: "0 12px",
-                        borderRadius: "6px",
+                        height: "30px",
+                        padding: "0 10px",
+                        borderRadius: "3px",
                         border: isActive
                           ? "1px solid #3b82f6"
-                          : "1px solid rgba(255, 255, 255, 0.12)",
+                          : "1px solid rgba(255, 255, 255, 0.1)",
                         backgroundColor: isActive ? "#2563eb" : "#07090e",
                         color: isActive ? "#ffffff" : "#94a3b8",
-                        fontSize: "12px",
-                        fontWeight: 700,
+                        fontSize: "11px",
+                        fontWeight: 600,
                         cursor: "pointer",
                         transition: "all 0.12s ease",
                         whiteSpace: "nowrap",
-                        boxShadow: isActive ? "0 1px 4px rgba(37, 99, 235, 0.35)" : "none",
                       }}
                       onMouseEnter={(e) => {
                         if (!isActive) {
-                          e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.08)";
+                          e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.06)";
                           e.currentTarget.style.color = "#f1f5f9";
                         }
                       }}
@@ -1028,8 +1004,8 @@ export const IDCardWorkspaceView: React.FC = () => {
           </div>
 
           {/* 4. Remarks (Optional) */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-            <span style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+            <span style={{ fontSize: "10.5px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em" }}>
               Remarks (Optional)
             </span>
             <input
@@ -1039,24 +1015,21 @@ export const IDCardWorkspaceView: React.FC = () => {
               onChange={(e) => setNewRemark(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleIngestOrder()}
               style={{
-                width: "160px",
-                height: "36px",
-                padding: "0 12px",
+                width: "135px",
+                height: "30px",
+                padding: "0 10px",
                 backgroundColor: "#07090e",
-                border: "1px solid rgba(255, 255, 255, 0.15)",
-                borderRadius: "6px",
+                border: "1px solid rgba(255, 255, 255, 0.12)",
+                borderRadius: "3px",
                 color: "#ffffff",
-                fontSize: "12.5px",
+                fontSize: "12px",
                 outline: "none",
-                transition: "all 0.15s ease",
               }}
               onFocus={(e) => {
                 e.currentTarget.style.borderColor = "#3b82f6";
-                e.currentTarget.style.boxShadow = "0 0 0 2px rgba(59, 130, 246, 0.25)";
               }}
               onBlur={(e) => {
-                e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.15)";
-                e.currentTarget.style.boxShadow = "none";
+                e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.12)";
               }}
             />
           </div>
@@ -1067,18 +1040,18 @@ export const IDCardWorkspaceView: React.FC = () => {
               marginLeft: "auto",
               display: "inline-flex",
               alignItems: "center",
-              gap: "8px",
-              padding: "0 14px",
-              height: "36px",
-              borderRadius: "6px",
+              gap: "6px",
+              padding: "0 10px",
+              height: "30px",
+              borderRadius: "3px",
               backgroundColor: "rgba(255, 255, 255, 0.03)",
-              border: "1px solid rgba(255, 255, 255, 0.09)",
-              fontSize: "12px",
-              color: intakeStockCheck.statusColor,
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              fontSize: "11px",
+              color: "#94a3b8",
               whiteSpace: "nowrap",
             }}
           >
-            <Icon name="layers" size={14} color={intakeStockCheck.statusColor} />
+            <Icon name="layers" size={12} color="#94a3b8" />
             <span>
               Blank PVC: {pvcCardItem.availableStock.toLocaleString()} in stock &bull; {parsedIntakeQty} req
             </span>
@@ -1094,16 +1067,16 @@ export const IDCardWorkspaceView: React.FC = () => {
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          gap: "10px",
+          gap: "8px",
           flexWrap: "wrap",
-          padding: "8px 12px",
-          borderRadius: "8px",
+          padding: "6px 10px",
+          borderRadius: "4px",
           backgroundColor: "#0e131f",
-          border: "1px solid rgba(255, 255, 255, 0.08)",
+          border: "1px solid rgba(255, 255, 255, 0.07)",
         }}
       >
         {/* Left: Segmented View Tabs (Active vs Completed vs All) */}
-        <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "3px" }}>
           <button
             type="button"
             onClick={() => {
@@ -1114,12 +1087,13 @@ export const IDCardWorkspaceView: React.FC = () => {
               display: "inline-flex",
               alignItems: "center",
               gap: "6px",
-              padding: "5px 12px",
-              borderRadius: "5px",
+              padding: "0 10px",
+              height: "28px",
+              borderRadius: "3px",
               border: "none",
-              backgroundColor: viewTab === "ACTIVE" ? "rgba(255, 255, 255, 0.12)" : "transparent",
+              backgroundColor: viewTab === "ACTIVE" ? "rgba(255, 255, 255, 0.1)" : "transparent",
               color: viewTab === "ACTIVE" ? "#ffffff" : "#94a3b8",
-              fontSize: "12px",
+              fontSize: "11.5px",
               fontWeight: viewTab === "ACTIVE" ? 700 : 500,
               cursor: "pointer",
               transition: "all 0.12s ease",
@@ -1131,7 +1105,7 @@ export const IDCardWorkspaceView: React.FC = () => {
                 fontSize: "10.5px",
                 fontFamily: "var(--font-mono)",
                 fontWeight: 700,
-                color: viewTab === "ACTIVE" ? "#38bdf8" : "#64748b",
+                color: viewTab === "ACTIVE" ? "#e2e8f0" : "#64748b",
               }}
             >
               {metrics.activeCount}
@@ -1148,12 +1122,13 @@ export const IDCardWorkspaceView: React.FC = () => {
               display: "inline-flex",
               alignItems: "center",
               gap: "6px",
-              padding: "5px 12px",
-              borderRadius: "5px",
+              padding: "0 10px",
+              height: "28px",
+              borderRadius: "3px",
               border: "none",
-              backgroundColor: viewTab === "COMPLETED" ? "rgba(255, 255, 255, 0.12)" : "transparent",
+              backgroundColor: viewTab === "COMPLETED" ? "rgba(255, 255, 255, 0.1)" : "transparent",
               color: viewTab === "COMPLETED" ? "#ffffff" : "#94a3b8",
-              fontSize: "12px",
+              fontSize: "11.5px",
               fontWeight: viewTab === "COMPLETED" ? 700 : 500,
               cursor: "pointer",
               transition: "all 0.12s ease",
@@ -1165,7 +1140,7 @@ export const IDCardWorkspaceView: React.FC = () => {
                 fontSize: "10.5px",
                 fontFamily: "var(--font-mono)",
                 fontWeight: 700,
-                color: viewTab === "COMPLETED" ? "#34d399" : "#64748b",
+                color: viewTab === "COMPLETED" ? "#4ade80" : "#64748b",
               }}
             >
               {metrics.doneCount}
@@ -1182,12 +1157,13 @@ export const IDCardWorkspaceView: React.FC = () => {
               display: "inline-flex",
               alignItems: "center",
               gap: "6px",
-              padding: "5px 12px",
-              borderRadius: "5px",
+              padding: "0 10px",
+              height: "28px",
+              borderRadius: "3px",
               border: "none",
-              backgroundColor: viewTab === "ALL" ? "rgba(255, 255, 255, 0.12)" : "transparent",
+              backgroundColor: viewTab === "ALL" ? "rgba(255, 255, 255, 0.1)" : "transparent",
               color: viewTab === "ALL" ? "#ffffff" : "#94a3b8",
-              fontSize: "12px",
+              fontSize: "11.5px",
               fontWeight: viewTab === "ALL" ? 700 : 500,
               cursor: "pointer",
               transition: "all 0.12s ease",
@@ -1208,19 +1184,19 @@ export const IDCardWorkspaceView: React.FC = () => {
         </div>
 
         {/* Right: Search, Filters & Quick Link to Lanyard Hub */}
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           {/* Card Category Filter */}
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
             style={{
-              height: "30px",
-              padding: "0 10px",
+              height: "28px",
+              padding: "0 8px",
               backgroundColor: "#07090e",
-              border: "1px solid rgba(255, 255, 255, 0.12)",
-              borderRadius: "5px",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
+              borderRadius: "3px",
               color: "#94a3b8",
-              fontSize: "12px",
+              fontSize: "11.5px",
               outline: "none",
             }}
           >
@@ -1235,13 +1211,13 @@ export const IDCardWorkspaceView: React.FC = () => {
             value={fileFilter}
             onChange={(e) => setFileFilter(e.target.value)}
             style={{
-              height: "30px",
-              padding: "0 10px",
+              height: "28px",
+              padding: "0 8px",
               backgroundColor: "#07090e",
-              border: "1px solid rgba(255, 255, 255, 0.12)",
-              borderRadius: "5px",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
+              borderRadius: "3px",
               color: "#94a3b8",
-              fontSize: "12px",
+              fontSize: "11.5px",
               outline: "none",
             }}
           >
@@ -1256,13 +1232,13 @@ export const IDCardWorkspaceView: React.FC = () => {
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as any)}
             style={{
-              height: "30px",
-              padding: "0 10px",
+              height: "28px",
+              padding: "0 8px",
               backgroundColor: "#07090e",
-              border: "1px solid rgba(255, 255, 255, 0.12)",
-              borderRadius: "5px",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
+              borderRadius: "3px",
               color: "#94a3b8",
-              fontSize: "12px",
+              fontSize: "11.5px",
               outline: "none",
             }}
           >
@@ -1280,28 +1256,28 @@ export const IDCardWorkspaceView: React.FC = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{
-                width: "180px",
-                height: "30px",
-                padding: "0 10px 0 28px",
+                width: "160px",
+                height: "28px",
+                padding: "0 8px 0 26px",
                 backgroundColor: "#07090e",
-                border: "1px solid rgba(255, 255, 255, 0.12)",
-                borderRadius: "5px",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
+                borderRadius: "3px",
                 color: "#f8fafc",
-                fontSize: "12px",
+                fontSize: "11.5px",
                 outline: "none",
               }}
             />
             <div
               style={{
                 position: "absolute",
-                left: "9px",
+                left: "8px",
                 top: "50%",
                 transform: "translateY(-50%)",
                 pointerEvents: "none",
                 opacity: 0.6,
               }}
             >
-              <Icon name="search" size={12} color="#94a3b8" />
+              <Icon name="search" size={11} color="#94a3b8" />
             </div>
           </div>
 
@@ -1310,17 +1286,17 @@ export const IDCardWorkspaceView: React.FC = () => {
             type="button"
             onClick={handleJumpToLanyard}
             style={{
-              height: "30px",
-              padding: "0 12px",
+              height: "28px",
+              padding: "0 10px",
               backgroundColor: "rgba(255, 255, 255, 0.04)",
-              border: "1px solid rgba(255, 255, 255, 0.1)",
-              borderRadius: "5px",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              borderRadius: "3px",
               color: "#94a3b8",
-              fontSize: "12px",
+              fontSize: "11.5px",
               cursor: "pointer",
               display: "inline-flex",
               alignItems: "center",
-              gap: "6px",
+              gap: "5px",
               transition: "all 0.12s ease",
             }}
             title="Switch to Lanyard Workspace"
@@ -1333,7 +1309,7 @@ export const IDCardWorkspaceView: React.FC = () => {
               e.currentTarget.style.color = "#94a3b8";
             }}
           >
-            <Icon name="tag" size={13} color="#38bdf8" />
+            <Icon name="tag" size={12} color="#94a3b8" />
             <span>Lanyard Hub</span>
           </button>
         </div>
@@ -1344,8 +1320,8 @@ export const IDCardWorkspaceView: React.FC = () => {
       {/* ══════════════════════════════════════════════════════════════════════════ */}
       <div
         style={{
-          borderRadius: "8px",
-          border: "1px solid rgba(255, 255, 255, 0.08)",
+          borderRadius: "4px",
+          border: "1px solid rgba(255, 255, 255, 0.07)",
           backgroundColor: "#0e131f",
           overflow: "hidden",
         }}
@@ -1362,47 +1338,47 @@ export const IDCardWorkspaceView: React.FC = () => {
             <thead>
               <tr
                 style={{
-                  backgroundColor: "rgba(255, 255, 255, 0.03)",
-                  borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+                  backgroundColor: "rgba(255, 255, 255, 0.02)",
+                  borderBottom: "1px solid rgba(255, 255, 255, 0.06)",
                 }}
               >
                 <th
                   style={{
-                    padding: "12px 14px",
+                    padding: "8px 10px",
                     textAlign: "left",
-                    fontSize: "11.5px",
+                    fontSize: "10.5px",
                     fontWeight: 700,
                     color: "#94a3b8",
                     textTransform: "uppercase",
-                    letterSpacing: "0.06em",
-                    width: "70px",
+                    letterSpacing: "0.05em",
+                    width: "60px",
                   }}
                 >
                   SN
                 </th>
                 <th
                   style={{
-                    padding: "12px 10px",
+                    padding: "8px 10px",
                     textAlign: "left",
-                    fontSize: "11.5px",
+                    fontSize: "10.5px",
                     fontWeight: 700,
                     color: "#94a3b8",
                     textTransform: "uppercase",
-                    letterSpacing: "0.06em",
-                    width: "85px",
+                    letterSpacing: "0.05em",
+                    width: "75px",
                   }}
                 >
                   Date
                 </th>
                 <th
                   style={{
-                    padding: "12px 14px",
+                    padding: "8px 12px",
                     textAlign: "left",
-                    fontSize: "11.5px",
+                    fontSize: "10.5px",
                     fontWeight: 700,
                     color: "#94a3b8",
                     textTransform: "uppercase",
-                    letterSpacing: "0.06em",
+                    letterSpacing: "0.05em",
                     minWidth: "220px",
                   }}
                 >
@@ -1410,97 +1386,97 @@ export const IDCardWorkspaceView: React.FC = () => {
                 </th>
                 <th
                   style={{
-                    padding: "12px 12px",
+                    padding: "8px 8px",
                     textAlign: "left",
-                    fontSize: "11.5px",
+                    fontSize: "10.5px",
                     fontWeight: 700,
                     color: "#94a3b8",
                     textTransform: "uppercase",
-                    letterSpacing: "0.06em",
-                    width: "110px",
+                    letterSpacing: "0.05em",
+                    width: "95px",
                   }}
                 >
                   Category
                 </th>
                 <th
                   style={{
-                    padding: "12px 14px",
+                    padding: "8px 10px",
                     textAlign: "right",
-                    fontSize: "11.5px",
+                    fontSize: "10.5px",
                     fontWeight: 700,
                     color: "#94a3b8",
                     textTransform: "uppercase",
-                    letterSpacing: "0.06em",
-                    width: "90px",
+                    letterSpacing: "0.05em",
+                    width: "75px",
                   }}
                 >
                   Qty
                 </th>
                 <th
                   style={{
-                    padding: "12px 10px",
+                    padding: "8px 8px",
                     textAlign: "center",
-                    fontSize: "11.5px",
+                    fontSize: "10.5px",
                     fontWeight: 700,
                     color: "#94a3b8",
                     textTransform: "uppercase",
-                    letterSpacing: "0.06em",
-                    width: "95px",
+                    letterSpacing: "0.05em",
+                    width: "80px",
                   }}
                 >
                   Format
                 </th>
                 <th
                   style={{
-                    padding: "12px 10px",
+                    padding: "8px 8px",
                     textAlign: "center",
-                    fontSize: "11.5px",
+                    fontSize: "10.5px",
                     fontWeight: 700,
                     color: "#94a3b8",
                     textTransform: "uppercase",
-                    letterSpacing: "0.06em",
-                    width: "145px",
+                    letterSpacing: "0.05em",
+                    width: "130px",
                   }}
                 >
                   Thermal Printing
                 </th>
                 <th
                   style={{
-                    padding: "12px 12px",
+                    padding: "8px 10px",
                     textAlign: "left",
-                    fontSize: "11.5px",
+                    fontSize: "10.5px",
                     fontWeight: 700,
                     color: "#94a3b8",
                     textTransform: "uppercase",
-                    letterSpacing: "0.06em",
-                    width: "145px",
+                    letterSpacing: "0.05em",
+                    width: "130px",
                   }}
                 >
                   Lanyard / Holder
                 </th>
                 <th
                   style={{
-                    padding: "12px 10px",
+                    padding: "8px 8px",
                     textAlign: "center",
-                    fontSize: "11.5px",
+                    fontSize: "10.5px",
                     fontWeight: 700,
                     color: "#94a3b8",
                     textTransform: "uppercase",
-                    letterSpacing: "0.06em",
-                    width: "155px",
+                    letterSpacing: "0.05em",
+                    width: "140px",
                   }}
                 >
                   Status
                 </th>
                 <th
                   style={{
-                    padding: "12px 14px",
+                    padding: "8px 12px",
                     textAlign: "left",
-                    fontSize: "11.5px",
+                    fontSize: "10.5px",
                     fontWeight: 700,
                     color: "#94a3b8",
                     textTransform: "uppercase",
-                    letterSpacing: "0.06em",
+                    letterSpacing: "0.05em",
                     minWidth: "120px",
                   }}
                 >
@@ -1514,10 +1490,10 @@ export const IDCardWorkspaceView: React.FC = () => {
                   <td
                     colSpan={10}
                     style={{
-                      padding: "48px 16px",
+                      padding: "40px 16px",
                       textAlign: "center",
                       color: "#64748b",
-                      fontSize: "13px",
+                      fontSize: "12.5px",
                     }}
                   >
                     No ID card orders match your filter criteria.
@@ -1527,19 +1503,18 @@ export const IDCardWorkspaceView: React.FC = () => {
                 filteredOrders.map((o, idx) => {
                   const isDone = o.status === "done";
                   const isReady = o.status === "ready" || o.status === "ready (1 pending he)";
-                  const isKamal = o.status === "kamal";
 
                   return (
                     <tr
                       key={o.id}
                       style={{
-                        height: "46px",
-                        borderBottom: "1px solid rgba(255, 255, 255, 0.05)",
+                        height: "38px",
+                        borderBottom: "1px solid rgba(255, 255, 255, 0.04)",
                         backgroundColor: idx % 2 === 0 ? "transparent" : "rgba(255, 255, 255, 0.012)",
                         transition: "background 0.12s ease",
                       }}
                       onMouseEnter={(e) =>
-                        (e.currentTarget.style.backgroundColor = "rgba(56, 189, 248, 0.03)")
+                        (e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.03)")
                       }
                       onMouseLeave={(e) =>
                         (e.currentTarget.style.backgroundColor =
@@ -1549,11 +1524,11 @@ export const IDCardWorkspaceView: React.FC = () => {
                       {/* 1. SN */}
                       <td
                         style={{
-                          padding: "10px 14px",
+                          padding: "8px 10px",
                           fontFamily: "var(--font-mono)",
-                          fontSize: "13px",
-                          fontWeight: 700,
-                          color: "#38bdf8",
+                          fontSize: "12px",
+                          fontWeight: 600,
+                          color: "#94a3b8",
                         }}
                       >
                         #{o.sn}
@@ -1562,10 +1537,10 @@ export const IDCardWorkspaceView: React.FC = () => {
                       {/* 2. Date */}
                       <td
                         style={{
-                          padding: "10px 10px",
+                          padding: "8px 10px",
                           fontFamily: "var(--font-mono)",
-                          fontSize: "12px",
-                          color: "#94a3b8",
+                          fontSize: "11.5px",
+                          color: "#64748b",
                         }}
                       >
                         {o.date}
@@ -1574,10 +1549,10 @@ export const IDCardWorkspaceView: React.FC = () => {
                       {/* 3. School / Client Title */}
                       <td
                         style={{
-                          padding: "10px 14px",
-                          fontSize: "14px",
-                          fontWeight: 700,
-                          color: "#ffffff",
+                          padding: "8px 12px",
+                          fontSize: "13px",
+                          fontWeight: 600,
+                          color: "#f1f5f9",
                           cursor: "pointer",
                         }}
                         onDoubleClick={(e) => handleStartEdit(o.id, "client", o.client, e)}
@@ -1596,13 +1571,13 @@ export const IDCardWorkspaceView: React.FC = () => {
                             }}
                             style={{
                               width: "100%",
-                              height: "28px",
-                              padding: "0 8px",
+                              height: "24px",
+                              padding: "0 6px",
                               backgroundColor: "#07090e",
                               border: "1px solid #3b82f6",
-                              borderRadius: "4px",
+                              borderRadius: "3px",
                               color: "#fff",
-                              fontSize: "13.5px",
+                              fontSize: "12.5px",
                               outline: "none",
                             }}
                           />
@@ -1614,7 +1589,7 @@ export const IDCardWorkspaceView: React.FC = () => {
                       {/* 4. Card Category (Student vs Staff - Strictly Separate) */}
                       <td
                         style={{
-                          padding: "9px 12px",
+                          padding: "8px 8px",
                           cursor: "pointer",
                         }}
                         onDoubleClick={() => {
@@ -1631,10 +1606,10 @@ export const IDCardWorkspaceView: React.FC = () => {
                       {/* 5. Total Quantity */}
                       <td
                         style={{
-                          padding: "10px 14px",
+                          padding: "8px 10px",
                           textAlign: "right",
                           fontFamily: "var(--font-mono)",
-                          fontSize: "14.5px",
+                          fontSize: "13.5px",
                           fontWeight: 700,
                           color: "#ffffff",
                           cursor: "pointer",
@@ -1654,14 +1629,14 @@ export const IDCardWorkspaceView: React.FC = () => {
                               if (e.key === "Escape") setEditingCell(null);
                             }}
                             style={{
-                              width: "70px",
-                              height: "26px",
-                              padding: "0 6px",
+                              width: "60px",
+                              height: "22px",
+                              padding: "0 4px",
                               backgroundColor: "#07090e",
                               border: "1px solid #3b82f6",
-                              borderRadius: "4px",
+                              borderRadius: "3px",
                               color: "#fff",
-                              fontSize: "13px",
+                              fontSize: "12px",
                               textAlign: "right",
                               fontFamily: "var(--font-mono)",
                               outline: "none",
@@ -1673,33 +1648,17 @@ export const IDCardWorkspaceView: React.FC = () => {
                       </td>
 
                       {/* 6. File Format (Strictly Single format: doc / excel / hard copy, NO PDF) */}
-                      <td style={{ padding: "10px 10px", textAlign: "center" }}>
+                      <td style={{ padding: "8px 8px", textAlign: "center" }}>
                         <span
                           style={{
-                            fontSize: "11px",
+                            fontSize: "10.5px",
                             fontFamily: "var(--font-mono)",
-                            fontWeight: 700,
-                            padding: "2.5px 7px",
-                            borderRadius: "4px",
-                            backgroundColor:
-                              o.fileLocation === "excel"
-                                ? "rgba(34, 197, 94, 0.1)"
-                                : o.fileLocation === "hard copy"
-                                ? "rgba(245, 158, 11, 0.1)"
-                                : "rgba(56, 189, 248, 0.1)",
-                            border: `1px solid ${
-                              o.fileLocation === "excel"
-                                ? "rgba(34, 197, 94, 0.25)"
-                                : o.fileLocation === "hard copy"
-                                ? "rgba(245, 158, 11, 0.25)"
-                                : "rgba(56, 189, 248, 0.25)"
-                            }`,
-                            color:
-                              o.fileLocation === "excel"
-                                ? "#4ade80"
-                                : o.fileLocation === "hard copy"
-                                ? "#fbbf24"
-                                : "#38bdf8",
+                            fontWeight: 600,
+                            padding: "2px 6px",
+                            borderRadius: "3px",
+                            backgroundColor: "rgba(255, 255, 255, 0.04)",
+                            border: "1px solid rgba(255, 255, 255, 0.09)",
+                            color: "#94a3b8",
                             textTransform: "uppercase",
                             whiteSpace: "nowrap",
                           }}
@@ -1709,23 +1668,23 @@ export const IDCardWorkspaceView: React.FC = () => {
                       </td>
 
                       {/* 7. Thermal Printing (Kamal Sir) */}
-                      <td style={{ padding: "10px 10px", textAlign: "center" }}>
+                      <td style={{ padding: "8px 8px", textAlign: "center" }}>
                         {isDone ? (
                           <span
                             style={{
                               display: "inline-flex",
                               alignItems: "center",
                               gap: "4px",
-                              padding: "3px 9px",
-                              borderRadius: "4px",
+                              padding: "2px 7px",
+                              borderRadius: "3px",
                               backgroundColor: "rgba(34, 197, 94, 0.08)",
-                              border: "1px solid rgba(34, 197, 94, 0.2)",
+                              border: "1px solid rgba(34, 197, 94, 0.22)",
                               color: "#4ade80",
                               fontSize: "11px",
-                              fontWeight: 700,
+                              fontWeight: 600,
                             }}
                           >
-                            <Icon name="check" size={11} color="#22c55e" />
+                            <Icon name="check" size={10} color="#22c55e" />
                             <span>Printed ✓</span>
                           </span>
                         ) : isReady ? (
@@ -1736,20 +1695,20 @@ export const IDCardWorkspaceView: React.FC = () => {
                             style={{
                               display: "inline-flex",
                               alignItems: "center",
-                              gap: "5px",
-                              padding: "3px 9px",
-                              borderRadius: "4px",
-                              backgroundColor: "rgba(34, 197, 94, 0.12)",
-                              border: "1px solid rgba(34, 197, 94, 0.3)",
+                              gap: "4px",
+                              padding: "2px 7px",
+                              borderRadius: "3px",
+                              backgroundColor: "rgba(34, 197, 94, 0.08)",
+                              border: "1px solid rgba(34, 197, 94, 0.22)",
                               color: "#4ade80",
                               fontSize: "11px",
-                              fontWeight: 700,
+                              fontWeight: 600,
                               cursor: "pointer",
                               whiteSpace: "nowrap",
-                              transition: "all 0.15s ease",
+                              transition: "all 0.12s ease",
                             }}
                           >
-                            <Icon name="check" size={11} color="#22c55e" />
+                            <Icon name="check" size={10} color="#22c55e" />
                             <span>Printed ✓</span>
                           </button>
                         ) : (
@@ -1760,22 +1719,28 @@ export const IDCardWorkspaceView: React.FC = () => {
                             style={{
                               display: "inline-flex",
                               alignItems: "center",
-                              gap: "5px",
-                              padding: "3px 9px",
-                              borderRadius: "4px",
-                              backgroundColor: "rgba(56, 189, 248, 0.1)",
-                              border: "1px solid rgba(56, 189, 248, 0.28)",
-                              color: "#38bdf8",
+                              gap: "4px",
+                              padding: "2px 7px",
+                              borderRadius: "3px",
+                              backgroundColor: "rgba(255, 255, 255, 0.04)",
+                              border: "1px solid rgba(255, 255, 255, 0.12)",
+                              color: "#cbd5e1",
                               fontSize: "11px",
-                              fontWeight: 700,
+                              fontWeight: 600,
                               cursor: "pointer",
                               whiteSpace: "nowrap",
-                              transition: "all 0.15s ease",
+                              transition: "all 0.12s ease",
                             }}
-                            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(56, 189, 248, 0.18)")}
-                            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "rgba(56, 189, 248, 0.1)")}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.08)";
+                              e.currentTarget.style.color = "#ffffff";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.04)";
+                              e.currentTarget.style.color = "#cbd5e1";
+                            }}
                           >
-                            <Icon name="printer" size={11} color="#38bdf8" />
+                            <Icon name="printer" size={10} color="#94a3b8" />
                             <span>With Kamal ⚡</span>
                           </button>
                         )}
@@ -1784,7 +1749,7 @@ export const IDCardWorkspaceView: React.FC = () => {
                       {/* 8. Lanyard / Holder */}
                       <td
                         style={{
-                          padding: "10px 12px",
+                          padding: "8px 10px",
                           cursor: "pointer",
                         }}
                         onDoubleClick={(e) =>
@@ -1805,13 +1770,13 @@ export const IDCardWorkspaceView: React.FC = () => {
                             }}
                             style={{
                               width: "100%",
-                              height: "28px",
-                              padding: "0 8px",
+                              height: "24px",
+                              padding: "0 6px",
                               backgroundColor: "#07090e",
                               border: "1px solid #3b82f6",
-                              borderRadius: "4px",
-                              color: "#38bdf8",
-                              fontSize: "12.5px",
+                              borderRadius: "3px",
+                              color: "#fff",
+                              fontSize: "12px",
                               outline: "none",
                             }}
                           />
@@ -1821,25 +1786,25 @@ export const IDCardWorkspaceView: React.FC = () => {
                       </td>
 
                       {/* 9. Status & Dispatch Action */}
-                      <td style={{ padding: "10px 10px", textAlign: "center" }}>
+                      <td style={{ padding: "8px 8px", textAlign: "center" }}>
                         {isDone ? (
-                          <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                          <div style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
                             <span
                               style={{
                                 display: "inline-flex",
                                 alignItems: "center",
                                 gap: "4px",
-                                padding: "3.5px 9px",
-                                borderRadius: "4px",
-                                backgroundColor: "rgba(34, 197, 94, 0.12)",
-                                border: "1px solid rgba(34, 197, 94, 0.3)",
+                                padding: "2.5px 7px",
+                                borderRadius: "3px",
+                                backgroundColor: "rgba(34, 197, 94, 0.08)",
+                                border: "1px solid rgba(34, 197, 94, 0.2)",
                                 color: "#4ade80",
                                 fontSize: "11px",
-                                fontWeight: 700,
+                                fontWeight: 600,
                                 whiteSpace: "nowrap",
                               }}
                             >
-                              <Icon name="check-circle" size={12} color="#22c55e" />
+                              <Icon name="check-circle" size={11} color="#22c55e" />
                               <span>Dispatched</span>
                             </span>
                             <button
@@ -1847,13 +1812,13 @@ export const IDCardWorkspaceView: React.FC = () => {
                               onClick={(e) => handleReopenOrder(o, e)}
                               title="Re-open order to Active Queue"
                               style={{
-                                height: "22px",
-                                width: "22px",
+                                height: "20px",
+                                width: "20px",
                                 display: "inline-flex",
                                 alignItems: "center",
-                                justifyContent: "center",
-                                backgroundColor: "rgba(255, 255, 255, 0.04)",
-                                border: "1px solid rgba(255, 255, 255, 0.09)",
+                                justifyCenter: "center",
+                                backgroundColor: "rgba(255, 255, 255, 0.03)",
+                                border: "1px solid rgba(255, 255, 255, 0.08)",
                                 borderRadius: "3px",
                                 color: "#94a3b8",
                                 cursor: "pointer",
@@ -1861,7 +1826,7 @@ export const IDCardWorkspaceView: React.FC = () => {
                               onMouseEnter={(e) => (e.currentTarget.style.color = "#f8fafc")}
                               onMouseLeave={(e) => (e.currentTarget.style.color = "#94a3b8")}
                             >
-                              <Icon name="refresh-cw" size={11} color="#94a3b8" />
+                              <Icon name="refresh-cw" size={10} color="#94a3b8" />
                             </button>
                           </div>
                         ) : isReady ? (
@@ -1869,32 +1834,31 @@ export const IDCardWorkspaceView: React.FC = () => {
                             type="button"
                             onClick={(e) => handleMarkDispatched(o, e)}
                             style={{
-                              height: "28px",
-                              padding: "0 12px",
-                              borderRadius: "4px",
-                              backgroundColor: "rgba(34, 197, 94, 0.15)",
-                              border: "1px solid rgba(34, 197, 94, 0.4)",
+                              height: "24px",
+                              padding: "0 9px",
+                              borderRadius: "3px",
+                              backgroundColor: "rgba(34, 197, 94, 0.14)",
+                              border: "1px solid rgba(34, 197, 94, 0.3)",
                               color: "#4ade80",
-                              fontSize: "11.5px",
-                              fontWeight: 700,
+                              fontSize: "11px",
+                              fontWeight: 600,
                               cursor: "pointer",
                               display: "inline-flex",
                               alignItems: "center",
-                              gap: "5px",
+                              gap: "4px",
                               whiteSpace: "nowrap",
-                              boxShadow: "0 1px 6px rgba(34, 197, 94, 0.15)",
-                              transition: "all 0.15s ease",
+                              transition: "all 0.12s ease",
                             }}
                             onMouseEnter={(e) => {
                               e.currentTarget.style.backgroundColor = "#15803d";
                               e.currentTarget.style.color = "#ffffff";
                             }}
                             onMouseLeave={(e) => {
-                              e.currentTarget.style.backgroundColor = "rgba(34, 197, 94, 0.15)";
+                              e.currentTarget.style.backgroundColor = "rgba(34, 197, 94, 0.14)";
                               e.currentTarget.style.color = "#4ade80";
                             }}
                           >
-                            <Icon name="check-circle" size={13} color="currentColor" />
+                            <Icon name="check-circle" size={11} color="currentColor" />
                             <span>Mark Dispatched ✓</span>
                           </button>
                         ) : (
@@ -1902,32 +1866,32 @@ export const IDCardWorkspaceView: React.FC = () => {
                             style={{
                               display: "inline-flex",
                               alignItems: "center",
-                              gap: "4px",
-                              padding: "3.5px 8px",
-                              borderRadius: "4px",
-                              backgroundColor: "rgba(255, 255, 255, 0.04)",
-                              border: "1px solid rgba(255, 255, 255, 0.08)",
+                              gap: "3px",
+                              padding: "2.5px 6px",
+                              borderRadius: "3px",
+                              backgroundColor: "rgba(255, 255, 255, 0.02)",
+                              border: "1px solid rgba(255, 255, 255, 0.06)",
                               color: "#64748b",
                               fontSize: "11px",
-                              fontWeight: 600,
+                              fontWeight: 500,
                               whiteSpace: "nowrap",
                             }}
                           >
-                            <Icon name="clock" size={11} color="#64748b" />
+                            <Icon name="clock" size={10} color="#64748b" />
                             <span>In Printing</span>
                           </span>
                         )}
                       </td>
 
                       {/* 10. Remarks & Jump Link */}
-                      <td style={{ padding: "10px 14px" }}>
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
+                      <td style={{ padding: "8px 12px" }}>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "6px" }}>
                           <span
                             onDoubleClick={(e) => handleStartEdit(o.id, "remarks", o.remarks, e)}
                             title="Double-click to edit remarks"
                             style={{
                               fontSize: "11.5px",
-                              color: o.remarks ? "#cbd5e1" : "#64748b",
+                              color: o.remarks ? "#94a3b8" : "#475569",
                               cursor: "pointer",
                               overflow: "hidden",
                               textOverflow: "ellipsis",
@@ -1948,8 +1912,8 @@ export const IDCardWorkspaceView: React.FC = () => {
                                 }}
                                 style={{
                                   width: "100%",
-                                  height: "24px",
-                                  padding: "0 6px",
+                                  height: "22px",
+                                  padding: "0 4px",
                                   backgroundColor: "#07090e",
                                   border: "1px solid #3b82f6",
                                   borderRadius: "3px",
@@ -1968,12 +1932,12 @@ export const IDCardWorkspaceView: React.FC = () => {
                             onClick={handleJumpToLanyard}
                             title="Jump to Lanyard Workspace"
                             style={{
-                              padding: "2px 6px",
+                              padding: "2px 5px",
                               borderRadius: "3px",
                               backgroundColor: "rgba(255, 255, 255, 0.04)",
-                              border: "1px solid rgba(255, 255, 255, 0.08)",
-                              color: "#94a3b8",
-                              fontSize: "10.5px",
+                              border: "1px solid rgba(255, 255, 255, 0.07)",
+                              color: "#64748b",
+                              fontSize: "10px",
                               cursor: "pointer",
                               display: "inline-flex",
                               alignItems: "center",
@@ -1981,7 +1945,7 @@ export const IDCardWorkspaceView: React.FC = () => {
                               flexShrink: 0,
                             }}
                           >
-                            <Icon name="tag" size={10} color="#38bdf8" />
+                            <Icon name="tag" size={10} color="#64748b" />
                           </button>
                         </div>
                       </td>
@@ -1996,13 +1960,13 @@ export const IDCardWorkspaceView: React.FC = () => {
         {/* Footer Bar */}
         <div
           style={{
-            padding: "8px 14px",
+            padding: "6px 12px",
             backgroundColor: "rgba(255, 255, 255, 0.015)",
-            borderTop: "1px solid rgba(255, 255, 255, 0.05)",
+            borderTop: "1px solid rgba(255, 255, 255, 0.04)",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            fontSize: "11.5px",
+            fontSize: "11px",
             color: "#64748b",
           }}
         >
