@@ -300,14 +300,14 @@ export const LanyardWorkspaceView: React.FC = () => {
               fittingContractorName: "wof",
               goneForFitting: true,
               fittingStatus: "ready",
-              completedQty: o.qty,
+              // NOTE: orderReady remains false until user explicitly clicks "Mark Ready" in the Status column
               fittingHardware: "None (Direct Supply)",
               fittingRemarks: o.fittingRemarks || "Client requested without fitting",
             }
           : o
       )
     );
-    toastSuccess("Without Fitting (Done)", `Order #${order.sn}: Completed without fitting & marked Ready for dispatch ✓.`);
+    toastSuccess("Without Fitting Set", `Order #${order.sn}: Fitting stage done (Without Fitting). Click "Mark Ready" in Status column to complete.`);
   };
 
   // Step 4 Option B: Toggle Fitting Done (for contractor assigned orders)
@@ -324,14 +324,14 @@ export const LanyardWorkspaceView: React.FC = () => {
           ? {
               ...o,
               fittingStatus: isDone ? "in_fitting" : "ready",
-              completedQty: isDone ? 0 : o.qty,
               goneForFitting: true,
+              // NOTE: orderReady remains false until user explicitly clicks "Mark Ready" in the Status column
             }
           : o
       )
     );
     if (!isDone) {
-      toastSuccess("Fitting Done", `Order #${order.sn}: Fitting assembled & verified. Order is Ready ✓.`);
+      toastSuccess("Fitting Done", `Order #${order.sn}: Fitting assembled & verified. Click "Mark Ready" in Status column to complete.`);
     } else {
       toastSuccess("Status Updated", `Order #${order.sn}: Returned to In Fitting.`);
     }
@@ -367,7 +367,7 @@ export const LanyardWorkspaceView: React.FC = () => {
   // Overall Order Status Toggle (Ready <-> Active)
   const handleCycleOrderStatus = (order: LanyardOrderEntry, e: React.MouseEvent) => {
     e.stopPropagation();
-    const isReady = order.fittingStatus === "ready";
+    const isReady = order.orderReady === true;
     if (!isReady) {
       setOrders((prev) =>
         prev.map((o) =>
@@ -382,25 +382,26 @@ export const LanyardWorkspaceView: React.FC = () => {
                 fittingContractorId: o.fittingContractorId || "wof",
                 fittingContractorName: o.fittingContractorName || "wof",
                 fittingStatus: "ready",
+                orderReady: true,
                 completedQty: o.qty,
               }
             : o
         )
       );
-      toastSuccess("Order Ready", `Order #${order.sn} marked Ready for Dispatch.`);
+      toastSuccess("Order Completed", `Order #${order.sn} marked Ready and moved to Completed queue.`);
     } else {
       setOrders((prev) =>
         prev.map((o) =>
           o.id === order.id
             ? {
                 ...o,
-                fittingStatus: o.fittingContractorId && o.fittingContractorId !== "wof" ? "in_fitting" : "pending_assignment",
+                orderReady: false,
                 completedQty: 0,
               }
             : o
         )
       );
-      toastSuccess("Order In Production", `Order #${order.sn} returned to active queue.`);
+      toastSuccess("Order Re-opened", `Order #${order.sn} returned to active queue.`);
     }
   };
 
@@ -593,18 +594,18 @@ export const LanyardWorkspaceView: React.FC = () => {
     const totalCount = orders.length;
     const totalVolume = orders.reduce((sum, o) => sum + (o.qty || 0), 0);
 
-    const activeOrders = orders.filter((o) => o.fittingStatus !== "ready");
+    const activeOrders = orders.filter((o) => o.orderReady !== true);
     const activeCount = activeOrders.length;
     const activeVolume = activeOrders.reduce((sum, o) => sum + (o.qty || 0), 0);
 
-    const completedOrders = orders.filter((o) => o.fittingStatus === "ready");
+    const completedOrders = orders.filter((o) => o.orderReady === true);
     const completedCount = completedOrders.length;
     const completedVolume = completedOrders.reduce((sum, o) => sum + (o.qty || 0), 0);
 
-    const inPrintOrders = orders.filter((o) => o.goneForPrint && !o.isPrinted);
+    const inPrintOrders = orders.filter((o) => o.goneForPrint && !o.isPrinted && o.orderReady !== true);
     const inPrintVolume = inPrintOrders.reduce((sum, o) => sum + (o.qty || 0), 0);
 
-    const inFittingOrders = orders.filter((o) => o.fittingStatus === "in_fitting");
+    const inFittingOrders = orders.filter((o) => o.fittingStatus === "in_fitting" && o.orderReady !== true);
     const inFittingVolume = inFittingOrders.reduce((sum, o) => sum + (o.qty || 0), 0);
 
     const completionRate = totalVolume > 0 ? Math.round((completedVolume / totalVolume) * 100) : 0;
@@ -629,8 +630,8 @@ export const LanyardWorkspaceView: React.FC = () => {
     return orders
       .filter((o) => {
         // 1. View Tab Filter (Active Queue hides completed by default)
-        if (viewTab === "ACTIVE" && o.fittingStatus === "ready") return false;
-        if (viewTab === "COMPLETED" && o.fittingStatus !== "ready") return false;
+        if (viewTab === "ACTIVE" && o.orderReady === true) return false;
+        if (viewTab === "COMPLETED" && o.orderReady !== true) return false;
 
         // 2. Contractor Filter
         if (contractorFilter !== "ALL") {
@@ -1318,14 +1319,14 @@ export const LanyardWorkspaceView: React.FC = () => {
                 </tr>
               ) : (
                 filteredOrders.map((entry) => {
-                  const isReady = entry.fittingStatus === "ready";
+                  const isReady = entry.orderReady === true;
                   const contractor = contractors.find((c) => c.id === entry.fittingContractorId);
                   const isMix = entry.fittingContractorId === "mix";
                   const rollReport = getRollStats(entry.size, entry.qty);
 
                   const pQty = entry.printedQty ?? (entry.isPrinted ? entry.qty : 0);
                   const sQty = entry.sentToLabourQty ?? (entry.goneForFitting ? entry.qty : 0);
-                  const rQty = entry.completedQty ?? (entry.fittingStatus === "ready" ? entry.qty : 0);
+                  const rQty = entry.completedQty ?? (entry.orderReady ? entry.qty : 0);
                   const leftQty = Math.max(0, entry.qty - rQty);
 
                   // Sequential Unlocking Step Calculations
@@ -1336,6 +1337,8 @@ export const LanyardWorkspaceView: React.FC = () => {
                   const isStep3Done = entry.isPrinted === true;
                   const isStep4Unlocked = isStep3Done;
                   const isWithoutFitting = entry.fittingContractorId === "wof";
+                  const isStep4Done = isWithoutFitting || entry.fittingStatus === "ready";
+                  const allStepsDone = isStep1Done && isStep2Done && isStep3Done && isStep4Done;
 
                   return (
                     <tr
@@ -1343,16 +1346,16 @@ export const LanyardWorkspaceView: React.FC = () => {
                       style={{
                         height: "48px",
                         borderBottom: "1px solid rgba(255, 255, 255, 0.05)",
-                        backgroundColor: isReady ? "rgba(34, 197, 94, 0.015)" : "transparent",
+                        backgroundColor: isReady ? "rgba(255, 255, 255, 0.015)" : "transparent",
                         transition: "background-color 0.15s ease",
                       }}
-                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(56, 189, 248, 0.04)")}
+                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.03)")}
                       onMouseLeave={(e) =>
-                        (e.currentTarget.style.backgroundColor = isReady ? "rgba(34, 197, 94, 0.015)" : "transparent")
+                        (e.currentTarget.style.backgroundColor = isReady ? "rgba(255, 255, 255, 0.015)" : "transparent")
                       }
                     >
                       {/* 1. SN */}
-                      <td style={{ padding: "11px 12px", fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: "13px", color: "#38bdf8" }}>
+                      <td style={{ padding: "11px 12px", fontFamily: "var(--font-mono)", fontWeight: 600, fontSize: "12.5px", color: "#94a3b8" }}>
                         #{entry.sn}
                       </td>
 
@@ -1366,14 +1369,14 @@ export const LanyardWorkspaceView: React.FC = () => {
                         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                           <span
                             style={{
-                              fontSize: "11.5px",
-                              fontWeight: 700,
+                              fontSize: "11px",
+                              fontWeight: 600,
                               fontFamily: "var(--font-mono)",
                               padding: "2px 7px",
                               borderRadius: "4px",
-                              backgroundColor: "rgba(56, 189, 248, 0.12)",
-                              border: "1px solid rgba(56, 189, 248, 0.3)",
-                              color: "#38bdf8",
+                              backgroundColor: "rgba(255, 255, 255, 0.05)",
+                              border: "1px solid rgba(255, 255, 255, 0.12)",
+                              color: "#cbd5e1",
                             }}
                           >
                             {entry.size}
@@ -1391,7 +1394,7 @@ export const LanyardWorkspaceView: React.FC = () => {
                                 height: "28px",
                                 padding: "0 8px",
                                 backgroundColor: "#090c13",
-                                border: "1px solid #38bdf8",
+                                border: "1px solid rgba(255, 255, 255, 0.3)",
                                 borderRadius: "4px",
                                 color: "#fff",
                                 fontSize: "14px",
@@ -1403,9 +1406,9 @@ export const LanyardWorkspaceView: React.FC = () => {
                               onClick={(e) => handleStartEdit(entry, "mplName", e)}
                               title="Click to edit title"
                               style={{
-                                fontSize: "14.5px",
-                                fontWeight: 700,
-                                color: isReady ? "#94a3b8" : "#ffffff",
+                                fontSize: "14px",
+                                fontWeight: 600,
+                                color: isReady ? "#94a3b8" : "#f1f5f9",
                                 cursor: "pointer",
                                 letterSpacing: "-0.01em",
                               }}
@@ -1416,7 +1419,7 @@ export const LanyardWorkspaceView: React.FC = () => {
                         </div>
                       </td>
 
-                      {/* 4. Quantity */}
+                      {/* 4. Quantity (No pcs mentioned) */}
                       <td style={{ padding: "11px 10px" }}>
                         {editingCell?.id === entry.id && editingCell?.field === "qty" ? (
                           <input
@@ -1431,7 +1434,7 @@ export const LanyardWorkspaceView: React.FC = () => {
                               height: "28px",
                               padding: "0 8px",
                               backgroundColor: "#090c13",
-                              border: "1px solid #38bdf8",
+                              border: "1px solid rgba(255, 255, 255, 0.3)",
                               borderRadius: "4px",
                               color: "#fff",
                               fontSize: "14px",
@@ -1445,20 +1448,19 @@ export const LanyardWorkspaceView: React.FC = () => {
                             title="Click to edit quantity"
                             style={{ cursor: "pointer" }}
                           >
-                            <span style={{ fontFamily: "var(--font-mono)", fontSize: "15px", fontWeight: 700, color: "#ffffff" }}>
+                            <span style={{ fontFamily: "var(--font-mono)", fontSize: "14px", fontWeight: 700, color: "#f8fafc" }}>
                               {entry.qty.toLocaleString()}
-                            </span>{" "}
-                            <span style={{ fontSize: "12px", color: "#94a3b8" }}>pcs</span>
-                            {entry.qtyDisplay && entry.qtyDisplay !== String(entry.qty) && (
-                              <div style={{ fontSize: "10.5px", color: "#94a3b8", fontFamily: "var(--font-mono)" }}>
-                                ({entry.qtyDisplay})
+                            </span>
+                            {entry.qtyDisplay && entry.qtyDisplay !== String(entry.qty) && !entry.qtyDisplay.includes(String(entry.qty)) && (
+                              <div style={{ fontSize: "10.5px", color: "#64748b", fontFamily: "var(--font-mono)" }}>
+                                ({entry.qtyDisplay.replace(/pcs/gi, "").trim()})
                               </div>
                             )}
                           </div>
                         )}
                       </td>
 
-                      {/* 5. Step 1: Design Status (Checkbox Style) */}
+                      {/* 5. Step 1: Design Status (Checkbox Style - Muted Palette) */}
                       <td style={{ padding: "10px 8px" }}>
                         <button
                           type="button"
@@ -1479,25 +1481,25 @@ export const LanyardWorkspaceView: React.FC = () => {
                             padding: "0 10px",
                             borderRadius: "5px",
                             backgroundColor: isStep1Done
-                              ? "rgba(34, 197, 94, 0.14)"
-                              : "rgba(255, 255, 255, 0.04)",
+                              ? "rgba(255, 255, 255, 0.04)"
+                              : "rgba(255, 255, 255, 0.02)",
                             border: isStep1Done
-                              ? "1px solid rgba(34, 197, 94, 0.4)"
-                              : "1px solid rgba(255, 255, 255, 0.15)",
-                            color: isStep1Done ? "#4ade80" : "#94a3b8",
+                              ? "1px solid rgba(255, 255, 255, 0.12)"
+                              : "1px solid rgba(255, 255, 255, 0.08)",
+                            color: isStep1Done ? "#f1f5f9" : "#94a3b8",
                             fontSize: "12px",
-                            fontWeight: 700,
+                            fontWeight: 600,
                             cursor: "pointer",
                             transition: "all 0.15s ease",
                             whiteSpace: "nowrap",
                           }}
                         >
-                          <CheckboxBox checked={isStep1Done} color="#22c55e" />
+                          <CheckboxBox checked={isStep1Done} color="#10b981" />
                           <span>{isStep1Done ? "Design OK" : "Design Pending"}</span>
                         </button>
                       </td>
 
-                      {/* 6. Step 2: Gone to Print (Checkbox Style - Unlocks on Step 1) */}
+                      {/* 6. Step 2: Gone to Print (Checkbox Style - Muted Palette) */}
                       <td style={{ padding: "10px 8px" }}>
                         {!isStep2Unlocked ? (
                           <div
@@ -1513,12 +1515,12 @@ export const LanyardWorkspaceView: React.FC = () => {
                               boxSizing: "border-box",
                               padding: "0 10px",
                               borderRadius: "5px",
-                              backgroundColor: "rgba(255, 255, 255, 0.02)",
-                              border: "1px dashed rgba(255, 255, 255, 0.1)",
-                              color: "#64748b",
+                              backgroundColor: "transparent",
+                              border: "1px dashed rgba(255, 255, 255, 0.07)",
+                              color: "#475569",
                               fontSize: "11.5px",
                               cursor: "not-allowed",
-                              opacity: 0.5,
+                              opacity: 0.6,
                               whiteSpace: "nowrap",
                             }}
                           >
@@ -1545,14 +1547,14 @@ export const LanyardWorkspaceView: React.FC = () => {
                               padding: "0 10px",
                               borderRadius: "5px",
                               backgroundColor: isStep2Done
-                                ? "rgba(56, 189, 248, 0.16)"
-                                : "rgba(56, 189, 248, 0.05)",
+                                ? "rgba(255, 255, 255, 0.04)"
+                                : "rgba(255, 255, 255, 0.02)",
                               border: isStep2Done
-                                ? "1px solid rgba(56, 189, 248, 0.45)"
-                                : "1px solid rgba(56, 189, 248, 0.25)",
-                              color: isStep2Done ? "#38bdf8" : "#7dd3fc",
+                                ? "1px solid rgba(255, 255, 255, 0.12)"
+                                : "1px solid rgba(255, 255, 255, 0.08)",
+                              color: isStep2Done ? "#f1f5f9" : "#94a3b8",
                               fontSize: "12px",
-                              fontWeight: 700,
+                              fontWeight: 600,
                               cursor: "pointer",
                               transition: "all 0.15s ease",
                               whiteSpace: "nowrap",
@@ -1564,7 +1566,7 @@ export const LanyardWorkspaceView: React.FC = () => {
                         )}
                       </td>
 
-                      {/* 7. Step 3: Printed (Checkbox Style - Unlocks on Step 2) */}
+                      {/* 7. Step 3: Printed (Checkbox Style - Muted Palette) */}
                       <td style={{ padding: "10px 8px" }}>
                         {!isStep3Unlocked ? (
                           <div
@@ -1580,12 +1582,12 @@ export const LanyardWorkspaceView: React.FC = () => {
                               boxSizing: "border-box",
                               padding: "0 10px",
                               borderRadius: "5px",
-                              backgroundColor: "rgba(255, 255, 255, 0.02)",
-                              border: "1px dashed rgba(255, 255, 255, 0.1)",
-                              color: "#64748b",
+                              backgroundColor: "transparent",
+                              border: "1px dashed rgba(255, 255, 255, 0.07)",
+                              color: "#475569",
                               fontSize: "11.5px",
                               cursor: "not-allowed",
-                              opacity: 0.5,
+                              opacity: 0.6,
                               whiteSpace: "nowrap",
                             }}
                           >
@@ -1612,26 +1614,26 @@ export const LanyardWorkspaceView: React.FC = () => {
                               padding: "0 10px",
                               borderRadius: "5px",
                               backgroundColor: isStep3Done
-                                ? "rgba(34, 197, 94, 0.16)"
-                                : "rgba(255, 255, 255, 0.04)",
+                                ? "rgba(255, 255, 255, 0.04)"
+                                : "rgba(255, 255, 255, 0.02)",
                               border: isStep3Done
-                                ? "1px solid rgba(34, 197, 94, 0.45)"
-                                : "1px solid rgba(255, 255, 255, 0.15)",
-                              color: isStep3Done ? "#4ade80" : "#94a3b8",
+                                ? "1px solid rgba(255, 255, 255, 0.12)"
+                                : "1px solid rgba(255, 255, 255, 0.08)",
+                              color: isStep3Done ? "#f1f5f9" : "#94a3b8",
                               fontSize: "12px",
-                              fontWeight: 700,
+                              fontWeight: 600,
                               cursor: "pointer",
                               transition: "all 0.15s ease",
                               whiteSpace: "nowrap",
                             }}
                           >
-                            <CheckboxBox checked={isStep3Done} color="#22c55e" />
+                            <CheckboxBox checked={isStep3Done} color="#10b981" />
                             <span>{isStep3Done ? "Printed ✓" : "Mark Printed"}</span>
                           </button>
                         )}
                       </td>
 
-                      {/* 8. Step 4: Fitting / Labour Assignment (Final Step - Unlocks on Step 3) */}
+                      {/* 8. Step 4: Fitting / Labour Assignment (Muted Palette) */}
                       <td style={{ padding: "10px 8px" }}>
                         {!isStep4Unlocked ? (
                           <div
@@ -1647,12 +1649,12 @@ export const LanyardWorkspaceView: React.FC = () => {
                               boxSizing: "border-box",
                               padding: "0 10px",
                               borderRadius: "5px",
-                              backgroundColor: "rgba(255, 255, 255, 0.02)",
-                              border: "1px dashed rgba(255, 255, 255, 0.1)",
-                              color: "#64748b",
+                              backgroundColor: "transparent",
+                              border: "1px dashed rgba(255, 255, 255, 0.07)",
+                              color: "#475569",
                               fontSize: "11.5px",
                               cursor: "not-allowed",
-                              opacity: 0.5,
+                              opacity: 0.6,
                               whiteSpace: "nowrap",
                             }}
                           >
@@ -1672,15 +1674,15 @@ export const LanyardWorkspaceView: React.FC = () => {
                                 boxSizing: "border-box",
                                 padding: "0 10px",
                                 borderRadius: "5px",
-                                backgroundColor: "rgba(34, 197, 94, 0.15)",
-                                border: "1px solid rgba(34, 197, 94, 0.4)",
-                                color: "#4ade80",
+                                backgroundColor: "rgba(255, 255, 255, 0.04)",
+                                border: "1px solid rgba(255, 255, 255, 0.12)",
+                                color: "#f1f5f9",
                                 fontSize: "12px",
-                                fontWeight: 700,
+                                fontWeight: 600,
                                 whiteSpace: "nowrap",
                               }}
                             >
-                              <CheckboxBox checked={true} color="#22c55e" />
+                              <CheckboxBox checked={true} color="#10b981" />
                               <span>Without Fitting (Done)</span>
                             </div>
                             <button
@@ -1697,7 +1699,7 @@ export const LanyardWorkspaceView: React.FC = () => {
                                 boxSizing: "border-box",
                                 borderRadius: "5px",
                                 backgroundColor: "rgba(255, 255, 255, 0.04)",
-                                border: "1px solid rgba(255, 255, 255, 0.1)",
+                                border: "1px solid rgba(255, 255, 255, 0.08)",
                                 color: "#94a3b8",
                                 cursor: "pointer",
                                 transition: "all 0.15s ease",
@@ -1722,18 +1724,18 @@ export const LanyardWorkspaceView: React.FC = () => {
                                 boxSizing: "border-box",
                                 padding: "0 8px",
                                 borderRadius: "5px",
-                                backgroundColor: contractor?.bgColor || "rgba(255, 255, 255, 0.05)",
-                                border: `1px solid ${contractor?.borderColor || "rgba(255, 255, 255, 0.16)"}`,
-                                color: contractor?.color || "#f8fafc",
+                                backgroundColor: "rgba(255, 255, 255, 0.04)",
+                                border: "1px solid rgba(255, 255, 255, 0.12)",
+                                color: "#cbd5e1",
                                 fontSize: "12px",
-                                fontWeight: 700,
+                                fontWeight: 600,
                                 cursor: "pointer",
                                 overflow: "hidden",
                                 textOverflow: "ellipsis",
                                 whiteSpace: "nowrap",
                               }}
                             >
-                              <Icon name="user" size={12} color={contractor?.color || "#94a3b8"} />
+                              <Icon name="user" size={12} color="#94a3b8" />
                               <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                                 {formatContractorLabel(entry.fittingContractorName || "")}
                               </span>
@@ -1745,7 +1747,7 @@ export const LanyardWorkspaceView: React.FC = () => {
                               title={
                                 entry.fittingStatus === "ready"
                                   ? "Fitting completed & verified. Click to uncheck."
-                                  : "Click to mark Fitting Done (Order completes)"
+                                  : "Click to mark Fitting Done"
                               }
                               style={{
                                 display: "flex",
@@ -1759,22 +1761,22 @@ export const LanyardWorkspaceView: React.FC = () => {
                                 borderRadius: "5px",
                                 backgroundColor:
                                   entry.fittingStatus === "ready"
-                                    ? "rgba(34, 197, 94, 0.15)"
-                                    : "rgba(245, 158, 11, 0.12)",
+                                    ? "rgba(255, 255, 255, 0.04)"
+                                    : "rgba(255, 255, 255, 0.02)",
                                 border:
                                   entry.fittingStatus === "ready"
-                                    ? "1px solid rgba(34, 197, 94, 0.4)"
-                                    : "1px solid rgba(245, 158, 11, 0.35)",
-                                color: entry.fittingStatus === "ready" ? "#4ade80" : "#fbbf24",
+                                    ? "1px solid rgba(255, 255, 255, 0.12)"
+                                    : "1px solid rgba(255, 255, 255, 0.08)",
+                                color: entry.fittingStatus === "ready" ? "#f1f5f9" : "#94a3b8",
                                 fontSize: "11.5px",
-                                fontWeight: 700,
+                                fontWeight: 600,
                                 cursor: "pointer",
                                 whiteSpace: "nowrap",
                               }}
                             >
                               <CheckboxBox
                                 checked={entry.fittingStatus === "ready"}
-                                color={entry.fittingStatus === "ready" ? "#22c55e" : "#f59e0b"}
+                                color="#10b981"
                               />
                               <span>{entry.fittingStatus === "ready" ? "Fitting Done ✓" : "In Fitting"}</span>
                             </button>
@@ -1794,7 +1796,7 @@ export const LanyardWorkspaceView: React.FC = () => {
                                   boxSizing: "border-box",
                                   borderRadius: "5px",
                                   backgroundColor: "rgba(255, 255, 255, 0.04)",
-                                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                                  border: "1px solid rgba(255, 255, 255, 0.08)",
                                   color: "#94a3b8",
                                   cursor: "pointer",
                                   transition: "all 0.15s ease",
@@ -1820,23 +1822,23 @@ export const LanyardWorkspaceView: React.FC = () => {
                                 boxSizing: "border-box",
                                 padding: "0 8px",
                                 borderRadius: "5px",
-                                backgroundColor: "rgba(245, 158, 11, 0.12)",
-                                border: "1px dashed rgba(245, 158, 11, 0.45)",
-                                color: "#fbbf24",
+                                backgroundColor: "rgba(255, 255, 255, 0.03)",
+                                border: "1px dashed rgba(255, 255, 255, 0.15)",
+                                color: "#cbd5e1",
                                 fontSize: "11.5px",
-                                fontWeight: 700,
+                                fontWeight: 600,
                                 cursor: "pointer",
                                 whiteSpace: "nowrap",
                               }}
                             >
-                              <Icon name="plus" size={11} color="#fbbf24" />
+                              <Icon name="plus" size={11} color="#94a3b8" />
                               <span>+ Assign Labour</span>
                             </button>
 
                             <button
                               type="button"
                               onClick={(e) => handleSetWithoutFitting(entry, e)}
-                              title="Fitting not needed. Complete order as Without Fitting (Done) and mark Ready."
+                              title="Fitting not needed. Mark as Without Fitting (Done)."
                               style={{
                                 display: "flex",
                                 alignItems: "center",
@@ -1847,8 +1849,8 @@ export const LanyardWorkspaceView: React.FC = () => {
                                 boxSizing: "border-box",
                                 padding: "0 8px",
                                 borderRadius: "5px",
-                                backgroundColor: "rgba(255, 255, 255, 0.05)",
-                                border: "1px solid rgba(255, 255, 255, 0.16)",
+                                backgroundColor: "rgba(255, 255, 255, 0.03)",
+                                border: "1px solid rgba(255, 255, 255, 0.1)",
                                 color: "#cbd5e1",
                                 fontSize: "11.5px",
                                 fontWeight: 600,
@@ -1856,30 +1858,26 @@ export const LanyardWorkspaceView: React.FC = () => {
                                 transition: "all 0.15s ease",
                                 whiteSpace: "nowrap",
                               }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.backgroundColor = "rgba(34, 197, 94, 0.16)";
-                                e.currentTarget.style.borderColor = "rgba(34, 197, 94, 0.4)";
-                                e.currentTarget.style.color = "#4ade80";
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
-                                e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.16)";
-                                e.currentTarget.style.color = "#cbd5e1";
-                              }}
                             >
-                              <Icon name="check" size={11} />
+                              <Icon name="check" size={11} color="#94a3b8" />
                               <span>Without Fitting</span>
                             </button>
                           </div>
                         )}
                       </td>
 
-                      {/* 9. Overall Order Status */}
+                      {/* 9. Overall Order Status (User manually marks Ready to Complete) */}
                       <td style={{ padding: "10px 8px", textAlign: "center" }}>
                         <button
                           type="button"
                           onClick={(e) => handleCycleOrderStatus(entry, e)}
-                          title="Click to toggle Order Status (In Progress <-> Ready)"
+                          title={
+                            isReady
+                              ? "Order verified & completed. Click to re-open to Active Queue."
+                              : allStepsDone
+                              ? "All production steps finished! Click to mark Ready and move to Completed."
+                              : "In production. Click to force mark Ready & complete."
+                          }
                           style={{
                             display: "flex",
                             alignItems: "center",
@@ -1891,40 +1889,33 @@ export const LanyardWorkspaceView: React.FC = () => {
                             padding: "0 8px",
                             borderRadius: "5px",
                             fontSize: "12px",
-                            fontWeight: 700,
+                            fontWeight: isReady || allStepsDone ? 700 : 600,
                             cursor: "pointer",
                             whiteSpace: "nowrap",
                             border: isReady
-                              ? "1px solid rgba(34, 197, 94, 0.4)"
-                              : entry.fittingStatus === "in_fitting"
-                              ? "1px solid rgba(245, 158, 11, 0.4)"
-                              : entry.isPrinted
-                              ? "1px solid rgba(56, 189, 248, 0.4)"
-                              : entry.goneForPrint
-                              ? "1px solid rgba(56, 189, 248, 0.3)"
-                              : "1px solid rgba(255, 255, 255, 0.14)",
+                              ? "1px solid rgba(16, 185, 129, 0.25)"
+                              : allStepsDone
+                              ? "1px solid rgba(16, 185, 129, 0.4)"
+                              : "1px solid rgba(255, 255, 255, 0.08)",
                             backgroundColor: isReady
-                              ? "rgba(34, 197, 94, 0.16)"
-                              : entry.fittingStatus === "in_fitting"
-                              ? "rgba(245, 158, 11, 0.16)"
-                              : entry.isPrinted
-                              ? "rgba(56, 189, 248, 0.16)"
-                              : entry.goneForPrint
-                              ? "rgba(56, 189, 248, 0.1)"
-                              : "rgba(255, 255, 255, 0.04)",
+                              ? "rgba(16, 185, 129, 0.08)"
+                              : allStepsDone
+                              ? "rgba(16, 185, 129, 0.15)"
+                              : "rgba(255, 255, 255, 0.03)",
                             color: isReady
+                              ? "#34d399"
+                              : allStepsDone
                               ? "#4ade80"
-                              : entry.fittingStatus === "in_fitting"
-                              ? "#fbbf24"
-                              : entry.isPrinted || entry.goneForPrint
-                              ? "#38bdf8"
                               : "#94a3b8",
+                            transition: "all 0.15s ease",
                           }}
                         >
                           <Icon
                             name={
                               isReady
                                 ? "check-circle"
+                                : allStepsDone
+                                ? "check"
                                 : entry.fittingStatus === "in_fitting"
                                 ? "tool"
                                 : entry.goneForPrint || entry.isPrinted
@@ -1936,6 +1927,8 @@ export const LanyardWorkspaceView: React.FC = () => {
                           <span>
                             {isReady
                               ? "Ready ✓"
+                              : allStepsDone
+                              ? "Mark Ready ✓"
                               : entry.fittingStatus === "in_fitting"
                               ? "In Fitting"
                               : entry.isPrinted
@@ -1963,20 +1956,18 @@ export const LanyardWorkspaceView: React.FC = () => {
                               boxSizing: "border-box",
                               borderRadius: "5px",
                               backgroundColor: "rgba(255, 255, 255, 0.04)",
-                              border: "1px solid rgba(255, 255, 255, 0.1)",
-                              color: "#cbd5e1",
+                              border: "1px solid rgba(255, 255, 255, 0.08)",
+                              color: "#94a3b8",
                               cursor: "pointer",
                               transition: "all 0.15s ease",
                             }}
                             onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor = "rgba(245, 158, 11, 0.15)";
-                              e.currentTarget.style.borderColor = "rgba(245, 158, 11, 0.4)";
-                              e.currentTarget.style.color = "#fbbf24";
+                              e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.08)";
+                              e.currentTarget.style.color = "#f1f5f9";
                             }}
                             onMouseLeave={(e) => {
                               e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.04)";
-                              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
-                              e.currentTarget.style.color = "#cbd5e1";
+                              e.currentTarget.style.color = "#94a3b8";
                             }}
                           >
                             <Icon name="user" size={13} />
@@ -2001,20 +1992,18 @@ export const LanyardWorkspaceView: React.FC = () => {
                               boxSizing: "border-box",
                               borderRadius: "5px",
                               backgroundColor: "rgba(255, 255, 255, 0.04)",
-                              border: "1px solid rgba(255, 255, 255, 0.1)",
-                              color: "#cbd5e1",
+                              border: "1px solid rgba(255, 255, 255, 0.08)",
+                              color: "#94a3b8",
                               cursor: "pointer",
                               transition: "all 0.15s ease",
                             }}
                             onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor = "rgba(56, 189, 248, 0.15)";
-                              e.currentTarget.style.borderColor = "rgba(56, 189, 248, 0.4)";
-                              e.currentTarget.style.color = "#38bdf8";
+                              e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.08)";
+                              e.currentTarget.style.color = "#f1f5f9";
                             }}
                             onMouseLeave={(e) => {
                               e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.04)";
-                              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
-                              e.currentTarget.style.color = "#cbd5e1";
+                              e.currentTarget.style.color = "#94a3b8";
                             }}
                           >
                             <Icon name="file-text" size={13} />

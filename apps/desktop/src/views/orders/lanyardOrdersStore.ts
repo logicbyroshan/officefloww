@@ -43,6 +43,7 @@ export interface LanyardOrderEntry {
 
   // 4. Status & Return Tracking
   fittingStatus: "ready" | "in_fitting" | "pending_assignment";
+  orderReady?: boolean; // User explicitly marks order Ready / Completed
   completedQty?: number;
   receivedDate?: string;
 
@@ -518,12 +519,20 @@ function loadInitialOrders(): LanyardOrderEntry[] {
     const raw = localStorage.getItem(STORAGE_KEY_ORDERS);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed.map((o: any) => ({
+          ...o,
+          orderReady: o.orderReady !== undefined ? o.orderReady : (o.sn < 1276 && o.fittingStatus === "ready"),
+        }));
+      }
     }
   } catch (e) {
     console.error("Failed to load lanyard orders from storage", e);
   }
-  return [...SEED_LANYARD_ORDERS];
+  return SEED_LANYARD_ORDERS.map((o) => ({
+    ...o,
+    orderReady: o.orderReady !== undefined ? o.orderReady : (o.sn < 1276 && o.fittingStatus === "ready"),
+  }));
 }
 
 function loadInitialVouchers(): Record<string, LabourFittingVoucher[]> {
@@ -641,6 +650,7 @@ export function useLanyardStore() {
   const addOrder = (entry: Omit<LanyardOrderEntry, "id">) => {
     const newEntry: LanyardOrderEntry = {
       ...entry,
+      orderReady: entry.orderReady ?? false,
       id: `lanyard-${entry.sn}-${Date.now()}`,
     };
     globalOrdersState = [newEntry, ...globalOrdersState];
