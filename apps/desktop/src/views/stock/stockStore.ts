@@ -61,8 +61,8 @@ export const INITIAL_STOCK_ITEMS: StockItem[] = [
   },
   {
     id: "stk-hook-3",
-    code: "plastic-hook",
-    name: "Plastic Hook",
+    code: "fish-hook",
+    name: "Fish Hook",
     category: "HOOKS",
     unit: "pieces",
     availableStock: 11400,

@@ -95,7 +95,7 @@ const CheckboxBox: React.FC<CheckboxBoxProps> = ({
   </div>
 );
 
-const HOOK_OPTIONS = ["Dog Hook", "Eagle Hook", "Plastic Hook", "None"] as const;
+const HOOK_OPTIONS = ["Dog Hook", "England Hook", "Fish Hook", "None"] as const;
 const HOLDER_PRESETS = ["DST-V", "DST-H", "CCH", "PH", "PV"] as const;
 
 export const LanyardWorkspaceView: React.FC = () => {
@@ -671,9 +671,10 @@ export const LanyardWorkspaceView: React.FC = () => {
   const hookStats = useMemo(() => {
     const dogHook = stockItems.find((s) => s.code === "dog-hook")?.availableStock ?? 8500;
     const englandHook = stockItems.find((s) => s.code === "england-hook")?.availableStock ?? 6200;
-    const plasticHook = stockItems.find((s) => s.code === "plastic-hook")?.availableStock ?? 11400;
-    const total = dogHook + englandHook + plasticHook;
-    return { total, dogHook, englandHook, plasticHook };
+    const fishHook =
+      stockItems.find((s) => s.code === "fish-hook" || s.code === "plastic-hook")?.availableStock ?? 11400;
+    const total = dogHook + englandHook + fishHook;
+    return { total, dogHook, englandHook, fishHook };
   }, [stockItems]);
 
   const jointerStats = useMemo(() => {
@@ -866,7 +867,7 @@ export const LanyardWorkspaceView: React.FC = () => {
             <span style={{ fontSize: "12px", color: "#94a3b8", fontWeight: 500 }}>units</span>
           </div>
           <div style={{ fontSize: "11px", color: "#94a3b8", marginTop: "2px", fontFamily: "var(--font-mono)" }}>
-            Dog: {(hookStats.dogHook / 1000).toFixed(1)}k • Eng: {(hookStats.englandHook / 1000).toFixed(1)}k • Plastic: {(hookStats.plasticHook / 1000).toFixed(1)}k
+            Dog: {(hookStats.dogHook / 1000).toFixed(1)}k • Eng: {(hookStats.englandHook / 1000).toFixed(1)}k • Fish: {(hookStats.fishHook / 1000).toFixed(1)}k
           </div>
         </div>
 
