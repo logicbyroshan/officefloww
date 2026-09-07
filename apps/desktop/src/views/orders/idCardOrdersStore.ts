@@ -11,11 +11,13 @@ export interface IDCardOrderEntry {
   cardCategory: IDCardCategory; // strictly separate orders for Student vs Staff
   workQtyDisplay: string; // e.g. "15 student", "8 staff"
   totalQty: number; // numeric computed total
-  sentForPrint: boolean; // true
+  designDone?: boolean; // artwork approved / verified
+  sentForPrint: boolean; // sent to Kamal Sir
   printOperator: string; // strictly "Kamal Sir" (In-house printing desk)
   fileLocation: IDCardFileFormat; // strictly single format: "doc" | "excel" | "hard copy" (no PDF, no combinations)
   status: "kamal" | "ready" | "done" | "ready (1 pending he)";
-  holderLanyardStatus?: string; // e.g. "available he", "only card hi", "green printed"
+  holderLanyardStatus?: string; // legacy support
+  holderName?: string; // strictly card holder name only: e.g. "DST-V", "DST-H", "Cards Only", "CCH", "PV", "PH"
   remarks?: string;
 }
 
@@ -27,6 +29,25 @@ export function parseIDCQuantity(qtyStr: string): number {
     return 0;
   }
   return nums.reduce((sum, n) => sum + parseInt(n, 10), 0);
+}
+
+// Strictly extract and format Card Holder Name ONLY (e.g. "DST-V", "Cards Only", "DST-H", "CCH", "PV", "PH")
+export function resolveHolderName(order: { holderName?: string; holderLanyardStatus?: string }): string {
+  if (order.holderName && order.holderName.trim() && order.holderName !== "—") {
+    const hn = order.holderName.trim();
+    if (hn.toLowerCase().includes("only") || hn.toLowerCase().includes("without")) return "Cards Only";
+    return hn;
+  }
+  const s = (order.holderLanyardStatus || "").toLowerCase().trim();
+  if (!s || s === "—" || s.includes("only") || s.includes("card") || s.includes("without")) {
+    return "Cards Only";
+  }
+  if (s.includes("dst-h") || s.includes("dsth")) return "DST-H";
+  if (s.includes("dst-v") || s.includes("dstv") || s.includes("available") || s.includes("ready")) return "DST-V";
+  if (s.includes("cch")) return "CCH";
+  if (s.includes("pv")) return "PV";
+  if (s.includes("ph")) return "PH";
+  return "DST-V";
 }
 
 export const SEED_IDCARD_ORDERS: IDCardOrderEntry[] = [
@@ -677,19 +698,32 @@ export const SEED_IDCARD_ORDERS: IDCardOrderEntry[] = [
   },
 ];
 
-const STORAGE_KEY = "officefloww_idcard_orders_v4";
+const STORAGE_KEY = "officefloww_idcard_orders_v5";
 
 function loadInitialOrders(): IDCardOrderEntry[] {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    let raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      raw = localStorage.getItem("officefloww_idcard_orders_v4");
+    }
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed.map((o: IDCardOrderEntry) => ({
+          ...o,
+          designDone: o.designDone ?? (o.status === "ready" || o.status === "done" ? true : false),
+          holderName: resolveHolderName(o),
+        }));
+      }
     }
   } catch (e) {
     console.error("Failed to load ID card orders from storage", e);
   }
-  return [...SEED_IDCARD_ORDERS];
+  return SEED_IDCARD_ORDERS.map((o) => ({
+    ...o,
+    designDone: o.designDone ?? (o.status === "ready" || o.status === "done" ? true : false),
+    holderName: resolveHolderName(o),
+  }));
 }
 
 let globalIDCardOrders: IDCardOrderEntry[] = loadInitialOrders();
@@ -771,6 +805,14 @@ export function useIDCardStore() {
     notifyAll();
   };
 
+  const toggleDesignDone = (id: string) => {
+    globalIDCardOrders = globalIDCardOrders.map((o) => {
+      if (o.id !== id) return o;
+      return { ...o, designDone: !o.designDone };
+    });
+    notifyAll();
+  };
+
   return {
     orders,
     setOrders,
@@ -779,5 +821,6 @@ export function useIDCardStore() {
     updateOrderStatus,
     cycleStatus,
     toggleSentForPrint,
+    toggleDesignDone,
   };
 }
