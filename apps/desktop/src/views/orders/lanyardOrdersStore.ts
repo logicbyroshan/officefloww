@@ -52,6 +52,13 @@ export interface LanyardOrderEntry {
   hookType?: string; // e.g. "Dog Hook", "England Hook", "Fish Hook", "None"
   jointerType?: string; // e.g. "16mm-j", "12mm-j", "none"
 
+  // 5b. Dori Size Breakdown (Small / Medium / Big)
+  doriBreakdown?: {
+    small?: number;
+    medium?: number;
+    big?: number;
+  };
+
   // 6. Remarks
   fittingRemarks?: string;
 }
@@ -786,6 +793,27 @@ export function useLanyardStore() {
     notifyAll();
   };
 
+  // Permanently delete an order and remove any linked vouchers (Completed orders are strictly protected)
+  const deleteOrder = (orderId: string) => {
+    const target = globalOrdersState.find((o) => o.id === orderId);
+    if (target && target.orderReady) {
+      console.warn(`Order #${target.sn} is marked as COMPLETED and cannot be deleted.`);
+      return false;
+    }
+
+    globalOrdersState = globalOrdersState.filter((o) => o.id !== orderId);
+
+    // Remove any vouchers registered for this order in any contractor's ledger
+    const nextVouchers: Record<string, LabourFittingVoucher[]> = {};
+    for (const [cId, vouchers] of Object.entries(globalVouchersState)) {
+      nextVouchers[cId] = vouchers.filter((v) => v.orderId !== orderId);
+    }
+    globalVouchersState = nextVouchers;
+
+    notifyAll();
+    return true;
+  };
+
   return {
     orders,
     setOrders,
@@ -795,6 +823,7 @@ export function useLanyardStore() {
     selectedContractorId,
     setSelectedContractorId,
     addOrder,
+    deleteOrder,
     addFittingVoucher,
     addSentItem,
     markVoucherComplete,
