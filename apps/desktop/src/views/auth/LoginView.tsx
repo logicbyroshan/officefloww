@@ -77,10 +77,10 @@ export const LoginView: React.FC = () => {
 
     const cleanEmail = email.trim().toLowerCase();
 
-    // Strict firm domain verification: must be @adharshbhopal.in
-    if (!cleanEmail.endsWith("@adharshbhopal.in")) {
+    // Firm domain verification: supports @adharshbhopal.in and @officefloww.com
+    if (!cleanEmail.endsWith("@adharshbhopal.in") && !cleanEmail.endsWith("@officefloww.com")) {
       setErrorMsg(
-        "Access restricted: Only authorized @adharshbhopal.in workstation accounts are permitted to authenticate."
+        "Access restricted: Only authorized @officefloww.com or @adharshbhopal.in workstation accounts are permitted to authenticate."
       );
       return;
     }
@@ -700,7 +700,7 @@ export const LoginView: React.FC = () => {
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
                 </svg>
-                <span>Authorized firm domain: <strong>@adharshbhopal.in</strong></span>
+                <span>Authorized firm domains: <strong>@officefloww.com</strong> or <strong>@adharshbhopal.in</strong></span>
               </div>
             </form>
           </div>

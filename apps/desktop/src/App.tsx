@@ -18,7 +18,7 @@ import { LoadingState } from "./design-system/components/FeedbackStates";
 
 const MainApp: React.FC = () => {
   const { user, loading: authLoading } = useAuth();
-  const [activeSection, setActiveSection] = useState<AppNavSection>("lanyard_orders");
+  const [activeSection, setActiveSection] = useState<AppNavSection>("orders");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   // Initialize theme, global search shortcut, and cross-workspace navigation
@@ -51,6 +51,9 @@ const MainApp: React.FC = () => {
 
   const renderCurrentView = () => {
     switch (activeSection) {
+      case "orders":
+        return <OrdersWorkspaceView />;
+
       case "lanyard_orders":
         return <LanyardWorkspaceView />;
 
@@ -64,7 +67,7 @@ const MainApp: React.FC = () => {
         return <StockDashboardView />;
 
       default:
-        return <LanyardWorkspaceView />;
+        return <OrdersWorkspaceView />;
     }
   };
 
