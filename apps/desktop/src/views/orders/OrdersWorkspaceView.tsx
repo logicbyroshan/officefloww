@@ -503,7 +503,7 @@ export const OrdersWorkspaceView: React.FC = () => {
               onClick={() => setOrderScope("full_set")}
               style={{
                 height: "26px",
-                padding: "0 10px",
+                padding: "0 12px",
                 borderRadius: "4px",
                 border: "none",
                 backgroundColor: orderScope === "full_set" ? "rgba(34, 197, 94, 0.2)" : "transparent",
@@ -519,7 +519,7 @@ export const OrdersWorkspaceView: React.FC = () => {
               }}
             >
               <Icon name="layers" size={12} color={orderScope === "full_set" ? "#4ade80" : "#94a3b8"} />
-              <span>Full Set Combination</span>
+              <span>Full Set</span>
             </button>
 
             <button
@@ -527,7 +527,7 @@ export const OrdersWorkspaceView: React.FC = () => {
               onClick={() => setOrderScope("lanyard_only")}
               style={{
                 height: "26px",
-                padding: "0 10px",
+                padding: "0 12px",
                 borderRadius: "4px",
                 border: "none",
                 backgroundColor: orderScope === "lanyard_only" ? "rgba(56, 189, 248, 0.2)" : "transparent",
@@ -543,7 +543,7 @@ export const OrdersWorkspaceView: React.FC = () => {
               }}
             >
               <Icon name="tag" size={12} color={orderScope === "lanyard_only" ? "#38bdf8" : "#94a3b8"} />
-              <span>Lanyard Only</span>
+              <span>Lanyard</span>
             </button>
 
             <button
@@ -551,7 +551,7 @@ export const OrdersWorkspaceView: React.FC = () => {
               onClick={() => setOrderScope("idcard_only")}
               style={{
                 height: "26px",
-                padding: "0 10px",
+                padding: "0 12px",
                 borderRadius: "4px",
                 border: "none",
                 backgroundColor: orderScope === "idcard_only" ? "rgba(168, 85, 247, 0.2)" : "transparent",
@@ -567,7 +567,7 @@ export const OrdersWorkspaceView: React.FC = () => {
               }}
             >
               <Icon name="credit-card" size={12} color={orderScope === "idcard_only" ? "#c084fc" : "#94a3b8"} />
-              <span>ID Card Only</span>
+              <span>ID Card</span>
             </button>
           </div>
 
@@ -583,31 +583,31 @@ export const OrdersWorkspaceView: React.FC = () => {
         </div>
 
         {/* CONSOLE CORE FORM: Two-Column Integrated Layout (Left = Textarea | Right = Specs + Quantity) */}
-        <div style={{ display: "flex", gap: "14px", alignItems: "stretch", flexWrap: "wrap" }}>
-          {/* LEFT COLUMN: Clean 2-Line Client Description (No redundant label) */}
-          <div style={{ width: "340px", flexShrink: 0, display: "flex", flexDirection: "column" }}>
+        <div style={{ display: "flex", gap: "16px", alignItems: "stretch", flexWrap: "wrap" }}>
+          {/* LEFT COLUMN: Large, Spacious 2-Line Client Description Input */}
+          <div style={{ width: "460px", flexShrink: 0, display: "flex", flexDirection: "column" }}>
             <textarea
               rows={2}
-              placeholder="Client / Job details..."
+              placeholder="Client / Job details (e.g. School or Organization Name)..."
               value={clientTitle}
               onChange={(e) => setClientTitle(e.target.value)}
               style={{
                 width: "100%",
-                height: "68px",
-                padding: "8px 10px",
+                height: "76px",
+                padding: "10px 14px",
                 backgroundColor: "#07090e",
-                border: "1px solid rgba(255, 255, 255, 0.15)",
-                borderRadius: "5px",
+                border: "1px solid rgba(255, 255, 255, 0.16)",
+                borderRadius: "6px",
                 color: "#fff",
-                fontSize: "13px",
-                lineHeight: "1.35",
+                fontSize: "14px",
+                lineHeight: "1.4",
                 outline: "none",
                 resize: "none",
                 boxSizing: "border-box",
                 transition: "border-color 0.15s ease",
               }}
               onFocus={(e) => (e.currentTarget.style.borderColor = "#38bdf8")}
-              onBlur={(e) => (e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.15)")}
+              onBlur={(e) => (e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.16)")}
             />
           </div>
 
@@ -1210,8 +1210,8 @@ export const OrdersWorkspaceView: React.FC = () => {
                     {showBreakdownDrawer
                       ? "Hide Splits ▴"
                       : breakdownMode !== "uniform"
-                      ? `Splits Configured (${currentAllocated.pieces}) ▾`
-                      : "Size & Color Splits ▾"}
+                      ? `Splits (${currentAllocated.pieces}) ▾`
+                      : "Splits ▾"}
                   </span>
                 </button>
               )}
@@ -1610,7 +1610,7 @@ export const OrdersWorkspaceView: React.FC = () => {
             <span style={{ color: "#e2e8f0" }}>{compiledFittingSummary}</span>
             {orderScope === "full_set" && (
               <span style={{ color: "#4ade80", backgroundColor: "rgba(34, 197, 94, 0.12)", padding: "1px 6px", borderRadius: "3px", fontWeight: 600 }}>
-                Synchronizes {fullSetCalculations.cardCount} Cards &bull; {currentAllocated.pieces} Lanyards
+                Sync: {fullSetCalculations.cardCount} cards &bull; {currentAllocated.pieces} lanyards
               </span>
             )}
           </div>
@@ -1640,10 +1640,10 @@ export const OrdersWorkspaceView: React.FC = () => {
             <Icon name="plus" size={14} />
             <span>
               {orderScope === "full_set"
-                ? `Create Full Set Order (${fullSetCalculations.cardCount} Cards + ${currentAllocated.pieces} Lanyards)`
+                ? `Create Full Set (${currentAllocated.pieces.toLocaleString()} pcs)`
                 : orderScope === "lanyard_only"
-                ? `Create Lanyard Order (${currentAllocated.pieces.toLocaleString()} pcs)`
-                : `Create ID Card Order (${cardCountInput.toLocaleString()} cards)`}
+                ? `Create Order (${currentAllocated.pieces.toLocaleString()} pcs)`
+                : `Create Order (${cardCountInput.toLocaleString()} cards)`}
             </span>
           </button>
         </div>
@@ -1796,41 +1796,68 @@ export const OrdersWorkspaceView: React.FC = () => {
       )}
 
       {/* ══════════════════════════════════════════════════════════════════════════ */}
-      {/* CROSS-LEDGER ACTIVE ORDERS REGISTRY                                       */}
+      {/* CROSS-LEDGER ACTIVE ORDERS REGISTRY (Matches Lanyard Ledger Styling)      */}
       {/* ══════════════════════════════════════════════════════════════════════════ */}
       <div
         style={{
-          backgroundColor: "#0d1322",
           borderRadius: "8px",
           border: "1px solid rgba(255, 255, 255, 0.08)",
-          padding: "12px 16px",
-          display: "flex",
-          flexDirection: "column",
-          gap: "10px",
+          backgroundColor: "#0e131f",
+          overflow: "hidden",
           flex: 1,
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <span style={{ fontSize: "13px", fontWeight: 700, color: "#cbd5e1" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "10px 14px",
+            borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+            backgroundColor: "rgba(255, 255, 255, 0.02)",
+          }}
+        >
+          <span style={{ fontSize: "14px", fontWeight: 700, color: "#f1f5f9", letterSpacing: "0.02em" }}>
             Cross-Ledger Production Pipeline
           </span>
-          <span style={{ fontSize: "11px", color: "#64748b" }}>
+          <span style={{ fontSize: "12px", color: "#64748b" }}>
             {lanyardOrders.length} Lanyard orders &bull; {idCardOrders.length} ID Card orders
           </span>
         </div>
 
         <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "12.5px" }}>
             <thead>
-              <tr style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.1)", color: "#64748b", textAlign: "left" }}>
-                <th style={{ padding: "6px 8px" }}>SN</th>
-                <th style={{ padding: "6px 8px" }}>DATE</th>
-                <th style={{ padding: "6px 8px" }}>CLIENT / JOB TITLE</th>
-                <th style={{ padding: "6px 8px" }}>SCOPE</th>
-                <th style={{ padding: "6px 8px" }}>QTY</th>
-                <th style={{ padding: "6px 8px" }}>FITTING / HARDWARE</th>
-                <th style={{ padding: "6px 8px" }}>LANYARD LEDGER</th>
-                <th style={{ padding: "6px 8px" }}>ID CARD LEDGER</th>
+              <tr
+                style={{
+                  borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+                  backgroundColor: "rgba(255, 255, 255, 0.03)",
+                }}
+              >
+                <th style={{ padding: "12px 14px", color: "#94a3b8", fontWeight: 700, fontSize: "12px", letterSpacing: "0.06em", width: "70px" }}>
+                  SN
+                </th>
+                <th style={{ padding: "12px 12px", color: "#94a3b8", fontWeight: 700, fontSize: "12px", letterSpacing: "0.06em", width: "85px" }}>
+                  DATE
+                </th>
+                <th style={{ padding: "12px 14px", color: "#94a3b8", fontWeight: 700, fontSize: "12px", letterSpacing: "0.06em", minWidth: "220px" }}>
+                  CLIENT / JOB TITLE
+                </th>
+                <th style={{ padding: "12px 12px", color: "#94a3b8", fontWeight: 700, fontSize: "12px", letterSpacing: "0.06em", width: "130px" }}>
+                  SCOPE
+                </th>
+                <th style={{ padding: "12px 12px", color: "#94a3b8", fontWeight: 700, fontSize: "12px", letterSpacing: "0.06em", width: "95px" }}>
+                  QTY
+                </th>
+                <th style={{ padding: "12px 14px", color: "#94a3b8", fontWeight: 700, fontSize: "12px", letterSpacing: "0.06em", minWidth: "190px" }}>
+                  FITTING / HARDWARE
+                </th>
+                <th style={{ padding: "12px 12px", color: "#94a3b8", fontWeight: 700, fontSize: "12px", letterSpacing: "0.06em", width: "135px" }}>
+                  LANYARD LEDGER
+                </th>
+                <th style={{ padding: "12px 12px", color: "#94a3b8", fontWeight: 700, fontSize: "12px", letterSpacing: "0.06em", width: "135px" }}>
+                  ID CARD LEDGER
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -1840,51 +1867,74 @@ export const OrdersWorkspaceView: React.FC = () => {
                 );
 
                 return (
-                  <tr key={lo.id} style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.04)" }}>
-                    <td style={{ padding: "6px 8px", fontFamily: "var(--font-mono)", color: "#38bdf8", fontWeight: 700 }}>
+                  <tr
+                    key={lo.id}
+                    style={{
+                      height: "48px",
+                      borderBottom: "1px solid rgba(255, 255, 255, 0.05)",
+                      transition: "background-color 0.15s ease",
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.03)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+                  >
+                    <td style={{ padding: "11px 14px", fontFamily: "var(--font-mono)", color: "#38bdf8", fontWeight: 700, fontSize: "12.5px" }}>
                       #{lo.sn}
                     </td>
-                    <td style={{ padding: "6px 8px", color: "#94a3b8" }}>{lo.date}</td>
-                    <td style={{ padding: "6px 8px", fontWeight: 600, color: "#f1f5f9" }}>{lo.mplName}</td>
-                    <td style={{ padding: "6px 8px" }}>
-                      <div style={{ display: "flex", gap: "4px" }}>
-                        <span style={{ padding: "1px 5px", borderRadius: "3px", backgroundColor: "rgba(56, 189, 248, 0.12)", color: "#38bdf8", fontSize: "10px", fontWeight: 700 }}>
+                    <td style={{ padding: "11px 12px", fontFamily: "var(--font-mono)", color: "#94a3b8", fontSize: "12.5px" }}>
+                      {lo.date}
+                    </td>
+                    <td style={{ padding: "11px 14px", fontWeight: 600, color: "#f1f5f9", fontSize: "13px" }}>
+                      {lo.mplName}
+                    </td>
+                    <td style={{ padding: "11px 12px" }}>
+                      <div style={{ display: "flex", gap: "5px" }}>
+                        <span style={{ padding: "2px 7px", borderRadius: "3px", backgroundColor: "rgba(56, 189, 248, 0.12)", color: "#38bdf8", fontSize: "11px", fontWeight: 700 }}>
                           LANYARD
                         </span>
                         {linkedIdc && (
-                          <span style={{ padding: "1px 5px", borderRadius: "3px", backgroundColor: "rgba(168, 85, 247, 0.12)", color: "#c084fc", fontSize: "10px", fontWeight: 700 }}>
+                          <span style={{ padding: "2px 7px", borderRadius: "3px", backgroundColor: "rgba(168, 85, 247, 0.12)", color: "#c084fc", fontSize: "11px", fontWeight: 700 }}>
                             ID CARD
                           </span>
                         )}
                       </div>
                     </td>
-                    <td style={{ padding: "6px 8px", fontFamily: "var(--font-mono)", fontWeight: 700, color: "#fff" }}>
+                    <td style={{ padding: "11px 12px", fontFamily: "var(--font-mono)", fontWeight: 700, color: "#fff", fontSize: "13px" }}>
                       {lo.qty.toLocaleString()}
                     </td>
-                    <td style={{ padding: "6px 8px", color: "#94a3b8", fontSize: "11px" }}>
+                    <td style={{ padding: "11px 14px", color: "#94a3b8", fontSize: "12.5px" }}>
                       {lo.fittingHardware || lo.fittingItem || "Standard"}
                     </td>
-                    <td style={{ padding: "6px 8px" }}>
+                    <td style={{ padding: "11px 12px" }}>
                       <span
                         style={{
-                          padding: "2px 6px",
-                          borderRadius: "3px",
-                          backgroundColor: lo.orderReady ? "rgba(34, 197, 94, 0.15)" : "rgba(255, 255, 255, 0.05)",
-                          color: lo.orderReady ? "#4ade80" : "#94a3b8",
-                          fontSize: "11px",
+                          padding: "3px 8px",
+                          borderRadius: "4px",
+                          backgroundColor: lo.orderReady
+                            ? "rgba(34, 197, 94, 0.15)"
+                            : lo.goneForFitting
+                            ? "rgba(234, 179, 8, 0.15)"
+                            : "rgba(255, 255, 255, 0.05)",
+                          color: lo.orderReady
+                            ? "#4ade80"
+                            : lo.goneForFitting
+                            ? "#facc15"
+                            : lo.isPrinted
+                            ? "#38bdf8"
+                            : "#94a3b8",
+                          fontSize: "11.5px",
                           fontWeight: 600,
                         }}
                       >
                         {lo.orderReady ? "✓ Ready" : lo.goneForFitting ? "In Fitting" : lo.isPrinted ? "Printed" : lo.goneForPrint ? "In Print" : "Design"}
                       </span>
                     </td>
-                    <td style={{ padding: "6px 8px" }}>
+                    <td style={{ padding: "11px 12px" }}>
                       {linkedIdc ? (
-                        <span style={{ padding: "2px 6px", borderRadius: "3px", backgroundColor: "rgba(168, 85, 247, 0.12)", color: "#c084fc", fontSize: "11px", fontWeight: 600 }}>
+                        <span style={{ padding: "3px 8px", borderRadius: "4px", backgroundColor: "rgba(168, 85, 247, 0.12)", color: "#c084fc", fontSize: "11.5px", fontWeight: 600 }}>
                           #{linkedIdc.sn}: {linkedIdc.status}
                         </span>
                       ) : (
-                        <span style={{ color: "#475569", fontSize: "11px" }}>—</span>
+                        <span style={{ color: "#475569", fontSize: "12px" }}>—</span>
                       )}
                     </td>
                   </tr>
