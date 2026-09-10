@@ -124,6 +124,8 @@ class StockService:
             available_stock=available_stock,
         )
 
+    calculate_stock_balance = get_stock_balance
+
     @staticmethod
     async def record_movement(
         db: AsyncSession,

@@ -34,7 +34,7 @@ class ManagementAITools:
         items = (await db.scalars(select(StockItem).where(StockItem.is_active == True))).all()
         low_stock_list = []
         for it in items:
-            bal = await StockService.calculate_stock_balance(db, it.id)
+            bal = await StockService.get_stock_balance(db, it.id)
             if bal.available_stock <= it.min_stock_level:
                 low_stock_list.append({
                     "item_code": it.code,
