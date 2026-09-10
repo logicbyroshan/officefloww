@@ -95,8 +95,198 @@ const CheckboxBox: React.FC<CheckboxBoxProps> = ({
   </div>
 );
 
-const HOOK_OPTIONS = ["Dog Hook", "England Hook", "Fish Hook", "None"] as const;
-const HOLDER_PRESETS = ["DST-V", "DST-H", "CCH", "PH", "PV"] as const;
+export const SIZE_BATCH_UNITS: Record<"12mm" | "16mm" | "20mm", number> = {
+  "12mm": 37,
+  "16mm": 30,
+  "20mm": 25,
+};
+
+const DEFAULT_HOOKS = ["Dog Hook", "England Hook", "Fish Hook", "None"] as const;
+const DEFAULT_HOLDERS = ["DST-V", "DST-H", "CCH", "PH", "PV"] as const;
+
+const STORAGE_HOOKS_KEY = "officefloww_custom_hooks";
+const STORAGE_HOLDERS_KEY = "officefloww_custom_holders";
+
+function loadSavedHooks(): string[] {
+  try {
+    const saved = localStorage.getItem(STORAGE_HOOKS_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {
+    // ignore
+  }
+  return [...DEFAULT_HOOKS];
+}
+
+function loadSavedHolders(): string[] {
+  try {
+    const saved = localStorage.getItem(STORAGE_HOLDERS_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {
+    // ignore
+  }
+  return [...DEFAULT_HOLDERS];
+}
+
+function parseQtyBreakdown(qtyDisplay?: string, doriBreakdown?: { small?: number; medium?: number; big?: number }): { label: string; color: string; bg: string; border: string; tooltip?: string }[] | null {
+  if (doriBreakdown && (doriBreakdown.small || doriBreakdown.medium || doriBreakdown.big)) {
+    const badges: { label: string; color: string; bg: string; border: string; tooltip?: string }[] = [];
+    if (doriBreakdown.small) {
+      badges.push({
+        label: `Small: ${doriBreakdown.small}`,
+        color: "#38bdf8",
+        bg: "rgba(56, 189, 248, 0.12)",
+        border: "rgba(56, 189, 248, 0.3)",
+      });
+    }
+    if (doriBreakdown.medium) {
+      badges.push({
+        label: `Med: ${doriBreakdown.medium}`,
+        color: "#facc15",
+        bg: "rgba(234, 179, 8, 0.12)",
+        border: "rgba(234, 179, 8, 0.3)",
+      });
+    }
+    if (doriBreakdown.big) {
+      badges.push({
+        label: `Big: ${doriBreakdown.big}`,
+        color: "#c084fc",
+        bg: "rgba(168, 85, 247, 0.12)",
+        border: "rgba(168, 85, 247, 0.3)",
+      });
+    }
+    if (badges.length > 0) return badges;
+  }
+
+  if (!qtyDisplay) return null;
+  const str = qtyDisplay.replace(/pcs/gi, "").trim();
+  if (!str) return null;
+
+  const lower = str.toLowerCase();
+
+  // Pattern with slash: e.g. "big=r-555,b-370,y-333,o-333 /small=r-148, b-74, y-74, o-74"
+  if (str.includes("/")) {
+    const segments = str.split("/").map((s) => s.trim()).filter(Boolean);
+    const badges: { label: string; color: string; bg: string; border: string; tooltip?: string }[] = [];
+
+    for (const seg of segments) {
+      const segLower = seg.toLowerCase();
+      let name = "Size";
+      let color = "#94a3b8";
+      let bg = "rgba(255, 255, 255, 0.05)";
+      let border = "rgba(255, 255, 255, 0.15)";
+
+      if (segLower.includes("big")) {
+        name = "Big";
+        color = "#c084fc";
+        bg = "rgba(168, 85, 247, 0.12)";
+        border = "rgba(168, 85, 247, 0.3)";
+      } else if (segLower.includes("small")) {
+        name = "Small";
+        color = "#38bdf8";
+        bg = "rgba(56, 189, 248, 0.12)";
+        border = "rgba(56, 189, 248, 0.3)";
+      } else if (segLower.includes("med")) {
+        name = "Med";
+        color = "#facc15";
+        bg = "rgba(234, 179, 8, 0.12)";
+        border = "rgba(234, 179, 8, 0.3)";
+      }
+
+      // Sum all numeric values in this segment
+      const nums = seg.match(/\d+/g);
+      const total = nums ? nums.map(Number).reduce((a, b) => a + b, 0) : null;
+      const label = total ? `${name}: ${total.toLocaleString()}` : seg;
+
+      badges.push({
+        label,
+        color,
+        bg,
+        border,
+        tooltip: seg,
+      });
+    }
+    return badges;
+  }
+
+  // Pattern: "Small: 37, Big: 74" or "74 medium"
+  if (lower.includes("big") || lower.includes("small") || lower.includes("medium") || lower.includes("med")) {
+    const cleanStr = str.replace(/^\d+\s*\((.*)\)$/, "$1");
+    const parts = cleanStr.split(",").map((p) => p.trim()).filter(Boolean);
+    const badges: { label: string; color: string; bg: string; border: string; tooltip?: string }[] = [];
+
+    for (const p of parts) {
+      const pLower = p.toLowerCase();
+      let color = "#94a3b8";
+      let bg = "rgba(255, 255, 255, 0.05)";
+      let border = "rgba(255, 255, 255, 0.15)";
+
+      if (pLower.includes("big")) {
+        color = "#c084fc";
+        bg = "rgba(168, 85, 247, 0.12)";
+        border = "rgba(168, 85, 247, 0.3)";
+      } else if (pLower.includes("small")) {
+        color = "#38bdf8";
+        bg = "rgba(56, 189, 248, 0.12)";
+        border = "rgba(56, 189, 248, 0.3)";
+      } else if (pLower.includes("med")) {
+        color = "#facc15";
+        bg = "rgba(234, 179, 8, 0.12)";
+        border = "rgba(234, 179, 8, 0.3)";
+      }
+
+      badges.push({ label: p, color, bg, border });
+    }
+    return badges.length > 0 ? badges : null;
+  }
+
+  // Pattern: Color codes like "y-222,m-222,g-222,b-259" or "r-666,b-370,g-925"
+  if (str.includes("-") && (str.includes(",") || str.includes("="))) {
+    const items = str.split(",").map((i) => i.trim()).filter(Boolean);
+    return items.map((item) => {
+      const iLower = item.toLowerCase();
+      let color = "#94a3b8";
+      let bg = "rgba(255, 255, 255, 0.05)";
+      let border = "rgba(255, 255, 255, 0.15)";
+
+      if (iLower.startsWith("r-")) {
+        color = "#f87171";
+        bg = "rgba(239, 68, 68, 0.12)";
+        border = "rgba(239, 68, 68, 0.3)";
+      } else if (iLower.startsWith("y-")) {
+        color = "#facc15";
+        bg = "rgba(234, 179, 8, 0.12)";
+        border = "rgba(234, 179, 8, 0.3)";
+      } else if (iLower.startsWith("g-")) {
+        color = "#4ade80";
+        bg = "rgba(34, 197, 94, 0.12)";
+        border = "rgba(34, 197, 94, 0.3)";
+      } else if (iLower.startsWith("b-")) {
+        color = "#60a5fa";
+        bg = "rgba(59, 130, 246, 0.12)";
+        border = "rgba(59, 130, 246, 0.3)";
+      } else if (iLower.startsWith("m-") || iLower.startsWith("o-")) {
+        color = "#fb923c";
+        bg = "rgba(249, 115, 22, 0.12)";
+        border = "rgba(249, 115, 22, 0.3)";
+      }
+
+      return { label: item.toUpperCase(), color, bg, border };
+    });
+  }
+
+  // Fallback if not purely numeric
+  if (isNaN(Number(str))) {
+    return [{ label: str, color: "#94a3b8", bg: "rgba(255, 255, 255, 0.05)", border: "rgba(255, 255, 255, 0.12)" }];
+  }
+
+  return null;
+}
 
 export const LanyardWorkspaceView: React.FC = () => {
   const { success: toastSuccess, error: toastError } = useToast();
@@ -104,6 +294,7 @@ export const LanyardWorkspaceView: React.FC = () => {
     orders,
     setOrders,
     addOrder,
+    deleteOrder,
     contractors,
     setSelectedContractorId,
     assignLabourAndRegisterVoucher,
@@ -119,29 +310,179 @@ export const LanyardWorkspaceView: React.FC = () => {
   const [filterSize, setFilterSize] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Intake bar states
+  // Intake bar states with size-based multiplier engine (12mm=37, 16mm=30, 20mm=25)
   const [newMplName, setNewMplName] = useState("");
-  const [newSize, setNewSize] = useState<"12mm" | "16mm" | "20mm">("16mm");
-  const [newQtyStr, setNewQtyStr] = useState("");
-  const [newHook, setNewHook] = useState<string>("Dog Hook");
-  const [newFittingItem, setNewFittingItem] = useState<string>("");
+  const [newSize, setNewSize] = useState<"12mm" | "16mm" | "20mm">("12mm");
+  const [batchCount, setBatchCount] = useState<number>(5); // e.g. 5 batches = 185 pcs for 12mm
+  const [customQtyStr, setCustomQtyStr] = useState<string>("185");
 
-  // Prospective Intake Stock Calculation
-  const parsedIntakeQty = useMemo(() => {
-    const qtyNums = newQtyStr.match(/\d+/g);
-    if (qtyNums && qtyNums.length > 0) {
-      return qtyNums.reduce((sum, n) => sum + parseInt(n, 10), 0);
+  // Dynamic Hooks List & Add Hook Popover
+  const [hookList, setHookList] = useState<string[]>(loadSavedHooks);
+  const [newHook, setNewHook] = useState<string>("Dog Hook");
+  const [showAddHookPopover, setShowAddHookPopover] = useState<boolean>(false);
+  const [newCustomHookName, setNewCustomHookName] = useState<string>("");
+
+  // Dynamic Holders List & Add Holder Popover
+  const [holderList, setHolderList] = useState<string[]>(loadSavedHolders);
+  const [newFittingItem, setNewFittingItem] = useState<string>("");
+  const [showAddHolderPopover, setShowAddHolderPopover] = useState<boolean>(false);
+  const [newCustomHolderName, setNewCustomHolderName] = useState<string>("");
+
+  // Compact Dropdown Selector States (Size, Hook, Holder)
+  const [showSizeDropdown, setShowSizeDropdown] = useState<boolean>(false);
+  const [showHookDropdown, setShowHookDropdown] = useState<boolean>(false);
+  const [showHolderDropdown, setShowHolderDropdown] = useState<boolean>(false);
+
+  // Split Sizes (Small / Medium / Big) State with Checkbox
+  const [splitSizesEnabled, setSplitSizesEnabled] = useState<boolean>(false);
+  const [splitSmallEnabled, setSplitSmallEnabled] = useState<boolean>(true);
+  const [splitMediumEnabled, setSplitMediumEnabled] = useState<boolean>(false);
+  const [splitBigEnabled, setSplitBigEnabled] = useState<boolean>(true);
+  const [splitSmallBatches, setSplitSmallBatches] = useState<number>(1);
+  const [splitMediumBatches, setSplitMediumBatches] = useState<number>(0);
+  const [splitBigBatches, setSplitBigBatches] = useState<number>(2);
+
+  const baseBatchUnit = SIZE_BATCH_UNITS[newSize];
+
+  // Prospective Intake Stock Calculation & Quantities
+  const totalCalculatedQty = useMemo(() => {
+    if (splitSizesEnabled) {
+      const s = splitSmallEnabled ? splitSmallBatches : 0;
+      const m = splitMediumEnabled ? splitMediumBatches : 0;
+      const b = splitBigEnabled ? splitBigBatches : 0;
+      return (s + m + b) * baseBatchUnit;
     }
-    const nameNums = newMplName.match(/\d+/g);
-    if (nameNums && nameNums.length > 0) {
-      return parseInt(nameNums[0], 10);
+    const parsed = parseInt(customQtyStr.replace(/\D/g, ""), 10);
+    if (!isNaN(parsed) && parsed > 0) {
+      return parsed;
     }
-    return 100;
-  }, [newQtyStr, newMplName]);
+    return batchCount * baseBatchUnit;
+  }, [
+    splitSizesEnabled,
+    splitSmallEnabled,
+    splitSmallBatches,
+    splitMediumEnabled,
+    splitMediumBatches,
+    splitBigEnabled,
+    splitBigBatches,
+    customQtyStr,
+    batchCount,
+    baseBatchUnit,
+  ]);
+
+  const handleAddCustomHook = () => {
+    const trimmed = newCustomHookName.trim();
+    if (!trimmed) return;
+    if (!hookList.includes(trimmed)) {
+      const updated = [...hookList, trimmed];
+      setHookList(updated);
+      try {
+        localStorage.setItem(STORAGE_HOOKS_KEY, JSON.stringify(updated));
+      } catch (e) {
+        // ignore
+      }
+    }
+    setNewHook(trimmed);
+    setNewCustomHookName("");
+    setShowAddHookPopover(false);
+    setShowHookDropdown(false);
+    toastSuccess("Hook Added", `Added "${trimmed}" to hook options.`);
+  };
+
+  const handleDeleteCustomHook = (hookToDelete: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const updated = hookList.filter((h) => h !== hookToDelete);
+    setHookList(updated);
+    try {
+      localStorage.setItem(STORAGE_HOOKS_KEY, JSON.stringify(updated));
+    } catch (e) {
+      // ignore
+    }
+    if (newHook === hookToDelete) {
+      setNewHook(updated[0] || "None");
+    }
+    toastSuccess("Hook Removed", `Removed "${hookToDelete}" from hook options.`);
+  };
+
+  const handleAddCustomHolder = () => {
+    const trimmed = newCustomHolderName.trim().toUpperCase();
+    if (!trimmed) return;
+    if (!holderList.includes(trimmed)) {
+      const updated = [...holderList, trimmed];
+      setHolderList(updated);
+      try {
+        localStorage.setItem(STORAGE_HOLDERS_KEY, JSON.stringify(updated));
+      } catch (e) {
+        // ignore
+      }
+    }
+    setNewFittingItem(trimmed);
+    setNewCustomHolderName("");
+    setShowAddHolderPopover(false);
+    setShowHolderDropdown(false);
+    toastSuccess("Holder Added", `Added "${trimmed}" to card holder presets.`);
+  };
+
+  const handleDeleteCustomHolder = (holderToDelete: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const updated = holderList.filter((h) => h !== holderToDelete);
+    setHolderList(updated);
+    try {
+      localStorage.setItem(STORAGE_HOLDERS_KEY, JSON.stringify(updated));
+    } catch (e) {
+      // ignore
+    }
+    if (newFittingItem.toUpperCase() === holderToDelete) {
+      setNewFittingItem("");
+    }
+    toastSuccess("Holder Removed", `Removed "${holderToDelete}" from holder presets.`);
+  };
+
+  const isMultipleValid = useMemo(() => {
+    if (splitSizesEnabled) return totalCalculatedQty > 0;
+    return totalCalculatedQty >= baseBatchUnit && totalCalculatedQty % baseBatchUnit === 0;
+  }, [splitSizesEnabled, totalCalculatedQty, baseBatchUnit]);
+
+  const nearestMultiples = useMemo(() => {
+    if (isMultipleValid) return null;
+    const lower = Math.max(baseBatchUnit, Math.floor(totalCalculatedQty / baseBatchUnit) * baseBatchUnit);
+    const upper = Math.max(baseBatchUnit, Math.ceil(totalCalculatedQty / baseBatchUnit) * baseBatchUnit);
+    return {
+      lower,
+      upper: upper === lower ? upper + baseBatchUnit : upper,
+    };
+  }, [isMultipleValid, totalCalculatedQty, baseBatchUnit]);
+
+  const handleSizeChange = (sz: "12mm" | "16mm" | "20mm") => {
+    setNewSize(sz);
+    const newUnit = SIZE_BATCH_UNITS[sz];
+    setCustomQtyStr(String(batchCount * newUnit));
+  };
+
+  const handleBatchStep = (delta: number) => {
+    const nextBatches = Math.max(1, batchCount + delta);
+    setBatchCount(nextBatches);
+    setCustomQtyStr(String(nextBatches * baseBatchUnit));
+  };
+
+  const handleCustomQtyChange = (val: string) => {
+    const numeric = val.replace(/\D/g, "");
+    setCustomQtyStr(numeric);
+    const parsed = parseInt(numeric, 10);
+    if (!isNaN(parsed) && parsed > 0) {
+      const b = Math.floor(parsed / baseBatchUnit);
+      if (b > 0) setBatchCount(b);
+    }
+  };
+
+  const snapToMultiple = (targetQty: number) => {
+    setCustomQtyStr(String(targetQty));
+    setBatchCount(Math.round(targetQty / baseBatchUnit));
+  };
 
   const intakeStockReport = useMemo(() => {
-    return getRollStats(newSize, parsedIntakeQty);
-  }, [getRollStats, newSize, parsedIntakeQty]);
+    return getRollStats(newSize, totalCalculatedQty > 0 ? totalCalculatedQty : baseBatchUnit);
+  }, [getRollStats, newSize, totalCalculatedQty, baseBatchUnit]);
 
   // Inline Cell Editing State
   const [editingCell, setEditingCell] = useState<{ id: string; field: keyof LanyardOrderEntry } | null>(null);
@@ -162,6 +503,42 @@ export const LanyardWorkspaceView: React.FC = () => {
   const [isMixFitting, setIsMixFitting] = useState<boolean>(false);
   const [mixFittingContractorIds, setMixFittingContractorIds] = useState<string[]>(["arti_akash", "rupa"]);
   const [mixFittingQtys, setMixFittingQtys] = useState<Record<string, number>>({});
+
+  // Divided Labour Dropdown Popover State
+  const [openSplitDropdownOrderId, setOpenSplitDropdownOrderId] = useState<string | null>(null);
+
+  // Secure Order Deletion Confirmation Modal State (with random 4-digit PIN verification)
+  const [deleteModalOrder, setDeleteModalOrder] = useState<LanyardOrderEntry | null>(null);
+  const [deleteGeneratedPin, setDeleteGeneratedPin] = useState<string>("");
+  const [deleteInputPin, setDeleteInputPin] = useState<string>("");
+
+  // Open Delete Confirmation Modal and generate a random 4-digit PIN (Completed orders protected)
+  const openDeleteModal = (order: LanyardOrderEntry, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (order.orderReady) {
+      toastError("Order Protected", `Order #${order.sn} is marked as Completed and cannot be deleted.`);
+      return;
+    }
+    const pin = Math.floor(1000 + Math.random() * 9000).toString();
+    setDeleteModalOrder(order);
+    setDeleteGeneratedPin(pin);
+    setDeleteInputPin("");
+  };
+
+  // Confirm permanent order deletion
+  const handleConfirmDelete = () => {
+    if (!deleteModalOrder) return;
+    if (deleteInputPin.trim() !== deleteGeneratedPin) {
+      toastError("Verification Failed", "Security PIN does not match. Please re-enter the 4-digit PIN.");
+      return;
+    }
+    const orderSn = deleteModalOrder.sn;
+    deleteOrder(deleteModalOrder.id);
+    toastSuccess("Order Deleted", `Order #${orderSn} was permanently deleted.`);
+    setDeleteModalOrder(null);
+    setDeleteInputPin("");
+    setDeleteGeneratedPin("");
+  };
 
   // Floor Progress Quick Update Modal State
   const [floorModalOrder, setFloorModalOrder] = useState<LanyardOrderEntry | null>(null);
@@ -410,23 +787,32 @@ export const LanyardWorkspaceView: React.FC = () => {
     }
   };
 
-  // Ingest Order Handler
+  // Ingest Order Handler with Size Multiplier Rule & Dori Breakdown Support
   const handleIngestOrder = () => {
     if (!newMplName.trim()) {
       toastError("Required Field", "Please enter an Order / MPL Client Name.");
       return;
     }
 
-    let parsedQty = 0;
-    const nums = newMplName.match(/\d+/g);
-    const qtyNums = newQtyStr.match(/\d+/g);
+    const currentUnit = SIZE_BATCH_UNITS[newSize];
+    const finalQty = totalCalculatedQty;
 
-    if (qtyNums && qtyNums.length > 0) {
-      parsedQty = qtyNums.reduce((sum, n) => sum + parseInt(n, 10), 0);
-    } else if (nums && nums.length > 0) {
-      parsedQty = parseInt(nums[0], 10);
-    } else {
-      parsedQty = 100;
+    // Enforce size-based minimum & multiple rule
+    if (finalQty < currentUnit) {
+      toastError(
+        "Minimum Quantity Required",
+        `For ${newSize} lanyards, minimum order quantity is ${currentUnit} pcs (1 batch).`
+      );
+      return;
+    }
+
+    if (finalQty % currentUnit !== 0) {
+      const nearest = Math.round(finalQty / currentUnit) * currentUnit;
+      toastError(
+        "Invalid Batch Multiplier",
+        `Quantity for ${newSize} must be in multiples of ${currentUnit} pcs. Nearest valid: ${nearest} pcs (${nearest / currentUnit} batches).`
+      );
+      return;
     }
 
     const nextSN = getNextSN(orders);
@@ -462,13 +848,35 @@ export const LanyardWorkspaceView: React.FC = () => {
     }
     const fittingHardware = hardwareParts.join(" + ");
 
+    let qtyDisplayStr = String(finalQty);
+    let doriBreakdownObj: { small?: number; medium?: number; big?: number } | undefined = undefined;
+
+    if (splitSizesEnabled) {
+      const sPcs = splitSmallEnabled && splitSmallBatches > 0 ? splitSmallBatches * currentUnit : 0;
+      const mPcs = splitMediumEnabled && splitMediumBatches > 0 ? splitMediumBatches * currentUnit : 0;
+      const bPcs = splitBigEnabled && splitBigBatches > 0 ? splitBigBatches * currentUnit : 0;
+
+      if (sPcs > 0 || mPcs > 0 || bPcs > 0) {
+        doriBreakdownObj = {
+          ...(sPcs > 0 ? { small: sPcs } : {}),
+          ...(mPcs > 0 ? { medium: mPcs } : {}),
+          ...(bPcs > 0 ? { big: bPcs } : {}),
+        };
+        const parts: string[] = [];
+        if (bPcs > 0) parts.push(`Big: ${bPcs}`);
+        if (mPcs > 0) parts.push(`Med: ${mPcs}`);
+        if (sPcs > 0) parts.push(`Small: ${sPcs}`);
+        qtyDisplayStr = `${finalQty} (${parts.join(", ")})`;
+      }
+    }
+
     const newEntry = addOrder({
       sn: nextSN,
       date: getFormattedDateToday(),
       mplName: title,
       size: newSize,
-      qty: parsedQty,
-      qtyDisplay: newQtyStr.trim() || String(parsedQty),
+      qty: finalQty,
+      qtyDisplay: qtyDisplayStr,
       designDone: false,
       goneForPrint: false,
       isPrinted: false,
@@ -480,12 +888,15 @@ export const LanyardWorkspaceView: React.FC = () => {
       fittingItem: holderUpper || undefined,
       hookType: newHook,
       jointerType: hasJointer ? `${newSize}-j` : undefined,
+      doriBreakdown: doriBreakdownObj,
     });
 
     setNewMplName("");
-    setNewQtyStr("");
     setNewFittingItem("");
-    toastSuccess("Order Ingested", `Added #${nextSN}: ${newEntry.mplName} (${parsedQty.toLocaleString()})`);
+    toastSuccess(
+      "Order Ingested",
+      `Added #${nextSN}: ${newEntry.mplName} (${finalQty.toLocaleString()} pcs in ${finalQty / currentUnit} batches of ${currentUnit})`
+    );
   };
 
   // Inline Editing
@@ -739,598 +1150,7 @@ export const LanyardWorkspaceView: React.FC = () => {
       }}
     >
       {/* ══════════════════════════════════════════════════════════════════════════ */}
-      {/* 1. EXECUTIVE 5-CARD KPI METRICS & LIVE INVENTORY DECK                      */}
-      {/* ══════════════════════════════════════════════════════════════════════════ */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-          gap: "12px",
-        }}
-      >
-        {/* Card 1: Active Orders */}
-        <div
-          style={{
-            padding: "12px 16px",
-            borderRadius: "8px",
-            backgroundColor: "#0e131f",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <span
-              style={{
-                fontSize: "11px",
-                fontWeight: 700,
-                color: "#94a3b8",
-                textTransform: "uppercase",
-                letterSpacing: "0.05em",
-              }}
-            >
-              Active Orders
-            </span>
-            <Icon name="layers" size={14} color="#94a3b8" />
-          </div>
-          <div
-            style={{
-              fontSize: "20px",
-              fontWeight: 800,
-              color: "#ffffff",
-              fontFamily: "var(--font-mono)",
-              marginTop: "4px",
-            }}
-          >
-            {metrics.activeCount}{" "}
-            <span style={{ fontSize: "12px", color: "#94a3b8", fontWeight: 500 }}>orders</span>
-          </div>
-          <div style={{ fontSize: "11px", color: "#64748b", marginTop: "2px", fontFamily: "var(--font-mono)" }}>
-            {metrics.activeVolume.toLocaleString()} total units
-          </div>
-        </div>
-
-        {/* Card 2: Tape Roll Stock */}
-        <div
-          style={{
-            padding: "12px 16px",
-            borderRadius: "8px",
-            backgroundColor: "#0e131f",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <span
-              style={{
-                fontSize: "11px",
-                fontWeight: 700,
-                color: "#94a3b8",
-                textTransform: "uppercase",
-                letterSpacing: "0.05em",
-              }}
-            >
-              Tape Roll Stock
-            </span>
-            <Icon name="package" size={14} color="#34d399" />
-          </div>
-          <div
-            style={{
-              fontSize: "20px",
-              fontWeight: 800,
-              color: "#f1f5f9",
-              fontFamily: "var(--font-mono)",
-              marginTop: "4px",
-            }}
-          >
-            63{" "}
-            <span style={{ fontSize: "12px", color: "#94a3b8", fontWeight: 500 }}>rolls</span>{" "}
-            <span style={{ fontSize: "11.5px", color: "#64748b", fontWeight: 500 }}>
-              (~28,350 cap)
-            </span>
-          </div>
-          <div style={{ fontSize: "11px", color: "#94a3b8", marginTop: "2px", fontFamily: "var(--font-mono)" }}>
-            12mm: 45r • 16mm: 6r • 20mm: 12r
-          </div>
-        </div>
-
-        {/* Card 3: Hooks Stock */}
-        <div
-          style={{
-            padding: "12px 16px",
-            borderRadius: "8px",
-            backgroundColor: "#0e131f",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <span
-              style={{
-                fontSize: "11px",
-                fontWeight: 700,
-                color: "#94a3b8",
-                textTransform: "uppercase",
-                letterSpacing: "0.05em",
-              }}
-            >
-              Hooks Stock
-            </span>
-            <Icon name="tool" size={14} color="#c084fc" />
-          </div>
-          <div
-            style={{
-              fontSize: "20px",
-              fontWeight: 800,
-              color: "#f1f5f9",
-              fontFamily: "var(--font-mono)",
-              marginTop: "4px",
-            }}
-          >
-            {hookStats.total.toLocaleString()}{" "}
-            <span style={{ fontSize: "12px", color: "#94a3b8", fontWeight: 500 }}>units</span>
-          </div>
-          <div style={{ fontSize: "11px", color: "#94a3b8", marginTop: "2px", fontFamily: "var(--font-mono)" }}>
-            Dog: {(hookStats.dogHook / 1000).toFixed(1)}k • Eng: {(hookStats.englandHook / 1000).toFixed(1)}k • Fish: {(hookStats.fishHook / 1000).toFixed(1)}k
-          </div>
-        </div>
-
-        {/* Card 4: Safety Jointers */}
-        <div
-          style={{
-            padding: "12px 16px",
-            borderRadius: "8px",
-            backgroundColor: "#0e131f",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <span
-              style={{
-                fontSize: "11px",
-                fontWeight: 700,
-                color: "#94a3b8",
-                textTransform: "uppercase",
-                letterSpacing: "0.05em",
-              }}
-            >
-              Safety Jointers
-            </span>
-            <Icon name="tag" size={14} color="#fbbf24" />
-          </div>
-          <div
-            style={{
-              fontSize: "20px",
-              fontWeight: 800,
-              color: "#f1f5f9",
-              fontFamily: "var(--font-mono)",
-              marginTop: "4px",
-            }}
-          >
-            {jointerStats.total.toLocaleString()}{" "}
-            <span style={{ fontSize: "12px", color: "#94a3b8", fontWeight: 500 }}>units</span>
-          </div>
-          <div style={{ fontSize: "11px", color: "#94a3b8", marginTop: "2px", fontFamily: "var(--font-mono)" }}>
-            16mm-j: {(jointerStats.j16mm / 1000).toFixed(1)}k • 12mm-j: {(jointerStats.j12mm / 1000).toFixed(1)}k
-          </div>
-        </div>
-
-        {/* Card 5: Completed */}
-        <div
-          style={{
-            padding: "12px 16px",
-            borderRadius: "8px",
-            backgroundColor: "#0e131f",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <span
-              style={{
-                fontSize: "11px",
-                fontWeight: 700,
-                color: "#94a3b8",
-                textTransform: "uppercase",
-                letterSpacing: "0.05em",
-              }}
-            >
-              Completed
-            </span>
-            <Icon name="check-circle" size={14} color="#34d399" />
-          </div>
-          <div
-            style={{
-              fontSize: "20px",
-              fontWeight: 800,
-              color: "#f1f5f9",
-              fontFamily: "var(--font-mono)",
-              marginTop: "4px",
-            }}
-          >
-            {metrics.completedVolume.toLocaleString()}{" "}
-            <span style={{ fontSize: "12px", color: "#94a3b8", fontWeight: 500 }}>units</span>
-          </div>
-          <div style={{ fontSize: "11px", color: "#64748b", marginTop: "2px" }}>
-            {metrics.completedCount} orders completed
-          </div>
-        </div>
-      </div>
-
-      {/* ══════════════════════════════════════════════════════════════════════════ */}
-      {/* 2. ORDER INTAKE DOCK (Top: Description & Qty | Bottom: Size, Hook & Holders) */}
-      {/* ══════════════════════════════════════════════════════════════════════════ */}
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "16px",
-          padding: "18px 20px",
-          borderRadius: "10px",
-          backgroundColor: "#0d1322",
-          border: "1px solid rgba(255, 255, 255, 0.10)",
-          boxShadow: "0 4px 24px rgba(0, 0, 0, 0.3)",
-        }}
-      >
-        {/* Top Row: SN Badge + Description Input + Qty Input + Ingest Button */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-            width: "100%",
-          }}
-        >
-          <div
-            style={{
-              height: "40px",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "8px",
-              padding: "0 14px",
-              borderRadius: "6px",
-              backgroundColor: "rgba(56, 189, 248, 0.08)",
-              border: "1px solid rgba(56, 189, 248, 0.25)",
-              color: "#38bdf8",
-              fontSize: "13.5px",
-              fontWeight: 700,
-              fontFamily: "var(--font-mono)",
-              whiteSpace: "nowrap",
-              flexShrink: 0,
-            }}
-          >
-            <span
-              style={{
-                width: "7px",
-                height: "7px",
-                borderRadius: "50%",
-                backgroundColor: "#38bdf8",
-                boxShadow: "0 0 6px #38bdf8",
-              }}
-            />
-            #{getNextSN(orders)}
-          </div>
-
-          <input
-            type="text"
-            placeholder="Client Name / Job Title (e.g. St. Xavier High School, Rajesh ji - Govt Girls)"
-            value={newMplName}
-            onChange={(e) => setNewMplName(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleIngestOrder()}
-            style={{
-              flex: 1,
-              height: "40px",
-              padding: "0 15px",
-              backgroundColor: "#07090e",
-              border: "1px solid rgba(255, 255, 255, 0.16)",
-              borderRadius: "6px",
-              color: "#ffffff",
-              fontSize: "13.5px",
-              outline: "none",
-              transition: "all 0.15s ease",
-            }}
-            onFocus={(e) => {
-              e.currentTarget.style.borderColor = "#3b82f6";
-              e.currentTarget.style.boxShadow = "0 0 0 2px rgba(59, 130, 246, 0.25)";
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.16)";
-              e.currentTarget.style.boxShadow = "none";
-            }}
-          />
-
-          <input
-            type="text"
-            placeholder="Qty (e.g. 500)"
-            value={newQtyStr}
-            onChange={(e) => setNewQtyStr(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleIngestOrder()}
-            style={{
-              width: "170px",
-              height: "40px",
-              padding: "0 14px",
-              backgroundColor: "#07090e",
-              border: "1px solid rgba(255, 255, 255, 0.16)",
-              borderRadius: "6px",
-              color: "#ffffff",
-              fontSize: "13.5px",
-              fontFamily: "var(--font-mono)",
-              fontWeight: 700,
-              textAlign: "center",
-              outline: "none",
-              transition: "all 0.15s ease",
-            }}
-            onFocus={(e) => {
-              e.currentTarget.style.borderColor = "#3b82f6";
-              e.currentTarget.style.boxShadow = "0 0 0 2px rgba(59, 130, 246, 0.25)";
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.16)";
-              e.currentTarget.style.boxShadow = "none";
-            }}
-          />
-
-          <button
-            type="button"
-            onClick={handleIngestOrder}
-            style={{
-              height: "40px",
-              padding: "0 24px",
-              borderRadius: "6px",
-              backgroundColor: "#2563eb",
-              border: "none",
-              color: "#ffffff",
-              fontSize: "13.5px",
-              fontWeight: 700,
-              cursor: "pointer",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "7px",
-              whiteSpace: "nowrap",
-              transition: "all 0.15s ease",
-              boxShadow: "0 2px 10px rgba(37, 99, 235, 0.4)",
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#1d4ed8")}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#2563eb")}
-          >
-            <Icon name="plus" size={16} />
-            <span>Ingest Order</span>
-          </button>
-        </div>
-
-        {/* Bottom Row: Specifications (Size + Hook + Holder & Live Stock) */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "flex-end",
-            gap: "24px",
-            paddingTop: "14px",
-            borderTop: "1px solid rgba(255, 255, 255, 0.07)",
-            flexWrap: "wrap",
-          }}
-        >
-          {/* 1. Ribbon Width / Size Selector */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-            <span style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-              Ribbon Width
-            </span>
-            <div
-              style={{
-                display: "flex",
-                backgroundColor: "#07090e",
-                borderRadius: "6px",
-                padding: "3px",
-                border: "1px solid rgba(255, 255, 255, 0.14)",
-                height: "36px",
-                boxSizing: "border-box",
-                alignItems: "center",
-                gap: "2px",
-              }}
-            >
-              {(["12mm", "16mm", "20mm"] as const).map((sz) => {
-                const isSelected = newSize === sz;
-                return (
-                  <button
-                    key={sz}
-                    type="button"
-                    onClick={() => setNewSize(sz)}
-                    style={{
-                      height: "28px",
-                      padding: "0 18px",
-                      borderRadius: "4px",
-                      border: "none",
-                      backgroundColor: isSelected ? "#2563eb" : "transparent",
-                      color: isSelected ? "#ffffff" : "#94a3b8",
-                      fontSize: "12.5px",
-                      fontWeight: isSelected ? 700 : 500,
-                      fontFamily: "var(--font-mono)",
-                      cursor: "pointer",
-                      transition: "all 0.12s ease",
-                      boxShadow: isSelected ? "0 1px 4px rgba(0, 0, 0, 0.35)" : "none",
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isSelected) {
-                        e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.07)";
-                        e.currentTarget.style.color = "#f1f5f9";
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isSelected) {
-                        e.currentTarget.style.backgroundColor = "transparent";
-                        e.currentTarget.style.color = "#94a3b8";
-                      }
-                    }}
-                  >
-                    {sz}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* 2. Hook Attachment Option */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-            <span style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-              Hook Attachment
-            </span>
-            <div
-              style={{
-                display: "flex",
-                backgroundColor: "#07090e",
-                borderRadius: "6px",
-                padding: "3px",
-                border: "1px solid rgba(255, 255, 255, 0.14)",
-                height: "36px",
-                boxSizing: "border-box",
-                alignItems: "center",
-                gap: "2px",
-              }}
-            >
-              {HOOK_OPTIONS.map((hk) => {
-                const isSelected = newHook === hk;
-                return (
-                  <button
-                    key={hk}
-                    type="button"
-                    onClick={() => setNewHook(hk)}
-                    style={{
-                      height: "28px",
-                      padding: "0 16px",
-                      borderRadius: "4px",
-                      border: "none",
-                      backgroundColor: isSelected ? "#2563eb" : "transparent",
-                      color: isSelected ? "#ffffff" : "#94a3b8",
-                      fontSize: "12.5px",
-                      fontWeight: isSelected ? 700 : 500,
-                      cursor: "pointer",
-                      transition: "all 0.12s ease",
-                      whiteSpace: "nowrap",
-                      boxShadow: isSelected ? "0 1px 4px rgba(0, 0, 0, 0.35)" : "none",
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isSelected) {
-                        e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.07)";
-                        e.currentTarget.style.color = "#f1f5f9";
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isSelected) {
-                        e.currentTarget.style.backgroundColor = "transparent";
-                        e.currentTarget.style.color = "#94a3b8";
-                      }
-                    }}
-                  >
-                    {hk}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* 3. Fitting Item / Holder Input & Presets */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-            <span style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-              Card Holder (Optional)
-            </span>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <input
-                type="text"
-                placeholder="e.g. DST-V"
-                value={newFittingItem}
-                onChange={(e) => setNewFittingItem(e.target.value.toUpperCase())}
-                onKeyDown={(e) => e.key === "Enter" && handleIngestOrder()}
-                style={{
-                  width: "120px",
-                  height: "36px",
-                  padding: "0 12px",
-                  backgroundColor: "#07090e",
-                  border: "1px solid rgba(255, 255, 255, 0.15)",
-                  borderRadius: "6px",
-                  color: "#ffffff",
-                  fontSize: "13px",
-                  fontFamily: "var(--font-mono)",
-                  fontWeight: 700,
-                  outline: "none",
-                  textTransform: "uppercase",
-                  transition: "all 0.15s ease",
-                }}
-                onFocus={(e) => {
-                  e.currentTarget.style.borderColor = "#3b82f6";
-                  e.currentTarget.style.boxShadow = "0 0 0 2px rgba(59, 130, 246, 0.25)";
-                }}
-                onBlur={(e) => {
-                  e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.15)";
-                  e.currentTarget.style.boxShadow = "none";
-                }}
-              />
-              <div style={{ display: "flex", gap: "5px", alignItems: "center" }}>
-                {HOLDER_PRESETS.map((holder) => {
-                  const isActive = newFittingItem.toUpperCase() === holder;
-                  return (
-                    <button
-                      key={holder}
-                      type="button"
-                      onClick={() => setNewFittingItem(isActive ? "" : holder)}
-                      title={`Select ${holder}`}
-                      style={{
-                        height: "36px",
-                        padding: "0 13px",
-                        borderRadius: "6px",
-                        border: isActive
-                          ? "1px solid #3b82f6"
-                          : "1px solid rgba(255, 255, 255, 0.12)",
-                        backgroundColor: isActive ? "#2563eb" : "#07090e",
-                        color: isActive ? "#ffffff" : "#94a3b8",
-                        fontSize: "12px",
-                        fontWeight: 700,
-                        fontFamily: "var(--font-mono)",
-                        cursor: "pointer",
-                        transition: "all 0.12s ease",
-                        boxShadow: isActive ? "0 1px 4px rgba(37, 99, 235, 0.35)" : "none",
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!isActive) {
-                          e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.08)";
-                          e.currentTarget.style.color = "#f1f5f9";
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!isActive) {
-                          e.currentTarget.style.backgroundColor = "#07090e";
-                          e.currentTarget.style.color = "#94a3b8";
-                        }
-                      }}
-                    >
-                      {holder}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          {/* Live Roll Stock Status Indicator */}
-          <div
-            style={{
-              marginLeft: "auto",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "8px",
-              padding: "0 14px",
-              height: "36px",
-              borderRadius: "6px",
-              backgroundColor: "rgba(255, 255, 255, 0.03)",
-              border: "1px solid rgba(255, 255, 255, 0.09)",
-              fontSize: "12px",
-              color: intakeStockReport.statusColor,
-              whiteSpace: "nowrap",
-            }}
-          >
-            <Icon name="package" size={14} color={intakeStockReport.statusColor} />
-            <span>
-              {intakeStockReport.size}: {intakeStockReport.exactRolls} roll{parseFloat(intakeStockReport.exactRolls) === 1 ? "" : "s"} req &bull; {intakeStockReport.statusText.replace(/\s*pcs\b/gi, "")}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* ══════════════════════════════════════════════════════════════════════════ */}
-      {/* 4. UNIFIED QUEUE & FILTER TOOLBAR                                          */}
+      {/* 1. LANYARD LEDGER QUEUE & FILTER TOOLBAR                                  */}
       {/* ══════════════════════════════════════════════════════════════════════════ */}
       <div
         style={{
@@ -1570,7 +1390,7 @@ export const LanyardWorkspaceView: React.FC = () => {
                 <th style={{ padding: "12px 8px", color: "#94a3b8", fontWeight: 700, fontSize: "12px", letterSpacing: "0.06em", width: "135px" }}>
                   3. PRINTED
                 </th>
-                <th style={{ padding: "12px 8px", color: "#94a3b8", fontWeight: 700, fontSize: "12px", letterSpacing: "0.06em", minWidth: "250px" }}>
+                <th style={{ padding: "12px 8px", color: "#94a3b8", fontWeight: 700, fontSize: "12px", letterSpacing: "0.06em", minWidth: "310px" }}>
                   4. FITTING &amp; LABOUR
                 </th>
                 <th style={{ padding: "12px 8px", color: "#94a3b8", fontWeight: 700, fontSize: "12px", letterSpacing: "0.06em", width: "115px", textAlign: "center" }}>
@@ -1749,11 +1569,35 @@ export const LanyardWorkspaceView: React.FC = () => {
                             <span style={{ fontFamily: "var(--font-mono)", fontSize: "14px", fontWeight: 700, color: "#f8fafc" }}>
                               {entry.qty.toLocaleString()}
                             </span>
-                            {entry.qtyDisplay && entry.qtyDisplay !== String(entry.qty) && !entry.qtyDisplay.includes(String(entry.qty)) && (
-                              <div style={{ fontSize: "10.5px", color: "#64748b", fontFamily: "var(--font-mono)" }}>
-                                ({entry.qtyDisplay.replace(/pcs/gi, "").trim()})
-                              </div>
-                            )}
+                            {(() => {
+                              const breakdownBadges = parseQtyBreakdown(entry.qtyDisplay, entry.doriBreakdown);
+                              if (!breakdownBadges || breakdownBadges.length === 0) return null;
+                              return (
+                                <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginTop: "4px" }}>
+                                  {breakdownBadges.map((b, idx) => (
+                                    <span
+                                      key={idx}
+                                      title={b.tooltip || b.label}
+                                      style={{
+                                        padding: "1px 6px",
+                                        borderRadius: "4px",
+                                        backgroundColor: b.bg,
+                                        border: `1px solid ${b.border}`,
+                                        color: b.color,
+                                        fontSize: "10px",
+                                        fontWeight: 700,
+                                        fontFamily: "var(--font-mono)",
+                                        whiteSpace: "nowrap",
+                                        display: "inline-flex",
+                                        alignItems: "center",
+                                      }}
+                                    >
+                                      {b.label}
+                                    </span>
+                                  ))}
+                                </div>
+                              );
+                            })()}
                           </div>
                         )}
                       </td>
@@ -2008,99 +1852,323 @@ export const LanyardWorkspaceView: React.FC = () => {
                           </div>
                         ) : entry.fittingContractorId ? (
                           <div style={{ display: "flex", alignItems: "center", gap: "6px", width: "100%" }}>
+                            {/* 1. Contractor Pill or Divided Multi-Contractor Dropdown */}
+                            <div style={{ position: "relative", flex: 1, minWidth: 0 }}>
+                              {entry.fittingContractorId === "mix" || (entry.fittingAllocations && entry.fittingAllocations.length > 0) ? (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setOpenSplitDropdownOrderId(openSplitDropdownOrderId === entry.id ? null : entry.id);
+                                    }}
+                                    title="Divided across multiple contractors. Click to view allocation breakdown."
+                                    style={{
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "space-between",
+                                      gap: "5px",
+                                      width: "100%",
+                                      height: "30px",
+                                      boxSizing: "border-box",
+                                      padding: "0 8px",
+                                      borderRadius: "5px",
+                                      backgroundColor: "rgba(56, 189, 248, 0.08)",
+                                      border: "1px solid rgba(56, 189, 248, 0.3)",
+                                      color: "#38bdf8",
+                                      fontSize: "11.5px",
+                                      fontWeight: 600,
+                                      cursor: "pointer",
+                                      whiteSpace: "nowrap",
+                                    }}
+                                  >
+                                    <div style={{ display: "flex", alignItems: "center", gap: "5px", overflow: "hidden" }}>
+                                      <Icon name="users" size={12} color="#38bdf8" />
+                                      <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>
+                                        Divided ({entry.fittingAllocations?.length || "2+"})
+                                      </span>
+                                    </div>
+                                    <Icon name="chevron-down" size={10} color="#38bdf8" />
+                                  </button>
+
+                                  {/* Popover showing split breakdown */}
+                                  {openSplitDropdownOrderId === entry.id && (
+                                    <>
+                                      <div
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setOpenSplitDropdownOrderId(null);
+                                        }}
+                                        style={{
+                                          position: "fixed",
+                                          top: 0,
+                                          left: 0,
+                                          right: 0,
+                                          bottom: 0,
+                                          zIndex: 80,
+                                        }}
+                                      />
+                                      <div
+                                        onClick={(e) => e.stopPropagation()}
+                                        style={{
+                                          position: "absolute",
+                                          top: "34px",
+                                          left: 0,
+                                          zIndex: 81,
+                                          minWidth: "230px",
+                                          backgroundColor: "#0d111c",
+                                          border: "1px solid rgba(255, 255, 255, 0.15)",
+                                          borderRadius: "8px",
+                                          padding: "8px",
+                                          boxShadow: "0 10px 25px rgba(0, 0, 0, 0.6)",
+                                        }}
+                                      >
+                                        <div style={{ fontSize: "10.5px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.06em", padding: "2px 4px 6px" }}>
+                                          Divided Allocation ({entry.fittingAllocations?.length || 0})
+                                        </div>
+                                        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                                          {entry.fittingAllocations && entry.fittingAllocations.length > 0 ? (
+                                            entry.fittingAllocations.map((alloc) => (
+                                              <div
+                                                key={alloc.contractorId}
+                                                style={{
+                                                  display: "flex",
+                                                  alignItems: "center",
+                                                  justifyContent: "space-between",
+                                                  padding: "5px 7px",
+                                                  borderRadius: "5px",
+                                                  backgroundColor: "rgba(255, 255, 255, 0.03)",
+                                                  border: "1px solid rgba(255, 255, 255, 0.06)",
+                                                }}
+                                              >
+                                                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                                  <Icon name="user" size={11} color="#38bdf8" />
+                                                  <span style={{ fontSize: "11.5px", fontWeight: 600, color: "#f1f5f9" }}>
+                                                    {alloc.contractorName.split(" (")[0]}
+                                                  </span>
+                                                </div>
+                                                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                                  <span style={{ fontSize: "11px", fontFamily: "var(--font-mono)", fontWeight: 700, color: "#facc15" }}>
+                                                    {alloc.qty.toLocaleString()}
+                                                  </span>
+                                                  <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      setOpenSplitDropdownOrderId(null);
+                                                      handleJumpToLabourPage(alloc.contractorId);
+                                                    }}
+                                                    title={`Open ${alloc.contractorName}'s ledger`}
+                                                    style={{
+                                                      display: "inline-flex",
+                                                      alignItems: "center",
+                                                      padding: "2px 5px",
+                                                      borderRadius: "4px",
+                                                      backgroundColor: "rgba(56, 189, 248, 0.12)",
+                                                      border: "1px solid rgba(56, 189, 248, 0.3)",
+                                                      color: "#38bdf8",
+                                                      fontSize: "10px",
+                                                      fontWeight: 600,
+                                                      cursor: "pointer",
+                                                    }}
+                                                  >
+                                                    Ledger ↗
+                                                  </button>
+                                                </div>
+                                              </div>
+                                            ))
+                                          ) : (
+                                            <div style={{ fontSize: "11px", color: "#64748b", padding: "4px" }}>No allocations recorded</div>
+                                          )}
+                                        </div>
+                                        <div style={{ marginTop: "6px", paddingTop: "6px", borderTop: "1px solid rgba(255, 255, 255, 0.08)" }}>
+                                          <button
+                                            type="button"
+                                            onClick={(e) => {
+                                              setOpenSplitDropdownOrderId(null);
+                                              openLabourAssignmentModal(entry, e);
+                                            }}
+                                            style={{
+                                              width: "100%",
+                                              display: "flex",
+                                              alignItems: "center",
+                                              justifyContent: "center",
+                                              gap: "5px",
+                                              padding: "5px 8px",
+                                              borderRadius: "5px",
+                                              backgroundColor: "rgba(255, 255, 255, 0.06)",
+                                              border: "1px solid rgba(255, 255, 255, 0.12)",
+                                              color: "#cbd5e1",
+                                              fontSize: "11px",
+                                              fontWeight: 600,
+                                              cursor: "pointer",
+                                            }}
+                                          >
+                                            <Icon name="users" size={11} color="#38bdf8" />
+                                            <span>Edit Split / Reassign</span>
+                                          </button>
+                                        </div>
+                                      </div>
+                                    </>
+                                  )}
+                                </>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={(e) => openLabourAssignmentModal(entry, e)}
+                                  title={`Assigned to ${entry.fittingContractorName}. Click to change or reassign.`}
+                                  style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "5px",
+                                    width: "100%",
+                                    height: "30px",
+                                    boxSizing: "border-box",
+                                    padding: "0 8px",
+                                    borderRadius: "5px",
+                                    backgroundColor: "rgba(255, 255, 255, 0.04)",
+                                    border: "1px solid rgba(255, 255, 255, 0.12)",
+                                    color: "#cbd5e1",
+                                    fontSize: "12px",
+                                    fontWeight: 600,
+                                    cursor: "pointer",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    whiteSpace: "nowrap",
+                                  }}
+                                >
+                                  <Icon name="user" size={12} color="#94a3b8" />
+                                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                    {formatContractorLabel(entry.fittingContractorName || "")}
+                                  </span>
+                                </button>
+                              )}
+                            </div>
+
+                            {/* 2. Direct Contractor Ledger Shortcut Button */}
                             <button
                               type="button"
-                              onClick={(e) => openLabourAssignmentModal(entry, e)}
-                              title={`Assigned to ${entry.fittingContractorName}. Click to reassign.`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleJumpToLabourPage(entry.fittingContractorId === "mix" ? undefined : entry.fittingContractorId);
+                              }}
+                              title={`Open ${entry.fittingContractorName || "contractor"}'s ledger in Labour Workspace`}
                               style={{
-                                display: "flex",
+                                display: "inline-flex",
                                 alignItems: "center",
                                 justifyContent: "center",
-                                gap: "5px",
-                                flex: 1,
+                                gap: "4px",
                                 height: "30px",
-                                boxSizing: "border-box",
                                 padding: "0 8px",
+                                flexShrink: 0,
+                                boxSizing: "border-box",
                                 borderRadius: "5px",
-                                backgroundColor: "rgba(255, 255, 255, 0.04)",
-                                border: "1px solid rgba(255, 255, 255, 0.12)",
-                                color: "#cbd5e1",
-                                fontSize: "12px",
-                                fontWeight: 600,
+                                backgroundColor: "rgba(56, 189, 248, 0.08)",
+                                border: "1px solid rgba(56, 189, 248, 0.25)",
+                                color: "#38bdf8",
+                                fontSize: "11px",
+                                fontWeight: 700,
                                 cursor: "pointer",
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
+                                transition: "all 0.15s ease",
                                 whiteSpace: "nowrap",
                               }}
-                            >
-                              <Icon name="user" size={12} color="#94a3b8" />
-                              <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                {formatContractorLabel(entry.fittingContractorName || "")}
-                              </span>
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={(e) => handleToggleFittingDone(entry, e)}
-                              title={
-                                entry.fittingStatus === "ready"
-                                  ? "Fitting completed & verified. Click to uncheck."
-                                  : "Click to mark Fitting Done"
-                              }
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                gap: "6px",
-                                flex: 1,
-                                height: "30px",
-                                boxSizing: "border-box",
-                                padding: "0 8px",
-                                borderRadius: "5px",
-                                backgroundColor:
-                                  entry.fittingStatus === "ready"
-                                    ? "rgba(255, 255, 255, 0.04)"
-                                    : "rgba(255, 255, 255, 0.02)",
-                                border:
-                                  entry.fittingStatus === "ready"
-                                    ? "1px solid rgba(255, 255, 255, 0.12)"
-                                    : "1px solid rgba(255, 255, 255, 0.08)",
-                                color: entry.fittingStatus === "ready" ? "#f1f5f9" : "#94a3b8",
-                                fontSize: "11.5px",
-                                fontWeight: 600,
-                                cursor: "pointer",
-                                whiteSpace: "nowrap",
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor = "rgba(56, 189, 248, 0.16)";
+                                e.currentTarget.style.borderColor = "rgba(56, 189, 248, 0.45)";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor = "rgba(56, 189, 248, 0.08)";
+                                e.currentTarget.style.borderColor = "rgba(56, 189, 248, 0.25)";
                               }}
                             >
-                              <CheckboxBox
-                                checked={entry.fittingStatus === "ready"}
-                                color="#10b981"
-                              />
-                              <span>{entry.fittingStatus === "ready" ? "Fitting Done ✓" : "In Fitting"}</span>
+                              <Icon name="external-link" size={11} color="#38bdf8" />
+                              <span>Ledger ↗</span>
                             </button>
 
-                            {entry.fittingContractorId !== "mix" && (
+                            {/* 3. Fitting Status: Yellow Tick (In Fitting) vs Green Tick (Fitting Done) */}
+                            {entry.fittingStatus === "ready" ? (
                               <button
                                 type="button"
-                                onClick={() => handleJumpToLabourPage(entry.fittingContractorId)}
-                                title={`Open ${entry.fittingContractorName}'s ledger in Labour Workspace`}
+                                onClick={(e) => handleToggleFittingDone(entry, e)}
+                                title="Fitting completed & verified ✓. Click to return to In Fitting."
                                 style={{
                                   display: "flex",
                                   alignItems: "center",
                                   justifyContent: "center",
-                                  width: "30px",
+                                  gap: "6px",
+                                  flex: 1,
                                   height: "30px",
-                                  flexShrink: 0,
                                   boxSizing: "border-box",
+                                  padding: "0 8px",
                                   borderRadius: "5px",
-                                  backgroundColor: "rgba(255, 255, 255, 0.04)",
-                                  border: "1px solid rgba(255, 255, 255, 0.08)",
-                                  color: "#94a3b8",
+                                  backgroundColor: "rgba(34, 197, 94, 0.12)",
+                                  border: "1px solid rgba(34, 197, 94, 0.35)",
+                                  color: "#4ade80",
+                                  fontSize: "11.5px",
+                                  fontWeight: 700,
                                   cursor: "pointer",
+                                  whiteSpace: "nowrap",
                                   transition: "all 0.15s ease",
                                 }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.backgroundColor = "rgba(34, 197, 94, 0.2)";
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.backgroundColor = "rgba(34, 197, 94, 0.12)";
+                                }}
                               >
-                                <Icon name="external-link" size={11} color="#94a3b8" />
+                                <CheckboxBox checked={true} color="#22c55e" />
+                                <span>Fitting Done ✓</span>
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={(e) => handleToggleFittingDone(entry, e)}
+                                title="Fitting in process (Contractor working). Click when completed to mark Fitting Done ✓."
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  gap: "6px",
+                                  flex: 1,
+                                  height: "30px",
+                                  boxSizing: "border-box",
+                                  padding: "0 8px",
+                                  borderRadius: "5px",
+                                  backgroundColor: "rgba(234, 179, 8, 0.12)",
+                                  border: "1px solid rgba(234, 179, 8, 0.38)",
+                                  color: "#facc15",
+                                  fontSize: "11.5px",
+                                  fontWeight: 700,
+                                  cursor: "pointer",
+                                  whiteSpace: "nowrap",
+                                  transition: "all 0.15s ease",
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.backgroundColor = "rgba(234, 179, 8, 0.2)";
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.backgroundColor = "rgba(234, 179, 8, 0.12)";
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    width: "14px",
+                                    height: "14px",
+                                    borderRadius: "3px",
+                                    border: "1.5px solid #eab308",
+                                    backgroundColor: "#eab308",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    flexShrink: 0,
+                                  }}
+                                >
+                                  <svg width="9" height="7" viewBox="0 0 10 8" fill="none">
+                                    <path d="M1 4L3.5 6.5L9 1" stroke="#080b12" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                  </svg>
+                                </div>
+                                <span>In Fitting ⚡</span>
                               </button>
                             )}
                           </div>
@@ -2130,7 +2198,7 @@ export const LanyardWorkspaceView: React.FC = () => {
                               }}
                             >
                               <Icon name="plus" size={11} color="#94a3b8" />
-                              <span>+ Assign Labour</span>
+                              <span>+ Give to Labour</span>
                             </button>
 
                             <button
@@ -2193,17 +2261,17 @@ export const LanyardWorkspaceView: React.FC = () => {
                             border: isReady
                               ? "1px solid rgba(16, 185, 129, 0.25)"
                               : allStepsDone
-                              ? "1px solid rgba(16, 185, 129, 0.4)"
+                              ? "1px solid rgba(59, 130, 246, 0.5)"
                               : "1px solid rgba(255, 255, 255, 0.08)",
                             backgroundColor: isReady
                               ? "rgba(16, 185, 129, 0.08)"
                               : allStepsDone
-                              ? "rgba(16, 185, 129, 0.15)"
+                              ? "rgba(59, 130, 246, 0.12)"
                               : "rgba(255, 255, 255, 0.03)",
                             color: isReady
                               ? "#34d399"
                               : allStepsDone
-                              ? "#4ade80"
+                              ? "#60a5fa"
                               : "#94a3b8",
                             transition: "all 0.15s ease",
                           }}
@@ -2213,7 +2281,7 @@ export const LanyardWorkspaceView: React.FC = () => {
                               isReady
                                 ? "check-circle"
                                 : allStepsDone
-                                ? "check"
+                                ? "arrow-right"
                                 : entry.fittingStatus === "in_fitting"
                                 ? "tool"
                                 : entry.goneForPrint || entry.isPrinted
@@ -2226,7 +2294,7 @@ export const LanyardWorkspaceView: React.FC = () => {
                             {isReady
                               ? "Ready ✓"
                               : allStepsDone
-                              ? "Mark Ready ✓"
+                              ? "Mark Ready →"
                               : entry.fittingStatus === "in_fitting"
                               ? "In Fitting"
                               : entry.isPrinted
@@ -2241,36 +2309,6 @@ export const LanyardWorkspaceView: React.FC = () => {
                       {/* 10. Actions */}
                       <td style={{ padding: "10px 10px", textAlign: "right" }}>
                         <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "flex-end", gap: "6px" }}>
-                          <button
-                            type="button"
-                            onClick={(e) => openLabourAssignmentModal(entry, e)}
-                            title="Assign or reassign labour"
-                            style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              width: "30px",
-                              height: "30px",
-                              boxSizing: "border-box",
-                              borderRadius: "5px",
-                              backgroundColor: "rgba(255, 255, 255, 0.04)",
-                              border: "1px solid rgba(255, 255, 255, 0.08)",
-                              color: "#94a3b8",
-                              cursor: "pointer",
-                              transition: "all 0.15s ease",
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.08)";
-                              e.currentTarget.style.color = "#f1f5f9";
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.04)";
-                              e.currentTarget.style.color = "#94a3b8";
-                            }}
-                          >
-                            <Icon name="user" size={13} />
-                          </button>
-
                           <button
                             type="button"
                             onClick={() => {
@@ -2306,6 +2344,60 @@ export const LanyardWorkspaceView: React.FC = () => {
                           >
                             <Icon name="file-text" size={13} />
                           </button>
+
+                          {/* Delete Order Action (Completed orders are strictly protected) */}
+                          {entry.orderReady ? (
+                            <div
+                              title="Completed order — permanently locked against deletion (Audit & Ledger Protection)"
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                width: "30px",
+                                height: "30px",
+                                boxSizing: "border-box",
+                                borderRadius: "5px",
+                                backgroundColor: "rgba(255, 255, 255, 0.02)",
+                                border: "1px solid rgba(255, 255, 255, 0.06)",
+                                color: "#475569",
+                                cursor: "not-allowed",
+                              }}
+                            >
+                              <Icon name="lock" size={12} color="#475569" />
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={(e) => openDeleteModal(entry, e)}
+                              title={`Delete order #${entry.sn}`}
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                width: "30px",
+                                height: "30px",
+                                boxSizing: "border-box",
+                                borderRadius: "5px",
+                                backgroundColor: "rgba(239, 68, 68, 0.08)",
+                                border: "1px solid rgba(239, 68, 68, 0.22)",
+                                color: "#f87171",
+                                cursor: "pointer",
+                                transition: "all 0.15s ease",
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor = "rgba(239, 68, 68, 0.2)";
+                                e.currentTarget.style.borderColor = "rgba(239, 68, 68, 0.45)";
+                                e.currentTarget.style.color = "#ff8585";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor = "rgba(239, 68, 68, 0.08)";
+                                e.currentTarget.style.borderColor = "rgba(239, 68, 68, 0.22)";
+                                e.currentTarget.style.color = "#f87171";
+                              }}
+                            >
+                              <Icon name="trash" size={13} />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -2472,74 +2564,186 @@ export const LanyardWorkspaceView: React.FC = () => {
                   />
                 </div>
               </div>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                <label style={{ fontSize: "11.5px", fontWeight: 600, color: "#64748b" }}>
-                  Distribute {fittingModalOrder.qty.toLocaleString()} pcs:
-                </label>
-                {contractors
-                  .filter((c) => c.id !== "wof" && c.id !== "shop")
-                  .map((c) => {
-                    const isChecked = mixFittingContractorIds.includes(c.id);
-                    return (
+            ) : (() => {
+                const totalOrderQty = fittingModalOrder.qty;
+                const sumAllocated = mixFittingContractorIds.reduce(
+                  (acc, id) => acc + (Number(mixFittingQtys[id]) || 0),
+                  0
+                );
+                const unallocated = totalOrderQty - sumAllocated;
+
+                return (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <label style={{ fontSize: "11.5px", fontWeight: 600, color: "#64748b" }}>
+                        Distribute {totalOrderQty.toLocaleString()} pcs:
+                      </label>
+                    </div>
+
+                    {/* Live Remainder Feedback Banner */}
+                    {unallocated === 0 ? (
                       <div
-                        key={c.id}
                         style={{
                           display: "flex",
-                          alignItems: "center",
                           justifyContent: "space-between",
-                          padding: "5px 8px",
-                          borderRadius: "5px",
-                          backgroundColor: "rgba(255, 255, 255, 0.02)",
-                          border: "1px solid rgba(255, 255, 255, 0.06)",
+                          alignItems: "center",
+                          padding: "6px 10px",
+                          borderRadius: "4px",
+                          backgroundColor: "rgba(34, 197, 94, 0.12)",
+                          border: "1px solid rgba(34, 197, 94, 0.3)",
+                          color: "#4ade80",
+                          fontSize: "11.5px",
+                          fontWeight: 700,
                         }}
                       >
-                        <label style={{ display: "flex", alignItems: "center", gap: "7px", cursor: "pointer" }}>
-                          <input
-                            type="checkbox"
-                            checked={isChecked}
-                            onChange={() => {
-                              if (isChecked) {
-                                setMixFittingContractorIds((prev) => prev.filter((id) => id !== c.id));
-                              } else {
-                                setMixFittingContractorIds((prev) => [...prev, c.id]);
-                              }
-                            }}
-                          />
-                          <span style={{ fontSize: "12px", color: "#cbd5e1" }}>
-                            {c.displayName.split(" (")[0]}
-                          </span>
-                        </label>
-                        {isChecked && (
-                          <input
-                            type="number"
-                            placeholder="Qty"
-                            value={mixFittingQtys[c.id] || ""}
-                            onChange={(e) =>
-                              setMixFittingQtys((prev) => ({
-                                ...prev,
-                                [c.id]: parseInt(e.target.value, 10) || 0,
-                              }))
-                            }
-                            style={{
-                              width: "80px",
-                              height: "26px",
-                              padding: "0 6px",
-                              backgroundColor: "#090c13",
-                              border: "1px solid rgba(255, 255, 255, 0.15)",
-                              borderRadius: "4px",
-                              color: "#fff",
-                              fontSize: "11.5px",
-                              fontFamily: "var(--font-mono)",
-                              textAlign: "right",
-                            }}
-                          />
-                        )}
+                        <span>✓ Exactly {totalOrderQty.toLocaleString()} pcs allocated</span>
+                        <span style={{ fontFamily: "var(--font-mono)" }}>0 left</span>
                       </div>
-                    );
-                  })}
-              </div>
-            )}
+                    ) : unallocated > 0 ? (
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          padding: "6px 10px",
+                          borderRadius: "4px",
+                          backgroundColor: "rgba(234, 179, 8, 0.12)",
+                          border: "1px solid rgba(234, 179, 8, 0.3)",
+                          color: "#facc15",
+                          fontSize: "11.5px",
+                          fontWeight: 700,
+                        }}
+                      >
+                        <span>Allocated: {sumAllocated.toLocaleString()} / {totalOrderQty.toLocaleString()} pcs</span>
+                        <span style={{ fontFamily: "var(--font-mono)" }}>⚠ {unallocated.toLocaleString()} pcs left</span>
+                      </div>
+                    ) : (
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          padding: "6px 10px",
+                          borderRadius: "4px",
+                          backgroundColor: "rgba(239, 68, 68, 0.12)",
+                          border: "1px solid rgba(239, 68, 68, 0.3)",
+                          color: "#f87171",
+                          fontSize: "11.5px",
+                          fontWeight: 700,
+                        }}
+                      >
+                        <span>Allocated: {sumAllocated.toLocaleString()} / {totalOrderQty.toLocaleString()} pcs</span>
+                        <span style={{ fontFamily: "var(--font-mono)" }}>✖ Over by {Math.abs(unallocated).toLocaleString()} pcs</span>
+                      </div>
+                    )}
+
+                    {contractors
+                      .filter((c) => c.id !== "wof" && c.id !== "shop")
+                      .map((c) => {
+                        const isChecked = mixFittingContractorIds.includes(c.id);
+                        const cQty = Number(mixFittingQtys[c.id]) || 0;
+
+                        return (
+                          <div
+                            key={c.id}
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              padding: "6px 8px",
+                              borderRadius: "5px",
+                              backgroundColor: isChecked ? "rgba(255, 255, 255, 0.04)" : "rgba(255, 255, 255, 0.015)",
+                              border: isChecked ? "1px solid rgba(59, 130, 246, 0.3)" : "1px solid rgba(255, 255, 255, 0.06)",
+                            }}
+                          >
+                            <label style={{ display: "flex", alignItems: "center", gap: "7px", cursor: "pointer" }}>
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={() => {
+                                  if (isChecked) {
+                                    setMixFittingContractorIds((prev) => prev.filter((id) => id !== c.id));
+                                    setMixFittingQtys((prev) => {
+                                      const next = { ...prev };
+                                      delete next[c.id];
+                                      return next;
+                                    });
+                                  } else {
+                                    setMixFittingContractorIds((prev) => [...prev, c.id]);
+                                    if (unallocated > 0) {
+                                      setMixFittingQtys((prev) => ({
+                                        ...prev,
+                                        [c.id]: unallocated,
+                                      }));
+                                    }
+                                  }
+                                }}
+                                style={{ accentColor: "#3b82f6" }}
+                              />
+                              <span style={{ fontSize: "12px", color: isChecked ? "#fff" : "#94a3b8", fontWeight: isChecked ? 600 : 400 }}>
+                                {c.displayName.split(" (")[0]}
+                              </span>
+                            </label>
+
+                            {isChecked && (
+                              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                {unallocated > 0 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setMixFittingQtys((prev) => ({
+                                        ...prev,
+                                        [c.id]: cQty + unallocated,
+                                      }));
+                                    }}
+                                    title={`Add remaining ${unallocated} pcs to ${c.displayName}`}
+                                    style={{
+                                      padding: "2px 6px",
+                                      borderRadius: "3px",
+                                      backgroundColor: "rgba(234, 179, 8, 0.15)",
+                                      border: "1px solid rgba(234, 179, 8, 0.3)",
+                                      color: "#facc15",
+                                      fontSize: "10.5px",
+                                      fontWeight: 700,
+                                      cursor: "pointer",
+                                    }}
+                                  >
+                                    +{unallocated}
+                                  </button>
+                                )}
+                                <input
+                                  type="number"
+                                  placeholder="Qty"
+                                  value={mixFittingQtys[c.id] || ""}
+                                  onChange={(e) => {
+                                    const val = parseInt(e.target.value, 10) || 0;
+                                    setMixFittingQtys((prev) => ({
+                                      ...prev,
+                                      [c.id]: val,
+                                    }));
+                                  }}
+                                  style={{
+                                    width: "85px",
+                                    height: "28px",
+                                    padding: "0 8px",
+                                    backgroundColor: "#090c13",
+                                    border: "1px solid rgba(255, 255, 255, 0.18)",
+                                    borderRadius: "4px",
+                                    color: "#fff",
+                                    fontSize: "12px",
+                                    fontFamily: "var(--font-mono)",
+                                    textAlign: "right",
+                                    fontWeight: 700,
+                                  }}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                  </div>
+                );
+              })()}
 
             {/* Modal Actions */}
             <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px", marginTop: "6px" }}>
@@ -2995,6 +3199,263 @@ export const LanyardWorkspaceView: React.FC = () => {
           </div>
         );
       })()}
+
+      {/* ══════════════════════════════════════════════════════════════════════════ */}
+      {/* 8. SECURE ORDER DELETION MODAL (Random 4-Digit Security PIN)              */}
+      {/* ══════════════════════════════════════════════════════════════════════════ */}
+      {deleteModalOrder && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.8)",
+            backdropFilter: "blur(6px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+            padding: "20px",
+          }}
+          onClick={() => setDeleteModalOrder(null)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: "440px",
+              maxWidth: "95vw",
+              backgroundColor: "#0d111c",
+              border: "1px solid rgba(239, 68, 68, 0.35)",
+              borderRadius: "12px",
+              overflow: "hidden",
+              boxShadow: "0 25px 60px rgba(0, 0, 0, 0.75), 0 0 30px rgba(239, 68, 68, 0.15)",
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            {/* Header */}
+            <div
+              style={{
+                padding: "16px 20px",
+                borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+                backgroundColor: "rgba(239, 68, 68, 0.06)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <div
+                  style={{
+                    width: "32px",
+                    height: "32px",
+                    borderRadius: "8px",
+                    backgroundColor: "rgba(239, 68, 68, 0.15)",
+                    border: "1px solid rgba(239, 68, 68, 0.35)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Icon name="alert-triangle" size={16} color="#ef4444" />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: "15px", fontWeight: 700, color: "#fff" }}>
+                    Delete Order #{deleteModalOrder.sn}
+                  </h3>
+                  <p style={{ margin: "2px 0 0", fontSize: "11.5px", color: "#94a3b8" }}>
+                    Permanent deletion safety verification
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDeleteModalOrder(null)}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  color: "#64748b",
+                  cursor: "pointer",
+                  padding: "4px",
+                  display: "flex",
+                }}
+              >
+                <Icon name="x" size={16} />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "16px" }}>
+              {/* Order Summary Card */}
+              <div
+                style={{
+                  padding: "12px 14px",
+                  borderRadius: "8px",
+                  backgroundColor: "rgba(255, 255, 255, 0.03)",
+                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "6px",
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontSize: "14px", fontWeight: 700, color: "#f8fafc" }}>
+                    {deleteModalOrder.mplName}
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: "11px",
+                      fontWeight: 700,
+                      color: "#38bdf8",
+                      padding: "2px 6px",
+                      borderRadius: "4px",
+                      backgroundColor: "rgba(56, 189, 248, 0.1)",
+                    }}
+                  >
+                    {deleteModalOrder.size}
+                  </span>
+                </div>
+                <div style={{ display: "flex", gap: "16px", fontSize: "12px", color: "#94a3b8", fontFamily: "var(--font-mono)" }}>
+                  <span>Qty: <strong style={{ color: "#fff" }}>{deleteModalOrder.qty.toLocaleString()}</strong></span>
+                  <span>Date: <strong style={{ color: "#fff" }}>{deleteModalOrder.date}</strong></span>
+                  <span>Labour: <strong style={{ color: "#fff" }}>{deleteModalOrder.fittingContractorName || "None"}</strong></span>
+                </div>
+              </div>
+
+              {/* Warning Notice */}
+              <p style={{ margin: 0, fontSize: "12px", color: "#cbd5e1", lineHeight: 1.5 }}>
+                This action cannot be undone. It will permanently remove this order from the queue and purge any registered vouchers from contractor ledgers.
+              </p>
+
+              {/* Random 4-digit PIN Verification */}
+              <div
+                style={{
+                  padding: "14px",
+                  borderRadius: "8px",
+                  backgroundColor: "rgba(239, 68, 68, 0.05)",
+                  border: "1px dashed rgba(239, 68, 68, 0.3)",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: "10px",
+                }}
+              >
+                <span style={{ fontSize: "11.5px", fontWeight: 600, color: "#cbd5e1" }}>
+                  Enter the 4-digit confirmation PIN below:
+                </span>
+                <div
+                  style={{
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "30px",
+                    fontWeight: 800,
+                    letterSpacing: "10px",
+                    color: "#f87171",
+                    textShadow: "0 0 12px rgba(239, 68, 68, 0.4)",
+                    userSelect: "all",
+                  }}
+                >
+                  {deleteGeneratedPin}
+                </div>
+                <input
+                  type="text"
+                  maxLength={4}
+                  autoFocus
+                  placeholder="Type 4 digits"
+                  value={deleteInputPin}
+                  onChange={(e) => setDeleteInputPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && deleteInputPin === deleteGeneratedPin) {
+                      handleConfirmDelete();
+                    }
+                  }}
+                  style={{
+                    width: "160px",
+                    height: "40px",
+                    textAlign: "center",
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "20px",
+                    fontWeight: 700,
+                    letterSpacing: "6px",
+                    backgroundColor: "#07090e",
+                    border:
+                      deleteInputPin === deleteGeneratedPin
+                        ? "2px solid #22c55e"
+                        : deleteInputPin.length === 4
+                        ? "2px solid #ef4444"
+                        : "1px solid rgba(255, 255, 255, 0.2)",
+                    borderRadius: "6px",
+                    color: "#ffffff",
+                    outline: "none",
+                    boxShadow:
+                      deleteInputPin === deleteGeneratedPin
+                        ? "0 0 10px rgba(34, 197, 94, 0.3)"
+                        : "none",
+                  }}
+                />
+                {deleteInputPin.length === 4 && deleteInputPin !== deleteGeneratedPin && (
+                  <span style={{ fontSize: "11px", color: "#f87171", fontWeight: 600 }}>
+                    Incorrect PIN. Please enter {deleteGeneratedPin} to confirm.
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div
+              style={{
+                padding: "14px 20px",
+                borderTop: "1px solid rgba(255, 255, 255, 0.08)",
+                backgroundColor: "rgba(255, 255, 255, 0.02)",
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: "10px",
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => setDeleteModalOrder(null)}
+                style={{
+                  padding: "8px 16px",
+                  borderRadius: "6px",
+                  border: "1px solid rgba(255, 255, 255, 0.12)",
+                  backgroundColor: "transparent",
+                  color: "#94a3b8",
+                  fontSize: "12.5px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={deleteInputPin !== deleteGeneratedPin}
+                onClick={handleConfirmDelete}
+                style={{
+                  padding: "8px 18px",
+                  borderRadius: "6px",
+                  border: "none",
+                  backgroundColor: deleteInputPin === deleteGeneratedPin ? "#ef4444" : "rgba(239, 68, 68, 0.2)",
+                  color: deleteInputPin === deleteGeneratedPin ? "#ffffff" : "rgba(255, 255, 255, 0.3)",
+                  fontSize: "12.5px",
+                  fontWeight: 700,
+                  cursor: deleteInputPin === deleteGeneratedPin ? "pointer" : "not-allowed",
+                  transition: "all 0.15s ease",
+                  boxShadow:
+                    deleteInputPin === deleteGeneratedPin
+                      ? "0 2px 10px rgba(239, 68, 68, 0.4)"
+                      : "none",
+                }}
+              >
+                Delete Permanently
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -2,9 +2,6 @@ import React from "react";
 import { useAuth } from "../auth/AuthContext";
 import { AppNavSection } from "../auth/permissions";
 import { Icon, IconName } from "../design-system/components/Icon";
-import { useLanyardStore } from "../views/orders/lanyardOrdersStore";
-import { useIDCardStore } from "../views/orders/idCardOrdersStore";
-
 export interface SidebarProps {
   activeSection: AppNavSection;
   onSelectSection: (section: AppNavSection) => void;
@@ -18,8 +15,6 @@ interface NavItemDef {
   id: AppNavSection;
   label: string;
   icon: IconName;
-  badge?: number;
-  badgeVariant?: "urgent" | "normal";
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -31,20 +26,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onToggleCollapse,
 }) => {
   const { canNav } = useAuth();
-  const { orders: lanyardOrders, vouchersMap } = useLanyardStore();
-  const { orders: idCardOrders } = useIDCardStore();
-
-  const lanyardActiveCount = lanyardOrders.filter((o) => o.fittingStatus !== "ready").length;
-  const idCardActiveCount = idCardOrders.filter((o) => o.status !== "done").length;
-  const labourActiveCount = Object.values(vouchersMap).reduce((acc, list) => {
-    return acc + list.filter((v) => v.status === "in_fitting").length;
-  }, 0);
 
   const primaryNav: NavItemDef[] = [
-    { id: "lanyard_orders", label: "Lanyard Order", icon: "tag" },
-    { id: "card_orders", label: "ID Card Order", icon: "credit-card" },
-    { id: "labour_lanyard", label: "Labour Lanyard", icon: "labour" },
-    { id: "stock", label: "Stock", icon: "stock" },
+    { id: "orders", label: "Orders", icon: "clipboard" },
+    { id: "lanyard_orders", label: "Lanyard Ledger", icon: "tag" },
+    { id: "card_orders", label: "ID Card Ledger", icon: "credit-card" },
+    { id: "labour_lanyard", label: "Labour Ledger", icon: "labour" },
+    { id: "stock", label: "Stock Ledger", icon: "stock" },
   ];
 
   const visiblePrimary = primaryNav.filter((item) => canNav(item.id));
@@ -110,7 +98,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   style={{
                     display: "flex",
                     alignItems: "center",
-                    justifyContent: isCollapsed ? "center" : "space-between",
+                    justifyContent: isCollapsed ? "center" : "flex-start",
+                    gap: isCollapsed ? "0" : "11px",
                     padding: isCollapsed ? "10px 0" : "10px 14px",
                     borderRadius: "4px",
                     border: "1px solid " + (isActive ? "var(--accent-border)" : "transparent"),
@@ -147,42 +136,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     }
                   }}
                 >
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: isCollapsed ? "0" : "11px",
-                    }}
-                  >
-                    <Icon
-                      name={item.icon}
-                      size={17}
-                      color={isActive ? "var(--accent-text)" : "var(--text-muted)"}
-                    />
-                    {!isCollapsed && <span>{item.label}</span>}
-                  </div>
-
-                  {!isCollapsed && item.badge !== undefined && item.badge > 0 && (
-                    <span
-                      style={{
-                        fontSize: "11px",
-                        fontFamily: "var(--font-mono)",
-                        fontWeight: 700,
-                        padding: "2px 7px",
-                        borderRadius: "3px",
-                        backgroundColor:
-                          item.badgeVariant === "urgent"
-                            ? "var(--status-error)"
-                            : "var(--accent)",
-                        color:
-                          item.badgeVariant === "urgent"
-                            ? "#fff"
-                            : "var(--accent-contrast, #111827)",
-                      }}
-                    >
-                      {item.badge}
-                    </span>
-                  )}
+                  <Icon
+                    name={item.icon}
+                    size={17}
+                    color={isActive ? "var(--accent-text)" : "var(--text-muted)"}
+                  />
+                  {!isCollapsed && <span>{item.label}</span>}
                 </button>
               );
             })}

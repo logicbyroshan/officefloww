@@ -45,8 +45,9 @@ export const LabourLanyardWorkspaceView: React.FC = () => {
   const { items: centralStockItems, issueHardwareToLabour } = useStockStore();
 
   const [searchQuery, setSearchQuery] = useState("");
-  // Default to "IN_FITTING" so completed vouchers are hidden by default
+  // Default to "IN_FITTING" so active vouchers are prominent
   const [statusFilter, setStatusFilter] = useState<"ALL" | "IN_FITTING" | "READY">("IN_FITTING");
+  const [sendItemViewMode, setSendItemViewMode] = useState<"by_item" | "logs">("by_item");
 
   // Modals
   const [showIssueModal, setShowIssueModal] = useState(false);
@@ -110,10 +111,22 @@ export const LabourLanyardWorkspaceView: React.FC = () => {
         }
         return true;
       })
-      .sort((a, b) => (b.voucherNo || 0) - (a.voucherNo || 0)); // LATEST ON TOP!
+      .sort((a, b) => (b.voucherNo || 0) - (a.voucherNo || 0)); // Latest on top
   }, [rawVouchers, statusFilter, searchQuery]);
 
-  // Real-Time Material Balance & Reconciliation (Sent - Used = Balance Items)
+  // Send Items Aggregated By Item Name (One side Item Name, Another side Qty)
+  const sentItemsByItem = useMemo(() => {
+    const map: Record<string, number> = {};
+    rawSentItems.forEach((s) => {
+      const code = s.materialCode.trim().toLowerCase();
+      map[code] = (map[code] || 0) + (s.qty || 0);
+    });
+    return Object.entries(map)
+      .map(([code, qty]) => ({ code, qty }))
+      .sort((a, b) => b.qty - a.qty);
+  }, [rawSentItems]);
+
+  // Real-Time Material Balance & Reconciliation (Sent - Used = Balance)
   const materialBalances = useMemo(() => {
     const sentTotals: Record<string, number> = {};
     const usedTotals: Record<string, number> = {};
@@ -136,12 +149,10 @@ export const LabourLanyardWorkspaceView: React.FC = () => {
       }
     });
 
-    // Combine all unique material codes
     const allCodes = Array.from(
       new Set([...Object.keys(sentTotals), ...Object.keys(usedTotals)])
     ).filter(Boolean);
 
-    // Sort logically: jointers first, then hooks, then clips
     return allCodes
       .map((code) => {
         const sent = sentTotals[code] || 0;
@@ -206,7 +217,7 @@ export const LabourLanyardWorkspaceView: React.FC = () => {
       qty,
     });
 
-    // 2. Automatically deduct from Central Stock!
+    // 2. Automatically deduct from Central Stock
     issueHardwareToLabour(activeContractor.name, newSentMaterial, qty);
 
     toastSuccess(
@@ -255,15 +266,6 @@ export const LabourLanyardWorkspaceView: React.FC = () => {
     setNewVoucherParticulars("");
   };
 
-  // Live Central Stock helper for the issue modal
-  const centralStockForSelected = useMemo(() => {
-    const code = newSentMaterial.toLowerCase();
-    const item = centralStockItems.find(
-      (it) => it.code?.toLowerCase() === code || it.name.toLowerCase().includes(code)
-    );
-    return item ? item.availableStock : 8500;
-  }, [centralStockItems, newSentMaterial]);
-
   return (
     <div
       style={{
@@ -278,7 +280,7 @@ export const LabourLanyardWorkspaceView: React.FC = () => {
       }}
     >
       {/* ══════════════════════════════════════════════════════════════════════════ */}
-      {/* 1. ENTERPRISE CONTRACTOR SELECTOR & HARDWARE DISPATCH                     */}
+      {/* 1. CONTRACTOR BAR WITH ACTION BUTTONS                                      */}
       {/* ══════════════════════════════════════════════════════════════════════════ */}
       <div
         style={{
@@ -287,7 +289,7 @@ export const LabourLanyardWorkspaceView: React.FC = () => {
           justifyContent: "space-between",
           flexWrap: "wrap",
           gap: "12px",
-          padding: "12px 18px",
+          padding: "10px 16px",
           borderRadius: "8px",
           backgroundColor: "#0e131f",
           border: "1px solid rgba(255, 255, 255, 0.08)",
@@ -322,7 +324,7 @@ export const LabourLanyardWorkspaceView: React.FC = () => {
                     display: "inline-flex",
                     alignItems: "center",
                     gap: "7px",
-                    padding: "6px 13px",
+                    padding: "5px 12px",
                     borderRadius: "6px",
                     backgroundColor: isSelected ? "rgba(56, 189, 248, 0.14)" : "rgba(255, 255, 255, 0.03)",
                     border: `1px solid ${isSelected ? "rgba(56, 189, 248, 0.35)" : "rgba(255, 255, 255, 0.07)"}`,
@@ -373,7 +375,7 @@ export const LabourLanyardWorkspaceView: React.FC = () => {
             })}
         </div>
 
-        {/* Selected Contractor Details Tag & Action Buttons */}
+        {/* Workstation Badge & Primary Actions */}
         <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
           <div
             style={{
@@ -402,22 +404,22 @@ export const LabourLanyardWorkspaceView: React.FC = () => {
               gap: "6px",
               padding: "6px 13px",
               borderRadius: "5px",
-              backgroundColor: "rgba(255, 255, 255, 0.05)",
-              border: "1px solid rgba(255, 255, 255, 0.12)",
-              color: "#f8fafc",
+              backgroundColor: "rgba(244, 114, 182, 0.12)",
+              border: "1px solid rgba(244, 114, 182, 0.3)",
+              color: "#f472b6",
               fontSize: "12px",
               fontWeight: 600,
               cursor: "pointer",
               transition: "all 0.12s ease",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.09)";
+              e.currentTarget.style.backgroundColor = "rgba(244, 114, 182, 0.22)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
+              e.currentTarget.style.backgroundColor = "rgba(244, 114, 182, 0.12)";
             }}
           >
-            <Icon name="plus" size={13} color="#f8fafc" />
+            <Icon name="plus" size={12} color="#f472b6" />
             <span>Add Voucher</span>
           </button>
 
@@ -428,7 +430,7 @@ export const LabourLanyardWorkspaceView: React.FC = () => {
               display: "inline-flex",
               alignItems: "center",
               gap: "6px",
-              padding: "6px 15px",
+              padding: "6px 14px",
               borderRadius: "5px",
               backgroundColor: "#ea580c",
               border: "none",
@@ -453,247 +455,19 @@ export const LabourLanyardWorkspaceView: React.FC = () => {
       </div>
 
       {/* ══════════════════════════════════════════════════════════════════════════ */}
-      {/* 3. EXECUTIVE LEDGER SUMMARY CARDS (MATCHING LANYARD / ID CARD STYLE)      */}
+      {/* 2. UNIFIED HORIZONTAL GRID: VOUCHERS | SEND ITEM | BALANCE (NOT STACKED) */}
       {/* ══════════════════════════════════════════════════════════════════════════ */}
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+          gridTemplateColumns: "1fr 200px 200px",
           gap: "12px",
-        }}
-      >
-        {/* Card 1: Lanyards Fitted */}
-        <div
-          style={{
-            padding: "14px 18px",
-            borderRadius: "8px",
-            backgroundColor: "#0e131f",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <span
-              style={{
-                fontSize: "11.5px",
-                fontWeight: 700,
-                color: "#94a3b8",
-                textTransform: "uppercase",
-                letterSpacing: "0.06em",
-              }}
-            >
-              Lanyards Fitted
-            </span>
-            <div
-              style={{
-                width: "28px",
-                height: "28px",
-                borderRadius: "6px",
-                backgroundColor: "rgba(244, 114, 182, 0.12)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Icon name="tool" size={14} color="#f472b6" />
-            </div>
-          </div>
-          <div
-            style={{
-              fontSize: "24px",
-              fontWeight: 800,
-              color: "#f8fafc",
-              fontFamily: "var(--font-mono)",
-              marginTop: "6px",
-              lineHeight: 1.2,
-            }}
-          >
-            {totals.totalLanyardsFitted.toLocaleString()}{" "}
-            <span style={{ fontSize: "12.5px", color: "#64748b", fontWeight: 500 }}>pcs</span>
-          </div>
-          <div style={{ fontSize: "11.5px", color: "#64748b", marginTop: "4px" }}>
-            Across {rawVouchers.length} production vouchers
-          </div>
-        </div>
-
-        {/* Card 2: Materials Sent */}
-        <div
-          style={{
-            padding: "14px 18px",
-            borderRadius: "8px",
-            backgroundColor: "#0e131f",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <span
-              style={{
-                fontSize: "11.5px",
-                fontWeight: 700,
-                color: "#94a3b8",
-                textTransform: "uppercase",
-                letterSpacing: "0.06em",
-              }}
-            >
-              Materials Dispatched
-            </span>
-            <div
-              style={{
-                width: "28px",
-                height: "28px",
-                borderRadius: "6px",
-                backgroundColor: "rgba(56, 189, 248, 0.12)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Icon name="truck" size={14} color="#38bdf8" />
-            </div>
-          </div>
-          <div
-            style={{
-              fontSize: "24px",
-              fontWeight: 800,
-              color: "#38bdf8",
-              fontFamily: "var(--font-mono)",
-              marginTop: "6px",
-              lineHeight: 1.2,
-            }}
-          >
-            {totals.totalHardwareSent.toLocaleString()}{" "}
-            <span style={{ fontSize: "12.5px", color: "rgba(56, 189, 248, 0.7)", fontWeight: 500 }}>
-              pcs
-            </span>
-          </div>
-          <div style={{ fontSize: "11.5px", color: "#64748b", marginTop: "4px" }}>
-            Issued from Central Stock to this table
-          </div>
-        </div>
-
-        {/* Card 3: Materials Consumed */}
-        <div
-          style={{
-            padding: "14px 18px",
-            borderRadius: "8px",
-            backgroundColor: "#0e131f",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <span
-              style={{
-                fontSize: "11.5px",
-                fontWeight: 700,
-                color: "#94a3b8",
-                textTransform: "uppercase",
-                letterSpacing: "0.06em",
-              }}
-            >
-              Materials Consumed
-            </span>
-            <div
-              style={{
-                width: "28px",
-                height: "28px",
-                borderRadius: "6px",
-                backgroundColor: "rgba(34, 197, 94, 0.12)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Icon name="check-circle" size={14} color="#22c55e" />
-            </div>
-          </div>
-          <div
-            style={{
-              fontSize: "24px",
-              fontWeight: 800,
-              color: "#22c55e",
-              fontFamily: "var(--font-mono)",
-              marginTop: "6px",
-              lineHeight: 1.2,
-            }}
-          >
-            {totals.totalHardwareUsed.toLocaleString()}{" "}
-            <span style={{ fontSize: "12.5px", color: "rgba(34, 197, 94, 0.7)", fontWeight: 500 }}>
-              pcs
-            </span>
-          </div>
-          <div style={{ fontSize: "11.5px", color: "#64748b", marginTop: "4px" }}>
-            Fitted into completed lanyard batches
-          </div>
-        </div>
-
-        {/* Card 4: Net Surplus Buffer Balance */}
-        <div
-          style={{
-            padding: "14px 18px",
-            borderRadius: "8px",
-            backgroundColor: "#0e131f",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <span
-              style={{
-                fontSize: "11.5px",
-                fontWeight: 700,
-                color: "#94a3b8",
-                textTransform: "uppercase",
-                letterSpacing: "0.06em",
-              }}
-            >
-              Surplus Buffer on Table
-            </span>
-            <div
-              style={{
-                width: "28px",
-                height: "28px",
-                borderRadius: "6px",
-                backgroundColor: "rgba(245, 158, 11, 0.12)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Icon name="package" size={14} color="#f59e0b" />
-            </div>
-          </div>
-          <div
-            style={{
-              fontSize: "24px",
-              fontWeight: 800,
-              color: totals.netBalancePieces >= 0 ? "#f59e0b" : "#f87171",
-              fontFamily: "var(--font-mono)",
-              marginTop: "6px",
-              lineHeight: 1.2,
-            }}
-          >
-            {totals.netBalancePieces.toLocaleString()}{" "}
-            <span style={{ fontSize: "12.5px", color: "rgba(245, 158, 11, 0.7)", fontWeight: 500 }}>
-              pcs
-            </span>
-          </div>
-          <div style={{ fontSize: "11.5px", color: "#64748b", marginTop: "4px" }}>
-            Active buffer hardware held on table
-          </div>
-        </div>
-      </div>
-
-      {/* ══════════════════════════════════════════════════════════════════════════ */}
-      {/* 4. THREE-SECTION WORKSPACE: VOUCHERS | SENT ITEMS | RECONCILIATION        */}
-      {/* ══════════════════════════════════════════════════════════════════════════ */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1.9fr 1fr 1fr",
-          gap: "14px",
-          alignItems: "start",
+          alignItems: "stretch",
+          width: "100%",
         }}
       >
         {/* ──────────────────────────────────────────────────────────────────────── */}
-        {/* COLUMN 1: FITTING VOUCHERS (USED MATERIAL)                                */}
+        {/* TABLE 1: FITTING VOUCHERS                                                */}
         {/* ──────────────────────────────────────────────────────────────────────── */}
         <div
           style={{
@@ -705,10 +479,10 @@ export const LabourLanyardWorkspaceView: React.FC = () => {
             flexDirection: "column",
           }}
         >
-          {/* Header */}
+          {/* Card Header */}
           <div
             style={{
-              padding: "12px 16px",
+              padding: "10px 14px",
               backgroundColor: "rgba(255, 255, 255, 0.02)",
               borderBottom: "1px solid rgba(255, 255, 255, 0.07)",
               display: "flex",
@@ -734,7 +508,7 @@ export const LabourLanyardWorkspaceView: React.FC = () => {
                   style={{
                     fontSize: "11px",
                     fontWeight: 700,
-                    padding: "2px 7px",
+                    padding: "1px 6px",
                     borderRadius: "4px",
                     backgroundColor: "rgba(244, 114, 182, 0.15)",
                     color: "#f472b6",
@@ -744,10 +518,13 @@ export const LabourLanyardWorkspaceView: React.FC = () => {
                   {filteredVouchers.length}
                 </span>
               </div>
+              <div style={{ fontSize: "11px", color: "#64748b", marginTop: "1px" }}>
+                Production batches • {activeContractor.displayName}
+              </div>
             </div>
 
             {/* Filter controls */}
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
               <div style={{ position: "relative" }}>
                 <div
                   style={{
@@ -763,19 +540,19 @@ export const LabourLanyardWorkspaceView: React.FC = () => {
                 </div>
                 <input
                   type="text"
-                  placeholder="Search vouchers..."
+                  placeholder="Search..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   style={{
-                    height: "30px",
-                    padding: "0 10px 0 26px",
+                    height: "28px",
+                    padding: "0 8px 0 24px",
                     fontSize: "11.5px",
                     backgroundColor: "#07090e",
-                    border: "1px solid rgba(255, 255, 255, 0.12)",
-                    borderRadius: "5px",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    borderRadius: "4px",
                     color: "#f8fafc",
                     outline: "none",
-                    width: "135px",
+                    width: "140px",
                   }}
                 />
               </div>
@@ -786,19 +563,19 @@ export const LabourLanyardWorkspaceView: React.FC = () => {
                   display: "inline-flex",
                   backgroundColor: "#07090e",
                   padding: "2px",
-                  borderRadius: "5px",
-                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  borderRadius: "4px",
+                  border: "1px solid rgba(255, 255, 255, 0.08)",
                 }}
               >
                 <button
                   type="button"
                   onClick={() => setStatusFilter("IN_FITTING")}
                   style={{
-                    height: "26px",
-                    padding: "0 10px",
-                    fontSize: "11.5px",
+                    height: "24px",
+                    padding: "0 9px",
+                    fontSize: "11px",
                     fontWeight: statusFilter === "IN_FITTING" ? 700 : 500,
-                    borderRadius: "4px",
+                    borderRadius: "3px",
                     border: "none",
                     backgroundColor:
                       statusFilter === "IN_FITTING" ? "rgba(245, 158, 11, 0.22)" : "transparent",
@@ -814,11 +591,11 @@ export const LabourLanyardWorkspaceView: React.FC = () => {
                   type="button"
                   onClick={() => setStatusFilter("READY")}
                   style={{
-                    height: "26px",
-                    padding: "0 10px",
-                    fontSize: "11.5px",
+                    height: "24px",
+                    padding: "0 9px",
+                    fontSize: "11px",
                     fontWeight: statusFilter === "READY" ? 700 : 500,
-                    borderRadius: "4px",
+                    borderRadius: "3px",
                     border: "none",
                     backgroundColor:
                       statusFilter === "READY" ? "rgba(34, 197, 94, 0.22)" : "transparent",
@@ -834,11 +611,11 @@ export const LabourLanyardWorkspaceView: React.FC = () => {
                   type="button"
                   onClick={() => setStatusFilter("ALL")}
                   style={{
-                    height: "26px",
-                    padding: "0 10px",
-                    fontSize: "11.5px",
+                    height: "24px",
+                    padding: "0 9px",
+                    fontSize: "11px",
                     fontWeight: statusFilter === "ALL" ? 700 : 500,
-                    borderRadius: "4px",
+                    borderRadius: "3px",
                     border: "none",
                     backgroundColor:
                       statusFilter === "ALL" ? "rgba(255, 255, 255, 0.1)" : "transparent",
@@ -853,16 +630,17 @@ export const LabourLanyardWorkspaceView: React.FC = () => {
             </div>
           </div>
 
-          {/* Fixed Table Header Bar (Never scrolls - zero overlap bug!) */}
+          {/* Table Header: 7 clean columns */}
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "55px 82px minmax(130px, 1.4fr) 68px 75px 125px 120px 110px",
-              padding: "12px 14px",
+              gridTemplateColumns: "48px 74px 1fr 58px 70px 135px 105px",
+              gap: "10px",
+              padding: "10px 14px",
               backgroundColor: "rgba(255, 255, 255, 0.03)",
               borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
               alignItems: "center",
-              fontSize: "12px",
+              fontSize: "11px",
               fontWeight: 700,
               color: "#94a3b8",
               textTransform: "uppercase",
@@ -875,13 +653,12 @@ export const LabourLanyardWorkspaceView: React.FC = () => {
             <div>Particulars</div>
             <div style={{ textAlign: "center" }}>Size</div>
             <div style={{ textAlign: "right" }}>Qty</div>
-            <div>Hardware 1</div>
-            <div>Jointer</div>
+            <div>Hardware</div>
             <div style={{ textAlign: "center" }}>Status</div>
           </div>
 
-          {/* Scrollable Vouchers Rows Container */}
-          <div style={{ maxHeight: "580px", overflowY: "auto" }}>
+          {/* Scrollable Rows Container */}
+          <div style={{ maxHeight: "560px", overflowY: "auto" }}>
             {filteredVouchers.length === 0 ? (
               <div
                 style={{
@@ -891,7 +668,7 @@ export const LabourLanyardWorkspaceView: React.FC = () => {
                   fontSize: "13px",
                 }}
               >
-                No fitting vouchers found.
+                No vouchers found matching filter.
               </div>
             ) : (
               filteredVouchers.map((v, idx) => {
@@ -901,9 +678,10 @@ export const LabourLanyardWorkspaceView: React.FC = () => {
                     key={v.id}
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "55px 82px minmax(130px, 1.4fr) 68px 75px 125px 120px 110px",
-                      padding: "12px 14px",
-                      minHeight: "52px",
+                      gridTemplateColumns: "48px 74px 1fr 58px 70px 135px 105px",
+                      gap: "10px",
+                      padding: "10px 14px",
+                      minHeight: "46px",
                       alignItems: "center",
                       borderBottom: "1px solid rgba(255, 255, 255, 0.05)",
                       backgroundColor: idx % 2 === 0 ? "transparent" : "rgba(255, 255, 255, 0.012)",
@@ -917,36 +695,30 @@ export const LabourLanyardWorkspaceView: React.FC = () => {
                         idx % 2 === 0 ? "transparent" : "rgba(255, 255, 255, 0.012)")
                     }
                   >
-                    {/* V# */}
                     <div
                       style={{
                         fontFamily: "var(--font-mono)",
                         fontWeight: 700,
-                        fontSize: "13px",
+                        fontSize: "12px",
                         color: "#f472b6",
                       }}
                     >
                       #{v.voucherNo}
                     </div>
-
-                    {/* Date */}
                     <div
                       style={{
                         color: "#94a3b8",
-                        fontSize: "12px",
+                        fontSize: "11.5px",
                         fontFamily: "var(--font-mono)",
                       }}
                     >
                       {v.date}
                     </div>
-
-                    {/* Particulars */}
                     <div
                       style={{
                         fontWeight: 600,
                         color: "#f1f5f9",
-                        fontSize: "13.5px",
-                        paddingRight: "10px",
+                        fontSize: "13px",
                         overflow: "hidden",
                         textOverflow: "ellipsis",
                         whiteSpace: "nowrap",
@@ -955,15 +727,13 @@ export const LabourLanyardWorkspaceView: React.FC = () => {
                     >
                       {formatClientTitle(v.particulars)}
                     </div>
-
-                    {/* Size */}
                     <div style={{ textAlign: "center" }}>
                       <span
                         style={{
-                          fontSize: "11px",
+                          fontSize: "10.5px",
                           fontFamily: "var(--font-mono)",
-                          padding: "3px 8px",
-                          borderRadius: "4px",
+                          padding: "2px 6px",
+                          borderRadius: "3px",
                           backgroundColor:
                             v.mplSize === "12mm"
                               ? "rgba(56, 189, 248, 0.12)"
@@ -979,86 +749,73 @@ export const LabourLanyardWorkspaceView: React.FC = () => {
                         {v.mplSize}
                       </span>
                     </div>
-
-                    {/* Qty */}
                     <div
                       style={{
                         textAlign: "right",
                         fontFamily: "var(--font-mono)",
                         fontWeight: 700,
-                        fontSize: "14px",
+                        fontSize: "13.5px",
                         color: "#ffffff",
-                        paddingRight: "4px",
                       }}
                     >
                       {v.qty > 0 ? v.qty.toLocaleString() : "—"}
                     </div>
-
-                    {/* Hardware 1 */}
-                    <div style={{ paddingRight: "6px" }}>
-                      {v.fittingItem1 && v.fittingItem1 !== "none" ? (
+                    <div style={{ display: "flex", alignItems: "center", gap: "5px", flexWrap: "wrap" }}>
+                      {v.fittingItem1 && v.fittingItem1 !== "none" && (
                         <span
                           style={{
-                            fontSize: "11.5px",
+                            fontSize: "11px",
                             fontFamily: "var(--font-mono)",
                             color: "#38bdf8",
                             backgroundColor: "rgba(56, 189, 248, 0.1)",
-                            border: "1px solid rgba(56, 189, 248, 0.25)",
-                            padding: "3px 8px",
-                            borderRadius: "4px",
+                            border: "1px solid rgba(56, 189, 248, 0.22)",
+                            padding: "2px 6px",
+                            borderRadius: "3px",
                             whiteSpace: "nowrap",
-                            display: "inline-block",
                           }}
                         >
-                          {v.fittingItem1} ({v.qty1})
+                          {v.fittingItem1}
                         </span>
-                      ) : (
-                        <span style={{ color: "#64748b" }}>—</span>
                       )}
-                    </div>
-
-                    {/* Jointer */}
-                    <div style={{ paddingRight: "6px" }}>
-                      {v.fittingItem2 && v.fittingItem2 !== "none" ? (
+                      {v.fittingItem2 && v.fittingItem2 !== "none" && (
                         <span
                           style={{
-                            fontSize: "11.5px",
+                            fontSize: "11px",
                             fontFamily: "var(--font-mono)",
                             color: "#fbbf24",
                             backgroundColor: "rgba(245, 158, 11, 0.1)",
-                            border: "1px solid rgba(245, 158, 11, 0.25)",
-                            padding: "3px 8px",
-                            borderRadius: "4px",
+                            border: "1px solid rgba(245, 158, 11, 0.22)",
+                            padding: "2px 6px",
+                            borderRadius: "3px",
                             whiteSpace: "nowrap",
-                            display: "inline-block",
                           }}
                         >
-                          {v.fittingItem2} ({v.qty2})
+                          {v.fittingItem2}
                         </span>
-                      ) : (
-                        <span style={{ color: "#64748b" }}>—</span>
                       )}
+                      {(!v.fittingItem1 || v.fittingItem1 === "none") &&
+                        (!v.fittingItem2 || v.fittingItem2 === "none") && (
+                          <span style={{ color: "#64748b", fontSize: "11px" }}>—</span>
+                        )}
                     </div>
-
-                    {/* Status */}
                     <div style={{ textAlign: "center" }}>
                       {isReady ? (
                         <span
                           style={{
-                            fontSize: "12px",
+                            fontSize: "11.5px",
                             fontWeight: 700,
                             color: "#4ade80",
                             backgroundColor: "rgba(34, 197, 94, 0.12)",
-                            border: "1px solid rgba(34, 197, 94, 0.32)",
-                            padding: "4px 10px",
-                            borderRadius: "5px",
+                            border: "1px solid rgba(34, 197, 94, 0.3)",
+                            padding: "3px 8px",
+                            borderRadius: "4px",
                             display: "inline-flex",
                             alignItems: "center",
-                            gap: "5px",
+                            gap: "4px",
                             whiteSpace: "nowrap",
                           }}
                         >
-                          <Icon name="check" size={11} color="#22c55e" />
+                          <Icon name="check" size={10} color="#22c55e" />
                           <span>Ready ✓</span>
                         </span>
                       ) : (
@@ -1070,17 +827,17 @@ export const LabourLanyardWorkspaceView: React.FC = () => {
                           }}
                           title="Click to mark fitting completed"
                           style={{
-                            fontSize: "12px",
+                            fontSize: "11.5px",
                             fontWeight: 600,
                             color: "#fbbf24",
                             backgroundColor: "rgba(245, 158, 11, 0.12)",
                             border: "1px solid rgba(245, 158, 11, 0.35)",
-                            padding: "4px 10px",
-                            borderRadius: "5px",
+                            padding: "3px 8px",
+                            borderRadius: "4px",
                             cursor: "pointer",
                             display: "inline-flex",
                             alignItems: "center",
-                            gap: "5px",
+                            gap: "4px",
                             whiteSpace: "nowrap",
                             transition: "all 0.12s ease",
                           }}
@@ -1108,258 +865,168 @@ export const LabourLanyardWorkspaceView: React.FC = () => {
               })
             )}
           </div>
-        </div>
 
-        {/* ──────────────────────────────────────────────────────────────────────── */}
-        {/* COLUMN 2: HARDWARE SENT LOG (DISPATCHED FROM CENTRAL STOCK)              */}
-        {/* ──────────────────────────────────────────────────────────────────────── */}
-        <div
-          style={{
-            borderRadius: "8px",
-            backgroundColor: "#0e131f",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
-            overflow: "hidden",
-            display: "flex",
-            flexDirection: "column",
-          }}
-        >
-          {/* Header */}
+          {/* Table Footer */}
           <div
             style={{
-              padding: "12px 16px",
+              padding: "10px 14px",
               backgroundColor: "rgba(255, 255, 255, 0.02)",
-              borderBottom: "1px solid rgba(255, 255, 255, 0.07)",
+              borderTop: "1px solid rgba(255, 255, 255, 0.07)",
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
-              <span style={{ fontSize: "13.5px", fontWeight: 700, color: "#f8fafc" }}>
-                Dispatched Hardware
-              </span>
-              <span
-                style={{
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  padding: "2px 7px",
-                  borderRadius: "4px",
-                  backgroundColor: "rgba(56, 189, 248, 0.15)",
-                  color: "#38bdf8",
-                  fontFamily: "var(--font-mono)",
-                }}
-              >
-                {rawSentItems.length}
-              </span>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setShowIssueModal(true)}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "5px",
-                fontSize: "11.5px",
-                fontWeight: 700,
-                color: "#f97316",
-                backgroundColor: "rgba(249, 115, 22, 0.14)",
-                border: "1px solid rgba(249, 115, 22, 0.3)",
-                padding: "4px 11px",
-                borderRadius: "5px",
-                cursor: "pointer",
-                transition: "all 0.12s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "rgba(249, 115, 22, 0.25)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "rgba(249, 115, 22, 0.14)";
-              }}
-            >
-              <Icon name="plus" size={11} color="#f97316" />
-              <span>Issue</span>
-            </button>
-          </div>
-
-          {/* Fixed Table Header Bar (Never scrolls - zero overlap bug!) */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "55px 85px 1fr 95px",
-              padding: "12px 14px",
-              backgroundColor: "rgba(255, 255, 255, 0.03)",
-              borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
-              alignItems: "center",
-              fontSize: "12px",
-              fontWeight: 700,
+              fontSize: "11.5px",
               color: "#94a3b8",
-              textTransform: "uppercase",
-              letterSpacing: "0.06em",
-              userSelect: "none",
             }}
           >
-            <div>V#</div>
-            <div>Date</div>
-            <div>Material Code</div>
-            <div style={{ textAlign: "right" }}>Sent Qty</div>
-          </div>
-
-          {/* Scrollable Rows Container */}
-          <div style={{ maxHeight: "580px", overflowY: "auto" }}>
-            {rawSentItems.length === 0 ? (
-              <div
-                style={{
-                  padding: "48px 16px",
-                  textAlign: "center",
-                  color: "#64748b",
-                  fontSize: "13px",
-                }}
-              >
-                No dispatched items logged.
-              </div>
-            ) : (
-              rawSentItems.map((s, idx) => (
-                <div
-                  key={s.id}
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "55px 85px 1fr 95px",
-                    padding: "12px 14px",
-                    minHeight: "50px",
-                    alignItems: "center",
-                    borderBottom: "1px solid rgba(255, 255, 255, 0.05)",
-                    backgroundColor: idx % 2 === 0 ? "transparent" : "rgba(255, 255, 255, 0.012)",
-                    transition: "background 0.12s ease",
-                  }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.backgroundColor = "rgba(56, 189, 248, 0.04)")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.backgroundColor =
-                      idx % 2 === 0 ? "transparent" : "rgba(255, 255, 255, 0.012)")
-                  }
-                >
-                  <div
-                    style={{
-                      fontFamily: "var(--font-mono)",
-                      fontSize: "12.5px",
-                      fontWeight: 700,
-                      color: "#f472b6",
-                    }}
-                  >
-                    #{s.voucherNo}
-                  </div>
-                  <div
-                    style={{
-                      fontFamily: "var(--font-mono)",
-                      fontSize: "12px",
-                      color: "#94a3b8",
-                    }}
-                  >
-                    {s.date}
-                  </div>
-                  <div>
-                    <span
-                      style={{
-                        fontFamily: "var(--font-mono)",
-                        fontSize: "12px",
-                        fontWeight: 700,
-                        color: "#38bdf8",
-                        padding: "3px 8px",
-                        borderRadius: "4px",
-                        backgroundColor: "rgba(56, 189, 248, 0.1)",
-                        border: "1px solid rgba(56, 189, 248, 0.25)",
-                        display: "inline-block",
-                      }}
-                    >
-                      {s.materialCode}
-                    </span>
-                  </div>
-                  <div
-                    style={{
-                      textAlign: "right",
-                      fontFamily: "var(--font-mono)",
-                      fontSize: "14px",
-                      fontWeight: 700,
-                      color: "#ffffff",
-                    }}
-                  >
-                    {s.qty.toLocaleString()}
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-
-        {/* ──────────────────────────────────────────────────────────────────────── */}
-        {/* COLUMN 3: LIVE BUFFER RECONCILIATION (SENT - USED = TABLE BUFFER)        */}
-        {/* ──────────────────────────────────────────────────────────────────────── */}
-        <div
-          style={{
-            borderRadius: "8px",
-            backgroundColor: "#0e131f",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
-            overflow: "hidden",
-            display: "flex",
-            flexDirection: "column",
-          }}
-        >
-          {/* Header */}
-          <div
-            style={{
-              padding: "12px 16px",
-              backgroundColor: "rgba(255, 255, 255, 0.02)",
-              borderBottom: "1px solid rgba(255, 255, 255, 0.07)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
-              <span style={{ fontSize: "13.5px", fontWeight: 700, color: "#f8fafc" }}>
-                Live Table Buffer
-              </span>
-              <span
-                style={{
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  padding: "2px 7px",
-                  borderRadius: "4px",
-                  backgroundColor: "rgba(245, 158, 11, 0.15)",
-                  color: "#f59e0b",
-                  fontFamily: "var(--font-mono)",
-                }}
-              >
-                {materialBalances.length} items
-              </span>
-            </div>
-            <span
-              style={{
-                fontSize: "11px",
-                color: "#94a3b8",
-                fontFamily: "var(--font-mono)",
-                padding: "2px 8px",
-                borderRadius: "4px",
-                backgroundColor: "rgba(255, 255, 255, 0.04)",
-                border: "1px solid rgba(255, 255, 255, 0.08)",
-              }}
-            >
-              Sent - Used
+            <span>
+              Showing {filteredVouchers.length} of {rawVouchers.length} vouchers
+            </span>
+            <span style={{ color: "#fbbf24", fontWeight: 700, fontFamily: "var(--font-mono)" }}>
+              Earned: ₹{totals.earnedPayout.toLocaleString()}
             </span>
           </div>
+        </div>
 
-          {/* Fixed Table Header Bar (Never scrolls - zero overlap bug!) */}
+        {/* ──────────────────────────────────────────────────────────────────────── */}
+        {/* TABLE 2: SEND ITEM (COMPACT 200px WIDTH, 2 COLUMNS)                      */}
+        {/* ──────────────────────────────────────────────────────────────────────── */}
+        <div
+          style={{
+            borderRadius: "8px",
+            backgroundColor: "#0e131f",
+            border: "1px solid rgba(255, 255, 255, 0.08)",
+            overflow: "hidden",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          {/* Card Header */}
           <div
             style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 85px 85px 95px",
-              padding: "12px 14px",
+              padding: "9px 12px",
+              backgroundColor: "rgba(255, 255, 255, 0.02)",
+              borderBottom: "1px solid rgba(255, 255, 255, 0.07)",
+              display: "flex",
+              flexDirection: "column",
+              gap: "6px",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <span style={{ fontSize: "13px", fontWeight: 700, color: "#f8fafc" }}>
+                  Send Item
+                </span>
+                <span
+                  style={{
+                    fontSize: "10.5px",
+                    fontWeight: 700,
+                    padding: "1px 5px",
+                    borderRadius: "3px",
+                    backgroundColor: "rgba(56, 189, 248, 0.15)",
+                    color: "#38bdf8",
+                    fontFamily: "var(--font-mono)",
+                  }}
+                >
+                  {sendItemViewMode === "by_item" ? sentItemsByItem.length : rawSentItems.length}
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowIssueModal(true)}
+                title="Issue Hardware to contractor"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "3px",
+                  fontSize: "10.5px",
+                  fontWeight: 700,
+                  color: "#f97316",
+                  backgroundColor: "rgba(249, 115, 22, 0.14)",
+                  border: "1px solid rgba(249, 115, 22, 0.3)",
+                  padding: "2px 7px",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                  transition: "all 0.12s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = "rgba(249, 115, 22, 0.25)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "rgba(249, 115, 22, 0.14)";
+                }}
+              >
+                <Icon name="plus" size={10} color="#f97316" />
+                <span>Issue</span>
+              </button>
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span style={{ fontSize: "10.5px", color: "#64748b" }}>
+                Dispatched
+              </span>
+
+              {/* By Item / Logs Switcher */}
+              <div
+                style={{
+                  display: "inline-flex",
+                  backgroundColor: "#07090e",
+                  padding: "1px",
+                  borderRadius: "3px",
+                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => setSendItemViewMode("by_item")}
+                  style={{
+                    height: "18px",
+                    padding: "0 6px",
+                    fontSize: "10px",
+                    fontWeight: sendItemViewMode === "by_item" ? 700 : 500,
+                    borderRadius: "2px",
+                    border: "none",
+                    backgroundColor:
+                      sendItemViewMode === "by_item" ? "rgba(56, 189, 248, 0.2)" : "transparent",
+                    color: sendItemViewMode === "by_item" ? "#38bdf8" : "#94a3b8",
+                    cursor: "pointer",
+                  }}
+                >
+                  By Item
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSendItemViewMode("logs")}
+                  style={{
+                    height: "18px",
+                    padding: "0 6px",
+                    fontSize: "10px",
+                    fontWeight: sendItemViewMode === "logs" ? 700 : 500,
+                    borderRadius: "2px",
+                    border: "none",
+                    backgroundColor:
+                      sendItemViewMode === "logs" ? "rgba(56, 189, 248, 0.2)" : "transparent",
+                    color: sendItemViewMode === "logs" ? "#38bdf8" : "#94a3b8",
+                    cursor: "pointer",
+                  }}
+                >
+                  Logs
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Table Header: Exactly 2 columns */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              padding: "8px 12px",
               backgroundColor: "rgba(255, 255, 255, 0.03)",
               borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
-              alignItems: "center",
-              fontSize: "12px",
+              fontSize: "11px",
               fontWeight: 700,
               color: "#94a3b8",
               textTransform: "uppercase",
@@ -1367,37 +1034,34 @@ export const LabourLanyardWorkspaceView: React.FC = () => {
               userSelect: "none",
             }}
           >
-            <div>Material Code</div>
-            <div style={{ textAlign: "right" }}>Sent</div>
-            <div style={{ textAlign: "right" }}>Used</div>
-            <div style={{ textAlign: "right" }}>Buffer</div>
+            <div>Item Name</div>
+            <div>Qty</div>
           </div>
 
           {/* Scrollable Rows Container */}
-          <div style={{ maxHeight: "580px", overflowY: "auto" }}>
-            {materialBalances.length === 0 ? (
-              <div
-                style={{
-                  padding: "48px 16px",
-                  textAlign: "center",
-                  color: "#64748b",
-                  fontSize: "13px",
-                }}
-              >
-                No buffer data available.
-              </div>
-            ) : (
-              materialBalances.map((m, idx) => {
-                const isPositive = m.balance > 0;
-                return (
+          <div style={{ maxHeight: "560px", overflowY: "auto" }}>
+            {sendItemViewMode === "by_item" ? (
+              sentItemsByItem.length === 0 ? (
+                <div
+                  style={{
+                    padding: "36px 12px",
+                    textAlign: "center",
+                    color: "#64748b",
+                    fontSize: "12px",
+                  }}
+                >
+                  No items dispatched.
+                </div>
+              ) : (
+                sentItemsByItem.map((item, idx) => (
                   <div
-                    key={m.code}
+                    key={item.code}
                     style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr 85px 85px 95px",
-                      padding: "12px 14px",
-                      minHeight: "50px",
+                      display: "flex",
+                      justifyContent: "space-between",
                       alignItems: "center",
+                      padding: "8px 12px",
+                      minHeight: "42px",
                       borderBottom: "1px solid rgba(255, 255, 255, 0.05)",
                       backgroundColor: idx % 2 === 0 ? "transparent" : "rgba(255, 255, 255, 0.012)",
                       transition: "background 0.12s ease",
@@ -1414,13 +1078,279 @@ export const LabourLanyardWorkspaceView: React.FC = () => {
                       <span
                         style={{
                           fontFamily: "var(--font-mono)",
-                          fontSize: "12px",
+                          fontSize: "11.5px",
                           fontWeight: 700,
                           color: "#38bdf8",
-                          padding: "3px 8px",
+                          padding: "2px 7px",
                           borderRadius: "4px",
                           backgroundColor: "rgba(56, 189, 248, 0.1)",
-                          border: "1px solid rgba(56, 189, 248, 0.25)",
+                          border: "1px solid rgba(56, 189, 248, 0.22)",
+                          display: "inline-block",
+                        }}
+                      >
+                        {item.code}
+                      </span>
+                    </div>
+                    <div
+                      style={{
+                        textAlign: "right",
+                        fontFamily: "var(--font-mono)",
+                        fontSize: "12.5px",
+                        fontWeight: 700,
+                        color: "#ffffff",
+                      }}
+                    >
+                      {item.qty.toLocaleString()} <span style={{ fontSize: "10px", color: "#64748b", fontWeight: 500 }}>pcs</span>
+                    </div>
+                  </div>
+                ))
+              )
+            ) : rawSentItems.length === 0 ? (
+              <div
+                style={{
+                  padding: "36px 12px",
+                  textAlign: "center",
+                  color: "#64748b",
+                  fontSize: "12px",
+                }}
+              >
+                No dispatched items logged.
+              </div>
+            ) : (
+              rawSentItems.map((s, idx) => (
+                <div
+                  key={s.id}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "8px 12px",
+                    minHeight: "42px",
+                    borderBottom: "1px solid rgba(255, 255, 255, 0.05)",
+                    backgroundColor: idx % 2 === 0 ? "transparent" : "rgba(255, 255, 255, 0.012)",
+                    transition: "background 0.12s ease",
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.backgroundColor = "rgba(56, 189, 248, 0.04)")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.backgroundColor =
+                      idx % 2 === 0 ? "transparent" : "rgba(255, 255, 255, 0.012)")
+                  }
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                    <span
+                      style={{
+                        fontFamily: "var(--font-mono)",
+                        fontSize: "10.5px",
+                        fontWeight: 700,
+                        color: "#f472b6",
+                      }}
+                    >
+                      #{s.voucherNo}
+                    </span>
+                    <span
+                      style={{
+                        fontFamily: "var(--font-mono)",
+                        fontSize: "11.5px",
+                        fontWeight: 700,
+                        color: "#38bdf8",
+                        padding: "1px 5px",
+                        borderRadius: "3px",
+                        backgroundColor: "rgba(56, 189, 248, 0.1)",
+                        border: "1px solid rgba(56, 189, 248, 0.2)",
+                      }}
+                    >
+                      {s.materialCode}
+                    </span>
+                  </div>
+                  <div
+                    style={{
+                      textAlign: "right",
+                      fontFamily: "var(--font-mono)",
+                      fontSize: "12px",
+                      fontWeight: 700,
+                      color: "#ffffff",
+                    }}
+                  >
+                    {s.qty.toLocaleString()} <span style={{ fontSize: "9.5px", color: "#64748b", fontWeight: 500 }}>pcs</span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Table Footer */}
+          <div
+            style={{
+              padding: "8px 12px",
+              backgroundColor: "rgba(255, 255, 255, 0.02)",
+              borderTop: "1px solid rgba(255, 255, 255, 0.07)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              fontSize: "11px",
+            }}
+          >
+            <span style={{ color: "#94a3b8" }}>Total Sent</span>
+            <span
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontWeight: 700,
+                color: "#38bdf8",
+                fontSize: "12px",
+              }}
+            >
+              {totals.totalHardwareSent.toLocaleString()} pcs
+            </span>
+          </div>
+        </div>
+
+        {/* ──────────────────────────────────────────────────────────────────────── */}
+        {/* TABLE 3: BALANCE (COMPACT 200px WIDTH, 2 COLUMNS)                        */}
+        {/* ──────────────────────────────────────────────────────────────────────── */}
+        <div
+          style={{
+            borderRadius: "8px",
+            backgroundColor: "#0e131f",
+            border: "1px solid rgba(255, 255, 255, 0.08)",
+            overflow: "hidden",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          {/* Card Header */}
+          <div
+            style={{
+              padding: "9px 12px",
+              backgroundColor: "rgba(255, 255, 255, 0.02)",
+              borderBottom: "1px solid rgba(255, 255, 255, 0.07)",
+              display: "flex",
+              flexDirection: "column",
+              gap: "6px",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <span style={{ fontSize: "13px", fontWeight: 700, color: "#f8fafc" }}>
+                  Balance
+                </span>
+                <span
+                  style={{
+                    fontSize: "10.5px",
+                    fontWeight: 700,
+                    padding: "1px 5px",
+                    borderRadius: "3px",
+                    backgroundColor: "rgba(245, 158, 11, 0.15)",
+                    color: "#f59e0b",
+                    fontFamily: "var(--font-mono)",
+                  }}
+                >
+                  {materialBalances.length}
+                </span>
+              </div>
+
+              <span
+                style={{
+                  fontSize: "10px",
+                  color: "#94a3b8",
+                  fontFamily: "var(--font-mono)",
+                  padding: "1px 6px",
+                  borderRadius: "3px",
+                  backgroundColor: "rgba(255, 255, 255, 0.04)",
+                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                }}
+              >
+                Sent - Used
+              </span>
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span style={{ fontSize: "10.5px", color: "#64748b" }}>
+                Live Buffer
+              </span>
+              <span
+                style={{
+                  fontSize: "10.5px",
+                  color: totals.netBalancePieces >= 0 ? "#4ade80" : "#f87171",
+                  fontFamily: "var(--font-mono)",
+                  fontWeight: 700,
+                }}
+              >
+                {totals.netBalancePieces > 0 ? "+" : ""}{totals.netBalancePieces.toLocaleString()} pcs
+              </span>
+            </div>
+          </div>
+
+          {/* Table Header: Exactly 2 columns */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              padding: "8px 12px",
+              backgroundColor: "rgba(255, 255, 255, 0.03)",
+              borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+              fontSize: "11px",
+              fontWeight: 700,
+              color: "#94a3b8",
+              textTransform: "uppercase",
+              letterSpacing: "0.06em",
+              userSelect: "none",
+            }}
+          >
+            <div>Item Name</div>
+            <div>Qty</div>
+          </div>
+
+          {/* Scrollable Rows Container */}
+          <div style={{ maxHeight: "560px", overflowY: "auto" }}>
+            {materialBalances.length === 0 ? (
+              <div
+                style={{
+                  padding: "36px 12px",
+                  textAlign: "center",
+                  color: "#64748b",
+                  fontSize: "12px",
+                }}
+              >
+                No buffer records.
+              </div>
+            ) : (
+              materialBalances.map((m, idx) => {
+                const isPositive = m.balance > 0;
+                return (
+                  <div
+                    key={m.code}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      padding: "8px 12px",
+                      minHeight: "42px",
+                      borderBottom: "1px solid rgba(255, 255, 255, 0.05)",
+                      backgroundColor: idx % 2 === 0 ? "transparent" : "rgba(255, 255, 255, 0.012)",
+                      transition: "background 0.12s ease",
+                    }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.backgroundColor = "rgba(56, 189, 248, 0.04)")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.backgroundColor =
+                        idx % 2 === 0 ? "transparent" : "rgba(255, 255, 255, 0.012)")
+                    }
+                  >
+                    <div>
+                      <span
+                        style={{
+                          fontFamily: "var(--font-mono)",
+                          fontSize: "11.5px",
+                          fontWeight: 700,
+                          color: "#f59e0b",
+                          padding: "2px 7px",
+                          borderRadius: "4px",
+                          backgroundColor: "rgba(245, 158, 11, 0.1)",
+                          border: "1px solid rgba(245, 158, 11, 0.22)",
                           display: "inline-block",
                         }}
                       >
@@ -1432,59 +1362,37 @@ export const LabourLanyardWorkspaceView: React.FC = () => {
                       style={{
                         textAlign: "right",
                         fontFamily: "var(--font-mono)",
-                        fontSize: "13px",
-                        color: "#cbd5e1",
-                      }}
-                    >
-                      {m.sent.toLocaleString()}
-                    </div>
-
-                    <div
-                      style={{
-                        textAlign: "right",
-                        fontFamily: "var(--font-mono)",
-                        fontSize: "13px",
-                        color: "#94a3b8",
-                      }}
-                    >
-                      {m.used.toLocaleString()}
-                    </div>
-
-                    <div
-                      style={{
-                        textAlign: "right",
-                        fontFamily: "var(--font-mono)",
-                        fontSize: "13.5px",
+                        fontSize: "12px",
                         fontWeight: 700,
                       }}
                     >
                       {m.balance === 0 ? (
-                        <span style={{ color: "#94a3b8" }}>0</span>
+                        <span style={{ color: "#94a3b8" }}>0 pcs</span>
                       ) : isPositive ? (
                         <span
                           style={{
                             color: "#4ade80",
                             backgroundColor: "rgba(34, 197, 94, 0.12)",
-                            border: "1px solid rgba(34, 197, 94, 0.28)",
-                            padding: "3px 8px",
-                            borderRadius: "4px",
+                            border: "1px solid rgba(34, 197, 94, 0.25)",
+                            padding: "2px 6px",
+                            borderRadius: "3px",
                             display: "inline-block",
                           }}
                         >
-                          +{m.balance.toLocaleString()}
+                          +{m.balance.toLocaleString()} pcs
                         </span>
                       ) : (
                         <span
                           style={{
                             color: "#f87171",
                             backgroundColor: "rgba(239, 68, 68, 0.12)",
-                            border: "1px solid rgba(239, 68, 68, 0.28)",
-                            padding: "3px 8px",
-                            borderRadius: "4px",
+                            border: "1px solid rgba(239, 68, 68, 0.25)",
+                            padding: "2px 6px",
+                            borderRadius: "3px",
                             display: "inline-block",
                           }}
                         >
-                          {m.balance.toLocaleString()}
+                          {m.balance.toLocaleString()} pcs
                         </span>
                       )}
                     </div>
@@ -1493,11 +1401,37 @@ export const LabourLanyardWorkspaceView: React.FC = () => {
               })
             )}
           </div>
+
+          {/* Table Footer */}
+          <div
+            style={{
+              padding: "8px 12px",
+              backgroundColor: "rgba(255, 255, 255, 0.02)",
+              borderTop: "1px solid rgba(255, 255, 255, 0.07)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              fontSize: "11px",
+            }}
+          >
+            <span style={{ color: "#94a3b8" }}>Net Buffer</span>
+            <span
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontWeight: 700,
+                fontSize: "12px",
+                color: totals.netBalancePieces >= 0 ? "#4ade80" : "#f87171",
+              }}
+            >
+              {totals.netBalancePieces > 0 ? "+" : ""}
+              {totals.netBalancePieces.toLocaleString()} pcs
+            </span>
+          </div>
         </div>
       </div>
 
       {/* ══════════════════════════════════════════════════════════════════════════ */}
-      {/* 5. MODAL: ISSUE MATERIAL (SENT ITEM) LINKED TO CENTRAL STOCK              */}
+      {/* 4. MODAL: ISSUE HARDWARE TO CONTRACTOR                                    */}
       {/* ══════════════════════════════════════════════════════════════════════════ */}
       {showIssueModal && (
         <div
@@ -1520,11 +1454,11 @@ export const LabourLanyardWorkspaceView: React.FC = () => {
               border: "1px solid rgba(255, 255, 255, 0.1)",
               borderRadius: "8px",
               width: "100%",
-              maxWidth: "440px",
+              maxWidth: "460px",
               padding: "20px",
               display: "flex",
               flexDirection: "column",
-              gap: "12px",
+              gap: "14px",
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -1532,7 +1466,7 @@ export const LabourLanyardWorkspaceView: React.FC = () => {
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 <Icon name="truck" size={16} color="#f97316" />
                 <h3 style={{ margin: 0, fontSize: "15px", fontWeight: 700, color: "#f8fafc" }}>
-                  Issue Hardware &rarr; {activeContractor.name}
+                  Issue Hardware to {activeContractor.name}
                 </h3>
               </div>
               <button
@@ -1544,30 +1478,10 @@ export const LabourLanyardWorkspaceView: React.FC = () => {
               </button>
             </div>
 
-            {/* Central Stock Availability Banner */}
-            <div
-              style={{
-                padding: "8px 12px",
-                borderRadius: "5px",
-                backgroundColor: "rgba(56, 189, 248, 0.08)",
-                border: "1px solid rgba(56, 189, 248, 0.2)",
-                fontSize: "11.5px",
-                color: "#38bdf8",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-              }}
-            >
-              <span>Central Stock Availability:</span>
-              <span style={{ fontWeight: 700, fontFamily: "var(--font-mono)" }}>
-                {centralStockForSelected.toLocaleString()} pcs in warehouse
-              </span>
-            </div>
-
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
               <div>
                 <label style={{ fontSize: "11px", fontWeight: 600, color: "#94a3b8", display: "block", marginBottom: "4px" }}>
-                  Voucher / Gate Pass #:
+                  Voucher / Issue #:
                 </label>
                 <input
                   type="number"
@@ -1589,7 +1503,7 @@ export const LabourLanyardWorkspaceView: React.FC = () => {
 
               <div>
                 <label style={{ fontSize: "11px", fontWeight: 600, color: "#94a3b8", display: "block", marginBottom: "4px" }}>
-                  Quantity (pcs):
+                  Quantity to Dispatch:
                 </label>
                 <input
                   type="number"
@@ -1602,7 +1516,7 @@ export const LabourLanyardWorkspaceView: React.FC = () => {
                     borderRadius: "4px",
                     backgroundColor: "rgba(255, 255, 255, 0.04)",
                     border: "1px solid rgba(255, 255, 255, 0.1)",
-                    color: "#38bdf8",
+                    color: "#f97316",
                     fontSize: "13px",
                     fontFamily: "var(--font-mono)",
                     fontWeight: 700,
@@ -1683,7 +1597,7 @@ export const LabourLanyardWorkspaceView: React.FC = () => {
       )}
 
       {/* ══════════════════════════════════════════════════════════════════════════ */}
-      {/* 6. MODAL: ADD FITTING VOUCHER                                              */}
+      {/* 5. MODAL: ADD FITTING VOUCHER                                              */}
       {/* ══════════════════════════════════════════════════════════════════════════ */}
       {showAddVoucherModal && (
         <div
