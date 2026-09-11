@@ -9,16 +9,12 @@ import { StatusDot, RoleBadge } from "../design-system/components/Badge";
 export interface TopBarProps {
   onOpenSearch: () => void;
   connected: boolean;
-  onToggleVoice: () => void;
-  isVoiceActive: boolean;
   onNavigate?: (section: AppNavSection) => void;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
   onOpenSearch,
   connected,
-  onToggleVoice,
-  isVoiceActive,
   onNavigate,
 }) => {
   const { user, logout, switchUser } = useAuth();
@@ -173,41 +169,6 @@ export const TopBar: React.FC<TopBarProps> = ({
 
       {/* Right Controls */}
       <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-        {/* Voice Mode Button */}
-        <button
-          type="button"
-          onClick={onToggleVoice}
-          title="Voice Assistant Mode"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "7px",
-            padding: "6px 12px",
-            borderRadius: "4px",
-            border: isVoiceActive
-              ? "1px solid var(--accent)"
-              : "1px solid rgba(255, 255, 255, 0.08)",
-            backgroundColor: isVoiceActive
-              ? "var(--accent-soft)"
-              : "rgba(255, 255, 255, 0.03)",
-            color: isVoiceActive ? "var(--accent-text)" : "var(--text-secondary)",
-            fontSize: "12.5px",
-            fontWeight: 600,
-            cursor: "pointer",
-            transition: "all 0.15s ease",
-            boxShadow: isVoiceActive ? "0 0 12px var(--accent-soft)" : "none",
-          }}
-          onMouseEnter={(e) => {
-            if (!isVoiceActive) e.currentTarget.style.borderColor = "var(--accent-border)";
-          }}
-          onMouseLeave={(e) => {
-            if (!isVoiceActive) e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.08)";
-          }}
-        >
-          <Icon name="mic" size={14} color={isVoiceActive ? "var(--accent-text)" : "var(--text-muted)"} />
-          <span>{isVoiceActive ? "Listening..." : "Voice"}</span>
-        </button>
-
         {/* Notifications Popover */}
         <div style={{ position: "relative" }}>
           <button

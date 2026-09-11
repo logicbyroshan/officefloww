@@ -4,7 +4,6 @@ import { Sidebar } from "./Sidebar";
 import { AppNavSection } from "../auth/permissions";
 import { ConnectionBanner } from "../design-system/components/UserAvatar";
 import { useConnection } from "../hooks/useConnection";
-import { VoiceAssistantBar } from "../views/voice/VoiceAssistantBar";
 
 export interface AppShellProps {
   activeSection: AppNavSection;
@@ -24,19 +23,6 @@ export const AppShell: React.FC<AppShellProps> = ({
   children,
 }) => {
   const { connected, checkConnection } = useConnection();
-  const [isVoiceActive, setIsVoiceActive] = useState(false);
-
-  // Keyboard shortcut Ctrl+Shift+V for voice
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.shiftKey && (e.key === "V" || e.key === "v")) {
-        e.preventDefault();
-        setIsVoiceActive((v) => !v);
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
 
   return (
     <div
@@ -69,14 +55,6 @@ export const AppShell: React.FC<AppShellProps> = ({
         }}
       />
 
-      {/* Global Voice Assistant Bar */}
-      <VoiceAssistantBar
-        isOpen={isVoiceActive}
-        onClose={() => setIsVoiceActive(false)}
-        activeSection={activeSection}
-        onNavigate={onSelectSection}
-      />
-
       <div
         style={{
           position: "relative",
@@ -91,8 +69,6 @@ export const AppShell: React.FC<AppShellProps> = ({
         <TopBar
           onOpenSearch={onOpenSearch}
           connected={connected}
-          onToggleVoice={() => setIsVoiceActive(!isVoiceActive)}
-          isVoiceActive={isVoiceActive}
           onNavigate={onSelectSection}
         />
 

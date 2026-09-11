@@ -16,7 +16,6 @@ type SettingsCategory =
   | "workflows"
   | "machines"
   | "automation"
-  | "voice"
   | "audit";
 
 interface CategoryNav {
@@ -44,7 +43,6 @@ export const SettingsView: React.FC = () => {
     { id: "workflows", label: "Workflow Templates", icon: "layers", desc: "9-stage production routing & approval steps" },
     { id: "machines", label: "Machines & Batches", icon: "production", desc: "Sublimation presses, cutters, card printers" },
     { id: "automation", label: "Automation Rules", icon: "cpu", desc: "Trigger-action rules for inventory & tickets" },
-    { id: "voice", label: "Voice & AI Assistant", icon: "mic", desc: "Natural language query engine & speech settings" },
     { id: "audit", label: "System & Audit Trail", icon: "shield", desc: "Immutable cryptographic ledger & telemetry logs" },
   ];
 
@@ -362,28 +360,6 @@ export const SettingsView: React.FC = () => {
                     <span style={{ fontSize: "11px", color: "#10b981", fontWeight: 700 }}>ACTIVE</span>
                   </div>
                 ))}
-              </div>
-            </Card>
-          )}
-
-          {activeCategory === "voice" && (
-            <Card title="Voice & Natural Language AI Assistant">
-              <p style={{ margin: "0 0 12px 0", fontSize: "12px", color: "var(--text-muted)" }}>
-                Enables hands-free telemetry queries and operational navigation from shop-floor terminals.
-              </p>
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12.5px" }}>
-                  <span style={{ color: "var(--text-muted)" }}>AI Assistant Endpoint:</span>
-                  <strong style={{ fontFamily: "var(--font-mono)", color: "var(--accent-text)" }}>POST /api/v1/ai/query</strong>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12.5px" }}>
-                  <span style={{ color: "var(--text-muted)" }}>Supported Languages:</span>
-                  <strong style={{ color: "#fff" }}>English (India - en-IN)</strong>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12.5px" }}>
-                  <span style={{ color: "var(--text-muted)" }}>Context Synchronization:</span>
-                  <strong style={{ color: "#10b981" }}>Active Workspace Synced</strong>
-                </div>
               </div>
             </Card>
           )}
