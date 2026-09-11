@@ -290,24 +290,23 @@ export const StockDashboardView: React.FC = () => {
               <thead>
                 <tr
                   style={{
-                    background: "linear-gradient(180deg, #161c2c 0%, #0d121c 100%)",
+                    backgroundColor: "rgba(255, 255, 255, 0.02)",
                     color: "#94a3b8",
                     fontSize: "11px",
                     textTransform: "uppercase",
-                    fontWeight: 800,
-                    letterSpacing: "0.8px",
+                    fontWeight: 700,
+                    letterSpacing: "0.5px",
                     userSelect: "none",
                     whiteSpace: "nowrap",
+                    borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
                   }}
                 >
                   {/* 1. STOCK ITEM NAME */}
                   <th
                     style={{
-                      padding: "16px 18px",
+                      padding: "12px 14px",
                       textAlign: "left",
                       cursor: "pointer",
-                      borderBottom: "2px solid rgba(255, 138, 115, 0.4)",
-                      borderRight: "1px solid rgba(255, 255, 255, 0.05)",
                       whiteSpace: "nowrap",
                     }}
                     onClick={() => toggleSort("name")}
@@ -325,11 +324,9 @@ export const StockDashboardView: React.FC = () => {
                   {/* 2. UNIT / PACKAGING */}
                   <th
                     style={{
-                      padding: "16px 18px",
+                      padding: "12px 14px",
                       textAlign: "center",
                       width: "180px",
-                      borderBottom: "2px solid rgba(255, 138, 115, 0.4)",
-                      borderRight: "1px solid rgba(255, 255, 255, 0.05)",
                       whiteSpace: "nowrap",
                     }}
                   >
@@ -339,12 +336,10 @@ export const StockDashboardView: React.FC = () => {
                   {/* 3. FLOOR AVAILABLE */}
                   <th
                     style={{
-                      padding: "16px 18px",
+                      padding: "12px 14px",
                       textAlign: "right",
                       width: "195px",
                       cursor: "pointer",
-                      borderBottom: "2px solid rgba(255, 138, 115, 0.4)",
-                      borderRight: "1px solid rgba(255, 255, 255, 0.05)",
                       whiteSpace: "nowrap",
                     }}
                     onClick={() => toggleSort("availableStock")}
@@ -362,12 +357,10 @@ export const StockDashboardView: React.FC = () => {
                   {/* 4. TOTAL CONSUMED */}
                   <th
                     style={{
-                      padding: "16px 18px",
+                      padding: "12px 14px",
                       textAlign: "right",
                       width: "185px",
                       cursor: "pointer",
-                      borderBottom: "2px solid rgba(255, 138, 115, 0.4)",
-                      borderRight: "1px solid rgba(255, 255, 255, 0.05)",
                       whiteSpace: "nowrap",
                     }}
                     onClick={() => toggleSort("usedStock")}
@@ -385,12 +378,10 @@ export const StockDashboardView: React.FC = () => {
                   {/* 5. MIN ALERT */}
                   <th
                     style={{
-                      padding: "16px 18px",
+                      padding: "12px 14px",
                       textAlign: "right",
                       width: "160px",
                       cursor: "pointer",
-                      borderBottom: "2px solid rgba(255, 138, 115, 0.4)",
-                      borderRight: "1px solid rgba(255, 255, 255, 0.05)",
                       whiteSpace: "nowrap",
                     }}
                     onClick={() => toggleSort("minThreshold")}
@@ -408,10 +399,9 @@ export const StockDashboardView: React.FC = () => {
                   {/* 6. ACTIONS */}
                   <th
                     style={{
-                      padding: "16px 18px",
+                      padding: "12px 14px",
                       textAlign: "center",
                       width: "230px",
-                      borderBottom: "2px solid rgba(255, 138, 115, 0.4)",
                       whiteSpace: "nowrap",
                     }}
                   >

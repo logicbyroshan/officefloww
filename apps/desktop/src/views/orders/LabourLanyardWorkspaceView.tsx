@@ -544,11 +544,11 @@ export const LabourLanyardWorkspaceView: React.FC = () => {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   style={{
-                    height: "28px",
+                    height: "32px",
                     padding: "0 8px 0 24px",
-                    fontSize: "11.5px",
-                    backgroundColor: "#07090e",
-                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    fontSize: "12px",
+                    backgroundColor: "rgba(255, 255, 255, 0.04)",
+                    border: "1px solid rgba(255, 255, 255, 0.12)",
                     borderRadius: "4px",
                     color: "#f8fafc",
                     outline: "none",
@@ -561,7 +561,7 @@ export const LabourLanyardWorkspaceView: React.FC = () => {
               <div
                 style={{
                   display: "inline-flex",
-                  backgroundColor: "#07090e",
+                  backgroundColor: "rgba(255, 255, 255, 0.03)",
                   padding: "2px",
                   borderRadius: "4px",
                   border: "1px solid rgba(255, 255, 255, 0.08)",
@@ -637,14 +637,14 @@ export const LabourLanyardWorkspaceView: React.FC = () => {
               gridTemplateColumns: "48px 74px 1fr 58px 70px 135px 105px",
               gap: "10px",
               padding: "10px 14px",
-              backgroundColor: "rgba(255, 255, 255, 0.03)",
+              backgroundColor: "rgba(255, 255, 255, 0.02)",
               borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
               alignItems: "center",
               fontSize: "11px",
               fontWeight: 700,
               color: "#94a3b8",
               textTransform: "uppercase",
-              letterSpacing: "0.06em",
+              letterSpacing: "0.5px",
               userSelect: "none",
             }}
           >

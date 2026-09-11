@@ -1273,13 +1273,13 @@ export const LanyardWorkspaceView: React.FC = () => {
             value={contractorFilter}
             onChange={(e) => setContractorFilter(e.target.value)}
             style={{
-              height: "30px",
+              height: "32px",
               padding: "0 8px",
-              backgroundColor: "#090c13",
-              border: "1px solid rgba(255, 255, 255, 0.1)",
-              borderRadius: "5px",
+              backgroundColor: "rgba(255, 255, 255, 0.04)",
+              border: "1px solid rgba(255, 255, 255, 0.12)",
+              borderRadius: "4px",
               color: "#cbd5e1",
-              fontSize: "11.5px",
+              fontSize: "12px",
               outline: "none",
             }}
           >
@@ -1296,13 +1296,13 @@ export const LanyardWorkspaceView: React.FC = () => {
             value={filterSize}
             onChange={(e) => setFilterSize(e.target.value)}
             style={{
-              height: "30px",
+              height: "32px",
               padding: "0 8px",
-              backgroundColor: "#090c13",
-              border: "1px solid rgba(255, 255, 255, 0.1)",
-              borderRadius: "5px",
+              backgroundColor: "rgba(255, 255, 255, 0.04)",
+              border: "1px solid rgba(255, 255, 255, 0.12)",
+              borderRadius: "4px",
               color: "#cbd5e1",
-              fontSize: "11.5px",
+              fontSize: "12px",
               fontFamily: "var(--font-mono)",
               outline: "none",
             }}
@@ -1333,15 +1333,15 @@ export const LanyardWorkspaceView: React.FC = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{
-                height: "30px",
+                height: "32px",
                 width: "180px",
                 paddingLeft: "26px",
                 paddingRight: "8px",
-                backgroundColor: "#090c13",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
-                borderRadius: "5px",
+                backgroundColor: "rgba(255, 255, 255, 0.04)",
+                border: "1px solid rgba(255, 255, 255, 0.12)",
+                borderRadius: "4px",
                 color: "#fff",
-                fontSize: "11.5px",
+                fontSize: "12px",
                 outline: "none",
               }}
             />
@@ -1366,37 +1366,37 @@ export const LanyardWorkspaceView: React.FC = () => {
               <tr
                 style={{
                   borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
-                  backgroundColor: "rgba(255, 255, 255, 0.03)",
+                  backgroundColor: "rgba(255, 255, 255, 0.02)",
                 }}
               >
-                <th style={{ padding: "12px 12px", color: "#94a3b8", fontWeight: 700, fontSize: "12px", letterSpacing: "0.06em", width: "65px" }}>
+                <th style={{ padding: "10px 12px", color: "#94a3b8", fontWeight: 700, fontSize: "11px", letterSpacing: "0.5px", textTransform: "uppercase", width: "65px" }}>
                   SN
                 </th>
-                <th style={{ padding: "12px 10px", color: "#94a3b8", fontWeight: 700, fontSize: "12px", letterSpacing: "0.06em", width: "80px" }}>
+                <th style={{ padding: "10px 10px", color: "#94a3b8", fontWeight: 700, fontSize: "11px", letterSpacing: "0.5px", textTransform: "uppercase", width: "80px" }}>
                   DATE
                 </th>
-                <th style={{ padding: "12px 14px", color: "#94a3b8", fontWeight: 700, fontSize: "12px", letterSpacing: "0.06em", minWidth: "210px" }}>
+                <th style={{ padding: "10px 14px", color: "#94a3b8", fontWeight: 700, fontSize: "11px", letterSpacing: "0.5px", textTransform: "uppercase", minWidth: "210px" }}>
                   ORDER / MPL CLIENT
                 </th>
-                <th style={{ padding: "12px 10px", color: "#94a3b8", fontWeight: 700, fontSize: "12px", letterSpacing: "0.06em", width: "90px" }}>
+                <th style={{ padding: "10px 10px", color: "#94a3b8", fontWeight: 700, fontSize: "11px", letterSpacing: "0.5px", textTransform: "uppercase", width: "90px" }}>
                   QTY
                 </th>
-                <th style={{ padding: "12px 8px", color: "#94a3b8", fontWeight: 700, fontSize: "12px", letterSpacing: "0.06em", width: "135px" }}>
+                <th style={{ padding: "10px 8px", color: "#94a3b8", fontWeight: 700, fontSize: "11px", letterSpacing: "0.5px", textTransform: "uppercase", width: "135px" }}>
                   1. DESIGN
                 </th>
-                <th style={{ padding: "12px 8px", color: "#94a3b8", fontWeight: 700, fontSize: "12px", letterSpacing: "0.06em", width: "140px" }}>
+                <th style={{ padding: "10px 8px", color: "#94a3b8", fontWeight: 700, fontSize: "11px", letterSpacing: "0.5px", textTransform: "uppercase", width: "140px" }}>
                   2. GONE TO PRINT
                 </th>
-                <th style={{ padding: "12px 8px", color: "#94a3b8", fontWeight: 700, fontSize: "12px", letterSpacing: "0.06em", width: "135px" }}>
+                <th style={{ padding: "10px 8px", color: "#94a3b8", fontWeight: 700, fontSize: "11px", letterSpacing: "0.5px", textTransform: "uppercase", width: "135px" }}>
                   3. PRINTED
                 </th>
-                <th style={{ padding: "12px 8px", color: "#94a3b8", fontWeight: 700, fontSize: "12px", letterSpacing: "0.06em", minWidth: "310px" }}>
+                <th style={{ padding: "10px 8px", color: "#94a3b8", fontWeight: 700, fontSize: "11px", letterSpacing: "0.5px", textTransform: "uppercase", minWidth: "310px" }}>
                   4. FITTING &amp; LABOUR
                 </th>
-                <th style={{ padding: "12px 8px", color: "#94a3b8", fontWeight: 700, fontSize: "12px", letterSpacing: "0.06em", width: "115px", textAlign: "center" }}>
+                <th style={{ padding: "10px 8px", color: "#94a3b8", fontWeight: 700, fontSize: "11px", letterSpacing: "0.5px", textTransform: "uppercase", width: "115px", textAlign: "center" }}>
                   STATUS
                 </th>
-                <th style={{ padding: "12px 10px", color: "#94a3b8", fontWeight: 700, fontSize: "12px", letterSpacing: "0.06em", textAlign: "right", width: "85px" }}>
+                <th style={{ padding: "10px 10px", color: "#94a3b8", fontWeight: 700, fontSize: "11px", letterSpacing: "0.5px", textTransform: "uppercase", textAlign: "right", width: "85px" }}>
                   ACTIONS
                 </th>
               </tr>

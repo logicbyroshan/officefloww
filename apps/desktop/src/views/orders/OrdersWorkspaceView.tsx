@@ -454,7 +454,7 @@ export const OrdersWorkspaceView: React.FC = () => {
         flexDirection: "column",
         gap: "12px",
         padding: "16px 20px",
-        backgroundColor: "#07090e",
+        backgroundColor: "#080b12",
         minHeight: "100vh",
         color: "#f8fafc",
         fontFamily: "var(--font-sans, system-ui, -apple-system, sans-serif)",
@@ -466,8 +466,8 @@ export const OrdersWorkspaceView: React.FC = () => {
       <div
         style={{
           borderRadius: "8px",
-          backgroundColor: "#0d1322",
-          border: "1px solid rgba(255, 255, 255, 0.1)",
+          backgroundColor: "#0e131f",
+          border: "1px solid rgba(255, 255, 255, 0.08)",
           boxShadow: "0 6px 24px rgba(0, 0, 0, 0.35)",
           padding: "12px 16px",
           display: "flex",
@@ -492,10 +492,10 @@ export const OrdersWorkspaceView: React.FC = () => {
             style={{
               display: "inline-flex",
               alignItems: "center",
-              backgroundColor: "#07090e",
+              backgroundColor: "rgba(255, 255, 255, 0.03)",
               padding: "2px",
               borderRadius: "6px",
-              border: "1px solid rgba(255, 255, 255, 0.1)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
             }}
           >
             <button

@@ -572,13 +572,13 @@ export const IDCardWorkspaceView: React.FC = () => {
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
             style={{
-              height: "30px",
+              height: "32px",
               padding: "0 8px",
-              backgroundColor: "#07090e",
-              border: "1px solid rgba(255, 255, 255, 0.1)",
-              borderRadius: "5px",
+              backgroundColor: "rgba(255, 255, 255, 0.04)",
+              border: "1px solid rgba(255, 255, 255, 0.12)",
+              borderRadius: "4px",
               color: "#cbd5e1",
-              fontSize: "11.5px",
+              fontSize: "12px",
               outline: "none",
             }}
           >
@@ -593,13 +593,13 @@ export const IDCardWorkspaceView: React.FC = () => {
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as any)}
             style={{
-              height: "30px",
+              height: "32px",
               padding: "0 8px",
-              backgroundColor: "#07090e",
-              border: "1px solid rgba(255, 255, 255, 0.1)",
-              borderRadius: "5px",
+              backgroundColor: "rgba(255, 255, 255, 0.04)",
+              border: "1px solid rgba(255, 255, 255, 0.12)",
+              borderRadius: "4px",
               color: "#cbd5e1",
-              fontSize: "11.5px",
+              fontSize: "12px",
               outline: "none",
             }}
           >
@@ -630,13 +630,13 @@ export const IDCardWorkspaceView: React.FC = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{
                 width: "180px",
-                height: "30px",
+                height: "32px",
                 padding: "0 8px 0 26px",
-                backgroundColor: "#07090e",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
-                borderRadius: "5px",
+                backgroundColor: "rgba(255, 255, 255, 0.04)",
+                border: "1px solid rgba(255, 255, 255, 0.12)",
+                borderRadius: "4px",
                 color: "#f8fafc",
-                fontSize: "11.5px",
+                fontSize: "12px",
                 outline: "none",
               }}
             />
@@ -668,17 +668,17 @@ export const IDCardWorkspaceView: React.FC = () => {
               <tr
                 style={{
                   borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
-                  backgroundColor: "rgba(255, 255, 255, 0.03)",
+                  backgroundColor: "rgba(255, 255, 255, 0.02)",
                 }}
               >
                 <th
                   style={{
-                    padding: "13px 14px",
-                    fontSize: "12px",
+                    padding: "10px 14px",
+                    fontSize: "11px",
                     fontWeight: 700,
                     color: "#94a3b8",
                     textTransform: "uppercase",
-                    letterSpacing: "0.06em",
+                    letterSpacing: "0.5px",
                     width: "80px",
                   }}
                 >
@@ -686,12 +686,12 @@ export const IDCardWorkspaceView: React.FC = () => {
                 </th>
                 <th
                   style={{
-                    padding: "13px 14px",
-                    fontSize: "12px",
+                    padding: "10px 14px",
+                    fontSize: "11px",
                     fontWeight: 700,
                     color: "#94a3b8",
                     textTransform: "uppercase",
-                    letterSpacing: "0.06em",
+                    letterSpacing: "0.5px",
                     width: "95px",
                   }}
                 >
@@ -699,12 +699,12 @@ export const IDCardWorkspaceView: React.FC = () => {
                 </th>
                 <th
                   style={{
-                    padding: "13px 20px",
-                    fontSize: "12px",
+                    padding: "10px 20px",
+                    fontSize: "11px",
                     fontWeight: 700,
                     color: "#94a3b8",
                     textTransform: "uppercase",
-                    letterSpacing: "0.06em",
+                    letterSpacing: "0.5px",
                     minWidth: "260px",
                     width: "28%",
                   }}
@@ -713,13 +713,13 @@ export const IDCardWorkspaceView: React.FC = () => {
                 </th>
                 <th
                   style={{
-                    padding: "13px 20px",
+                    padding: "10px 20px",
                     textAlign: "right",
-                    fontSize: "12px",
+                    fontSize: "11px",
                     fontWeight: 700,
                     color: "#94a3b8",
                     textTransform: "uppercase",
-                    letterSpacing: "0.06em",
+                    letterSpacing: "0.5px",
                     width: "105px",
                   }}
                 >
@@ -727,13 +727,13 @@ export const IDCardWorkspaceView: React.FC = () => {
                 </th>
                 <th
                   style={{
-                    padding: "13px 16px",
+                    padding: "10px 16px",
                     textAlign: "center",
-                    fontSize: "12px",
+                    fontSize: "11px",
                     fontWeight: 700,
                     color: "#94a3b8",
                     textTransform: "uppercase",
-                    letterSpacing: "0.06em",
+                    letterSpacing: "0.5px",
                     width: "160px",
                   }}
                 >
@@ -741,13 +741,13 @@ export const IDCardWorkspaceView: React.FC = () => {
                 </th>
                 <th
                   style={{
-                    padding: "13px 16px",
+                    padding: "10px 16px",
                     textAlign: "center",
-                    fontSize: "12px",
+                    fontSize: "11px",
                     fontWeight: 700,
                     color: "#94a3b8",
                     textTransform: "uppercase",
-                    letterSpacing: "0.06em",
+                    letterSpacing: "0.5px",
                     width: "170px",
                   }}
                 >
@@ -755,13 +755,13 @@ export const IDCardWorkspaceView: React.FC = () => {
                 </th>
                 <th
                   style={{
-                    padding: "13px 16px",
+                    padding: "10px 16px",
                     textAlign: "center",
-                    fontSize: "12px",
+                    fontSize: "11px",
                     fontWeight: 700,
                     color: "#94a3b8",
                     textTransform: "uppercase",
-                    letterSpacing: "0.06em",
+                    letterSpacing: "0.5px",
                     width: "140px",
                   }}
                   title="Format of data given to Kamal Sir for printing (DOC / EXCEL / HARD COPY)"
@@ -770,13 +770,13 @@ export const IDCardWorkspaceView: React.FC = () => {
                 </th>
                 <th
                   style={{
-                    padding: "13px 16px",
+                    padding: "10px 16px",
                     textAlign: "center",
-                    fontSize: "12px",
+                    fontSize: "11px",
                     fontWeight: 700,
                     color: "#94a3b8",
                     textTransform: "uppercase",
-                    letterSpacing: "0.06em",
+                    letterSpacing: "0.5px",
                     width: "135px",
                   }}
                 >
@@ -784,13 +784,13 @@ export const IDCardWorkspaceView: React.FC = () => {
                 </th>
                 <th
                   style={{
-                    padding: "13px 20px",
+                    padding: "10px 20px",
                     textAlign: "center",
-                    fontSize: "12px",
+                    fontSize: "11px",
                     fontWeight: 700,
                     color: "#94a3b8",
                     textTransform: "uppercase",
-                    letterSpacing: "0.06em",
+                    letterSpacing: "0.5px",
                     width: "185px",
                   }}
                 >
