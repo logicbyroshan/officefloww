@@ -1257,7 +1257,7 @@ export const IDCardWorkspaceView: React.FC = () => {
                               onMouseEnter={(e) => (e.currentTarget.style.color = "#f8fafc")}
                               onMouseLeave={(e) => (e.currentTarget.style.color = "#94a3b8")}
                             >
-                              <Icon name="refresh-cw" size={11} color="#94a3b8" />
+                              <Icon name="refresh" size={11} color="#94a3b8" />
                             </button>
                           </div>
                         ) : isReady ? (

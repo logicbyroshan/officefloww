@@ -145,23 +145,7 @@ export const StockDashboardView: React.FC = () => {
   const handleConfirmAddStock = (e: React.FormEvent) => {
     e.preventDefault();
     const qty = parseInt(adjustQty, 10) || 0;
-    setStockItems((prev) =>
-      prev.map((i) => (i.id === targetItem.id ? { ...i, availableStock: i.availableStock + qty } : i))
-    );
-    setMovements([
-      {
-        id: `mov-${Date.now()}`,
-        timestamp: "Just now",
-        itemName: targetItem.name,
-        type: "ADDITION",
-        quantity: qty,
-        unit: targetItem.unit,
-        destinationOrSource: adjustSource,
-        reportedBy: "Floor Supervisor",
-        notes: adjustNote,
-      },
-      ...movements,
-    ]);
+    adjustStock(targetItem.id, qty, "Floor Supervisor", adjustSource, adjustNote);
     setIsAddStockModalOpen(false);
     success("Stock Added", `Added +${qty} ${targetItem.unit} of ${targetItem.name}`);
   };
@@ -173,18 +157,6 @@ export const StockDashboardView: React.FC = () => {
 
     const person = useReportedBy.trim() || "User";
 
-    setStockItems((prev) =>
-      prev.map((i) =>
-        i.id === targetItem.id
-          ? {
-              ...i,
-              availableStock: Math.max(0, i.availableStock - qty),
-              usedStock: i.usedStock + qty,
-            }
-          : i
-      )
-    );
-
     // Update target item so drawer top card updates in real-time
     setTargetItem((prev) => ({
       ...prev,
@@ -192,19 +164,7 @@ export const StockDashboardView: React.FC = () => {
       usedStock: prev.usedStock + qty,
     }));
 
-    const newLog: StockMovementLog = {
-      id: `mov-${Date.now()}`,
-      timestamp: "Just now",
-      itemName: targetItem.name,
-      type: "USAGE",
-      quantity: qty,
-      unit: targetItem.unit,
-      destinationOrSource: "Stock Floor",
-      reportedBy: person,
-      notes: `Deducted by ${person}`,
-    };
-
-    setMovements([newLog, ...movements]);
+    adjustStock(targetItem.id, -qty, person, "Stock Floor", `Deducted by ${person}`);
     success("Stock Deducted", `Deducted -${qty} ${targetItem.unit} by ${person}`);
     setUseQty(targetItem.unit === "rolls" ? "2" : targetItem.unit.includes("packet") ? "2" : "100");
   };

@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { useAuth } from "../auth/AuthContext";
-import { SEED_ACCOUNTS } from "../api/auth.service";
 import { AppNavSection } from "../auth/permissions";
 import { Icon } from "../design-system/components/Icon";
 import { UserAvatar } from "../design-system/components/UserAvatar";
@@ -17,7 +16,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   connected,
   onNavigate,
 }) => {
-  const { user, logout, switchUser } = useAuth();
+  const { user, logout } = useAuth();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
 
@@ -26,14 +25,14 @@ export const TopBar: React.FC<TopBarProps> = ({
       id: "notif-1",
       title: "Order #ORD-2026-0001 requires attention",
       desc: "High priority • Sublimation press setup",
-      target: "tasks" as AppNavSection,
+      target: "orders" as AppNavSection,
       urgent: true,
     },
     {
       id: "notif-2",
       title: "Proof approval requested",
       desc: "St. Xavier's High School lanyard repeat setup",
-      target: "tasks" as AppNavSection,
+      target: "lanyard_orders" as AppNavSection,
       urgent: false,
     },
     {
@@ -383,77 +382,6 @@ export const TopBar: React.FC<TopBarProps> = ({
                 <div style={{ marginTop: "6px" }}>
                   <RoleBadge role={user?.role || "USER"} />
                 </div>
-              </div>
-
-              {/* Quick Switch Role for Testing */}
-              <div
-                style={{
-                  padding: "4px 8px",
-                  fontSize: "10.5px",
-                  fontWeight: 700,
-                  textTransform: "uppercase",
-                  color: "var(--text-muted)",
-                }}
-              >
-                Switch Role Account:
-              </div>
-
-              <div
-                style={{
-                  maxHeight: "180px",
-                  overflowY: "auto",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "2px",
-                }}
-              >
-                {SEED_ACCOUNTS.map((acc) => (
-                  <button
-                    key={acc.email}
-                    type="button"
-                    onClick={() => {
-                      switchUser(acc.email);
-                      setShowUserMenu(false);
-                    }}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      padding: "6px 8px",
-                      borderRadius: "3px",
-                      border: "none",
-                      backgroundColor:
-                        user?.email === acc.email
-                          ? "var(--accent-soft)"
-                          : "transparent",
-                      color:
-                        user?.email === acc.email
-                          ? "var(--accent-text)"
-                          : "var(--text-secondary)",
-                      fontSize: "12px",
-                      cursor: "pointer",
-                      textAlign: "left",
-                    }}
-                    onMouseEnter={(e) => {
-                      if (user?.email !== acc.email) {
-                        e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.04)";
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (user?.email !== acc.email) {
-                        e.currentTarget.style.backgroundColor = "transparent";
-                      }
-                    }}
-                  >
-                    <div>
-                      <div style={{ fontWeight: 500 }}>{acc.name}</div>
-                      <div style={{ fontSize: "10px", color: "var(--text-muted)" }}>
-                        {acc.role}
-                      </div>
-                    </div>
-                    {user?.email === acc.email && <Icon name="check" size={13} />}
-                  </button>
-                ))}
               </div>
 
               <div

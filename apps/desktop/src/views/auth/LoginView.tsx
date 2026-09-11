@@ -54,7 +54,7 @@ const FACILITY_SLIDES: FacilitySlide[] = [
 
 export const LoginView: React.FC = () => {
   const { login } = useAuth();
-  const [email, setEmail] = useState("admin@adharshbhopal.in");
+  const [email, setEmail] = useState("admin@officefloww.com");
   const [password, setPassword] = useState("");
   const [keepLoggedIn, setKeepLoggedIn] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -817,11 +817,8 @@ export const LoginView: React.FC = () => {
               </div>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div className="auth-roles-strip">
-                  <span className="auth-role-tag" style={{ background: "#e11d48" }}>OWNER</span>
-                  <span className="auth-role-tag" style={{ background: "#2563eb" }}>ADMIN</span>
-                  <span className="auth-role-tag" style={{ background: "#7c3aed" }}>PROD</span>
-                  <span className="auth-role-tag" style={{ background: "#059669" }}>QC</span>
-                  <span className="auth-role-tag" style={{ background: "#334155" }}>+6</span>
+                  <span className="auth-role-tag" style={{ background: "#e11d48" }}>SUPERADMIN</span>
+                  <span className="auth-role-tag" style={{ background: "#2563eb" }}>WORKSTATION</span>
                 </div>
                 <div style={{ fontSize: "11px", fontWeight: 600, color: "#10b981", display: "flex", alignItems: "center", gap: "4px" }}>
                   <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10b981" }} />

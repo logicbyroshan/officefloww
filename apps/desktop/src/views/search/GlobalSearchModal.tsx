@@ -27,9 +27,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
     clients: Client[];
     tasks: Task[];
     stock: Array<{ id: string; code: string; name: string }>;
-    staff: Array<{ id: string; name: string; role: string }>;
-    invoices: Array<{ id: string; invoice_number: string; client_name: string; amount: number }>;
-  }>({ orders: [], clients: [], tasks: [], stock: [], staff: [], invoices: [] });
+  }>({ orders: [], clients: [], tasks: [], stock: [] });
 
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -39,7 +37,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
       setTimeout(() => inputRef.current?.focus(), 50);
     } else {
       setQuery("");
-      setResults({ orders: [], clients: [], tasks: [], stock: [], staff: [], invoices: [] });
+      setResults({ orders: [], clients: [], tasks: [], stock: [] });
     }
   }, [isOpen]);
 
@@ -59,7 +57,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
 
   useEffect(() => {
     if (!query.trim()) {
-      setResults({ orders: [], clients: [], tasks: [], stock: [], staff: [], invoices: [] });
+      setResults({ orders: [], clients: [], tasks: [], stock: [] });
       return;
     }
 
@@ -74,32 +72,18 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
           // fallback if offline
         }
 
-        // Mock/Curated stock, staff, and invoice search matches
+        // Mock/Curated stock search matches
         const stockMatches = [
           { id: "stk-01", code: "RAW-PVC-076", name: "0.76mm Gloss White PVC Core Sheet" },
           { id: "stk-02", code: "RAW-SATIN-20MM-WHT", name: "20mm White Satin Polyester Ribbon Roll" },
           { id: "stk-03", code: "HDW-DOGHOOK-20MM", name: "20mm Nickel-Plated Metal Dog-Hook Fitting" },
         ].filter((s) => s.code.toLowerCase().includes(q) || s.name.toLowerCase().includes(q));
 
-        const staffMatches = [
-          { id: "staff-1", name: "Rohan Sharma", role: "ADMIN" },
-          { id: "staff-2", name: "Priya Nair", role: "MANAGER" },
-          { id: "staff-3", name: "Sneha Roy", role: "DESIGNER" },
-          { id: "staff-4", name: "Dinesh Kumar", role: "MACHINE_OPERATOR" },
-        ].filter((s) => s.name.toLowerCase().includes(q) || s.role.toLowerCase().includes(q));
-
-        const invoiceMatches = [
-          { id: "inv-01", invoice_number: "INV-2026-0001", client_name: "St. Xavier's High School", amount: 182500 },
-          { id: "inv-02", invoice_number: "INV-2026-0002", client_name: "Delhi Public School", amount: 253700 },
-        ].filter((i) => i.invoice_number.toLowerCase().includes(q) || i.client_name.toLowerCase().includes(q));
-
         setResults({
           orders: apiResults.orders || [],
           clients: apiResults.clients || [],
           tasks: apiResults.tasks || [],
           stock: stockMatches,
-          staff: staffMatches,
-          invoices: invoiceMatches,
         });
       } finally {
         setLoading(false);
@@ -115,9 +99,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
     results.orders.length +
     results.clients.length +
     results.tasks.length +
-    results.stock.length +
-    results.staff.length +
-    results.invoices.length;
+    results.stock.length;
 
   return (
     <div
@@ -357,77 +339,6 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
             </div>
           )}
 
-          {/* Staff */}
-          {results.staff.length > 0 && (
-            <div style={{ marginBottom: "12px" }}>
-              <div style={{ fontSize: "10.5px", fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)", padding: "4px 8px" }}>
-                Staff & People ({results.staff.length})
-              </div>
-              {results.staff.map((st) => (
-                <div
-                  key={st.id}
-                  onClick={() => {
-                    if (onNavigate) onNavigate("staff");
-                    onClose();
-                  }}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    padding: "8px 10px",
-                    borderRadius: "4px",
-                    cursor: "pointer",
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <Icon name="staff" size={14} color="var(--accent-text)" />
-                    <span style={{ fontSize: "13px", fontWeight: 600, color: "#fff" }}>{st.name}</span>
-                    <span style={{ fontSize: "11.5px", color: "var(--text-muted)" }}>({st.role})</span>
-                  </div>
-                  <span style={{ fontSize: "11px", color: "var(--accent-text)" }}>Open in Staff →</span>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Invoices */}
-          {results.invoices.length > 0 && (
-            <div style={{ marginBottom: "6px" }}>
-              <div style={{ fontSize: "10.5px", fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)", padding: "4px 8px" }}>
-                Billing & Invoices ({results.invoices.length})
-              </div>
-              {results.invoices.map((inv) => (
-                <div
-                  key={inv.id}
-                  onClick={() => {
-                    if (onNavigate) onNavigate("dashboard");
-                    onClose();
-                  }}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    padding: "8px 10px",
-                    borderRadius: "4px",
-                    cursor: "pointer",
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <Icon name="billing" size={14} color="var(--accent-text)" />
-                    <span style={{ fontSize: "13px", fontWeight: 600, color: "#fff" }}>{inv.invoice_number}</span>
-                    <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>{inv.client_name}</span>
-                  </div>
-                  <span style={{ fontSize: "12px", color: "#34d399", fontFamily: "var(--font-mono)", fontWeight: 700 }}>
-                    ₹{inv.amount.toLocaleString()}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       </div>
     </div>

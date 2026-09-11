@@ -36,7 +36,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   const visiblePrimary = primaryNav.filter((item) => canNav(item.id));
-  const canAccessSettings = canNav("settings");
 
   return (
     <aside
@@ -158,63 +157,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           flexDirection: "column",
           gap: "6px",
         }}
-      >
-        {canAccessSettings && (
-          <button
-            type="button"
-            onClick={() => onSelectSection("settings")}
-            title={isCollapsed ? "Settings" : undefined}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: isCollapsed ? "center" : "flex-start",
-              gap: isCollapsed ? "0" : "10px",
-              padding: isCollapsed ? "10px 0" : "9px 12px",
-              borderRadius: "4px",
-              border:
-                "1px solid " +
-                (activeSection === "settings"
-                  ? "var(--accent-border)"
-                  : "transparent"),
-              borderLeft: !isCollapsed
-                ? activeSection === "settings"
-                  ? "3px solid var(--accent)"
-                  : "3px solid transparent"
-                : undefined,
-              backgroundColor:
-                activeSection === "settings"
-                  ? "var(--accent-soft)"
-                  : "transparent",
-              color:
-                activeSection === "settings"
-                  ? "var(--accent-text)"
-                  : "var(--text-secondary)",
-              fontSize: "13px",
-              fontWeight: activeSection === "settings" ? 600 : 500,
-              cursor: "pointer",
-              width: "100%",
-              textAlign: "left",
-              transition: "all 0.15s ease",
-            }}
-            onMouseEnter={(e) => {
-              if (activeSection !== "settings") {
-                e.currentTarget.style.backgroundColor =
-                  "rgba(255, 255, 255, 0.04)";
-                e.currentTarget.style.color = "var(--text-primary)";
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (activeSection !== "settings") {
-                e.currentTarget.style.backgroundColor = "transparent";
-                e.currentTarget.style.color = "var(--text-secondary)";
-              }
-            }}
-          >
-            <Icon name="settings" size={16} />
-            {!isCollapsed && <span>Settings</span>}
-          </button>
-        )}
-      </div>
+      />
     </aside>
   );
 };

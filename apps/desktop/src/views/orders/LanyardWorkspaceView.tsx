@@ -2281,7 +2281,7 @@ export const LanyardWorkspaceView: React.FC = () => {
                               isReady
                                 ? "check-circle"
                                 : allStepsDone
-                                ? "arrow-right"
+                                ? "chevron-right"
                                 : entry.fittingStatus === "in_fitting"
                                 ? "tool"
                                 : entry.goneForPrint || entry.isPrinted

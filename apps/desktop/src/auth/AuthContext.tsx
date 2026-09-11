@@ -8,7 +8,6 @@ interface AuthContextType {
   loading: boolean;
   login: (email: string, password?: string) => Promise<void>;
   logout: () => Promise<void>;
-  switchUser: (email: string) => Promise<void>;
   can: (permission: Permission) => boolean;
   hasPerm: (permission: Permission) => boolean;
   canNav: (section: AppNavSection) => boolean;
@@ -53,10 +52,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const switchUser = async (email: string) => {
-    await login(email);
-  };
-
   const logout = async () => {
     setLoading(true);
     try {
@@ -84,7 +79,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         loading,
         login,
         logout,
-        switchUser,
         can,
         hasPerm: can,
         canNav,

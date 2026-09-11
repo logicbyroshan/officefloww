@@ -12,37 +12,24 @@ export interface SeedAccount {
 /** Local in-house accounts that work offline (no backend required) */
 export const SEED_ACCOUNTS: SeedAccount[] = [
   {
-    email: "admin@adharshbhopal.in",
-    name: "Rohan Sharma",
+    email: "admin@officefloww.com",
+    name: "Rohan Sharma (Superadmin)",
     role: UserRole.ADMIN,
-    description: "System administrator – full access",
+    description: "Superadmin Workstation – Full Access",
     password: "Admin@2026",
   },
   {
-    email: "operator@adharshbhopal.in",
-    name: "Priya Nair",
-    role: UserRole.OPERATOR,
-    description: "Operations manager – production & scheduling",
-    password: "Operator@2026",
-  },
-  {
-    email: "worker@adharshbhopal.in",
-    name: "Dinesh Kumar",
-    role: UserRole.WORKER,
-    description: "Floor worker – press & packing",
-    password: "Worker@2026",
-  },
-  {
-    email: "labour@adharshbhopal.in",
-    name: "Ramesh Stitching",
-    role: UserRole.LABOUR,
-    description: "Labour contractor – lanyard assembly",
-    password: "Labour@2026",
+    email: "admin@adharshbhopal.in",
+    name: "Rohan Sharma (Superadmin)",
+    role: UserRole.ADMIN,
+    description: "Superadmin Workstation – Full Access",
+    password: "Admin@2026",
   },
 ];
 
 /** Build a fake User object from a seed account (offline mode) */
 function buildLocalUser(seed: SeedAccount): User {
+  const now = new Date().toISOString();
   return {
     id: `local-${seed.email.split("@")[0]}`,
     email: seed.email,
@@ -50,7 +37,8 @@ function buildLocalUser(seed: SeedAccount): User {
     phone: null,
     role: seed.role,
     is_active: true,
-    created_at: new Date().toISOString(),
+    created_at: now,
+    updated_at: now,
   };
 }
 
