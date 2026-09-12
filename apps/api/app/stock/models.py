@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional
 import uuid
 
 import sqlalchemy as sa
-from sqlalchemy import Boolean, Date, DateTime, Enum, ForeignKey, Numeric, String, Text
+from sqlalchemy import Boolean, Date, DateTime, Enum, ForeignKey, Index, Numeric, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -102,6 +102,9 @@ class StockLot(Base, UUIDPrimaryKeyMixin, TimestampMixin):
 
 class StockMovement(Base, UUIDPrimaryKeyMixin):
     __tablename__ = "stock_movements"
+    __table_args__ = (
+        Index("ix_stock_movements_item_time", "stock_item_id", "timestamp"),
+    )
 
     stock_item_id: Mapped[uuid.UUID] = mapped_column(
         sa.Uuid(as_uuid=True),
