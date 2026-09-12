@@ -31,6 +31,18 @@ async def test_login_invalid_credentials(client: AsyncClient, admin_user: User):
 
 
 @pytest.mark.asyncio
+async def test_no_hardcoded_password_bypass(client: AsyncClient, admin_user: User):
+    # Passwords that used to be bypass backdoor strings must be rejected if they do not match user's hash
+    for static_bypass in ("admin", "admin123", "123456", "adharsh@123"):
+        response = await client.post(
+            "/api/v1/auth/login",
+            json={"email": admin_user.email, "password": static_bypass},
+        )
+        assert response.status_code == 401
+        assert response.json()["success"] is False
+
+
+@pytest.mark.asyncio
 async def test_refresh_token_rotation(client: AsyncClient, admin_user: User):
     # First login
     login_res = await client.post(
