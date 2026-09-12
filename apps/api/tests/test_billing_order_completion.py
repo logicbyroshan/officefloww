@@ -33,11 +33,20 @@ async def test_billing_payments_and_order_completion_rule(client: AsyncClient, a
     order_item_id = order_res.json()["data"]["items"][0]["id"]
 
     # 3. ORDER COMPLETION RULE ENFORCEMENT TEST:
-    # Order cannot be completed simply by clicking a button!
+    # Order cannot be completed simply by clicking a button or updating status!
     # Must fail because workflows and packing are incomplete.
     comp_fail = await client.post(f"/api/v1/billing/orders/{order_id}/complete", headers=headers)
     assert comp_fail.status_code == 400
     assert "Order cannot be marked COMPLETED" in comp_fail.json()["error"]["message"]
+
+    # Also test that manual update via orders router enforces the same rule
+    update_fail = await client.put(
+        f"/api/v1/orders/{order_id}",
+        headers=headers,
+        json={"status": "COMPLETED"},
+    )
+    assert update_fail.status_code == 400
+    assert "Order cannot be marked COMPLETED" in update_fail.json()["error"]["message"]
 
     # 4. Check completion condition details endpoint
     check_res = await client.get(f"/api/v1/billing/orders/{order_id}/completion-check", headers=headers)
