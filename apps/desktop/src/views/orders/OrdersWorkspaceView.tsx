@@ -62,6 +62,7 @@ const DEFAULT_COLORS = [
   { name: "Orange", hex: "#ea580c" },
   { name: "Purple", hex: "#9333ea" },
   { name: "Sky Blue", hex: "#0284c7" },
+  { name: "Golden", hex: "#d97706" },
 ];
 
 export const OrdersWorkspaceView: React.FC = () => {
@@ -75,7 +76,17 @@ export const OrdersWorkspaceView: React.FC = () => {
   const [description, setDescription] = useState<string>("");
   const [orderScope, setOrderScope] = useState<OrderScope>("full_set");
 
-  // Level 1 Dropdown selections (Holders, Hooks, Sizes)
+  // Dropdowns: Size, Holders, Hooks (no labels)
+  const [lanyardSizes, setLanyardSizes] = useState<string[]>(() => {
+    try {
+      const s = localStorage.getItem("officefloww_lanyard_sizes");
+      return s ? JSON.parse(s) : DEFAULT_LANYARD_SIZES;
+    } catch {
+      return DEFAULT_LANYARD_SIZES;
+    }
+  });
+  const [selectedSize, setSelectedSize] = useState<string>("16mm");
+
   const [fittingItems, setFittingItems] = useState<string[]>(() => {
     try {
       const s = localStorage.getItem("officefloww_fitting_items");
@@ -96,30 +107,26 @@ export const OrdersWorkspaceView: React.FC = () => {
   });
   const [selectedHook, setSelectedHook] = useState<string>("Dog Hook");
 
-  const [lanyardSizes, setLanyardSizes] = useState<string[]>(() => {
-    try {
-      const s = localStorage.getItem("officefloww_lanyard_sizes");
-      return s ? JSON.parse(s) : DEFAULT_LANYARD_SIZES;
-    } catch {
-      return DEFAULT_LANYARD_SIZES;
-    }
-  });
-  const [selectedSize, setSelectedSize] = useState<string>("16mm");
-
-  // Optional Checkboxes for expandable controls
-  const [enableColors, setEnableColors] = useState<boolean>(false);
+  // Checkbox & Modal States
+  const [isColorModalOpen, setIsColorModalOpen] = useState<boolean>(false);
+  const [hasColorsConfigured, setHasColorsConfigured] = useState<boolean>(false);
   const [selectedColors, setSelectedColors] = useState<string[]>(["Royal Blue"]);
   const [customColorInput, setCustomColorInput] = useState<string>("");
 
-  const [enableSizes, setEnableSizes] = useState<boolean>(false);
-  const [customSizeInput, setCustomSizeInput] = useState<string>("");
+  const [isSizeModalOpen, setIsSizeModalOpen] = useState<boolean>(false);
+  const [hasSizesConfigured, setHasSizesConfigured] = useState<boolean>(false);
+  const [customWidth, setCustomWidth] = useState<string>("");
+  const [doriSmall, setDoriSmall] = useState<string>("");
+  const [doriMedium, setDoriMedium] = useState<string>("");
+  const [doriBig, setDoriBig] = useState<string>("");
 
-  const [enableIDCardDetails, setEnableIDCardDetails] = useState<boolean>(false);
+  const [isIDCardModalOpen, setIsIDCardModalOpen] = useState<boolean>(false);
+  const [hasIDSpecsConfigured, setHasIDSpecsConfigured] = useState<boolean>(false);
   const [cardCategory, setCardCategory] = useState<IDCardCategory>("Student");
   const [fileLocation, setFileLocation] = useState<IDCardFileFormat>("excel");
   const [printOperator, setPrintOperator] = useState<string>("Kamal Sir");
 
-  // Add Item Modal / Inline Prompt
+  // Add Item to Dropdown Modal
   const [addItemModal, setAddItemModal] = useState<{
     isOpen: boolean;
     type: "fitting" | "hook" | "size" | null;
@@ -138,7 +145,7 @@ export const OrdersWorkspaceView: React.FC = () => {
   const scopeActive = SCOPE_OPTIONS.find((s) => s.id === orderScope)!;
   const hasDesc = description.trim().length > 0;
 
-  // Append dropdown specification into description easily
+  // Append spec to description
   const appendSpecToDesc = (specText: string) => {
     setDescription((prev) => {
       const clean = prev.trim();
@@ -148,12 +155,15 @@ export const OrdersWorkspaceView: React.FC = () => {
     });
   };
 
+  // Color modal handlers
   const toggleColor = (col: string) => {
     setSelectedColors((prev) => {
-      const next = prev.includes(col) ? prev.filter((c) => c !== col) : [...prev, col];
-      const res = next.length === 0 ? [col] : next;
-      appendSpecToDesc(res.join("+") + " color");
-      return res;
+      if (prev.includes(col)) {
+        const next = prev.filter((c) => c !== col);
+        return next.length === 0 ? [col] : next;
+      } else {
+        return [...prev, col];
+      }
     });
   };
 
@@ -162,11 +172,41 @@ export const OrdersWorkspaceView: React.FC = () => {
     if (!val) return;
     if (!selectedColors.includes(val)) {
       setSelectedColors((prev) => [...prev, val]);
-      appendSpecToDesc(val);
     }
     setCustomColorInput("");
   };
 
+  const applyColors = () => {
+    setHasColorsConfigured(true);
+    setIsColorModalOpen(false);
+    if (selectedColors.length > 0) {
+      appendSpecToDesc(`${selectedColors.join(" + ")} color`);
+    }
+    toastSuccess("Colors Applied", `${selectedColors.join(", ")} applied to order.`);
+  };
+
+  const applyCustomSizes = () => {
+    setHasSizesConfigured(true);
+    setIsSizeModalOpen(false);
+    const parts: string[] = [];
+    if (customWidth.trim()) parts.push(`${customWidth.trim()} width`);
+    if (doriSmall.trim()) parts.push(`${doriSmall} Small`);
+    if (doriMedium.trim()) parts.push(`${doriMedium} Med`);
+    if (doriBig.trim()) parts.push(`${doriBig} Big`);
+    if (parts.length > 0) {
+      appendSpecToDesc(parts.join(" / "));
+    }
+    toastSuccess("Sizes Applied", "Custom size & dori breakdown applied.");
+  };
+
+  const applyIDSpecs = () => {
+    setHasIDSpecsConfigured(true);
+    setIsIDCardModalOpen(false);
+    appendSpecToDesc(`${cardCategory} ID (${fileLocation.toUpperCase()})`);
+    toastSuccess("ID Specs Applied", `${cardCategory} card via ${printOperator} saved.`);
+  };
+
+  // Save new custom dropdown item
   const handleSaveCustomItem = () => {
     const val = addItemModal.inputValue.trim();
     if (!val) return;
@@ -179,7 +219,7 @@ export const OrdersWorkspaceView: React.FC = () => {
       }
       setSelectedFitting(val);
       appendSpecToDesc(`Holder: ${val}`);
-      toastSuccess("Fitting Item Added", `"${val}" added.`);
+      toastSuccess("Holder Added", `"${val}" added and selected.`);
     } else if (addItemModal.type === "hook") {
       if (!hookTypes.includes(val)) {
         const updated = [...hookTypes, val];
@@ -188,7 +228,7 @@ export const OrdersWorkspaceView: React.FC = () => {
       }
       setSelectedHook(val);
       appendSpecToDesc(val);
-      toastSuccess("Hook Type Added", `"${val}" added.`);
+      toastSuccess("Hook Added", `"${val}" added and selected.`);
     } else if (addItemModal.type === "size") {
       if (!lanyardSizes.includes(val)) {
         const updated = [...lanyardSizes, val];
@@ -197,7 +237,7 @@ export const OrdersWorkspaceView: React.FC = () => {
       }
       setSelectedSize(val);
       appendSpecToDesc(val);
-      toastSuccess("Size Added", `"${val}" added.`);
+      toastSuccess("Size Added", `"${val}" added and selected.`);
     }
 
     setAddItemModal({ isOpen: false, type: null, title: "", inputValue: "" });
@@ -215,8 +255,8 @@ export const OrdersWorkspaceView: React.FC = () => {
     const nextIdcSN = (idCardOrders[0]?.sn || 1500) + 1;
 
     const sizeVal = (
-      enableSizes && customSizeInput.trim()
-        ? customSizeInput.trim()
+      hasSizesConfigured && customWidth.trim()
+        ? customWidth.trim()
         : selectedSize.includes("12")
         ? "12mm"
         : selectedSize.includes("20")
@@ -224,7 +264,7 @@ export const OrdersWorkspaceView: React.FC = () => {
         : "16mm"
     ) as any;
 
-    const colorsStr = enableColors && selectedColors.length > 0 ? selectedColors.join("/") : "";
+    const colorsStr = hasColorsConfigured && selectedColors.length > 0 ? selectedColors.join("/") : "";
 
     if (includeLanyard) {
       const newEntry: LanyardOrderEntry = {
@@ -243,6 +283,11 @@ export const OrdersWorkspaceView: React.FC = () => {
         hookType: selectedHook,
         jointerType: "None",
         fittingHardware: `${selectedHook} + ${selectedFitting} ${colorsStr ? `(${colorsStr})` : ""}`,
+        doriBreakdown: {
+          small: parseInt(doriSmall, 10) || undefined,
+          medium: parseInt(doriMedium, 10) || undefined,
+          big: parseInt(doriBig, 10) || undefined,
+        },
         fittingRemarks: desc,
       };
       addLanyardOrder(newEntry);
@@ -267,15 +312,18 @@ export const OrdersWorkspaceView: React.FC = () => {
     }
 
     toastSuccess(
-      "Order Created",
+      "Order Ingested",
       includeLanyard && includeIDCard
-        ? `Full set (${qty} pcs) ingested into Lanyard #${nextLanyardSN} & ID Card #${nextIdcSN}.`
+        ? `Full set (${qty} pcs) added to Lanyard #${nextLanyardSN} & ID Card #${nextIdcSN}.`
         : includeLanyard
         ? `Lanyard order #${nextLanyardSN} (${qty} pcs) added.`
         : `ID Card order #${nextIdcSN} (${qty} cards) added.`
     );
 
     setDescription("");
+    setHasColorsConfigured(false);
+    setHasSizesConfigured(false);
+    setHasIDSpecsConfigured(false);
   };
 
   return (
@@ -291,52 +339,23 @@ export const OrdersWorkspaceView: React.FC = () => {
         fontFamily: "var(--font-sans, system-ui, -apple-system, sans-serif)",
       }}
     >
-      {/* ─── COMPACT SPACE-SAVING 50/50 ORDER BAR ─── */}
+      {/* ─── STREAMLINED 50/50 COMPACT ORDER BAR (NO TITLES / NO LABELS) ─── */}
       <div
         style={{
           borderRadius: "10px",
           backgroundColor: "#0e131f",
           border: `1.5px solid ${hasDesc ? scopeActive.color + "45" : "rgba(255, 255, 255, 0.08)"}`,
           boxShadow: hasDesc ? `0 4px 20px ${scopeActive.color}15` : "0 2px 12px rgba(0,0,0,0.3)",
-          padding: "14px 18px",
+          padding: "14px 16px",
           display: "grid",
           gridTemplateColumns: "1fr 1fr",
-          gap: "18px",
-          alignItems: "start",
+          gap: "16px",
+          alignItems: "center",
           transition: "border-color 0.2s ease, box-shadow 0.2s ease",
         }}
       >
-        {/* ──── LEFT 50%: SINGLE DESCRIPTION TEXTAREA ──── */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <label
-              style={{
-                fontSize: "11px",
-                fontWeight: 700,
-                color: "#94a3b8",
-                textTransform: "uppercase",
-                letterSpacing: "0.6px",
-              }}
-            >
-              Order Description
-            </label>
-            {parsedQty > 0 && (
-              <span
-                style={{
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  color: scopeActive.color,
-                  fontFamily: "var(--font-mono)",
-                  backgroundColor: scopeActive.accent,
-                  padding: "1px 8px",
-                  borderRadius: "3px",
-                }}
-              >
-                {parsedQty.toLocaleString()} pcs detected
-              </span>
-            )}
-          </div>
-
+        {/* ──── LEFT 50%: CLEAN SINGLE DESCRIPTION INPUT (NO LABELS / NO DETECT BADGE) ──── */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px", height: "100%" }}>
           <textarea
             id="order-description"
             value={description}
@@ -347,25 +366,19 @@ export const OrdersWorkspaceView: React.FC = () => {
                 handleCreateOrder();
               }
             }}
-            placeholder={
-              orderScope === "full_set"
-                ? "DPS Bhopal — 985 students, 16mm lanyards, Red + Blue colors, Dog Hook, DST-V holder, Student ID cards..."
-                : orderScope === "lanyard_only"
-                ? "Green Valley School — 500 pcs, 20mm lanyards, Maroon color, Crocodile Clip, Without fitting..."
-                : "St. Joseph Convent — 750 staff ID cards, Excel format, DST-V holder..."
-            }
-            rows={4}
+            placeholder="Enter client & order details (e.g. DPS Bhopal — 1000 pcs, 16mm Red, Dog Hook, DST-V holder, Student ID)..."
+            rows={3}
             style={{
               width: "100%",
               resize: "none",
-              height: "100px",
+              height: "82px",
               padding: "10px 12px",
               backgroundColor: "rgba(255, 255, 255, 0.025)",
               border: `1.5px solid ${hasDesc ? scopeActive.color + "50" : "rgba(255, 255, 255, 0.1)"}`,
               borderRadius: "6px",
               color: "#f1f5f9",
               fontSize: "13.5px",
-              lineHeight: "1.6",
+              lineHeight: "1.55",
               fontFamily: "var(--font-sans, system-ui, -apple-system, sans-serif)",
               outline: "none",
               boxSizing: "border-box",
@@ -378,8 +391,8 @@ export const OrdersWorkspaceView: React.FC = () => {
           </div>
         </div>
 
-        {/* ──── RIGHT 50%: 2-LEVEL DROPDOWNS & OPTIONAL CHECKBOXES ──── */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+        {/* ──── RIGHT 50%: 2-LEVEL DROPDOWNS & MODAL CHECKBOXES ──── */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
           {/* Top Row: Date & Scope Buttons */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", flexWrap: "wrap" }}>
             <span
@@ -431,88 +444,67 @@ export const OrdersWorkspaceView: React.FC = () => {
             </div>
           </div>
 
-          {/* Level 1: 3 Compact Dropdowns (Size, Holder, Hook) */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1.2fr 1fr", gap: "8px" }}>
+          {/* Level 1: 3 Direct Dropdowns (No labels above) */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1.3fr 1fr", gap: "8px" }}>
             {/* Lanyard Size Dropdown */}
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "3px" }}>
-                <span style={{ fontSize: "10.5px", fontWeight: 700, color: "#94a3b8" }}>Size</span>
-                <span
-                  onClick={() =>
-                    setAddItemModal({
-                      isOpen: true,
-                      type: "size",
-                      title: "Add Custom Lanyard Width",
-                      inputValue: "",
-                    })
-                  }
-                  style={{ fontSize: "10px", color: "#38bdf8", cursor: "pointer" }}
-                  title="Add custom size"
-                >
-                  + Add
-                </span>
-              </div>
+            <div style={{ display: "flex", gap: "3px", alignItems: "center" }}>
               <select
                 value={selectedSize}
                 onChange={(e) => {
-                  setSelectedSize(e.target.value);
-                  appendSpecToDesc(e.target.value);
+                  if (e.target.value === "__add__") {
+                    setAddItemModal({ isOpen: true, type: "size", title: "Add Lanyard Size", inputValue: "" });
+                  } else {
+                    setSelectedSize(e.target.value);
+                    appendSpecToDesc(e.target.value);
+                  }
                 }}
                 style={{
-                  width: "100%",
-                  height: "30px",
+                  flex: 1,
+                  height: "32px",
                   backgroundColor: "#131826",
                   border: "1px solid rgba(255, 255, 255, 0.12)",
                   borderRadius: "4px",
-                  padding: "0 6px",
+                  padding: "0 8px",
                   color: "#f8fafc",
                   fontSize: "12px",
+                  fontWeight: 600,
                   outline: "none",
                   cursor: "pointer",
                 }}
               >
                 {lanyardSizes.map((sz) => (
                   <option key={sz} value={sz} style={{ background: "#131826" }}>
-                    {sz}
+                    {sz} Width
                   </option>
                 ))}
+                <option value="__add__" style={{ background: "#131826", color: "#38bdf8" }}>
+                  + Add Size...
+                </option>
               </select>
             </div>
 
             {/* Holder / Fitting Dropdown */}
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "3px" }}>
-                <span style={{ fontSize: "10.5px", fontWeight: 700, color: "#94a3b8" }}>Holders / Fitting</span>
-                <span
-                  onClick={() =>
-                    setAddItemModal({
-                      isOpen: true,
-                      type: "fitting",
-                      title: "Add New Fitting / Holder Item",
-                      inputValue: "",
-                    })
-                  }
-                  style={{ fontSize: "10px", color: "#38bdf8", cursor: "pointer" }}
-                  title="Add custom holder"
-                >
-                  + Add
-                </span>
-              </div>
+            <div style={{ display: "flex", gap: "3px", alignItems: "center" }}>
               <select
                 value={selectedFitting}
                 onChange={(e) => {
-                  setSelectedFitting(e.target.value);
-                  appendSpecToDesc(`Holder: ${e.target.value}`);
+                  if (e.target.value === "__add__") {
+                    setAddItemModal({ isOpen: true, type: "fitting", title: "Add Holder / Fitting", inputValue: "" });
+                  } else {
+                    setSelectedFitting(e.target.value);
+                    appendSpecToDesc(`Holder: ${e.target.value}`);
+                  }
                 }}
                 style={{
-                  width: "100%",
-                  height: "30px",
+                  flex: 1,
+                  height: "32px",
                   backgroundColor: "#131826",
                   border: "1px solid rgba(255, 255, 255, 0.12)",
                   borderRadius: "4px",
-                  padding: "0 6px",
+                  padding: "0 8px",
                   color: "#f8fafc",
                   fontSize: "12px",
+                  fontWeight: 600,
                   outline: "none",
                   cursor: "pointer",
                 }}
@@ -522,43 +514,34 @@ export const OrdersWorkspaceView: React.FC = () => {
                     {item}
                   </option>
                 ))}
+                <option value="__add__" style={{ background: "#131826", color: "#38bdf8" }}>
+                  + Add Holder...
+                </option>
               </select>
             </div>
 
             {/* Hook Type Dropdown */}
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "3px" }}>
-                <span style={{ fontSize: "10.5px", fontWeight: 700, color: "#94a3b8" }}>Hook Type</span>
-                <span
-                  onClick={() =>
-                    setAddItemModal({
-                      isOpen: true,
-                      type: "hook",
-                      title: "Add Custom Hook Type",
-                      inputValue: "",
-                    })
-                  }
-                  style={{ fontSize: "10px", color: "#38bdf8", cursor: "pointer" }}
-                  title="Add custom hook"
-                >
-                  + Add
-                </span>
-              </div>
+            <div style={{ display: "flex", gap: "3px", alignItems: "center" }}>
               <select
                 value={selectedHook}
                 onChange={(e) => {
-                  setSelectedHook(e.target.value);
-                  appendSpecToDesc(e.target.value);
+                  if (e.target.value === "__add__") {
+                    setAddItemModal({ isOpen: true, type: "hook", title: "Add Hook Type", inputValue: "" });
+                  } else {
+                    setSelectedHook(e.target.value);
+                    appendSpecToDesc(e.target.value);
+                  }
                 }}
                 style={{
-                  width: "100%",
-                  height: "30px",
+                  flex: 1,
+                  height: "32px",
                   backgroundColor: "#131826",
                   border: "1px solid rgba(255, 255, 255, 0.12)",
                   borderRadius: "4px",
-                  padding: "0 6px",
+                  padding: "0 8px",
                   color: "#f8fafc",
                   fontSize: "12px",
+                  fontWeight: 600,
                   outline: "none",
                   cursor: "pointer",
                 }}
@@ -568,261 +551,104 @@ export const OrdersWorkspaceView: React.FC = () => {
                     {h}
                   </option>
                 ))}
+                <option value="__add__" style={{ background: "#131826", color: "#38bdf8" }}>
+                  + Add Hook...
+                </option>
               </select>
             </div>
           </div>
 
-          {/* Level 2: Optional Checkboxes Row */}
-          <div style={{ display: "flex", gap: "14px", alignItems: "center", fontSize: "11.5px", color: "#cbd5e1" }}>
-            <label style={{ display: "flex", alignItems: "center", gap: "5px", cursor: "pointer", userSelect: "none" }}>
+          {/* Level 2: Interactive Checkboxes That Open Modals */}
+          <div style={{ display: "flex", gap: "12px", alignItems: "center", fontSize: "11.5px", color: "#cbd5e1" }}>
+            {/* Colors Checkbox / Trigger */}
+            <div
+              onClick={() => setIsColorModalOpen(true)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "5px",
+                cursor: "pointer",
+                padding: "2px 6px",
+                borderRadius: "4px",
+                backgroundColor: hasColorsConfigured ? "rgba(56, 189, 248, 0.12)" : "transparent",
+                border: hasColorsConfigured ? "1px solid rgba(56, 189, 248, 0.3)" : "1px solid transparent",
+              }}
+            >
               <input
                 type="checkbox"
-                checked={enableColors}
-                onChange={(e) => setEnableColors(e.target.checked)}
+                checked={hasColorsConfigured}
+                onChange={(e) => {
+                  if (e.target.checked) setIsColorModalOpen(true);
+                  else setHasColorsConfigured(false);
+                }}
                 style={{ accentColor: "#38bdf8", cursor: "pointer" }}
               />
-              <span style={{ fontWeight: enableColors ? 700 : 500, color: enableColors ? "#38bdf8" : "#94a3b8" }}>
-                Colors Palette
+              <span style={{ fontWeight: hasColorsConfigured ? 700 : 500, color: hasColorsConfigured ? "#38bdf8" : "#94a3b8" }}>
+                Colors {hasColorsConfigured ? `(${selectedColors.length})` : ""}
               </span>
-            </label>
+            </div>
 
-            <label style={{ display: "flex", alignItems: "center", gap: "5px", cursor: "pointer", userSelect: "none" }}>
+            {/* Custom Sizes / Dori Checkbox / Trigger */}
+            <div
+              onClick={() => setIsSizeModalOpen(true)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "5px",
+                cursor: "pointer",
+                padding: "2px 6px",
+                borderRadius: "4px",
+                backgroundColor: hasSizesConfigured ? "rgba(56, 189, 248, 0.12)" : "transparent",
+                border: hasSizesConfigured ? "1px solid rgba(56, 189, 248, 0.3)" : "1px solid transparent",
+              }}
+            >
               <input
                 type="checkbox"
-                checked={enableSizes}
-                onChange={(e) => setEnableSizes(e.target.checked)}
+                checked={hasSizesConfigured}
+                onChange={(e) => {
+                  if (e.target.checked) setIsSizeModalOpen(true);
+                  else setHasSizesConfigured(false);
+                }}
                 style={{ accentColor: "#38bdf8", cursor: "pointer" }}
               />
-              <span style={{ fontWeight: enableSizes ? 700 : 500, color: enableSizes ? "#38bdf8" : "#94a3b8" }}>
-                Custom Width / Dori
+              <span style={{ fontWeight: hasSizesConfigured ? 700 : 500, color: hasSizesConfigured ? "#38bdf8" : "#94a3b8" }}>
+                Sizes / Dori {hasSizesConfigured ? "✓" : ""}
               </span>
-            </label>
+            </div>
 
-            <label style={{ display: "flex", alignItems: "center", gap: "5px", cursor: "pointer", userSelect: "none" }}>
+            {/* ID Card Specs Checkbox / Trigger */}
+            <div
+              onClick={() => setIsIDCardModalOpen(true)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "5px",
+                cursor: "pointer",
+                padding: "2px 6px",
+                borderRadius: "4px",
+                backgroundColor: hasIDSpecsConfigured ? "rgba(192, 132, 252, 0.12)" : "transparent",
+                border: hasIDSpecsConfigured ? "1px solid rgba(192, 132, 252, 0.3)" : "1px solid transparent",
+              }}
+            >
               <input
                 type="checkbox"
-                checked={enableIDCardDetails}
-                onChange={(e) => setEnableIDCardDetails(e.target.checked)}
+                checked={hasIDSpecsConfigured}
+                onChange={(e) => {
+                  if (e.target.checked) setIsIDCardModalOpen(true);
+                  else setHasIDSpecsConfigured(false);
+                }}
                 style={{ accentColor: "#c084fc", cursor: "pointer" }}
               />
-              <span style={{ fontWeight: enableIDCardDetails ? 700 : 500, color: enableIDCardDetails ? "#c084fc" : "#94a3b8" }}>
-                ID Card Specs
+              <span style={{ fontWeight: hasIDSpecsConfigured ? 700 : 500, color: hasIDSpecsConfigured ? "#c084fc" : "#94a3b8" }}>
+                ID Card Specs {hasIDSpecsConfigured ? "✓" : ""}
               </span>
-            </label>
+            </div>
           </div>
 
-          {/* Expandable Colors Strip (if Colors checkbox checked) */}
-          {enableColors && (
-            <div
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: "5px",
-                padding: "8px",
-                borderRadius: "5px",
-                backgroundColor: "rgba(56, 189, 248, 0.05)",
-                border: "1px solid rgba(56, 189, 248, 0.15)",
-              }}
-            >
-              {DEFAULT_COLORS.map((col) => {
-                const isSelected = selectedColors.includes(col.name);
-                return (
-                  <button
-                    key={col.name}
-                    type="button"
-                    onClick={() => toggleColor(col.name)}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "4px",
-                      padding: "2px 7px",
-                      borderRadius: "3px",
-                      border: isSelected ? "1px solid #38bdf8" : "1px solid rgba(255, 255, 255, 0.08)",
-                      backgroundColor: isSelected ? "rgba(56, 189, 248, 0.2)" : "#131826",
-                      color: isSelected ? "#fff" : "#94a3b8",
-                      fontSize: "11px",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <span style={{ width: 7, height: 7, borderRadius: "50%", backgroundColor: col.hex }} />
-                    {col.name}
-                  </button>
-                );
-              })}
-
-              <div style={{ display: "flex", gap: "4px", marginLeft: "auto" }}>
-                <input
-                  type="text"
-                  placeholder="Custom color..."
-                  value={customColorInput}
-                  onChange={(e) => setCustomColorInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleAddCustomColor();
-                    }
-                  }}
-                  style={{
-                    height: "22px",
-                    width: "100px",
-                    backgroundColor: "#0d111a",
-                    border: "1px solid rgba(255, 255, 255, 0.15)",
-                    borderRadius: "3px",
-                    padding: "0 6px",
-                    fontSize: "11px",
-                    color: "#fff",
-                    outline: "none",
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={handleAddCustomColor}
-                  style={{
-                    height: "22px",
-                    padding: "0 8px",
-                    backgroundColor: "#0284c7",
-                    border: "none",
-                    borderRadius: "3px",
-                    color: "#fff",
-                    fontSize: "10.5px",
-                    fontWeight: 700,
-                    cursor: "pointer",
-                  }}
-                >
-                  Add
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Expandable Custom Sizes / Dori Strip (if Sizes checkbox checked) */}
-          {enableSizes && (
-            <div
-              style={{
-                display: "flex",
-                gap: "8px",
-                alignItems: "center",
-                padding: "8px",
-                borderRadius: "5px",
-                backgroundColor: "rgba(56, 189, 248, 0.05)",
-                border: "1px solid rgba(56, 189, 248, 0.15)",
-              }}
-            >
-              <span style={{ fontSize: "11px", color: "#94a3b8", fontWeight: 600 }}>Custom Width / Dori:</span>
-              <input
-                type="text"
-                placeholder="e.g. 18mm, 22mm, 30mm, Small Dori..."
-                value={customSizeInput}
-                onChange={(e) => {
-                  setCustomSizeInput(e.target.value);
-                  if (e.target.value.trim()) appendSpecToDesc(e.target.value.trim());
-                }}
-                style={{
-                  flex: 1,
-                  height: "24px",
-                  backgroundColor: "#0d111a",
-                  border: "1px solid rgba(255, 255, 255, 0.15)",
-                  borderRadius: "3px",
-                  padding: "0 8px",
-                  fontSize: "11.5px",
-                  color: "#fff",
-                  outline: "none",
-                }}
-              />
-            </div>
-          )}
-
-          {/* Expandable ID Card Specs Strip (if ID Card checkbox checked) */}
-          {enableIDCardDetails && (
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr 1fr",
-                gap: "8px",
-                padding: "8px",
-                borderRadius: "5px",
-                backgroundColor: "rgba(192, 132, 252, 0.05)",
-                border: "1px solid rgba(192, 132, 252, 0.15)",
-              }}
-            >
-              <div>
-                <span style={{ fontSize: "10.5px", color: "#c084fc", fontWeight: 700, display: "block", marginBottom: "2px" }}>Class</span>
-                <select
-                  value={cardCategory}
-                  onChange={(e) => {
-                    setCardCategory(e.target.value as IDCardCategory);
-                    appendSpecToDesc(`${e.target.value} ID`);
-                  }}
-                  style={{
-                    width: "100%",
-                    height: "26px",
-                    backgroundColor: "#131826",
-                    border: "1px solid rgba(255, 255, 255, 0.12)",
-                    borderRadius: "3px",
-                    padding: "0 6px",
-                    color: "#fff",
-                    fontSize: "11px",
-                    outline: "none",
-                  }}
-                >
-                  <option value="Student">Student</option>
-                  <option value="Staff">Staff</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-
-              <div>
-                <span style={{ fontSize: "10.5px", color: "#c084fc", fontWeight: 700, display: "block", marginBottom: "2px" }}>Format</span>
-                <select
-                  value={fileLocation}
-                  onChange={(e) => setFileLocation(e.target.value as IDCardFileFormat)}
-                  style={{
-                    width: "100%",
-                    height: "26px",
-                    backgroundColor: "#131826",
-                    border: "1px solid rgba(255, 255, 255, 0.12)",
-                    borderRadius: "3px",
-                    padding: "0 6px",
-                    color: "#fff",
-                    fontSize: "11px",
-                    outline: "none",
-                  }}
-                >
-                  <option value="excel">Excel (.xlsx)</option>
-                  <option value="doc">Word (.docx)</option>
-                  <option value="hard copy">Hard Copy</option>
-                </select>
-              </div>
-
-              <div>
-                <span style={{ fontSize: "10.5px", color: "#c084fc", fontWeight: 700, display: "block", marginBottom: "2px" }}>Operator</span>
-                <select
-                  value={printOperator}
-                  onChange={(e) => setPrintOperator(e.target.value)}
-                  style={{
-                    width: "100%",
-                    height: "26px",
-                    backgroundColor: "#131826",
-                    border: "1px solid rgba(255, 255, 255, 0.12)",
-                    borderRadius: "3px",
-                    padding: "0 6px",
-                    color: "#fff",
-                    fontSize: "11px",
-                    outline: "none",
-                  }}
-                >
-                  <option value="Kamal Sir">Kamal Sir</option>
-                  <option value="Floor Line 1">Floor Line 1</option>
-                  <option value="Floor Line 2">Floor Line 2</option>
-                </select>
-              </div>
-            </div>
-          )}
-
-          {/* Action Row: Ledger Indicator & Button */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: "4px" }}>
+          {/* Action Row: Ledger Target & Create Button */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: "2px" }}>
             <span style={{ fontSize: "11px", color: "#64748b" }}>
-              {"Ingest into: "}
+              {"Ingest: "}
               {includeLanyard && <span style={{ color: "#38bdf8", fontWeight: 700 }}>Lanyard</span>}
               {includeLanyard && includeIDCard && " + "}
               {includeIDCard && <span style={{ color: "#c084fc", fontWeight: 700 }}>ID Card</span>}
@@ -833,13 +659,13 @@ export const OrdersWorkspaceView: React.FC = () => {
               disabled={!hasDesc}
               onClick={handleCreateOrder}
               style={{
-                height: "36px",
-                padding: "0 22px",
+                height: "34px",
+                padding: "0 20px",
                 borderRadius: "5px",
                 backgroundColor: hasDesc ? scopeActive.btnColor : "#1e293b",
                 border: "none",
                 color: hasDesc ? "#fff" : "#475569",
-                fontSize: "13px",
+                fontSize: "12.5px",
                 fontWeight: 700,
                 cursor: hasDesc ? "pointer" : "not-allowed",
                 display: "inline-flex",
@@ -849,14 +675,500 @@ export const OrdersWorkspaceView: React.FC = () => {
                 transition: "all 0.15s ease",
               }}
             >
-              <Icon name="plus" size={14} />
+              <Icon name="plus" size={13} />
               <span>Create Order</span>
             </button>
           </div>
         </div>
       </div>
 
-      {/* ─── MODAL: ADD CUSTOM SPECIFICATION ─── */}
+      {/* ─── MODAL 1: COLOR PALETTE SELECTION ─── */}
+      {isColorModalOpen && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.75)",
+            backdropFilter: "blur(6px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+          }}
+          onClick={() => setIsColorModalOpen(false)}
+        >
+          <div
+            style={{
+              width: "440px",
+              backgroundColor: "#0f1422",
+              border: "1px solid rgba(56, 189, 248, 0.3)",
+              borderRadius: "10px",
+              padding: "22px",
+              boxShadow: "0 20px 50px rgba(0, 0, 0, 0.75)",
+              display: "flex",
+              flexDirection: "column",
+              gap: "16px",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span style={{ fontSize: "15px", fontWeight: 700, color: "#f8fafc" }}>
+                🎨 Configure Lanyard Colors
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsColorModalOpen(false)}
+                style={{ background: "none", border: "none", color: "#64748b", cursor: "pointer", fontSize: "18px" }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <p style={{ fontSize: "12px", color: "#94a3b8", margin: 0 }}>
+              Select one or multiple preset ribbon colors, or enter a custom Pantone/color shade.
+            </p>
+
+            {/* Color chips */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px" }}>
+              {DEFAULT_COLORS.map((col) => {
+                const isSelected = selectedColors.includes(col.name);
+                return (
+                  <button
+                    key={col.name}
+                    type="button"
+                    onClick={() => toggleColor(col.name)}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "7px",
+                      padding: "6px 10px",
+                      borderRadius: "5px",
+                      border: isSelected ? "1.5px solid #38bdf8" : "1px solid rgba(255, 255, 255, 0.1)",
+                      backgroundColor: isSelected ? "rgba(56, 189, 248, 0.2)" : "#131826",
+                      color: isSelected ? "#fff" : "#94a3b8",
+                      fontSize: "11.5px",
+                      fontWeight: isSelected ? 700 : 500,
+                      cursor: "pointer",
+                      textAlign: "left",
+                    }}
+                  >
+                    <span style={{ width: 10, height: 10, borderRadius: "50%", backgroundColor: col.hex, flexShrink: 0 }} />
+                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{col.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Custom Color Input */}
+            <div style={{ display: "flex", gap: "8px" }}>
+              <input
+                type="text"
+                placeholder="Type custom color (e.g. Neon Green, Dual Tone)..."
+                value={customColorInput}
+                onChange={(e) => setCustomColorInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleAddCustomColor();
+                  }
+                }}
+                style={{
+                  flex: 1,
+                  height: "36px",
+                  backgroundColor: "#161b2c",
+                  border: "1px solid rgba(255, 255, 255, 0.15)",
+                  borderRadius: "5px",
+                  padding: "0 10px",
+                  color: "#fff",
+                  fontSize: "12.5px",
+                  outline: "none",
+                }}
+              />
+              <button
+                type="button"
+                onClick={handleAddCustomColor}
+                style={{
+                  height: "36px",
+                  padding: "0 14px",
+                  backgroundColor: "#0284c7",
+                  border: "none",
+                  borderRadius: "5px",
+                  color: "#fff",
+                  fontSize: "12px",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                + Add
+              </button>
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "4px" }}>
+              <button
+                type="button"
+                onClick={() => setIsColorModalOpen(false)}
+                style={{
+                  padding: "7px 14px",
+                  borderRadius: "5px",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  backgroundColor: "transparent",
+                  color: "#94a3b8",
+                  fontSize: "12px",
+                  cursor: "pointer",
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={applyColors}
+                style={{
+                  padding: "7px 18px",
+                  borderRadius: "5px",
+                  border: "none",
+                  backgroundColor: "#0284c7",
+                  color: "#ffffff",
+                  fontSize: "12.5px",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                Apply Colors
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── MODAL 2: CUSTOM SIZES & DORI BREAKDOWN ─── */}
+      {isSizeModalOpen && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.75)",
+            backdropFilter: "blur(6px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+          }}
+          onClick={() => setIsSizeModalOpen(false)}
+        >
+          <div
+            style={{
+              width: "420px",
+              backgroundColor: "#0f1422",
+              border: "1px solid rgba(56, 189, 248, 0.3)",
+              borderRadius: "10px",
+              padding: "22px",
+              boxShadow: "0 20px 50px rgba(0, 0, 0, 0.75)",
+              display: "flex",
+              flexDirection: "column",
+              gap: "16px",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span style={{ fontSize: "15px", fontWeight: 700, color: "#f8fafc" }}>
+                📏 Custom Lanyard Sizes & Dori Breakdown
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsSizeModalOpen(false)}
+                style={{ background: "none", border: "none", color: "#64748b", cursor: "pointer", fontSize: "18px" }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div>
+              <label style={{ fontSize: "11.5px", fontWeight: 700, color: "#94a3b8", display: "block", marginBottom: "4px" }}>
+                Custom Width (mm)
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. 18mm, 22mm, 30mm..."
+                value={customWidth}
+                onChange={(e) => setCustomWidth(e.target.value)}
+                style={{
+                  width: "100%",
+                  height: "36px",
+                  backgroundColor: "#161b2c",
+                  border: "1px solid rgba(255, 255, 255, 0.15)",
+                  borderRadius: "5px",
+                  padding: "0 10px",
+                  color: "#fff",
+                  fontSize: "13px",
+                  outline: "none",
+                  boxSizing: "border-box",
+                }}
+              />
+            </div>
+
+            <div>
+              <label style={{ fontSize: "11.5px", fontWeight: 700, color: "#94a3b8", display: "block", marginBottom: "6px" }}>
+                Dori Length Breakdown (Pcs):
+              </label>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px" }}>
+                <div>
+                  <span style={{ fontSize: "10.5px", color: "#64748b" }}>Small Dori</span>
+                  <input
+                    type="number"
+                    placeholder="Qty"
+                    value={doriSmall}
+                    onChange={(e) => setDoriSmall(e.target.value)}
+                    style={{
+                      width: "100%",
+                      height: "32px",
+                      backgroundColor: "#161b2c",
+                      border: "1px solid rgba(255, 255, 255, 0.15)",
+                      borderRadius: "4px",
+                      padding: "0 8px",
+                      color: "#fff",
+                      fontSize: "12px",
+                      outline: "none",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                </div>
+                <div>
+                  <span style={{ fontSize: "10.5px", color: "#64748b" }}>Medium Dori</span>
+                  <input
+                    type="number"
+                    placeholder="Qty"
+                    value={doriMedium}
+                    onChange={(e) => setDoriMedium(e.target.value)}
+                    style={{
+                      width: "100%",
+                      height: "32px",
+                      backgroundColor: "#161b2c",
+                      border: "1px solid rgba(255, 255, 255, 0.15)",
+                      borderRadius: "4px",
+                      padding: "0 8px",
+                      color: "#fff",
+                      fontSize: "12px",
+                      outline: "none",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                </div>
+                <div>
+                  <span style={{ fontSize: "10.5px", color: "#64748b" }}>Big Dori</span>
+                  <input
+                    type="number"
+                    placeholder="Qty"
+                    value={doriBig}
+                    onChange={(e) => setDoriBig(e.target.value)}
+                    style={{
+                      width: "100%",
+                      height: "32px",
+                      backgroundColor: "#161b2c",
+                      border: "1px solid rgba(255, 255, 255, 0.15)",
+                      borderRadius: "4px",
+                      padding: "0 8px",
+                      color: "#fff",
+                      fontSize: "12px",
+                      outline: "none",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+              <button
+                type="button"
+                onClick={() => setIsSizeModalOpen(false)}
+                style={{
+                  padding: "7px 14px",
+                  borderRadius: "5px",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  backgroundColor: "transparent",
+                  color: "#94a3b8",
+                  fontSize: "12px",
+                  cursor: "pointer",
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={applyCustomSizes}
+                style={{
+                  padding: "7px 18px",
+                  borderRadius: "5px",
+                  border: "none",
+                  backgroundColor: "#0284c7",
+                  color: "#ffffff",
+                  fontSize: "12.5px",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                Apply Sizes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── MODAL 3: ID CARD SPECIFICATIONS ─── */}
+      {isIDCardModalOpen && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.75)",
+            backdropFilter: "blur(6px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+          }}
+          onClick={() => setIsIDCardModalOpen(false)}
+        >
+          <div
+            style={{
+              width: "420px",
+              backgroundColor: "#0f1422",
+              border: "1px solid rgba(192, 132, 252, 0.3)",
+              borderRadius: "10px",
+              padding: "22px",
+              boxShadow: "0 20px 50px rgba(0, 0, 0, 0.75)",
+              display: "flex",
+              flexDirection: "column",
+              gap: "16px",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span style={{ fontSize: "15px", fontWeight: 700, color: "#f8fafc" }}>
+                💳 ID Card Specifications
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsIDCardModalOpen(false)}
+                style={{ background: "none", border: "none", color: "#64748b", cursor: "pointer", fontSize: "18px" }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div>
+              <label style={{ fontSize: "11.5px", fontWeight: 700, color: "#94a3b8", display: "block", marginBottom: "4px" }}>
+                Classification
+              </label>
+              <select
+                value={cardCategory}
+                onChange={(e) => setCardCategory(e.target.value as IDCardCategory)}
+                style={{
+                  width: "100%",
+                  height: "36px",
+                  backgroundColor: "#161b2c",
+                  border: "1px solid rgba(255, 255, 255, 0.15)",
+                  borderRadius: "5px",
+                  padding: "0 10px",
+                  color: "#fff",
+                  fontSize: "13px",
+                  outline: "none",
+                }}
+              >
+                <option value="Student">Student ID</option>
+                <option value="Staff">Staff / Teacher ID</option>
+                <option value="Other">Corporate / Visitor / Other</option>
+              </select>
+            </div>
+
+            <div>
+              <label style={{ fontSize: "11.5px", fontWeight: 700, color: "#94a3b8", display: "block", marginBottom: "4px" }}>
+                Data / File Format
+              </label>
+              <select
+                value={fileLocation}
+                onChange={(e) => setFileLocation(e.target.value as IDCardFileFormat)}
+                style={{
+                  width: "100%",
+                  height: "36px",
+                  backgroundColor: "#161b2c",
+                  border: "1px solid rgba(255, 255, 255, 0.15)",
+                  borderRadius: "5px",
+                  padding: "0 10px",
+                  color: "#fff",
+                  fontSize: "13px",
+                  outline: "none",
+                }}
+              >
+                <option value="excel">Excel (.xlsx / .csv)</option>
+                <option value="doc">Word Document (.docx)</option>
+                <option value="hard copy">Hard Copy / Physical Sheet</option>
+              </select>
+            </div>
+
+            <div>
+              <label style={{ fontSize: "11.5px", fontWeight: 700, color: "#94a3b8", display: "block", marginBottom: "4px" }}>
+                In-House Print Operator
+              </label>
+              <select
+                value={printOperator}
+                onChange={(e) => setPrintOperator(e.target.value)}
+                style={{
+                  width: "100%",
+                  height: "36px",
+                  backgroundColor: "#161b2c",
+                  border: "1px solid rgba(255, 255, 255, 0.15)",
+                  borderRadius: "5px",
+                  padding: "0 10px",
+                  color: "#fff",
+                  fontSize: "13px",
+                  outline: "none",
+                }}
+              >
+                <option value="Kamal Sir">Kamal Sir (Thermal Station)</option>
+                <option value="Floor Line 1">Floor Line 1 (Direct UV)</option>
+                <option value="Floor Line 2">Floor Line 2 (Sublimation)</option>
+              </select>
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+              <button
+                type="button"
+                onClick={() => setIsIDCardModalOpen(false)}
+                style={{
+                  padding: "7px 14px",
+                  borderRadius: "5px",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  backgroundColor: "transparent",
+                  color: "#94a3b8",
+                  fontSize: "12px",
+                  cursor: "pointer",
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={applyIDSpecs}
+                style={{
+                  padding: "7px 18px",
+                  borderRadius: "5px",
+                  border: "none",
+                  backgroundColor: "#7c3aed",
+                  color: "#ffffff",
+                  fontSize: "12.5px",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                Apply Specs
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── MODAL 4: ADD CUSTOM DROPDOWN ITEM ─── */}
       {addItemModal.isOpen && (
         <div
           style={{
@@ -892,13 +1204,7 @@ export const OrdersWorkspaceView: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setAddItemModal({ isOpen: false, type: null, title: "", inputValue: "" })}
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: "#64748b",
-                  cursor: "pointer",
-                  fontSize: "16px",
-                }}
+                style={{ background: "none", border: "none", color: "#64748b", cursor: "pointer", fontSize: "16px" }}
               >
                 ✕
               </button>
@@ -1014,7 +1320,7 @@ export const OrdersWorkspaceView: React.FC = () => {
                   <td colSpan={7} style={{ padding: "48px 14px", textAlign: "center", color: "#475569", fontSize: "12.5px" }}>
                     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "7px" }}>
                       <Icon name="package" size={28} color="#1e293b" />
-                      <span>No orders yet — describe an order above and click Create</span>
+                      <span>No orders yet — enter order details above and click Create</span>
                     </div>
                   </td>
                 </tr>
