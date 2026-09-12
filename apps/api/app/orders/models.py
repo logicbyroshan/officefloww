@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from decimal import Decimal
 from enum import Enum
 from typing import Any, Dict, List, Optional
-from sqlalchemy import DateTime, Enum as SAEnum, ForeignKey, Integer, Numeric, String, Text, Uuid, JSON
+from sqlalchemy import DateTime, Enum as SAEnum, ForeignKey, Index, Integer, Numeric, String, Text, Uuid, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from apps.api.app.core.database import Base, TimestampMixin, UUIDPrimaryKeyMixin
@@ -35,6 +35,10 @@ class OrderPriority(str, Enum):
 
 class Order(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     __tablename__ = "orders"
+    __table_args__ = (
+        Index("ix_orders_client_status", "client_id", "status"),
+        Index("ix_orders_status_priority", "status", "priority"),
+    )
 
     order_number: Mapped[str] = mapped_column(String(50), unique=True, index=True, nullable=False)
     client_id: Mapped[uuid.UUID] = mapped_column(

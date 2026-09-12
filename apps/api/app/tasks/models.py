@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional
-from sqlalchemy import Boolean, DateTime, Enum as SAEnum, Float, ForeignKey, Integer, String, Text, Uuid, JSON
+from sqlalchemy import Boolean, DateTime, Enum as SAEnum, Float, ForeignKey, Index, Integer, String, Text, Uuid, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from apps.api.app.core.database import Base, TimestampMixin, UUIDPrimaryKeyMixin
@@ -27,6 +27,10 @@ class TaskStatus(str, Enum):
 
 class Task(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     __tablename__ = "tasks"
+    __table_args__ = (
+        Index("ix_tasks_order_status", "order_id", "status"),
+        Index("ix_tasks_user_status", "assigned_user_id", "status"),
+    )
 
     task_code: Mapped[str] = mapped_column(String(50), unique=True, index=True, nullable=False)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
