@@ -2,10 +2,17 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from fastapi.middleware.gzip import GZipMiddleware
+from sqlalchemy import text
+
 from apps.api.app.core.config import settings
 from apps.api.app.core.database import Base, engine
 from apps.api.app.core.logging import setup_logging
-from apps.api.app.core.middleware import CorrelationIdMiddleware, register_exception_handlers
+from apps.api.app.core.middleware import (
+    CorrelationIdMiddleware,
+    SecurityHeadersMiddleware,
+    register_exception_handlers,
+)
 from apps.api.app.core.ws_router import router as ws_router
 
 from apps.api.app.auth.router import router as auth_router
@@ -63,8 +70,10 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Correlation ID and exception handlers
+# Middleware stack
+app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(CorrelationIdMiddleware)
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 register_exception_handlers(app)
 
 # CORS
@@ -79,11 +88,19 @@ app.add_middleware(
 
 @app.get("/health", tags=["Health"])
 async def health_check():
+    db_status = "healthy"
+    try:
+        async with engine.connect() as conn:
+            await conn.execute(text("SELECT 1"))
+    except Exception as e:
+        db_status = f"degraded: {str(e)}"
+
     return {
-        "status": "healthy",
+        "status": "healthy" if db_status == "healthy" else "degraded",
         "service": settings.APP_NAME,
         "environment": settings.APP_ENV,
         "version": "3.0.0",
+        "database": db_status,
     }
 
 

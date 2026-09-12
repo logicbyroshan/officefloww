@@ -24,7 +24,22 @@ def _hash_token(token: str) -> str:
     return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 
+_login_attempts: dict = {}
+
+
 class AuthService:
+    @staticmethod
+    def _check_rate_limit(email: str, max_attempts: int = 15, window_seconds: int = 60):
+        now = datetime.now(timezone.utc).timestamp()
+        key = email.lower().strip()
+        attempts = _login_attempts.get(key, [])
+        # Prune old attempts
+        attempts = [t for t in attempts if now - t < window_seconds]
+        if len(attempts) >= max_attempts:
+            raise AuthenticationError("Too many login attempts. Please wait 60 seconds before retrying.")
+        attempts.append(now)
+        _login_attempts[key] = attempts
+
     @staticmethod
     async def authenticate_user(db: AsyncSession, email: str, password: str) -> Optional[User]:
         clean_email = email.lower().strip()
@@ -44,11 +59,15 @@ class AuthService:
 
     @staticmethod
     async def login(db: AsyncSession, login_data: LoginRequest) -> TokenResponse:
+        AuthService._check_rate_limit(login_data.email)
         user = await AuthService.authenticate_user(db, login_data.email, login_data.password)
         if not user:
             raise AuthenticationError("Invalid email or password.")
         if not user.is_active:
             raise AuthenticationError("User account is inactive.")
+
+        # Reset rate limit tracker on successful login
+        _login_attempts.pop(login_data.email.lower().strip(), None)
 
         user.last_login_at = datetime.now(timezone.utc)
 
