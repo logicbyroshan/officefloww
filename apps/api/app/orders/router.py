@@ -60,6 +60,7 @@ async def get_order(
 
 
 @router.patch("/{order_id}", response_model=SuccessResponse[OrderRead])
+@router.put("/{order_id}", response_model=SuccessResponse[OrderRead])
 async def update_order(
     order_id: uuid.UUID,
     order_in: OrderUpdate,

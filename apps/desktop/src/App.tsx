@@ -82,8 +82,14 @@ const MainApp: React.FC = () => {
       <GlobalSearchModal
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
-        onSelectOrder={(_id) => setIsSearchOpen(false)}
-        onSelectClient={(_id) => setIsSearchOpen(false)}
+        onSelectOrder={(_id) => {
+          setActiveSection("orders");
+          setIsSearchOpen(false);
+        }}
+        onSelectClient={(_id) => {
+          setActiveSection("orders");
+          setIsSearchOpen(false);
+        }}
         onSelectTask={() => {
           setActiveSection("lanyard_orders");
           setIsSearchOpen(false);

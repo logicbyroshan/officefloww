@@ -189,6 +189,14 @@ class OrderService:
         old_status = order.status
 
         if data.status is not None:
+            if data.status == OrderStatus.COMPLETED and old_status != OrderStatus.COMPLETED:
+                from apps.api.app.billing.service import BillingService
+
+                check = await BillingService.check_order_completion_conditions(db, order_id)
+                if not check.can_complete:
+                    raise BusinessRuleViolationError(
+                        f"Order cannot be marked COMPLETED. Invariants breached: {'; '.join(check.reasons)}"
+                    )
             order.status = data.status
         if data.priority is not None:
             order.priority = data.priority

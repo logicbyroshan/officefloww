@@ -3,6 +3,7 @@ import { Order, Client, Task } from "@officefloww/api-types";
 import { SearchService } from "../../api/services";
 import { Icon } from "../../design-system/components/Icon";
 import { AppNavSection } from "../../auth/permissions";
+import { INITIAL_STOCK_ITEMS } from "../stock/stockStore";
 
 export interface GlobalSearchModalProps {
   isOpen: boolean;
@@ -72,12 +73,18 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
           // fallback if offline
         }
 
-        // Mock/Curated stock search matches
-        const stockMatches = [
-          { id: "stk-01", code: "RAW-PVC-076", name: "0.76mm Gloss White PVC Core Sheet" },
-          { id: "stk-02", code: "RAW-SATIN-20MM-WHT", name: "20mm White Satin Polyester Ribbon Roll" },
-          { id: "stk-03", code: "HDW-DOGHOOK-20MM", name: "20mm Nickel-Plated Metal Dog-Hook Fitting" },
-        ].filter((s) => s.code.toLowerCase().includes(q) || s.name.toLowerCase().includes(q));
+        // Live Stock inventory matches from active catalog
+        const stockMatches = INITIAL_STOCK_ITEMS.filter(
+          (s) =>
+            (s.code && s.code.toLowerCase().includes(q)) ||
+            s.name.toLowerCase().includes(q) ||
+            s.category.toLowerCase().includes(q) ||
+            (s.workstation && s.workstation.toLowerCase().includes(q))
+        ).map((s) => ({
+          id: s.id,
+          code: s.code ? s.code.toUpperCase() : s.id,
+          name: `${s.name} (${s.availableStock} ${s.unit} avail)`,
+        }));
 
         setResults({
           orders: apiResults.orders || [],
