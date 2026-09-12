@@ -264,13 +264,36 @@ class LabourService:
         order_item = order_item_res.scalar_one_or_none()
 
         if order_item:
-            # Check for any active StockItem with this labourer
-            labour_ledger_items = await db.execute(
-                select(LabourStockLedger.stock_item_id)
-                .where(LabourStockLedger.labourer_id == batch.labourer_id)
-                .distinct()
-            )
-            for item_id in labour_ledger_items.scalars().all():
+            # Check for stock items issued specifically for this order item or order
+            issued_items_query = select(LabourStockLedger.stock_item_id).where(
+                LabourStockLedger.labourer_id == batch.labourer_id,
+                LabourStockLedger.order_item_id == batch.order_item_id,
+                LabourStockLedger.transaction_type == LabourStockTransactionType.ISSUED,
+            ).distinct()
+            issued_res = await db.execute(issued_items_query)
+            target_item_ids = list(issued_res.scalars().all())
+
+            if not target_item_ids and batch.order_id:
+                order_issued_query = select(LabourStockLedger.stock_item_id).where(
+                    LabourStockLedger.labourer_id == batch.labourer_id,
+                    LabourStockLedger.order_id == batch.order_id,
+                    LabourStockLedger.transaction_type == LabourStockTransactionType.ISSUED,
+                ).distinct()
+                order_issued_res = await db.execute(order_issued_query)
+                target_item_ids = list(order_issued_res.scalars().all())
+
+            if not target_item_ids:
+                all_ledger_items = await db.execute(
+                    select(LabourStockLedger.stock_item_id)
+                    .where(LabourStockLedger.labourer_id == batch.labourer_id)
+                    .distinct()
+                )
+                for it_id in all_ledger_items.scalars().all():
+                    bal = await LabourService.get_labour_material_balance(db, batch.labourer_id, it_id)
+                    if bal > Decimal("0.0"):
+                        target_item_ids.append(it_id)
+
+            for item_id in target_item_ids:
                 if data.completed_quantity > Decimal("0.0"):
                     db.add(
                         LabourStockLedger(
@@ -292,7 +315,7 @@ class LabourService:
                             quantity=data.defective_quantity,
                             order_id=batch.order_id,
                             order_item_id=batch.order_item_id,
-                            notes=f"Defect: {data.defect_reason}",
+                            notes=f"Defect: {data.defect_reason or 'Scrapped during fitting'}",
                         )
                     )
                 if data.returned_quantity > Decimal("0.0"):

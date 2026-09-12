@@ -1,8 +1,9 @@
 import uuid
 from datetime import datetime, timezone
+from decimal import Decimal
 from enum import Enum
 from typing import Any, Dict, List, Optional
-from sqlalchemy import DateTime, Enum as SAEnum, Float, ForeignKey, Integer, String, Text, Uuid, JSON
+from sqlalchemy import DateTime, Enum as SAEnum, ForeignKey, Integer, Numeric, String, Text, Uuid, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from apps.api.app.core.database import Base, TimestampMixin, UUIDPrimaryKeyMixin
@@ -55,7 +56,7 @@ class Order(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     promised_delivery_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     billing_address: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     delivery_address: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    total_amount: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
+    total_amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=Decimal("0.0"), nullable=False)
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     created_by_id: Mapped[Optional[uuid.UUID]] = mapped_column(Uuid(as_uuid=True), nullable=True)
 
@@ -84,7 +85,7 @@ class OrderItem(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         index=True,
     )
     quantity: Mapped[int] = mapped_column(Integer, nullable=False)
-    unit_price: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
+    unit_price: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=Decimal("0.0"), nullable=False)
     specifications_json: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON, default=dict, nullable=True)
     status: Mapped[OrderItemStatus] = mapped_column(
         SAEnum(OrderItemStatus, native_enum=False, length=50),
