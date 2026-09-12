@@ -7940,7 +7940,7 @@
             "type": "string",
             "format": "date",
             "title": "Effective Date",
-            "default": "2026-09-07"
+            "default": "2026-09-12"
           },
           "is_active": {
             "type": "boolean",
@@ -7981,7 +7981,7 @@
             "type": "string",
             "format": "date",
             "title": "Effective Date",
-            "default": "2026-09-07"
+            "default": "2026-09-12"
           },
           "is_active": {
             "type": "boolean",
