@@ -1,4 +1,7 @@
 import hashlib
+import os
+from pathlib import Path
+import re
 import uuid
 from datetime import datetime, timezone
 from typing import List, Optional, Tuple
@@ -11,6 +14,12 @@ from apps.api.app.files.models import File, FileVersion, FileFolder, FileLink, F
 
 
 class FileService:
+    @staticmethod
+    def sanitize_filename(name: str) -> str:
+        clean = Path(name).name
+        clean = re.sub(r'[^a-zA-Z0-9_.-]', '_', clean).strip("._")
+        return clean or "unnamed_file"
+
     @staticmethod
     def calculate_checksum(content: bytes) -> str:
         return hashlib.sha256(content).hexdigest()
@@ -47,6 +56,7 @@ class FileService:
         user_id: Optional[uuid.UUID] = None,
         notes: Optional[str] = None,
     ) -> Tuple[File, FileVersion]:
+        filename = FileService.sanitize_filename(filename)
         checksum = FileService.calculate_checksum(content)
         file_size = len(content)
 
