@@ -96,3 +96,17 @@ async def test_get_me(client: AsyncClient, admin_headers: dict, admin_user: User
     response = await client.get("/api/v1/auth/me", headers=admin_headers)
     assert response.status_code == 200
     assert response.json()["data"]["email"] == admin_user.email
+    # Verify security headers injected by SecurityHeadersMiddleware
+    assert response.headers.get("X-Content-Type-Options") == "nosniff"
+    assert response.headers.get("X-Frame-Options") == "DENY"
+    assert "X-Correlation-ID" in response.headers
+
+
+@pytest.mark.asyncio
+async def test_health_check_database_ping(client: AsyncClient):
+    response = await client.get("/health")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "healthy"
+    assert data["database"] == "healthy"
+    assert "version" in data
